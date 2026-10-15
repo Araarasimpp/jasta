@@ -68,6 +68,7 @@ export interface PedidoItem {
   precio_base: number;
   precio_compra: number;
   total: number;
+  producto?: { imagen_url: string | null } | null;
 }
 
 export interface Nota {

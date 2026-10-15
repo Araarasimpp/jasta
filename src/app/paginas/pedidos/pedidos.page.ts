@@ -3,278 +3,60 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { add, searchOutline, refreshOutline, printOutline, cubeOutline, checkmarkCircle, closeOutline, bicycleOutline } from 'ionicons/icons';
+import {
+  add, searchOutline, printOutline, cubeOutline, checkmarkCircle, close, ellipsisHorizontal,
+} from 'ionicons/icons';
 import { PedidosService } from '../../core/services/pedidos.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { RotulosService } from '../../shared/rotulo/rotulos.service';
 import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detalle.component';
 import { RangoComponent, RangoFechas } from '../../shared/rango/rango.component';
-import { EstadoPedido, Pedido, Usuario, estadoLabel } from '../../shared/modelos';
-import { mensajeError, numero, pesos } from '../../shared/formato';
+import { AvatarComponent } from '../../shared/avatar/avatar.component';
+import { EstadoIconComponent } from '../../shared/estado-icon/estado-icon.component';
+import { ImagenPreviewComponent } from '../../shared/imagen-preview/imagen-preview.component';
+import { EstadoPedido, Pedido, PedidoItem, Usuario } from '../../shared/modelos';
+import { mensajeError, numero, pesos, urlImagen } from '../../shared/formato';
 import { finDiaColombia, formatoFechaCO, formatoHoraCO, inicioDiaColombia } from '../../shared/fecha-colombia';
 
-type Filtro = EstadoPedido | 'activos' | 'todos';
+type Filtro = EstadoPedido | 'todos';
+
+interface Grupo {
+  estado: EstadoPedido;
+  etiqueta: string;
+  pedidos: Pedido[];
+  /** Cuántos hay en total con estos filtros (puede ser más que los de esta página) */
+  total: number;
+  subtotal: number;
+  /** true si están todos cargados (la suma es la del grupo completo) */
+  completo: boolean;
+}
+
+/** Estados en curso: se cargan completos. Entregados y cancelados van por páginas. */
+const ACTIVOS: EstadoPedido[] = ['por_alistar', 'alistado', 'despachado'];
+const CERRADOS: EstadoPedido[] = ['entregado', 'cancelado'];
+// Orden en que se muestran los grupos en "Todos"
+const ORDEN_GRUPOS: EstadoPedido[] = [...ACTIVOS, ...CERRADOS];
+const ETIQUETA_GRUPO: Record<EstadoPedido, string> = {
+  por_alistar: 'Por alistar',
+  alistado: 'Alistados',
+  despachado: 'En ruta',
+  entregado: 'Entregados',
+  cancelado: 'Cancelados',
+};
 
 /**
- * Lista de pedidos. Como en Kaesuri, el alistamiento se hace aquí mismo:
- * botón Alistar en cada pedido, pestaña Alistados en orden (1°, 2°…), despacho
- * con mensajero, rótulos y acciones para varios pedidos seleccionados.
+ * Lista de pedidos, igual que en Home ALS: abre en Pendientes, los pedidos van
+ * agrupados por estado con su cantidad y su suma, con las fotos de los
+ * productos, el orden de alistamiento (1°, 2°…), el mensajero (asignarlo lo
+ * despacha: pasa a En ruta) y un menú por pedido.
  */
 @Component({
   selector: 'app-pedidos',
   standalone: true,
-  imports: [FormsModule, RouterLink, IonIcon, PedidoDetalleComponent, RangoComponent],
-  styles: [
-    `
-      .check { width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent); }
-      .col-check { width: 28px; padding-right: 0 !important; }
-      .cliente { display: flex; flex-direction: column; gap: 2px; min-width: 200px; max-width: 260px; white-space: normal; }
-      .cliente strong { font-weight: 500; }
-      .cliente small { color: var(--text-muted); font-size: 12px; line-height: 1.35; }
-      .tabla tr.sel td { background: var(--oro-wash); }
-      .tabla tr.sel td:first-child { box-shadow: inset 3px 0 0 var(--oro); }
-      .tabla td { white-space: nowrap; }
-      .alistar { height: 28px; padding: 0 10px; font-size: 12px; }
-      .orden { display: inline-flex; align-items: center; gap: 4px; color: var(--oro-texto); font-family: var(--mono-font); font-size: 12px; font-weight: 600; }
-      .rot { font-size: 12px; }
-      .rot.pend { color: var(--text); font-weight: 550; }
-      .rot.ok { color: var(--text-muted); }
-      .sel-mens { height: 30px; font-size: 12px; min-width: 150px; max-width: 170px; }
-      .tabla td.fecha { font-size: 12.5px; line-height: 1.35; }
-      .acciones-fila { display: flex; gap: 6px; align-items: center; }
-      .lote { position: fixed; z-index: 150; left: 50%; transform: translateX(-50%); bottom: calc(16px + var(--tabbar-offset, 0px));
-        display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; max-width: calc(100vw - 24px);
-        padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-pop); }
-      .lote span { font-size: 13px; font-weight: 500; padding: 0 4px; white-space: nowrap; }
-      .lote select { height: 34px; max-width: 180px; }
-      .tarjeta .meta { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--text-muted); }
-      .tarjeta .fila-top { display: flex; gap: 10px; align-items: flex-start; }
-      .tarjeta .fila-top > div { flex: 1; min-width: 0; cursor: pointer; }
-      .rango-wrap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-      .tarjeta.sel { border-color: var(--oro); box-shadow: inset 3px 0 0 var(--oro); background: var(--oro-wash); }
-      @media (max-width: 760px) {
-        .barra.filtros { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-right: 40px;
-          -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent); }
-        .barra.filtros::-webkit-scrollbar { display: none; }
-        .barra.filtros > * { flex-shrink: 0; }
-        .barra.filtros .rango-wrap { flex-wrap: nowrap; }
-        .lote { width: calc(100vw - 24px); box-sizing: border-box; }
-        .lote > span:first-child { width: 100%; text-align: center; }
-      }
-    `,
-  ],
-  template: `
-    <div class="vista">
-      <div class="vista-head">
-        <h1>Pedidos <small class="num">{{ numero(total()) }}</small></h1>
-        <label class="buscar">
-          <ion-icon name="search-outline"></ion-icon>
-          <input type="search" placeholder="N.º, cliente, teléfono o barrio" [(ngModel)]="texto" (ngModelChange)="buscarLuego()" />
-        </label>
-        <button class="b b-icono" aria-label="Actualizar" (click)="cargar()"><ion-icon name="refresh-outline"></ion-icon></button>
-        @if (puedeVender()) {
-          <a class="b b-pri" routerLink="/app/pedidos/nuevo"><ion-icon name="add"></ion-icon>Nuevo pedido</a>
-        }
-      </div>
-
-      <div class="barra">
-        <div class="chips" role="tablist">
-          @for (f of filtros; track f.id) {
-            <button class="chip" [class.on]="filtro() === f.id" (click)="cambiarFiltro(f.id)">
-              {{ f.label }}
-              @if (conteos()[f.id] !== undefined) {
-                <span class="n num">{{ conteos()[f.id] }}</span>
-              }
-            </button>
-          }
-        </div>
-      </div>
-
-      <div class="barra filtros">
-        <div class="rango-wrap">
-          <app-rango [conTodo]="true" inicial="todo" (cambio)="cambiarRango($event)"></app-rango>
-        </div>
-        <select class="inp inp-chico" [(ngModel)]="filtroCanal" (change)="irPagina(0)" aria-label="Canal">
-          <option ngValue="domicilio">Domicilios</option>
-          <option ngValue="local">Ventas en local</option>
-          <option [ngValue]="null">Domicilios y local</option>
-        </select>
-        @if (gestiona()) {
-          <select class="inp inp-chico" [(ngModel)]="filtroRotulo" (change)="irPagina(0)" aria-label="Rótulo">
-            <option [ngValue]="null">Rótulo: todos</option>
-            <option ngValue="pendiente">Rótulo: sin imprimir</option>
-            <option ngValue="impreso">Rótulo: impreso</option>
-          </select>
-          <select class="inp inp-chico" [(ngModel)]="filtroMensajero" (change)="irPagina(0)" aria-label="Mensajero">
-            <option [ngValue]="null">Todos los mensajeros</option>
-            @for (m of mensajeros(); track m.id) {
-              <option [ngValue]="m.id">{{ m.nombre }}</option>
-            }
-          </select>
-        }
-        @if (filtro() === 'alistado' && gestiona()) {
-          <button class="b b-pri" [disabled]="imprimiendo()" (click)="imprimirAlistados()">
-            <ion-icon name="print-outline"></ion-icon>{{ imprimiendo() ? 'Preparando…' : 'Imprimir alistados sin rótulo' }}
-          </button>
-        }
-      </div>
-
-      @if (error()) {
-        <div class="vista-body"><p class="error">{{ error() }}</p></div>
-      }
-
-      <!-- Escritorio -->
-      <div class="tabla-wrap solo-pc">
-        <table class="tabla">
-          <thead>
-            <tr>
-              @if (gestiona()) {
-                <th class="col-check"><input type="checkbox" class="check" [checked]="todosSel()" (change)="alternarTodos()" aria-label="Seleccionar todos" /></th>
-              }
-              <th>N.º</th><th>Cliente y productos</th><th>Barrio</th><th>Vendedora</th><th>Mensajero</th>
-              @if (gestiona()) { <th>Rótulo</th> }
-              <th>Estado</th><th class="der">Total</th><th>Fecha</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (p of filas(); track p.id; let i = $index) {
-              <tr [class.sel]="sel().has(p.id)">
-                @if (gestiona()) {
-                  <td class="col-check"><input type="checkbox" class="check" [checked]="sel().has(p.id)" (change)="alternar(p.id)" [attr.aria-label]="'Seleccionar #' + p.id" /></td>
-                }
-                <td><a class="guia" (click)="abrir(p.id)">#{{ p.id }}</a></td>
-                <td>
-                  <div class="cliente">
-                    <strong (click)="abrir(p.id)" style="cursor: pointer">{{ p.cliente_nombre }}</strong>
-                    <small>{{ productosTexto(p) }}</small>
-                    @if (gestiona() && p.estado === 'por_alistar') {
-                      <span><button class="b alistar" [disabled]="ocupado()" (click)="alistar([p])"><ion-icon name="cube-outline"></ion-icon>Alistar</button></span>
-                    }
-                    @if (p.estado === 'alistado' && filtro() === 'alistado') {
-                      <span class="orden"><ion-icon name="checkmark-circle"></ion-icon>{{ pagina() * porPagina + i + 1 }}° alistado</span>
-                    }
-                  </div>
-                </td>
-                <td class="suave corta">{{ p.barrio || '—' }}</td>
-                <td class="corta">{{ p.vendedora?.nombre || '—' }}</td>
-                <td>
-                  @if (gestiona() && (p.estado === 'por_alistar' || p.estado === 'alistado' || p.estado === 'despachado')) {
-                    <div class="acciones-fila">
-                      <select class="inp sel-mens" [ngModel]="p.mensajero_id" (ngModelChange)="asignar(p, $event)" aria-label="Mensajero">
-                        <option [ngValue]="null">Sin asignar</option>
-                        @for (m of mensajeros(); track m.id) {
-                          <option [ngValue]="m.id">{{ m.nombre }}</option>
-                        }
-                      </select>
-                      @if (p.estado === 'alistado') {
-                        <button class="b alistar b-pri" [disabled]="!p.mensajero_id || ocupado()" (click)="despachar([p])">Despachar</button>
-                      }
-                    </div>
-                  } @else {
-                    {{ p.mensajero?.nombre || '—' }}
-                  }
-                </td>
-                @if (gestiona()) {
-                  <td>
-                    @if (p.rotulo_impreso_at) {
-                      <span class="rot ok">Impreso</span>
-                    } @else if (p.estado !== 'entregado' && p.estado !== 'cancelado') {
-                      <span class="rot pend">Pendiente</span>
-                    } @else { <span class="suave">—</span> }
-                  </td>
-                }
-                <td><span class="estado {{ p.estado }}">{{ estadoLabel(p.estado) }}</span></td>
-                <td class="der num">{{ pesos(p.total) }}</td>
-                <td class="suave fecha">{{ dia(p.created_at) }}<br />{{ hora(p.created_at) }}</td>
-              </tr>
-            } @empty {
-              <tr><td colspan="10" class="suave">{{ cargando() ? 'Cargando…' : 'No hay pedidos con estos filtros.' }}</td></tr>
-            }
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Celular -->
-      <div class="vista-body solo-cel">
-        <div class="tarjetas" style="width: 100%">
-          @for (p of filas(); track p.id; let i = $index) {
-            <div class="tarjeta" [class.sel]="sel().has(p.id)">
-              <div class="fila-top">
-                @if (gestiona()) {
-                  <input type="checkbox" class="check" [checked]="sel().has(p.id)" (change)="alternar(p.id)" [attr.aria-label]="'Seleccionar #' + p.id" />
-                }
-                <div (click)="abrir(p.id)">
-                  <div class="tarjeta-top"><h3>{{ p.cliente_nombre }}</h3><strong class="num">{{ pesos(p.total) }}</strong></div>
-                  <p>{{ productosTexto(p) }}</p>
-                  <p>{{ p.barrio || 'Sin barrio' }} · {{ p.vendedora?.nombre || '—' }}@if (p.mensajero) { · 🛵 {{ p.mensajero.nombre }} }</p>
-                </div>
-              </div>
-              <div class="meta">
-                <span class="estado {{ p.estado }}">{{ estadoLabel(p.estado) }}@if (p.estado === 'alistado' && filtro() === 'alistado') { · {{ pagina() * porPagina + i + 1 }}° }</span>
-                <span><span class="guia">#{{ p.id }}</span> {{ fecha(p.created_at) }}</span>
-              </div>
-              @if (gestiona() && (p.estado === 'por_alistar' || p.estado === 'alistado')) {
-                <div class="acciones">
-                  @if (p.estado === 'por_alistar') {
-                    <button class="b" style="flex: 1" [disabled]="ocupado()" (click)="alistar([p])"><ion-icon name="cube-outline"></ion-icon>Alistar</button>
-                  } @else {
-                    <select class="inp" style="flex: 1" [ngModel]="p.mensajero_id" (ngModelChange)="asignar(p, $event)" aria-label="Mensajero">
-                      <option [ngValue]="null">Mensajero…</option>
-                      @for (m of mensajeros(); track m.id) {
-                        <option [ngValue]="m.id">{{ m.nombre }}</option>
-                      }
-                    </select>
-                    <button class="b b-pri" [disabled]="!p.mensajero_id || ocupado()" (click)="despachar([p])">Despachar</button>
-                  }
-                </div>
-              }
-            </div>
-          } @empty {
-            <div class="vacio">{{ cargando() ? 'Cargando…' : 'No hay pedidos con estos filtros.' }}</div>
-          }
-        </div>
-      </div>
-
-      @if (total() > porPagina) {
-        <div class="paginar">
-          <span class="num">{{ pagina() * porPagina + 1 }}–{{ min((pagina() + 1) * porPagina, total()) }} de {{ numero(total()) }}</span>
-          <span style="display: flex; gap: 8px">
-            <button class="b" [disabled]="pagina() === 0" (click)="irPagina(pagina() - 1)">Anterior</button>
-            <button class="b" [disabled]="(pagina() + 1) * porPagina >= total()" (click)="irPagina(pagina() + 1)">Siguiente</button>
-          </span>
-        </div>
-      }
-      <div style="height: 72px"></div>
-    </div>
-
-    <!-- Acciones para varios pedidos -->
-    @if (sel().size) {
-      <div class="lote" role="toolbar" aria-label="Acciones para los seleccionados">
-        <span class="num">{{ sel().size }} seleccionado(s)</span>
-        @if (selPorAlistar().length) {
-          <button class="b" [disabled]="ocupado()" (click)="alistar(selPorAlistar())"><ion-icon name="cube-outline"></ion-icon>Alistar ({{ selPorAlistar().length }})</button>
-        }
-        @if (selAlistados().length) {
-          <select class="inp" [(ngModel)]="mensajeroLote" aria-label="Mensajero para despachar">
-            <option [ngValue]="null">Mensajero…</option>
-            @for (m of mensajeros(); track m.id) {
-              <option [ngValue]="m.id">{{ m.nombre }}</option>
-            }
-          </select>
-          <button class="b b-pri" [disabled]="!mensajeroLote || ocupado()" (click)="despachar(selAlistados(), mensajeroLote)">
-            <ion-icon name="bicycle-outline"></ion-icon>Despachar ({{ selAlistados().length }})
-          </button>
-        }
-        <button class="b" [disabled]="imprimiendo()" (click)="imprimirSeleccion()"><ion-icon name="print-outline"></ion-icon>Rótulos</button>
-        <button class="b b-icono" aria-label="Quitar selección" (click)="limpiarSel()"><ion-icon name="close-outline"></ion-icon></button>
-      </div>
-    }
-
-    @if (abierto(); as id) {
-      <app-pedido-detalle [pedidoId]="id" (cerrar)="cerrarDetalle()" (cambiado)="cargar()"></app-pedido-detalle>
-    }
-  `,
+  imports: [FormsModule, RouterLink, IonIcon, PedidoDetalleComponent, RangoComponent, AvatarComponent, EstadoIconComponent, ImagenPreviewComponent],
+  templateUrl: './pedidos.page.html',
+  styleUrls: ['./pedidos.page.scss'],
 })
 export class PedidosPage implements OnInit, OnDestroy {
   private ps = inject(PedidosService);
@@ -284,61 +66,102 @@ export class PedidosPage implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
 
-  filtros: { id: Filtro; label: string }[] = [
-    { id: 'activos', label: 'Activos' },
-    { id: 'por_alistar', label: 'Por alistar' },
+  readonly filtros: { id: Filtro; label: string }[] = [
+    { id: 'por_alistar', label: 'Pendientes' },
     { id: 'alistado', label: 'Alistados' },
     { id: 'despachado', label: 'En ruta' },
     { id: 'entregado', label: 'Entregados' },
     { id: 'cancelado', label: 'Cancelados' },
     { id: 'todos', label: 'Todos' },
   ];
+  readonly hoy = formatoFechaCO(new Date().toISOString(), { weekday: 'long', day: 'numeric', month: 'long' });
+  /** Productos que se muestran con foto; el resto se resume como "+N más" */
+  readonly maxProductosVisibles = 3;
+  readonly porPagina = 50;
 
-  filtro = signal<Filtro>('activos');
+  // Se abre en Pendientes: es lo que hay que atender primero
+  filtro = signal<Filtro>('por_alistar');
   filas = signal<Pedido[]>([]);
-  total = signal(0);
+  totalCerrados = signal(0);
   pagina = signal(0);
   cargando = signal(true);
   error = signal('');
   conteos = signal<Record<string, number>>({});
+  ordenAlistado = signal<Map<number, number>>(new Map());
   abierto = signal<number | null>(null);
   mensajeros = signal<Usuario[]>([]);
   sel = signal<Set<number>>(new Set());
+  menuAbierto = signal<number | null>(null);
+  guardandoId = signal<number | null>(null);
   ocupado = signal(false);
   imprimiendo = signal(false);
+  imagen = signal<{ url: string; alt: string } | null>(null);
   texto = '';
   filtroRotulo: 'pendiente' | 'impreso' | null = null;
   filtroMensajero: number | null = null;
   filtroCanal: 'domicilio' | 'local' | null = 'domicilio';
-  mensajeroLote: number | null = null;
   private rango: RangoFechas = { desde: '', hasta: '', etiqueta: '' };
-  readonly porPagina = 50;
 
   puedeVender = computed(() => this.sb.tiene('admin', 'vendedora'));
   /** Admin y alistamiento alistan, despachan e imprimen rótulos desde aquí */
   gestiona = computed(() => this.sb.tiene('admin', 'alistador'));
-  selPedidos = computed(() => this.filas().filter((p) => this.sel().has(p.id)));
-  selPorAlistar = computed(() => this.selPedidos().filter((p) => p.estado === 'por_alistar'));
-  selAlistados = computed(() => this.selPedidos().filter((p) => p.estado === 'alistado'));
-  todosSel = computed(() => this.filas().length > 0 && this.filas().every((p) => this.sel().has(p.id)));
+  esAdmin = computed(() => this.sb.tiene('admin'));
+
+  grupos = computed<Grupo[]>(() => {
+    const filas = this.filas();
+    const conteos = this.conteos();
+    return ORDEN_GRUPOS.map((estado) => {
+      let pedidos = filas.filter((p) => p.estado === estado);
+      // Los alistados van en el orden en que se alistaron (el primero arriba)
+      if (estado === 'alistado') pedidos = [...pedidos].sort((a, b) => this.puesto(a) - this.puesto(b));
+      const total = Math.max(conteos[estado] ?? 0, pedidos.length);
+      return {
+        estado,
+        etiqueta: ETIQUETA_GRUPO[estado],
+        pedidos,
+        total,
+        subtotal: pedidos.reduce((s, p) => s + Number(p.total || 0), 0),
+        completo: pedidos.length >= total,
+      };
+    }).filter((g) => g.pedidos.length);
+  });
+  visibles = computed(() => this.grupos().flatMap((g) => g.pedidos));
+  selPedidos = computed(() => this.visibles().filter((p) => this.sel().has(p.id)));
+  selPorAlistar = computed(() => this.selPedidos().filter((p) => this.puedeAlistar(p)));
+  todosSel = computed(() => this.visibles().length > 0 && this.visibles().every((p) => this.sel().has(p.id)));
+  /** Alistados a los que les falta el rótulo (en la pestaña Alistados la lista está completa) */
+  alistadosSinRotulo = computed(() => this.filas().filter((p) => p.estado === 'alistado' && !p.rotulo_impreso_at && p.canal !== 'local').length);
+  hayFiltros = computed(() => {
+    this.filas();
+    return !!(this.texto.trim() || this.filtroRotulo || this.filtroMensajero || this.rango.desde || this.rango.hasta);
+  });
+  vacioTitulo = computed(() => {
+    const f = this.filtro();
+    if (f === 'por_alistar') return 'No hay pedidos por alistar';
+    if (f === 'alistado') return 'No hay pedidos alistados';
+    if (f === 'despachado') return 'No hay pedidos en ruta';
+    return 'Todavía no hay pedidos';
+  });
 
   pesos = pesos;
   numero = numero;
-  estadoLabel = estadoLabel;
   min = Math.min;
 
   private timer?: ReturnType<typeof setTimeout>;
   private dejarDeEscuchar?: () => void;
   private iniciado = false;
+  private cargaPendiente = false;
+  private enCarga = false;
 
   constructor() {
-    addIcons({ add, searchOutline, refreshOutline, printOutline, cubeOutline, checkmarkCircle, closeOutline, bicycleOutline });
+    addIcons({ add, searchOutline, printOutline, cubeOutline, checkmarkCircle, close, ellipsisHorizontal });
   }
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.queryParamMap.get('id'));
     if (id) this.abierto.set(id);
-    if (this.gestiona()) this.ps.mensajeros().then((m) => this.mensajeros.set(m)).catch(() => undefined);
+    this.ps.mensajeros().then((m) => this.mensajeros.set(m)).catch(() => undefined);
+    // Los cambios de otros (realtime) llegan seguidos: se agrupan en una sola recarga
     this.dejarDeEscuchar = this.ps.escuchar(() => {
       clearTimeout(this.timer);
       this.timer = setTimeout(() => this.cargar(), 600);
@@ -356,42 +179,69 @@ export class PedidosPage implements OnInit, OnDestroy {
     this.irPagina(0);
   }
 
+  /** Nunca dos cargas a la vez: si llega otra mientras tanto, se repite al final */
   async cargar(): Promise<void> {
     if (!this.iniciado) return;
-    this.cargando.set(true);
+    if (this.enCarga) {
+      this.cargaPendiente = true;
+      return;
+    }
+    this.enCarga = true;
+    // Solo se muestra la carga la primera vez; las recargas no parpadean
+    if (!this.filas().length) this.cargando.set(true);
     try {
       const f = this.filtro();
-      const [r, c] = await Promise.all([
-        this.ps.listar({
-          estado: f === 'todos' ? null : f,
-          texto: this.texto,
-          desde: this.rango.desde ? inicioDiaColombia(this.rango.desde).toISOString() : null,
-          hasta: this.rango.hasta ? finDiaColombia(this.rango.hasta).toISOString() : null,
-          rotulo: this.filtroRotulo,
-          canal: this.filtroCanal,
-          mensajeroId: this.filtroMensajero,
-          conItems: true,
-          pagina: this.pagina(),
-          porPagina: this.porPagina,
-        }),
-        this.ps.conteoPorEstado(),
+      const base = {
+        texto: this.texto,
+        desde: this.rango.desde ? inicioDiaColombia(this.rango.desde).toISOString() : null,
+        hasta: this.rango.hasta ? finDiaColombia(this.rango.hasta).toISOString() : null,
+        rotulo: this.filtroCanal === 'local' ? null : this.filtroRotulo,
+        canal: this.filtroCanal,
+        mensajeroId: this.filtroMensajero,
+        conItems: true,
+      };
+      const activos = f === 'todos' ? ACTIVOS : ACTIVOS.filter((e) => e === f);
+      const cerrados = f === 'todos' ? CERRADOS : CERRADOS.filter((e) => e === f);
+      const [a, c, conteos, orden] = await Promise.all([
+        activos.length ? this.ps.listar({ ...base, estados: activos, estado: activos.length === 1 ? activos[0] : null, pagina: 0, porPagina: 1000 }) : null,
+        cerrados.length ? this.ps.listar({ ...base, estados: cerrados, pagina: this.pagina(), porPagina: this.porPagina }) : null,
+        this.ps.conteoPorEstado(base),
+        this.ps.ordenAlistados(),
       ]);
-      this.filas.set(r.filas);
-      this.total.set(r.total);
-      this.conteos.set({ ...c, activos: (c['por_alistar'] ?? 0) + (c['alistado'] ?? 0) + (c['despachado'] ?? 0) });
+      this.filas.set([...(a?.filas ?? []), ...(c?.filas ?? [])]);
+      this.totalCerrados.set(c?.total ?? 0);
+      this.conteos.set({ ...conteos, todos: Object.values(conteos).reduce((s, n) => s + n, 0) });
+      this.ordenAlistado.set(orden);
       // La selección solo conserva lo que sigue en pantalla
-      const visibles = new Set(r.filas.map((p) => p.id));
-      this.sel.set(new Set([...this.sel()].filter((id) => visibles.has(id))));
+      const ids = new Set(this.filas().map((p) => p.id));
+      this.sel.set(new Set([...this.sel()].filter((id) => ids.has(id))));
       this.error.set('');
     } catch (e) {
       this.error.set('No se pudieron cargar los pedidos: ' + mensajeError(e));
     } finally {
       this.cargando.set(false);
+      this.enCarga = false;
+      if (this.cargaPendiente) {
+        this.cargaPendiente = false;
+        void this.cargar();
+      }
     }
   }
 
   cambiarFiltro(f: Filtro): void {
     this.filtro.set(f);
+    this.sel.set(new Set());
+    this.irPagina(0);
+  }
+
+  /** Las ventas en local nacen entregadas: al verlas se muestran todas */
+  cambioCanal(): void {
+    if (this.filtroCanal === 'local') {
+      this.filtro.set('todos');
+      this.filtroRotulo = null;
+    } else if (this.filtro() === 'todos') {
+      this.filtro.set('por_alistar');
+    }
     this.sel.set(new Set());
     this.irPagina(0);
   }
@@ -406,6 +256,44 @@ export class PedidosPage implements OnInit, OnDestroy {
     this.timer = setTimeout(() => this.irPagina(0), 350);
   }
 
+  quitarFiltros(): void {
+    this.texto = '';
+    this.filtroRotulo = null;
+    this.filtroMensajero = null;
+    this.filtro.set('todos');
+    this.irPagina(0);
+  }
+
+  // ---------- Reglas ----------
+  editable(p: Pedido): boolean {
+    return p.estado !== 'entregado' && p.estado !== 'cancelado';
+  }
+
+  puedeAlistar(p: Pedido): boolean {
+    return this.gestiona() && p.estado === 'por_alistar' && p.canal !== 'local';
+  }
+
+  puedeEditar(p: Pedido): boolean {
+    return this.puedeVender() && p.estado !== 'cancelado';
+  }
+
+  /** El admin cancela cualquiera; la vendedora, los suyos que siguen por alistar */
+  puedeCancelar(p: Pedido): boolean {
+    if (!this.editable(p)) return false;
+    return this.esAdmin() || (p.estado === 'por_alistar' && p.vendedora_id === this.sb.usuario()?.id);
+  }
+
+  private puesto(p: Pedido): number {
+    return this.ordenAlistado().get(p.id) ?? Number.MAX_SAFE_INTEGER;
+  }
+
+  /** "1°", "2°"… según el orden en que se alistó */
+  ordinal(p: Pedido): string {
+    const n = this.ordenAlistado().get(p.id);
+    return n ? `${n}°` : '';
+  }
+
+  // ---------- Selección ----------
   alternar(id: number): void {
     const s = new Set(this.sel());
     if (s.has(id)) s.delete(id);
@@ -414,20 +302,99 @@ export class PedidosPage implements OnInit, OnDestroy {
   }
 
   alternarTodos(): void {
-    this.sel.set(this.todosSel() ? new Set() : new Set(this.filas().map((p) => p.id)));
+    this.sel.set(this.todosSel() ? new Set() : new Set(this.visibles().map((p) => p.id)));
   }
 
+  grupoSeleccionado(g: Grupo): boolean {
+    return g.pedidos.every((p) => this.sel().has(p.id));
+  }
+
+  alternarGrupo(g: Grupo): void {
+    const s = new Set(this.sel());
+    const todos = this.grupoSeleccionado(g);
+    g.pedidos.forEach((p) => (todos ? s.delete(p.id) : s.add(p.id)));
+    this.sel.set(s);
+  }
+
+  limpiarSel(): void {
+    this.sel.set(new Set());
+  }
+
+  // ---------- Acciones ----------
+  /** Uno por uno, del más viejo al más nuevo, para que el orden de alistamiento siga el de los pedidos */
   async alistar(lista: Pedido[]): Promise<void> {
-    await this.enLote(lista, (p) => this.ps.cambiarEstado(p.id, 'alistado'), 'alistado(s)');
+    this.menuAbierto.set(null);
+    const enOrden = [...lista].sort((a, b) => a.created_at.localeCompare(b.created_at));
+    await this.enLote(enOrden, (p) => this.ps.cambiarEstado(p.id, 'alistado'), 'alistado(s)');
   }
 
-  async despachar(lista: Pedido[], mensajero: number | null = null): Promise<void> {
-    await this.enLote(lista, (p) => this.ps.cambiarEstado(p.id, 'despachado', mensajero ?? p.mensajero_id), 'despachado(s)');
-    this.mensajeroLote = null;
+  async quitarAlistado(p: Pedido): Promise<void> {
+    this.menuAbierto.set(null);
+    await this.enLote([p], (x) => this.ps.cambiarEstado(x.id, 'por_alistar'), 'devuelto(s) a por alistar');
+  }
+
+  /** Elegir mensajero despacha el pedido (pasa a En ruta); quitarlo lo devuelve a Alistados */
+  cambioMensajero(p: Pedido, evento: Event): void {
+    const valor = (evento.target as HTMLSelectElement).value;
+    void this.asignar(p, valor ? Number(valor) : null);
+  }
+
+  async asignar(p: Pedido, mensajeroId: number | null): Promise<void> {
+    if ((mensajeroId ?? null) === (p.mensajero_id ?? null) || this.guardandoId()) return;
+    if (!this.editable(p)) {
+      await this.cargar();
+      return;
+    }
+    this.guardandoId.set(p.id);
+    try {
+      if (mensajeroId) {
+        if (p.estado === 'despachado') await this.ps.asignarMensajero(p.id, mensajeroId);
+        else await this.ps.cambiarEstado(p.id, 'despachado', mensajeroId);
+      } else {
+        if (p.estado === 'despachado') await this.ps.cambiarEstado(p.id, 'alistado');
+        await this.ps.asignarMensajero(p.id, null);
+      }
+    } catch (e) {
+      this.toast.error('No se pudo asignar el mensajero. ' + mensajeError(e));
+    } finally {
+      this.guardandoId.set(null);
+    }
+    await this.cargar();
+  }
+
+  /** Asigna el mismo mensajero a los seleccionados que todavía se puedan despachar */
+  asignarLote(evento: Event): void {
+    const select = evento.target as HTMLSelectElement;
+    const id = Number(select.value);
+    select.value = ''; // vuelve a mostrar "Asignar mensajero"
+    if (!id) return;
+    const lista = this.selPedidos().filter((p) => this.editable(p) && p.canal !== 'local');
+    if (!lista.length) {
+      this.toast.error('Los pedidos seleccionados ya están entregados o cancelados.');
+      return;
+    }
+    void this.enLote(
+      lista,
+      (p) => (p.estado === 'despachado' ? this.ps.asignarMensajero(p.id, id) : this.ps.cambiarEstado(p.id, 'despachado', id)),
+      'despachado(s)'
+    );
+  }
+
+  async cancelar(p: Pedido): Promise<void> {
+    this.menuAbierto.set(null);
+    if (!confirm(`¿Cancelar el pedido #${p.id} de ${p.cliente_nombre}?`)) return;
+    await this.enLote([p], (x) => this.ps.cambiarEstado(x.id, 'cancelado'), 'cancelado(s)');
+  }
+
+  async eliminar(p: Pedido): Promise<void> {
+    this.menuAbierto.set(null);
+    if (p.estado === 'entregado') return;
+    if (!confirm(`¿Eliminar el pedido #${p.id} de ${p.cliente_nombre}? Esta acción no se puede deshacer.`)) return;
+    await this.enLote([p], (x) => this.ps.eliminar(x.id), 'eliminado(s)');
   }
 
   private async enLote(lista: Pedido[], accion: (p: Pedido) => Promise<void>, texto: string): Promise<void> {
-    if (!lista.length) return;
+    if (!lista.length || this.ocupado()) return;
     this.ocupado.set(true);
     let ok = 0;
     const errores: string[] = [];
@@ -446,20 +413,7 @@ export class PedidosPage implements OnInit, OnDestroy {
     await this.cargar();
   }
 
-  async asignar(p: Pedido, mensajeroId: number | null): Promise<void> {
-    if (!mensajeroId || mensajeroId === p.mensajero_id) return;
-    try {
-      await this.ps.asignarMensajero(p.id, mensajeroId);
-      this.filas.set(
-        this.filas().map((x) =>
-          x.id === p.id ? { ...x, mensajero_id: mensajeroId, mensajero: { nombre: this.mensajeros().find((m) => m.id === mensajeroId)?.nombre ?? '' } } : x
-        )
-      );
-    } catch (e) {
-      this.toast.error(mensajeError(e));
-    }
-  }
-
+  // ---------- Rótulos ----------
   /** Abre la ventana de impresión en el mismo clic y luego trae los datos */
   async imprimirAlistados(): Promise<void> {
     this.imprimiendo.set(true);
@@ -473,14 +427,18 @@ export class PedidosPage implements OnInit, OnDestroy {
     }
   }
 
-  limpiarSel(): void {
-    this.sel.set(new Set());
-  }
-
+  /** Los alistados salen primero y en el orden en que se alistaron; el resto, en el orden de la lista */
   async imprimirSeleccion(): Promise<void> {
+    const ids = this.selPedidos()
+      .filter((p) => p.canal !== 'local')
+      .sort((a, b) => this.puesto(a) - this.puesto(b))
+      .map((p) => p.id);
+    if (!ids.length) {
+      this.toast.error('Las ventas en local no llevan rótulo.');
+      return;
+    }
     this.imprimiendo.set(true);
     try {
-      const ids = this.selPedidos().map((p) => p.id);
       if (await this.rotulos.imprimir(() => this.ps.conItems(ids))) {
         this.sel.set(new Set());
         await this.cargar();
@@ -490,7 +448,9 @@ export class PedidosPage implements OnInit, OnDestroy {
     }
   }
 
+  // ---------- Detalle, menú y fotos ----------
   abrir(id: number): void {
+    this.menuAbierto.set(null);
     this.abierto.set(id);
     this.router.navigate([], { queryParams: { id }, replaceUrl: true });
   }
@@ -500,20 +460,43 @@ export class PedidosPage implements OnInit, OnDestroy {
     this.router.navigate([], { queryParams: {}, replaceUrl: true });
   }
 
+  alternarMenu(id: number): void {
+    this.menuAbierto.set(this.menuAbierto() === id ? null : id);
+  }
+
+  foto(it: PedidoItem): string | null {
+    return urlImagen(it.producto?.imagen_url);
+  }
+
+  verImagen(url: string | null, alt: string, evento: Event): void {
+    evento.stopPropagation();
+    if (url) this.imagen.set({ url, alt });
+  }
+
+  inicial(nombre: string): string {
+    return (nombre.trim()[0] ?? '?').toUpperCase();
+  }
+
+  nombreMensajero(p: Pedido): string {
+    return p.mensajero?.nombre || this.mensajeros().find((m) => m.id === p.mensajero_id)?.nombre || 'Sin asignar';
+  }
+
+  fotoMensajero(id: number | null): string | null {
+    if (!id) return null;
+    return this.mensajeros().find((m) => m.id === id)?.avatar_url ?? null;
+  }
+
   productosTexto(p: Pedido): string {
-    const it = p.pedido_items ?? [];
-    return it.map((i) => (i.cantidad > 1 ? `${i.nombre} x${i.cantidad}` : i.nombre)).join(', ') || 'Sin productos';
+    return (p.pedido_items ?? []).map((i) => (i.cantidad > 1 ? `${i.nombre} ×${i.cantidad}` : i.nombre)).join(', ');
   }
 
-  dia(iso: string): string {
-    return formatoFechaCO(iso, { day: 'numeric', month: 'short' });
-  }
-
-  hora(iso: string): string {
-    return formatoHoraCO(iso);
-  }
-
+  /** Hora si el pedido es de hoy; si no, día y mes */
   fecha(iso: string): string {
-    return formatoFechaCO(iso, { day: 'numeric', month: 'short' }) + ' ' + formatoHoraCO(iso);
+    const dia = (x: string) => formatoFechaCO(x, { year: 'numeric', month: 'numeric', day: 'numeric' });
+    return dia(iso) === dia(new Date().toISOString()) ? formatoHoraCO(iso) : formatoFechaCO(iso, { day: 'numeric', month: 'short' });
+  }
+
+  fechaCompleta(iso: string): string {
+    return formatoFechaCO(iso, { day: 'numeric', month: 'long' }) + ' ' + formatoHoraCO(iso);
   }
 }
