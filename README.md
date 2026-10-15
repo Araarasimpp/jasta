@@ -34,7 +34,22 @@ La configuración de Supabase está en `src/environments/`. La llave es la publi
 la dan las políticas RLS y las funciones de la base (`crear_pedido`, `cambiar_estado`,
 `entregar_pedido`, `cerrar_cuadre`, `resumen`…).
 
+## Probar en tu computador
+
+Necesitas Node 22 o más reciente.
+
+```bash
+git clone https://github.com/Araarasimpp/jasta.git
+cd jasta
+npm install
+npm start
+```
+
+Abre http://localhost:4200. Para que los correos de registro y de "olvidé mi contraseña" vuelvan a
+tu computador, en Supabase → Authentication → URL Configuration pon `http://localhost:4200` como
+Site URL (y agrégalo en Redirect URLs).
+
 ## Publicación
 
-- **GitHub Pages:** cada push a `main` compila y publica en https://araarasimpp.github.io/jasta/
 - **Vercel:** importar el repo; comando `npm run build`, carpeta `www`.
+- Cada push a `main` corre la revisión "Compilar" en GitHub Actions.
