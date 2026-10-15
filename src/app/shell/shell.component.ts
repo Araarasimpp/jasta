@@ -18,6 +18,7 @@ import {
   sunnyOutline,
   walletOutline,
   statsChartOutline,
+  settingsOutline,
 } from 'ionicons/icons';
 import { SupabaseService } from '../core/services/supabase.service';
 import { ThemeService } from '../core/services/theme.service';
@@ -40,6 +41,7 @@ const MENU: ItemMenu[] = [
   { label: 'Reportes', path: '/app/reportes', icon: 'stats-chart-outline', roles: ['admin', 'cuadres', 'vendedora'] },
   { label: 'Productos', path: '/app/productos', icon: 'cube-outline', roles: ['admin'] },
   { label: 'Usuarios', path: '/app/usuarios', icon: 'people-outline', roles: ['admin'] },
+  { label: 'Configuración', path: '/app/configuracion', icon: 'settings-outline', roles: ['admin'] },
 ];
 
 @Component({
@@ -173,7 +175,7 @@ export class ShellComponent {
   constructor() {
     addIcons({
       add, barChartOutline, chevronBackOutline, chevronForwardOutline, cubeOutline, ellipsisHorizontal,
-      logOutOutline, moonOutline, peopleOutline, receiptOutline, bicycleOutline, clipboardOutline, sunnyOutline, walletOutline, statsChartOutline,
+      logOutOutline, moonOutline, peopleOutline, receiptOutline, bicycleOutline, clipboardOutline, sunnyOutline, walletOutline, statsChartOutline, settingsOutline,
     });
   }
 

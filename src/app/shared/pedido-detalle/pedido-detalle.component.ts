@@ -7,6 +7,7 @@ import { PedidosService } from '../../core/services/pedidos.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../toast/toast.service';
 import { EntregarComponent } from '../entregar/entregar.component';
+import { RotulosService } from '../rotulo/rotulos.service';
 import { EstadoPedido, Nota, Pedido, Usuario, estadoLabel } from '../modelos';
 import { mensajeError, pesos, urlImagen } from '../formato';
 import { formatoFechaCO, formatoHoraCO } from '../fecha-colombia';
@@ -108,6 +109,7 @@ import { formatoFechaCO, formatoHoraCO } from '../fecha-colombia';
                   }
                 </dd>
               }
+              <dt>Rótulo</dt><dd>{{ p.rotulo_impreso_at ? 'Impreso ' + fechaCorta(p.rotulo_impreso_at) : 'Sin imprimir' }}</dd>
               <dt>Cuadre</dt><dd>{{ p.cuadre_id ? 'Cuadrado' : p.estado === 'entregado' ? 'Pendiente' : '—' }}</dd>
             </dl>
           </section>
@@ -181,6 +183,7 @@ export class PedidoDetalleComponent implements OnChanges {
   private ps = inject(PedidosService);
   private sb = inject(SupabaseService);
   private toast = inject(ToastService);
+  private rotulos = inject(RotulosService);
 
   pedido = signal<Pedido | null>(null);
   notas = signal<Nota[]>([]);
@@ -211,6 +214,8 @@ export class PedidoDetalleComponent implements OnChanges {
       out.push({ id: 'entregar', label: 'Entregar', principal: true });
     if (p.estado !== 'cancelado' && (admin || (p.estado === 'por_alistar' && p.vendedora_id === yo)))
       out.push({ id: 'cancelado', label: 'Cancelar pedido', peligro: true });
+    if (p.estado !== 'cancelado' && this.sb.tiene('admin', 'alistador'))
+      out.push({ id: 'rotulo', label: p.rotulo_impreso_at ? 'Reimprimir rótulo' : 'Imprimir rótulo' });
     if (p.estado === 'cancelado' && admin) out.push({ id: 'por_alistar', label: 'Reactivar' });
     return out;
   });
@@ -239,6 +244,14 @@ export class PedidoDetalleComponent implements OnChanges {
 
   async ejecutar(id: string): Promise<void> {
     if (id === 'entregar') return this.entregando.set(true);
+    if (id === 'rotulo') {
+      // Sin await antes: la ventana de impresión tiene que abrirse en el mismo clic
+      if (await this.rotulos.imprimir([this.pedido()!])) {
+        await this.cargar();
+        this.cambiado.emit();
+      }
+      return;
+    }
     if (id === 'cancelado' && !confirm('¿Cancelar el pedido #' + this.pedidoId + '?')) return;
     await this.accion(id as EstadoPedido);
   }

@@ -2,9 +2,10 @@ import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular
 import { FormsModule } from '@angular/forms';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { refreshOutline } from 'ionicons/icons';
+import { refreshOutline, printOutline } from 'ionicons/icons';
 import { PedidosService } from '../../core/services/pedidos.service';
 import { ToastService } from '../../shared/toast/toast.service';
+import { RotulosService } from '../../shared/rotulo/rotulos.service';
 import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detalle.component';
 import { Pedido, Usuario } from '../../shared/modelos';
 import { mensajeError, pesos } from '../../shared/formato';
@@ -31,6 +32,9 @@ import { formatoHoraCO, formatoFechaCO } from '../../shared/fecha-colombia';
     <div class="vista">
       <div class="vista-head">
         <h1>Alistamiento</h1>
+        <button class="b" [disabled]="!sinRotulo().length" (click)="imprimirPendientes()">
+          <ion-icon name="print-outline"></ion-icon>Imprimir rótulos ({{ sinRotulo().length }})
+        </button>
         <button class="b b-icono" aria-label="Actualizar" (click)="cargar()"><ion-icon name="refresh-outline"></ion-icon></button>
       </div>
       <div class="barra solo-cel">
@@ -60,7 +64,8 @@ import { formatoHoraCO, formatoFechaCO } from '../../shared/fecha-colombia';
                     <p class="obs">{{ p.observaciones }}</p>
                   }
                   <div class="acciones">
-                    <button class="b b-pri" [disabled]="ocupado() === p.id" (click)="alistar(p)">Marcar alistado</button>
+                    <button class="b" (click)="imprimir(p)"><ion-icon name="print-outline"></ion-icon>{{ p.rotulo_impreso_at ? 'Reimprimir' : 'Rótulo' }}</button>
+                    <button class="b b-pri" style="flex: 1" [disabled]="ocupado() === p.id" (click)="alistar(p)">Marcar alistado</button>
                   </div>
                 </article>
               } @empty {
@@ -79,6 +84,13 @@ import { formatoHoraCO, formatoFechaCO } from '../../shared/fecha-colombia';
                     <strong class="num">{{ pesos(p.total) }}</strong>
                   </div>
                   <p>{{ p.direccion }} · {{ p.barrio || 'Sin barrio' }}</p>
+                  <p>
+                    @if (p.rotulo_impreso_at) {
+                      <span class="etiqueta">Rótulo impreso</span>
+                    } @else {
+                      <button class="b" (click)="imprimir(p)"><ion-icon name="print-outline"></ion-icon>Imprimir rótulo</button>
+                    }
+                  </p>
                   <div class="despacho">
                     <select class="inp" [(ngModel)]="eleccion[p.id]" aria-label="Mensajero">
                       <option [ngValue]="undefined">Elige mensajero…</option>
@@ -106,6 +118,7 @@ import { formatoHoraCO, formatoFechaCO } from '../../shared/fecha-colombia';
 export class AlistamientoPage implements OnInit, OnDestroy {
   private ps = inject(PedidosService);
   private toast = inject(ToastService);
+  private rotulos = inject(RotulosService);
 
   pedidos = signal<Pedido[]>([]);
   mensajeros = signal<Usuario[]>([]);
@@ -117,13 +130,15 @@ export class AlistamientoPage implements OnInit, OnDestroy {
 
   porAlistar = computed(() => this.pedidos().filter((p) => p.estado === 'por_alistar'));
   alistados = computed(() => this.pedidos().filter((p) => p.estado === 'alistado'));
+  /** Rótulos por imprimir: todo lo que está en la cola y no tiene rótulo */
+  sinRotulo = computed(() => this.pedidos().filter((p) => !p.rotulo_impreso_at));
   pesos = pesos;
 
   private dejar?: () => void;
   private timer?: ReturnType<typeof setTimeout>;
 
   constructor() {
-    addIcons({ refreshOutline });
+    addIcons({ refreshOutline, printOutline });
   }
 
   ngOnInit(): void {
@@ -177,6 +192,18 @@ export class AlistamientoPage implements OnInit, OnDestroy {
       this.toast.error(mensajeError(e));
     } finally {
       this.ocupado.set(null);
+    }
+  }
+
+  async imprimir(p: Pedido): Promise<void> {
+    if (await this.rotulos.imprimir([p])) await this.cargar();
+  }
+
+  async imprimirPendientes(): Promise<void> {
+    const lista = this.sinRotulo();
+    if (await this.rotulos.imprimir(lista)) {
+      this.toast.ok(`${lista.length} rótulo(s) enviados a imprimir`);
+      await this.cargar();
     }
   }
 

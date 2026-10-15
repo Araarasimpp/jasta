@@ -57,6 +57,10 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/productos/productos.page').then((m) => m.ProductosPage),
       },
       {
+        path: 'configuracion', canActivate: [rolGuard], data: { roles: ['admin'] },
+        loadComponent: () => import('./paginas/configuracion/configuracion.page').then((m) => m.ConfiguracionPage),
+      },
+      {
         path: 'usuarios', canActivate: [rolGuard], data: { roles: ['admin'] },
         loadComponent: () => import('./paginas/usuarios/usuarios.page').then((m) => m.UsuariosPage),
       },
