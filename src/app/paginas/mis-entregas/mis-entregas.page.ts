@@ -9,6 +9,7 @@ import { EntregarComponent } from '../../shared/entregar/entregar.component';
 import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detalle.component';
 import { Pedido } from '../../shared/modelos';
 import { mensajeError, pesos } from '../../shared/formato';
+import { formatoFechaCO } from '../../shared/fecha-colombia';
 
 /** Pantalla del mensajero: lo que tiene en ruta y lo que lleva por cuadrar */
 @Component({
@@ -18,11 +19,17 @@ import { mensajeError, pesos } from '../../shared/formato';
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
-      .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .tarjeta h3 { cursor: pointer; }
-      .contacto { display: flex; gap: 8px; }
       .total { font-size: 17px; }
-      @media (max-width: 640px) { .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } .kpi:nth-child(3) { border-left: 1px solid var(--border); } .kpi:nth-child(n + 3) { border-top: none; } }
+      .cuadre { display: flex; flex-direction: column; gap: 12px; }
+      .cuadre .panel-head { margin-bottom: 0; }
+      .en-ruta { font-size: 13px; color: var(--text-soft); }
+      .entregar-total { display: flex; flex-direction: column; gap: 2px; padding: 14px; border-radius: var(--radius); background: var(--accent-wash); }
+      .entregar-total span { font-size: 13px; color: var(--text-2); }
+      .entregar-total strong { font-size: 28px; font-weight: 600; color: var(--accent); letter-spacing: -0.01em; }
+      .desglose { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; margin: 0; font-size: 13px; }
+      .desglose dt { color: var(--text-soft); }
+      .desglose dd { margin: 0; text-align: right; }
     `,
   ],
   template: `
@@ -32,11 +39,49 @@ import { mensajeError, pesos } from '../../shared/formato';
         <button class="b b-icono" aria-label="Actualizar" (click)="cargar()"><ion-icon name="refresh-outline"></ion-icon></button>
       </div>
 
-      <div class="kpis">
-        <div class="kpi"><span class="kpi-label">En ruta</span><span class="kpi-valor num">{{ enRuta().length }}</span></div>
-        <div class="kpi"><span class="kpi-label">Por cuadrar</span><span class="kpi-valor num">{{ pendiente()?.pedidos ?? 0 }}</span></div>
-        <div class="kpi kpi-principal"><span class="kpi-label">Efectivo a entregar</span><span class="kpi-valor num">{{ pesos(pendiente()?.efectivo ?? 0) }}</span></div>
-      </div>
+      @if (esMensajero()) {
+        <section class="panel cuadre">
+          <div class="panel-head">
+            <div>
+              <h2>Por cuadrar</h2>
+              <p class="panel-sub">
+                @if (pendiente(); as c) {
+                  {{ c.pedidos }} {{ c.pedidos === 1 ? 'pedido entregado' : 'pedidos entregados' }} desde {{ fecha(c.desde) }}
+                } @else {
+                  No tienes entregas pendientes por cuadrar
+                }
+              </p>
+            </div>
+            <span class="en-ruta">{{ enRuta().length }} en ruta</span>
+          </div>
+          @if (pendiente(); as c) {
+            <div class="entregar-total">
+              <span>Efectivo que debes entregar</span>
+              <strong class="num">{{ pesos(c.efectivo - c.domicilios) }}</strong>
+            </div>
+            <dl class="desglose">
+              <dt>Efectivo cobrado</dt><dd class="num">{{ pesos(c.efectivo) }}</dd>
+              <dt>Tus domicilios (se descuentan)</dt><dd class="num">− {{ pesos(c.domicilios) }}</dd>
+              <dt>Transferencias (ya le llegaron a la tienda)</dt><dd class="num">{{ pesos(c.transferencia) }}</dd>
+            </dl>
+            <button class="b" (click)="verDetalle()">{{ detalle().length ? 'Ocultar pedidos' : 'Ver pedidos por cuadrar' }}</button>
+            @if (detalle().length) {
+              <ul class="items-mini">
+                @for (p of detalle(); track p.id) {
+                  <li (click)="abierto.set(p.id)" style="cursor: pointer">
+                    <span>#{{ p.id }} · {{ p.cliente_nombre }} · {{ p.tipo_recaudo }}</span><span class="num">{{ pesos(p.total) }}</span>
+                  </li>
+                }
+              </ul>
+            }
+          }
+        </section>
+      } @else {
+        <div class="vacio">
+          <span class="vacio-titulo">No tienes el rol de mensajero</span>
+          <p>Aquí abajo ves todos los pedidos en ruta. Para ver lo que tiene que cuadrar cada mensajero, entra a Cuadres.</p>
+        </div>
+      }
 
       <div class="tarjetas">
         @for (p of enRuta(); track p.id) {
@@ -87,12 +132,16 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   private toast = inject(ToastService);
 
   enRuta = signal<Pedido[]>([]);
-  pendientes = signal<{ mensajero_id: number; pedidos: number; efectivo: number }[]>([]);
+  pendientes = signal<
+    { mensajero_id: number; pedidos: number; efectivo: number; transferencia: number; domicilios: number; desde: string }[]
+  >([]);
+  detalle = signal<Pedido[]>([]);
   cargando = signal(true);
   entregando = signal<Pedido | null>(null);
   abierto = signal<number | null>(null);
   pesos = pesos;
 
+  esMensajero = computed(() => this.sb.tiene('mensajero'));
   pendiente = computed(() => this.pendientes().find((x) => x.mensajero_id === this.sb.usuario()?.id) ?? null);
 
   private dejar?: () => void;
@@ -122,6 +171,7 @@ export class MisEntregasPage implements OnInit, OnDestroy {
       const [r, c] = await Promise.all([this.ps.cola(['despachado'], soloMios), this.ps.cuadresPendientes()]);
       this.enRuta.set(r);
       this.pendientes.set(c);
+      if (this.detalle().length && this.sb.usuario()) this.detalle.set(await this.ps.pendientesDe(this.sb.usuario()!.id));
     } catch (e) {
       this.toast.error(mensajeError(e));
     } finally {
@@ -133,6 +183,16 @@ export class MisEntregasPage implements OnInit, OnDestroy {
     this.entregando.set(null);
     this.toast.ok(`#${p.id} entregado`);
     await this.cargar();
+  }
+
+  async verDetalle(): Promise<void> {
+    if (this.detalle().length) return this.detalle.set([]);
+    const yo = this.sb.usuario()?.id;
+    if (yo) this.detalle.set(await this.ps.pendientesDe(yo));
+  }
+
+  fecha(iso: string): string {
+    return formatoFechaCO(iso, { day: 'numeric', month: 'long' });
   }
 
   mapa(p: Pedido): string {

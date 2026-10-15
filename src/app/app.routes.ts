@@ -49,6 +49,10 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/cuadres/cuadres.page').then((m) => m.CuadresPage),
       },
       {
+        path: 'reportes', canActivate: [rolGuard], data: { roles: ['admin', 'cuadres', 'vendedora'] },
+        loadComponent: () => import('./paginas/reportes/reportes.page').then((m) => m.ReportesPage),
+      },
+      {
         path: 'productos', canActivate: [rolGuard], data: { roles: ['admin'] },
         loadComponent: () => import('./paginas/productos/productos.page').then((m) => m.ProductosPage),
       },
