@@ -176,7 +176,7 @@ export const ROTULO_CSS = `
     border-bottom: 0.3mm solid #000;
   }
   .marca { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-start; gap: 1mm; max-width: 44mm; }
-  .logo { width: 18mm; height: 18mm; object-fit: contain; }
+  .logo { width: 22mm; height: 22mm; object-fit: contain; }
   .nombre { font-size: 11pt; font-weight: bold; line-height: 1.1; }
   .contacto {
     flex: 1;

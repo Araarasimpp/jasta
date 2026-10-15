@@ -232,4 +232,4 @@ Punto de 8px más el nombre del estado en su color. "Por alistar" es un anillo v
 - **Don't** usar fichas de KPI con número gigante como estructura de tablero. Las cifras van como renglones de tiquete.
 - **Don't** poner etiquetas pequeñas encima de los títulos (kickers). La fecha o el periodo van al lado del título.
 - **Don't** usar azul, ámbar o verde fuera de los estados del pedido (salvo el botón Entregar).
-- **Don't** tocar el rótulo impreso de 100×100 mm: tiene su propio diseño y no sigue este sistema.
+- **Don't** cambiar el diseño del rótulo impreso de 100×100 mm: tiene el suyo propio, en blanco y negro para impresora térmica, con el logo JT en escala de grises (`logo-rotulo.png`).
