@@ -6,7 +6,7 @@ export const SELECT_PEDIDO =
   '*, vendedora:usuarios!pedidos_vendedora_id_fkey(nombre), mensajero:usuarios!pedidos_mensajero_id_fkey(nombre)';
 
 export interface FiltroPedidos {
-  estado?: EstadoPedido | 'activos' | null;
+  estado?: EstadoPedido | null;
   texto?: string;
   desde?: string | null; // ISO
   hasta?: string | null; // ISO
@@ -44,8 +44,7 @@ export class PedidosService {
     const pagina = f.pagina ?? 0;
     const campos = f.conItems ? SELECT_PEDIDO + ', pedido_items(id, nombre, cantidad)' : SELECT_PEDIDO;
     let q = this.db.from('pedidos').select(campos, { count: 'exact' });
-    if (f.estado === 'activos') q = q.in('estado', ['por_alistar', 'alistado', 'despachado']);
-    else if (f.estado) q = q.eq('estado', f.estado);
+    if (f.estado) q = q.eq('estado', f.estado);
     if (f.desde) q = q.gte('created_at', f.desde);
     if (f.hasta) q = q.lte('created_at', f.hasta);
     if (f.vendedoraId) q = q.eq('vendedora_id', f.vendedoraId);
@@ -90,10 +89,20 @@ export class PedidosService {
     return (r ?? []) as unknown as Pedido[];
   }
 
-  async conteoPorEstado(): Promise<Record<string, number>> {
-    const estados: EstadoPedido[] = ['por_alistar', 'alistado', 'despachado'];
+  /** Cuántos pedidos hay en cada estado, con los mismos filtros de la lista (menos la búsqueda) */
+  async conteoPorEstado(f: Pick<FiltroPedidos, 'desde' | 'hasta' | 'canal' | 'rotulo' | 'mensajeroId'> = {}): Promise<Record<string, number>> {
+    const estados: EstadoPedido[] = ['por_alistar', 'alistado', 'despachado', 'entregado', 'cancelado'];
     const res = await Promise.all(
-      estados.map((e) => this.db.from('pedidos').select('id', { count: 'exact', head: true }).eq('estado', e))
+      estados.map((e) => {
+        let q = this.db.from('pedidos').select('id', { count: 'exact', head: true }).eq('estado', e);
+        if (f.desde) q = q.gte('created_at', f.desde);
+        if (f.hasta) q = q.lte('created_at', f.hasta);
+        if (f.canal) q = q.eq('canal', f.canal);
+        if (f.mensajeroId) q = q.eq('mensajero_id', f.mensajeroId);
+        if (f.rotulo === 'pendiente') q = q.is('rotulo_impreso_at', null);
+        if (f.rotulo === 'impreso') q = q.not('rotulo_impreso_at', 'is', null);
+        return q;
+      })
     );
     const out: Record<string, number> = {};
     estados.forEach((e, i) => (out[e] = res[i].count ?? 0));

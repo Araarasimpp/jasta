@@ -14,10 +14,11 @@ import { EstadoPedido, Pedido, Usuario, estadoLabel } from '../../shared/modelos
 import { mensajeError, numero, pesos } from '../../shared/formato';
 import { finDiaColombia, formatoFechaCO, formatoHoraCO, inicioDiaColombia } from '../../shared/fecha-colombia';
 
-type Filtro = EstadoPedido | 'activos' | 'todos';
+type Filtro = EstadoPedido | 'todos';
 
 /**
- * Lista de pedidos. Como en Kaesuri, el alistamiento se hace aquí mismo:
+ * Lista de pedidos. Como en Home ALS, abre en Pendientes (lo que falta por alistar)
+ * y cada estado tiene su pestaña con su conteo. El alistamiento se hace aquí mismo:
  * botón Alistar en cada pedido, pestaña Alistados en orden (1°, 2°…), despacho
  * con mensajero, rótulos y acciones para varios pedidos seleccionados.
  */
@@ -69,7 +70,7 @@ type Filtro = EstadoPedido | 'activos' | 'todos';
       <div class="barra">
         <div class="chips" role="tablist">
           @for (f of filtros; track f.id) {
-            <button class="chip" [class.on]="filtro() === f.id" (click)="cambiarFiltro(f.id)">
+            <button class="chip" [class.on]="filtro() === f.id" [attr.aria-pressed]="filtro() === f.id" (click)="cambiarFiltro(f.id)">
               {{ f.label }}
               @if (conteos()[f.id] !== undefined) {
                 <span class="n num">{{ conteos()[f.id] }}</span>
@@ -273,8 +274,7 @@ export class PedidosPage implements OnInit, OnDestroy {
   private router = inject(Router);
 
   filtros: { id: Filtro; label: string }[] = [
-    { id: 'activos', label: 'Activos' },
-    { id: 'por_alistar', label: 'Por alistar' },
+    { id: 'por_alistar', label: 'Pendientes' },
     { id: 'alistado', label: 'Alistados' },
     { id: 'despachado', label: 'En ruta' },
     { id: 'entregado', label: 'Entregados' },
@@ -282,7 +282,8 @@ export class PedidosPage implements OnInit, OnDestroy {
     { id: 'todos', label: 'Todos' },
   ];
 
-  filtro = signal<Filtro>('activos');
+  // Abre en Pendientes: es lo que hay que atender primero
+  filtro = signal<Filtro>('por_alistar');
   filas = signal<Pedido[]>([]);
   total = signal(0);
   pagina = signal(0);
@@ -349,12 +350,14 @@ export class PedidosPage implements OnInit, OnDestroy {
     this.cargando.set(true);
     try {
       const f = this.filtro();
+      const desde = this.rango.desde ? inicioDiaColombia(this.rango.desde).toISOString() : null;
+      const hasta = this.rango.hasta ? finDiaColombia(this.rango.hasta).toISOString() : null;
       const [r, c] = await Promise.all([
         this.ps.listar({
           estado: f === 'todos' ? null : f,
           texto: this.texto,
-          desde: this.rango.desde ? inicioDiaColombia(this.rango.desde).toISOString() : null,
-          hasta: this.rango.hasta ? finDiaColombia(this.rango.hasta).toISOString() : null,
+          desde,
+          hasta,
           rotulo: this.filtroRotulo,
           canal: this.filtroCanal,
           mensajeroId: this.filtroMensajero,
@@ -362,11 +365,17 @@ export class PedidosPage implements OnInit, OnDestroy {
           pagina: this.pagina(),
           porPagina: this.porPagina,
         }),
-        this.ps.conteoPorEstado(),
+        this.ps.conteoPorEstado({
+          desde,
+          hasta,
+          canal: this.filtroCanal,
+          rotulo: this.filtroRotulo,
+          mensajeroId: this.filtroMensajero,
+        }),
       ]);
       this.filas.set(r.filas);
       this.total.set(r.total);
-      this.conteos.set({ ...c, activos: (c['por_alistar'] ?? 0) + (c['alistado'] ?? 0) + (c['despachado'] ?? 0) });
+      this.conteos.set({ ...c, todos: Object.values(c).reduce((s, n) => s + n, 0) });
       // La selección solo conserva lo que sigue en pantalla
       const visibles = new Set(r.filas.map((p) => p.id));
       this.sel.set(new Set([...this.sel()].filter((id) => visibles.has(id))));
