@@ -83,6 +83,11 @@ type Filtro = EstadoPedido | 'activos' | 'todos';
         <div class="rango-wrap">
           <app-rango [conTodo]="true" inicial="todo" (cambio)="cambiarRango($event)"></app-rango>
         </div>
+        <select class="inp inp-chico" [(ngModel)]="filtroCanal" (change)="irPagina(0)" aria-label="Canal">
+          <option ngValue="domicilio">Domicilios</option>
+          <option ngValue="local">Ventas en local</option>
+          <option [ngValue]="null">Domicilios y local</option>
+        </select>
         @if (gestiona()) {
           <select class="inp inp-chico" [(ngModel)]="filtroRotulo" (change)="irPagina(0)" aria-label="Rótulo">
             <option [ngValue]="null">Rótulo: todos</option>
@@ -292,6 +297,7 @@ export class PedidosPage implements OnInit, OnDestroy {
   texto = '';
   filtroRotulo: 'pendiente' | 'impreso' | null = null;
   filtroMensajero: number | null = null;
+  filtroCanal: 'domicilio' | 'local' | null = 'domicilio';
   mensajeroLote: number | null = null;
   private rango: RangoFechas = { desde: '', hasta: '', etiqueta: '' };
   readonly porPagina = 50;
@@ -350,6 +356,7 @@ export class PedidosPage implements OnInit, OnDestroy {
           desde: this.rango.desde ? inicioDiaColombia(this.rango.desde).toISOString() : null,
           hasta: this.rango.hasta ? finDiaColombia(this.rango.hasta).toISOString() : null,
           rotulo: this.filtroRotulo,
+          canal: this.filtroCanal,
           mensajeroId: this.filtroMensajero,
           conItems: true,
           pagina: this.pagina(),

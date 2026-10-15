@@ -1,13 +1,13 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import { add, remove, closeOutline, searchOutline } from 'ionicons/icons';
 import { PedidosService } from '../../core/services/pedidos.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
-import { Producto } from '../../shared/modelos';
+import { Producto, TipoRecaudo } from '../../shared/modelos';
 import { mensajeError, pesos, urlImagen } from '../../shared/formato';
 
 interface Linea {
@@ -21,6 +21,12 @@ function normal(s: string): string {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 }
 
+/**
+ * Formulario de pedido. Sirve para tres cosas (según la ruta):
+ *  - Nuevo pedido a domicilio (/app/pedidos/nuevo)
+ *  - Venta en el local, que queda entregada y cobrada de una vez (/app/venta-local)
+ *  - Editar un pedido existente (/app/pedidos/:id/editar)
+ */
 @Component({
   selector: 'app-nuevo-pedido',
   standalone: true,
@@ -50,50 +56,82 @@ function normal(s: string): string {
       .totales div { display: flex; justify-content: space-between; color: var(--text-soft); }
       .totales .fin { color: var(--text); font-size: 18px; font-weight: 600; margin-top: 4px; }
       .cliente-previo { margin: 0; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--accent-wash); font-size: 13px; }
-      @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+      .tipos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+      .tipo { height: 40px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface);
+        color: var(--text); font-size: 14px; font-weight: 500; cursor: pointer; }
+      .tipo.on { border-color: var(--accent); background: var(--accent-wash); color: var(--accent); }
+      @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } .linea { grid-template-columns: 1fr auto auto; } .linea .precio { grid-column: 1 / 3; width: 100%; } }
     `,
   ],
   template: `
     <div class="vista">
-      <div class="vista-head"><h1>Nuevo pedido</h1></div>
+      <div class="vista-head">
+        <h1>{{ titulo() }}</h1>
+        @if (editId()) {
+          <button class="b" (click)="volver()">Cancelar</button>
+        }
+      </div>
       <div class="vista-body">
+        @if (cargandoPedido()) {
+          <div class="vacio">Cargando pedido…</div>
+        } @else {
         <div class="grid">
           <section class="panel">
             <h2>Cliente</h2>
             <div class="campo">
-              <label for="tel">Teléfono</label>
+              <label for="tel">Teléfono{{ local() ? ' (opcional)' : '' }}</label>
               <input id="tel" type="tel" inputmode="tel" autocomplete="off" [(ngModel)]="telefono" (blur)="buscarCliente()" />
             </div>
             @if (clientePrevio()) {
               <p class="cliente-previo">Cliente conocido: {{ clientePrevio() }} pedido(s) antes. Llenamos sus datos.</p>
             }
             <div class="campo">
-              <label for="nom">Nombre</label>
-              <input id="nom" autocomplete="off" [(ngModel)]="nombre" />
+              <label for="nom">Nombre{{ local() ? ' (opcional)' : '' }}</label>
+              <input id="nom" autocomplete="off" [(ngModel)]="nombre" [placeholder]="local() ? 'Cliente del local' : ''" />
             </div>
-            <div class="campo">
-              <label for="dir">Dirección</label>
-              <input id="dir" autocomplete="off" [(ngModel)]="direccion" />
-            </div>
-            <div class="fila-campos">
+            @if (!local()) {
               <div class="campo">
-                <label for="barrio">Barrio</label>
-                <input id="barrio" list="lista-barrios" autocomplete="off" [(ngModel)]="barrio" (change)="sugerirDomicilio()" />
-                <datalist id="lista-barrios">
-                  @for (b of barrios(); track b.barrio) {
-                    <option [value]="b.barrio"></option>
-                  }
-                </datalist>
+                <label for="dir">Dirección</label>
+                <input id="dir" autocomplete="off" [(ngModel)]="direccion" />
               </div>
-              <div class="campo">
-                <label for="dom">Domicilio</label>
-                <input id="dom" type="number" inputmode="numeric" min="0" step="1000" [(ngModel)]="domicilio" (ngModelChange)="domicilioS.set(+$event || 0)" />
+              <div class="fila-campos">
+                <div class="campo">
+                  <label for="barrio">Barrio</label>
+                  <input id="barrio" list="lista-barrios" autocomplete="off" [(ngModel)]="barrio" (change)="sugerirDomicilio()" />
+                  <datalist id="lista-barrios">
+                    @for (b of barrios(); track b.barrio) {
+                      <option [value]="b.barrio"></option>
+                    }
+                  </datalist>
+                </div>
+                <div class="campo">
+                  <label for="dom">Domicilio</label>
+                  <input id="dom" type="number" inputmode="numeric" min="0" step="1000" [(ngModel)]="domicilio" (ngModelChange)="domicilioS.set(+$event || 0)" />
+                </div>
               </div>
-            </div>
+            }
             <div class="campo">
               <label for="obs">Observaciones</label>
-              <textarea id="obs" [(ngModel)]="observaciones" placeholder="Ej: llamar antes, entregar antes de las 3 pm"></textarea>
+              <textarea id="obs" [(ngModel)]="observaciones" [placeholder]="local() ? '' : 'Ej: llamar antes, entregar antes de las 3 pm'"></textarea>
             </div>
+            @if (local()) {
+              <div class="campo">
+                <span class="etq">¿Cómo pagó?</span>
+                <div class="tipos">
+                  @for (t of tipos; track t.id) {
+                    <button type="button" class="tipo" [class.on]="tipo() === t.id" (click)="tipo.set(t.id)">{{ t.label }}</button>
+                  }
+                </div>
+              </div>
+              @if (tipo() === 'mixto') {
+                <div class="fila-campos">
+                  <div class="campo"><label for="ef">Efectivo</label>
+                    <input id="ef" type="number" inputmode="numeric" [(ngModel)]="efectivo" (ngModelChange)="transferencia = subtotal() - (+$event || 0)" /></div>
+                  <div class="campo"><label for="tr">Transferencia</label>
+                    <input id="tr" type="number" inputmode="numeric" [(ngModel)]="transferencia" /></div>
+                </div>
+              }
+            }
           </section>
 
           <section class="panel">
@@ -134,20 +172,25 @@ function normal(s: string): string {
                 <button class="b b-icono" (click)="quitar(i)" aria-label="Quitar"><ion-icon name="close-outline"></ion-icon></button>
               </div>
             } @empty {
-              <div class="vacio">Busca y agrega los productos del pedido.</div>
+              <div class="vacio">Busca y agrega los productos.</div>
             }
 
             <div class="totales">
               <div><span>Productos</span><span class="num">{{ pesos(subtotal()) }}</span></div>
-              <div><span>Domicilio</span><span class="num">{{ pesos(domicilioS()) }}</span></div>
-              <div class="fin"><span>Total</span><span class="num">{{ pesos(subtotal() + domicilioS()) }}</span></div>
+              @if (!local()) {
+                <div><span>Domicilio</span><span class="num">{{ pesos(domicilioS()) }}</span></div>
+              }
+              <div class="fin"><span>Total</span><span class="num">{{ pesos(subtotal() + (local() ? 0 : domicilioS())) }}</span></div>
             </div>
             @if (error()) {
               <p class="error" role="alert">{{ error() }}</p>
             }
-            <button class="b b-pri b-grande" [disabled]="guardando()" (click)="guardar()">{{ guardando() ? 'Guardando…' : 'Crear pedido' }}</button>
+            <button class="b b-pri b-grande" [disabled]="guardando()" (click)="guardar()">
+              {{ guardando() ? 'Guardando…' : editId() ? 'Guardar cambios' : local() ? 'Registrar venta' : 'Crear pedido' }}
+            </button>
           </section>
         </div>
+        }
       </div>
     </div>
   `,
@@ -157,6 +200,12 @@ export class NuevoPedidoPage implements OnInit {
   private sb = inject(SupabaseService);
   private toast = inject(ToastService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
+
+  /** 'local' = venta en el punto físico */
+  local = signal(this.route.snapshot.data['modo'] === 'local');
+  editId = signal<number | null>(Number(this.route.snapshot.paramMap.get('id')) || null);
+  titulo = computed(() => (this.editId() ? `Editar pedido #${this.editId()}` : this.local() ? 'Venta en el local' : 'Nuevo pedido'));
 
   productos = signal<Producto[]>([]);
   barrios = signal<{ barrio: string; domicilio: number; usos: number }[]>([]);
@@ -164,8 +213,15 @@ export class NuevoPedidoPage implements OnInit {
   busqueda = signal('');
   clientePrevio = signal(0);
   guardando = signal(false);
+  cargandoPedido = signal(false);
   error = signal('');
   domicilioS = signal(0);
+  tipo = signal<TipoRecaudo | null>(null);
+  tipos: { id: TipoRecaudo; label: string }[] = [
+    { id: 'efectivo', label: 'Efectivo' },
+    { id: 'transferencia', label: 'Transferencia' },
+    { id: 'mixto', label: 'Mixto' },
+  ];
 
   telefono = '';
   nombre = '';
@@ -173,6 +229,8 @@ export class NuevoPedidoPage implements OnInit {
   barrio = '';
   domicilio = 0;
   observaciones = '';
+  efectivo = 0;
+  transferencia = 0;
 
   pesos = pesos;
   urlImagen = urlImagen;
@@ -182,10 +240,7 @@ export class NuevoPedidoPage implements OnInit {
     if (!q) return [];
     const partes = q.split(/\s+/);
     return this.productos()
-      .filter((p) => {
-        const t = normal(`${p.nombre} ${p.sku ?? ''} ${p.codigo_barras ?? ''}`);
-        return partes.every((x) => t.includes(x));
-      })
+      .filter((p) => partes.every((x) => normal(`${p.nombre} ${p.sku ?? ''} ${p.codigo_barras ?? ''}`).includes(x)))
       .slice(0, 30);
   });
 
@@ -197,28 +252,59 @@ export class NuevoPedidoPage implements OnInit {
 
   async ngOnInit(): Promise<void> {
     try {
-      const [p, b] = await Promise.all([this.ps.productosActivos(), this.ps.barrios()]);
+      const [p, b] = await Promise.all([this.ps.productosActivos(), this.local() ? Promise.resolve([]) : this.ps.barrios()]);
       this.productos.set(p);
       this.barrios.set(b);
+      if (this.editId()) await this.cargarPedido(this.editId()!);
     } catch (e) {
-      this.error.set('No se pudieron cargar los productos: ' + mensajeError(e));
+      this.error.set('No se pudieron cargar los datos: ' + mensajeError(e));
+    }
+  }
+
+  private async cargarPedido(id: number): Promise<void> {
+    this.cargandoPedido.set(true);
+    try {
+      const { pedido: p } = await this.ps.detalle(id);
+      this.local.set(p.canal === 'local');
+      this.telefono = p.cliente_telefono ?? '';
+      this.nombre = p.cliente_nombre;
+      this.direccion = p.direccion ?? '';
+      this.barrio = p.barrio ?? '';
+      this.domicilio = Number(p.valor_domicilio) || 0;
+      this.domicilioS.set(this.domicilio);
+      this.observaciones = p.observaciones ?? '';
+      // Los productos que ya no están activos se agregan igual para poder conservarlos
+      const porId = new Map(this.productos().map((x) => [x.id, x]));
+      this.lineas.set(
+        (p.pedido_items ?? []).map((i) => ({
+          producto:
+            (i.producto_id && porId.get(i.producto_id)) ||
+            ({ id: i.producto_id ?? 0, nombre: i.nombre, precio_base: i.precio_base, precio_venta: i.precio_venta } as Producto),
+          cantidad: i.cantidad,
+          precio: Number(i.precio_venta),
+        }))
+      );
+    } finally {
+      this.cargandoPedido.set(false);
     }
   }
 
   async buscarCliente(): Promise<void> {
     const tel = this.telefono.replace(/\D/g, '');
-    if (tel.length < 7) return;
+    if (tel.length < 7 || this.editId()) return;
     this.telefono = tel;
     try {
       const c = await this.ps.buscarCliente(tel);
       this.clientePrevio.set(c?.pedidos ?? 0);
       if (c) {
         if (!this.nombre) this.nombre = c.cliente_nombre;
-        if (!this.direccion) this.direccion = c.direccion ?? '';
-        if (!this.barrio) this.barrio = c.barrio ?? '';
-        if (!this.domicilio) {
-          this.domicilio = Number(c.valor_domicilio) || 0;
-          this.domicilioS.set(this.domicilio);
+        if (!this.local()) {
+          if (!this.direccion) this.direccion = c.direccion ?? '';
+          if (!this.barrio) this.barrio = c.barrio ?? '';
+          if (!this.domicilio) {
+            this.domicilio = Number(c.valor_domicilio) || 0;
+            this.domicilioS.set(this.domicilio);
+          }
         }
       }
     } catch {
@@ -263,29 +349,66 @@ export class NuevoPedidoPage implements OnInit {
     this.lineas.set(ls);
   }
 
+  volver(): void {
+    this.router.navigate(['/app/pedidos'], { queryParams: { id: this.editId() } });
+  }
+
   async guardar(): Promise<void> {
     this.error.set('');
-    if (!this.nombre.trim()) return this.error.set('Escribe el nombre del cliente.');
-    if (!this.direccion.trim()) return this.error.set('Escribe la dirección.');
+    const local = this.local();
+    if (!local && !this.nombre.trim()) return this.error.set('Escribe el nombre del cliente.');
+    if (!local && !this.direccion.trim()) return this.error.set('Escribe la dirección.');
     if (!this.lineas().length) return this.error.set('Agrega al menos un producto.');
-    const admin = this.sb.tiene('admin');
     const bajo = this.lineas().find((l) => l.precio < Number(l.producto.precio_base));
-    if (bajo && !admin) return this.error.set(`${bajo.producto.nombre}: el precio no puede ser menor a ${pesos(bajo.producto.precio_base)}.`);
+    if (bajo && !this.sb.tiene('admin')) return this.error.set(`${bajo.producto.nombre}: el precio no puede ser menor a ${pesos(bajo.producto.precio_base)}.`);
+    if (local && !this.editId()) {
+      if (!this.tipo()) return this.error.set('Escoge cómo pagó el cliente.');
+      if (this.tipo() === 'mixto' && Number(this.efectivo) + Number(this.transferencia) !== this.subtotal())
+        return this.error.set(`Efectivo + transferencia debe dar ${pesos(this.subtotal())}.`);
+    }
+    const items = this.lineas().map((l) => ({ producto_id: l.producto.id, cantidad: l.cantidad, precio_venta: l.precio }));
     this.guardando.set(true);
     try {
-      const id = await this.ps.crear({
-        cliente_nombre: this.nombre,
-        cliente_telefono: this.telefono,
-        direccion: this.direccion,
-        barrio: this.barrio,
-        observaciones: this.observaciones,
-        valor_domicilio: Number(this.domicilio) || 0,
-        items: this.lineas().map((l) => ({ producto_id: l.producto.id, cantidad: l.cantidad, precio_venta: l.precio })),
-      });
-      this.toast.ok(`Pedido #${id} creado`);
-      this.router.navigate(['/app/pedidos'], { queryParams: { id } });
+      if (this.editId()) {
+        await this.ps.editar(this.editId()!, {
+          cliente_nombre: this.nombre || 'Cliente del local',
+          cliente_telefono: this.telefono,
+          direccion: this.direccion,
+          barrio: this.barrio,
+          observaciones: this.observaciones,
+          valor_domicilio: local ? 0 : Number(this.domicilio) || 0,
+          items,
+        });
+        this.toast.ok(`Pedido #${this.editId()} actualizado`);
+        this.volver();
+      } else if (local) {
+        const id = await this.ps.crearVentaLocal({
+          cliente_nombre: this.nombre,
+          cliente_telefono: this.telefono,
+          observaciones: this.observaciones,
+          items,
+          tipo: this.tipo()!,
+          efectivo: Number(this.efectivo) || 0,
+          transferencia: Number(this.transferencia) || 0,
+        });
+        this.toast.ok(`Venta #${id} registrada`);
+        this.router.navigate(['/app/ventas-local']);
+      } else {
+        const id = await this.ps.crear({
+          cliente_nombre: this.nombre,
+          cliente_telefono: this.telefono,
+          direccion: this.direccion,
+          barrio: this.barrio,
+          observaciones: this.observaciones,
+          valor_domicilio: Number(this.domicilio) || 0,
+          items,
+        });
+        this.toast.ok(`Pedido #${id} creado`);
+        this.router.navigate(['/app/pedidos'], { queryParams: { id } });
+      }
     } catch (e) {
-      this.error.set(mensajeError(e));
+      const m = mensajeError(e);
+      this.error.set(m.includes('editar_pedido') ? 'Editar pedidos aún no está activo en la base de datos.' : m);
     } finally {
       this.guardando.set(false);
     }

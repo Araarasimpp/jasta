@@ -11,6 +11,7 @@ export interface Usuario {
   roles: Rol[];
   activo: boolean;
   created_at: string;
+  avatar_url?: string | null;
 }
 
 export interface Producto {
@@ -51,6 +52,7 @@ export interface Pedido {
   cuadre_id: number | null;
   rotulo_impreso_at: string | null;
   alistado_at?: string | null;
+  canal?: 'domicilio' | 'local';
   vendedora?: { nombre: string } | null;
   mensajero?: { nombre: string } | null;
   pedido_items?: PedidoItem[];

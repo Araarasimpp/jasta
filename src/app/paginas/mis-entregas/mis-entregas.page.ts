@@ -1,7 +1,8 @@
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { refreshOutline, callOutline, navigateOutline } from 'ionicons/icons';
+import { refreshOutline, callOutline, navigateOutline, logoWhatsapp } from 'ionicons/icons';
+import { enlaceWhatsapp } from '../../shared/whatsapp';
 import { PedidosService } from '../../core/services/pedidos.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
@@ -22,6 +23,8 @@ import { RangoComponent, RangoFechas } from '../../shared/rango/rango.component'
     `
       .tarjeta h3 { cursor: pointer; }
       .total { font-size: 17px; }
+      .b-wa { color: #128c4a; border-color: #9fd8b5; }
+      .b-wa:hover { border-color: #128c4a; }
       .cuadre { display: flex; flex-direction: column; gap: 12px; }
       .cuadre .panel-head { margin-bottom: 0; }
       .en-ruta { font-size: 13px; color: var(--text-soft); }
@@ -111,6 +114,7 @@ import { RangoComponent, RangoFechas } from '../../shared/rango/rango.component'
             <div class="acciones">
               @if (p.cliente_telefono) {
                 <a class="b" [href]="'tel:' + p.cliente_telefono"><ion-icon name="call-outline"></ion-icon>Llamar</a>
+                <a class="b b-wa" [href]="whatsapp(p)" target="_blank" rel="noopener"><ion-icon name="logo-whatsapp"></ion-icon>WhatsApp</a>
               }
               <a class="b" [href]="mapa(p)" target="_blank" rel="noopener"><ion-icon name="navigate-outline"></ion-icon>Mapa</a>
               <button class="b b-pri" style="flex: 1" (click)="entregando.set(p)">Entregar</button>
@@ -197,7 +201,7 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   private timer?: ReturnType<typeof setTimeout>;
 
   constructor() {
-    addIcons({ refreshOutline, callOutline, navigateOutline });
+    addIcons({ refreshOutline, callOutline, navigateOutline, logoWhatsapp });
   }
 
   ngOnInit(): void {
@@ -264,6 +268,16 @@ export class MisEntregasPage implements OnInit, OnDestroy {
 
   fecha(iso: string): string {
     return formatoFechaCO(iso, { day: 'numeric', month: 'long' });
+  }
+
+  /** Mensaje listo para avisarle al cliente que va el pedido */
+  whatsapp(p: Pedido): string {
+    const cliente = p.cliente_nombre.split(' ')[0];
+    const yo = this.sb.usuario()?.nombre.split(' ')[0] ?? '';
+    return enlaceWhatsapp(
+      p.cliente_telefono,
+      `Hola ${cliente}, soy ${yo}, mensajero de Jasta. Voy en camino con tu pedido #${p.id} por ${pesos(p.total)}.`
+    );
   }
 
   mapa(p: Pedido): string {

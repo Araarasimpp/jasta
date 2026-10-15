@@ -33,6 +33,34 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/pedidos/pedidos.page').then((m) => m.PedidosPage),
       },
       {
+        path: 'pedidos/:id/editar', canActivate: [rolGuard], data: { roles: ['admin', 'vendedora'] },
+        loadComponent: () => import('./paginas/nuevo-pedido/nuevo-pedido.page').then((m) => m.NuevoPedidoPage),
+      },
+      {
+        path: 'venta-local', canActivate: [rolGuard], data: { roles: ['admin', 'vendedora', 'alistador'], modo: 'local' },
+        loadComponent: () => import('./paginas/nuevo-pedido/nuevo-pedido.page').then((m) => m.NuevoPedidoPage),
+      },
+      {
+        path: 'ventas-local', canActivate: [rolGuard], data: { roles: ['admin', 'vendedora', 'alistador', 'cuadres'] },
+        loadComponent: () => import('./paginas/ventas-local/ventas-local.page').then((m) => m.VentasLocalPage),
+      },
+      {
+        path: 'ranking',
+        loadComponent: () => import('./paginas/ranking/ranking.page').then((m) => m.RankingPage),
+      },
+      {
+        path: 'clientes', canActivate: [rolGuard], data: { roles: ['admin'] },
+        loadComponent: () => import('./paginas/clientes/clientes.page').then((m) => m.ClientesPage),
+      },
+      {
+        path: 'actividad', canActivate: [rolGuard], data: { roles: ['admin'] },
+        loadComponent: () => import('./paginas/actividad/actividad.page').then((m) => m.ActividadPage),
+      },
+      {
+        path: 'perfil',
+        loadComponent: () => import('./paginas/perfil/perfil.page').then((m) => m.PerfilPage),
+      },
+      {
         path: 'pedidos/nuevo', canActivate: [rolGuard], data: { roles: ['admin', 'vendedora'] },
         loadComponent: () => import('./paginas/nuevo-pedido/nuevo-pedido.page').then((m) => m.NuevoPedidoPage),
       },

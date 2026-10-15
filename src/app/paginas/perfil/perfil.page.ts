@@ -1,0 +1,164 @@
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { SupabaseService } from '../../core/services/supabase.service';
+import { ToastService } from '../../shared/toast/toast.service';
+import { AvatarComponent } from '../../shared/avatar/avatar.component';
+import { ROLES } from '../../shared/modelos';
+import { mensajeError } from '../../shared/formato';
+
+/** Reduce la foto a un cuadrado de 400 px en JPG antes de subirla */
+async function fotoCuadrada(archivo: File): Promise<Blob> {
+  const img = await createImageBitmap(archivo);
+  const lado = Math.min(img.width, img.height);
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = 400;
+  canvas.getContext('2d')!.drawImage(img, (img.width - lado) / 2, (img.height - lado) / 2, lado, lado, 0, 0, 400, 400);
+  return new Promise((ok, mal) => canvas.toBlob((b) => (b ? ok(b) : mal(new Error('No se pudo leer la foto'))), 'image/jpeg', 0.85));
+}
+
+/** Mi perfil y mi seguridad: nombre, teléfono, foto, contraseña y sesiones */
+@Component({
+  selector: 'app-perfil',
+  standalone: true,
+  imports: [FormsModule, AvatarComponent],
+  styleUrls: ['../../shared/ui.scss'],
+  styles: [
+    `
+      .page { max-width: 620px; }
+      .panel { display: flex; flex-direction: column; gap: 14px; }
+      .foto { display: flex; align-items: center; gap: 16px; }
+      .foto label { cursor: pointer; }
+      .foto input { display: none; }
+      .roles { display: flex; gap: 6px; flex-wrap: wrap; }
+      .fila { display: flex; gap: 8px; flex-wrap: wrap; }
+    `,
+  ],
+  template: `
+    <div class="page">
+      <div class="head"><div><h1>Mi perfil</h1></div></div>
+
+      <section class="panel">
+        <div class="foto">
+          <app-avatar [nombre]="nombre" [foto]="foto()" [tam]="72"></app-avatar>
+          <div class="fila">
+            <label class="b">{{ subiendo() ? 'Subiendo…' : 'Cambiar foto' }}
+              <input type="file" accept="image/*" (change)="subirFoto($event)" [disabled]="subiendo()" />
+            </label>
+            @if (foto()) {
+              <button class="b" (click)="quitarFoto()">Quitar foto</button>
+            }
+          </div>
+        </div>
+        <div class="campo"><label for="pn">Nombre</label><input id="pn" [(ngModel)]="nombre" autocomplete="name" /></div>
+        <div class="campo"><label for="pt">Teléfono</label><input id="pt" type="tel" [(ngModel)]="telefono" autocomplete="tel" /></div>
+        <div class="campo"><span class="etq">Correo</span><span class="suave">{{ sb.usuario()?.email }}</span></div>
+        <div class="campo">
+          <span class="etq">Roles</span>
+          <span class="roles">
+            @for (r of roles(); track r) { <span class="etiqueta on">{{ r }}</span> } @empty { <span class="suave">Sin rol asignado</span> }
+          </span>
+        </div>
+        <div><button class="b b-pri" [disabled]="guardando()" (click)="guardar()">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button></div>
+      </section>
+
+      <section class="panel">
+        <h2>Contraseña</h2>
+        <div class="fila-campos">
+          <div class="campo"><label for="c1">Nueva contraseña</label><input id="c1" type="password" autocomplete="new-password" [(ngModel)]="clave1" /></div>
+          <div class="campo"><label for="c2">Repítela</label><input id="c2" type="password" autocomplete="new-password" [(ngModel)]="clave2" /></div>
+        </div>
+        <p class="ayuda">Mínimo 8 caracteres. Mezcla letras y números.</p>
+        <div><button class="b" [disabled]="cambiando()" (click)="cambiarClave()">{{ cambiando() ? 'Cambiando…' : 'Cambiar contraseña' }}</button></div>
+      </section>
+
+      <section class="panel">
+        <h2>Sesiones</h2>
+        <p class="ayuda">Si perdiste el celular o entraste en un computador ajeno, cierra la sesión en todos los dispositivos. Tendrás que volver a entrar.</p>
+        <div><button class="b b-peligro" (click)="cerrarTodas()">Cerrar sesión en todos los dispositivos</button></div>
+      </section>
+    </div>
+  `,
+})
+export class PerfilPage implements OnInit {
+  sb = inject(SupabaseService);
+  private toast = inject(ToastService);
+  private router = inject(Router);
+
+  nombre = '';
+  telefono = '';
+  clave1 = '';
+  clave2 = '';
+  foto = signal<string | null>(null);
+  guardando = signal(false);
+  subiendo = signal(false);
+  cambiando = signal(false);
+  roles = computed(() => this.sb.roles().map((r) => ROLES.find((x) => x.id === r)?.label ?? r));
+
+  ngOnInit(): void {
+    const u = this.sb.usuario();
+    this.nombre = u?.nombre ?? '';
+    this.telefono = u?.telefono ?? '';
+    this.foto.set(u?.avatar_url ?? null);
+  }
+
+  private async guardarPerfil(avatar: string | null): Promise<boolean> {
+    const { error } = await this.sb.client.rpc('actualizar_mi_perfil', { p_nombre: this.nombre, p_telefono: this.telefono, p_avatar_url: avatar });
+    if (error) {
+      this.toast.error(mensajeError(error));
+      return false;
+    }
+    await this.sb.cargarUsuario();
+    return true;
+  }
+
+  async guardar(): Promise<void> {
+    this.guardando.set(true);
+    if (await this.guardarPerfil(this.foto())) this.toast.ok('Perfil guardado');
+    this.guardando.set(false);
+  }
+
+  async subirFoto(ev: Event): Promise<void> {
+    const archivo = (ev.target as HTMLInputElement).files?.[0];
+    const uid = this.sb.session()?.user.id;
+    if (!archivo || !uid) return;
+    this.subiendo.set(true);
+    try {
+      const blob = await fotoCuadrada(archivo);
+      const ruta = `${uid}/foto-${Date.now()}.jpg`;
+      const { error } = await this.sb.client.storage.from('avatars').upload(ruta, blob, { contentType: 'image/jpeg', upsert: true });
+      if (error) throw error;
+      const url = this.sb.client.storage.from('avatars').getPublicUrl(ruta).data.publicUrl;
+      if (await this.guardarPerfil(url)) {
+        this.foto.set(url);
+        this.toast.ok('Foto actualizada');
+      }
+    } catch (e) {
+      this.toast.error(mensajeError(e));
+    } finally {
+      this.subiendo.set(false);
+      (ev.target as HTMLInputElement).value = '';
+    }
+  }
+
+  async quitarFoto(): Promise<void> {
+    if (await this.guardarPerfil(null)) this.foto.set(null);
+  }
+
+  async cambiarClave(): Promise<void> {
+    if (this.clave1.length < 8) return this.toast.error('La contraseña debe tener al menos 8 caracteres.');
+    if (this.clave1 !== this.clave2) return this.toast.error('Las contraseñas no coinciden.');
+    this.cambiando.set(true);
+    const { error } = await this.sb.cambiarClave(this.clave1);
+    this.cambiando.set(false);
+    if (error) return this.toast.error(mensajeError(error));
+    this.clave1 = this.clave2 = '';
+    this.toast.ok('Contraseña cambiada');
+  }
+
+  async cerrarTodas(): Promise<void> {
+    if (!confirm('Se cerrará tu sesión en todos los dispositivos, incluido este. ¿Continuar?')) return;
+    await this.sb.client.auth.signOut({ scope: 'global' });
+    this.router.navigateByUrl('/auth/login');
+  }
+}

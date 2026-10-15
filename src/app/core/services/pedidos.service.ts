@@ -14,6 +14,8 @@ export interface FiltroPedidos {
   mensajeroId?: number | null;
   rotulo?: 'pendiente' | 'impreso' | null;
   conItems?: boolean;
+  canal?: 'domicilio' | 'local' | null;
+  tipoRecaudo?: string | null;
   pagina?: number;
   porPagina?: number;
 }
@@ -48,6 +50,8 @@ export class PedidosService {
     if (f.hasta) q = q.lte('created_at', f.hasta);
     if (f.vendedoraId) q = q.eq('vendedora_id', f.vendedoraId);
     if (f.mensajeroId) q = q.eq('mensajero_id', f.mensajeroId);
+    if (f.canal) q = q.eq('canal', f.canal);
+    if (f.tipoRecaudo) q = q.eq('tipo_recaudo', f.tipoRecaudo);
     if (f.rotulo === 'pendiente') q = q.is('rotulo_impreso_at', null);
     if (f.rotulo === 'impreso') q = q.not('rotulo_impreso_at', 'is', null);
     const t = (f.texto ?? '').trim().replace(/[,()%]/g, ' ').trim();
@@ -108,6 +112,46 @@ export class PedidosService {
       this.db.from('pedido_notas').select('id, created_at, autor, nota').eq('pedido_id', id).order('created_at').order('id'),
     ]);
     return { pedido: this.check(p) as unknown as Pedido, notas: (this.check(n) ?? []) as Nota[] };
+  }
+
+  async crearVentaLocal(datos: {
+    cliente_nombre: string;
+    cliente_telefono: string;
+    observaciones: string;
+    items: ItemNuevo[];
+    tipo: string;
+    efectivo: number;
+    transferencia: number;
+  }): Promise<number> {
+    return this.check(
+      await this.db.rpc('crear_venta_local', {
+        p_cliente_nombre: datos.cliente_nombre,
+        p_cliente_telefono: datos.cliente_telefono,
+        p_observaciones: datos.observaciones,
+        p_items: datos.items,
+        p_tipo: datos.tipo,
+        p_efectivo: datos.efectivo,
+        p_transferencia: datos.transferencia,
+      })
+    ) as number;
+  }
+
+  async editar(
+    id: number,
+    datos: { cliente_nombre: string; cliente_telefono: string; direccion: string; barrio: string; observaciones: string; valor_domicilio: number; items: ItemNuevo[] }
+  ): Promise<void> {
+    this.check(
+      await this.db.rpc('editar_pedido', {
+        p_pedido: id,
+        p_cliente_nombre: datos.cliente_nombre,
+        p_cliente_telefono: datos.cliente_telefono,
+        p_direccion: datos.direccion,
+        p_barrio: datos.barrio,
+        p_observaciones: datos.observaciones,
+        p_valor_domicilio: datos.valor_domicilio,
+        p_items: datos.items,
+      })
+    );
   }
 
   async crear(datos: {

@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, Output, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import { closeOutline, callOutline, logoWhatsapp } from 'ionicons/icons';
@@ -8,6 +9,7 @@ import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../toast/toast.service';
 import { EntregarComponent } from '../entregar/entregar.component';
 import { RotulosService } from '../rotulo/rotulos.service';
+import { enlaceWhatsapp } from '../whatsapp';
 import { EstadoPedido, Nota, Pedido, Usuario, estadoLabel } from '../modelos';
 import { mensajeError, pesos, urlImagen } from '../formato';
 import { formatoFechaCO, formatoHoraCO } from '../fecha-colombia';
@@ -94,6 +96,7 @@ import { formatoFechaCO, formatoHoraCO } from '../fecha-colombia';
           <section>
             <h3 class="seccion-titulo">Seguimiento</h3>
             <dl class="datos">
+              <dt>Canal</dt><dd>{{ p.canal === 'local' ? 'Venta en el local' : 'Domicilio' }}</dd>
               <dt>Creado</dt><dd>{{ fecha(p.created_at) }}</dd>
               <dt>Vendedora</dt><dd>{{ p.vendedora?.nombre || '—' }}</dd>
               <dt>Mensajero</dt><dd>{{ p.mensajero?.nombre || 'Sin asignar' }}</dd>
@@ -182,6 +185,7 @@ export class PedidoDetalleComponent implements OnChanges {
 
   private ps = inject(PedidosService);
   private sb = inject(SupabaseService);
+  private router = inject(Router);
   private toast = inject(ToastService);
   private rotulos = inject(RotulosService);
 
@@ -216,6 +220,8 @@ export class PedidoDetalleComponent implements OnChanges {
       out.push({ id: 'cancelado', label: 'Cancelar pedido', peligro: true });
     if (p.estado !== 'cancelado' && this.sb.tiene('admin', 'alistador'))
       out.push({ id: 'rotulo', label: p.rotulo_impreso_at ? 'Reimprimir rótulo' : 'Imprimir rótulo' });
+    if (p.estado !== 'cancelado' && (admin || (p.estado === 'por_alistar' && p.vendedora_id === yo)))
+      out.push({ id: 'editar', label: 'Editar' });
     if (p.estado === 'cancelado' && admin) out.push({ id: 'por_alistar', label: 'Reactivar' });
     return out;
   });
@@ -244,6 +250,10 @@ export class PedidoDetalleComponent implements OnChanges {
 
   async ejecutar(id: string): Promise<void> {
     if (id === 'entregar') return this.entregando.set(true);
+    if (id === 'editar') {
+      void this.router.navigate(['/app/pedidos', this.pedidoId, 'editar']);
+      return;
+    }
     if (id === 'rotulo') {
       // Sin await antes: la ventana de impresión tiene que abrirse en el mismo clic
       if (await this.rotulos.imprimir([this.pedido()!])) {
@@ -293,8 +303,7 @@ export class PedidoDetalleComponent implements OnChanges {
   }
 
   whatsapp(tel: string): string {
-    const n = tel.replace(/\D/g, '');
-    return 'https://wa.me/' + (n.length === 10 ? '57' + n : n);
+    return enlaceWhatsapp(tel, `Hola ${this.pedido()?.cliente_nombre.split(' ')[0] ?? ''}, te escribimos de Jasta por tu pedido #${this.pedidoId}.`);
   }
 
   fecha(iso: string): string {

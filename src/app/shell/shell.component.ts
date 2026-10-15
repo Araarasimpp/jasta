@@ -19,6 +19,12 @@ import {
   walletOutline,
   statsChartOutline,
   settingsOutline,
+  storefrontOutline,
+  listOutline,
+  trophyOutline,
+  peopleCircleOutline,
+  timeOutline,
+  personCircleOutline,
 } from 'ionicons/icons';
 import { SupabaseService } from '../core/services/supabase.service';
 import { ThemeService } from '../core/services/theme.service';
@@ -36,11 +42,17 @@ const MENU: ItemMenu[] = [
   { label: 'Inicio', path: '/app/inicio', icon: 'bar-chart-outline', roles: ['admin', 'cuadres'] },
   { label: 'Pedidos', path: '/app/pedidos', icon: 'receipt-outline', roles: ['admin', 'vendedora', 'alistador', 'cuadres'] },
   { label: 'Mis entregas', path: '/app/mis-entregas', icon: 'bicycle-outline', roles: ['mensajero'] },
+  { label: 'Venta en local', path: '/app/venta-local', icon: 'storefront-outline', roles: ['admin', 'vendedora', 'alistador'] },
+  { label: 'Ventas del local', path: '/app/ventas-local', icon: 'list-outline', roles: ['admin', 'vendedora', 'alistador', 'cuadres'] },
   { label: 'Cuadres', path: '/app/cuadres', icon: 'wallet-outline', roles: ['admin', 'cuadres', 'mensajero'] },
-  { label: 'Reportes', path: '/app/reportes', icon: 'stats-chart-outline', roles: ['admin', 'cuadres', 'vendedora'] },
+  { label: 'Ranking', path: '/app/ranking', icon: 'trophy-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador'] },
+  { label: 'Clientes', path: '/app/clientes', icon: 'people-circle-outline', roles: ['admin'] },
   { label: 'Productos', path: '/app/productos', icon: 'cube-outline', roles: ['admin'] },
   { label: 'Usuarios', path: '/app/usuarios', icon: 'people-outline', roles: ['admin'] },
+  { label: 'Reportes', path: '/app/reportes', icon: 'stats-chart-outline', roles: ['admin', 'cuadres', 'vendedora'] },
+  { label: 'Actividad', path: '/app/actividad', icon: 'time-outline', roles: ['admin'] },
   { label: 'Configuración', path: '/app/configuracion', icon: 'settings-outline', roles: ['admin'] },
+  { label: 'Mi perfil', path: '/app/perfil', icon: 'person-circle-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador'] },
 ];
 
 @Component({
@@ -175,6 +187,7 @@ export class ShellComponent {
     addIcons({
       add, barChartOutline, chevronBackOutline, chevronForwardOutline, cubeOutline, ellipsisHorizontal,
       logOutOutline, moonOutline, peopleOutline, receiptOutline, bicycleOutline, clipboardOutline, sunnyOutline, walletOutline, statsChartOutline, settingsOutline,
+      storefrontOutline, listOutline, trophyOutline, peopleCircleOutline, timeOutline, personCircleOutline,
     });
   }
 
