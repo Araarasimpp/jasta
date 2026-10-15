@@ -9,13 +9,14 @@ import { EntregarComponent } from '../../shared/entregar/entregar.component';
 import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detalle.component';
 import { Pedido } from '../../shared/modelos';
 import { mensajeError, pesos } from '../../shared/formato';
-import { formatoFechaCO } from '../../shared/fecha-colombia';
+import { finDiaColombia, formatoFechaCO, formatoHoraCO, inicioDiaColombia } from '../../shared/fecha-colombia';
+import { RangoComponent, RangoFechas } from '../../shared/rango/rango.component';
 
 /** Pantalla del mensajero: lo que tiene en ruta y lo que lleva por cuadrar */
 @Component({
   selector: 'app-mis-entregas',
   standalone: true,
-  imports: [IonIcon, EntregarComponent, PedidoDetalleComponent],
+  imports: [IonIcon, EntregarComponent, PedidoDetalleComponent, RangoComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -30,6 +31,14 @@ import { formatoFechaCO } from '../../shared/fecha-colombia';
       .desglose { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; margin: 0; font-size: 13px; }
       .desglose dt { color: var(--text-soft); }
       .desglose dd { margin: 0; text-align: right; }
+      .hist-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+      .hist { width: 100%; border-collapse: collapse; font-size: 13px; }
+      .hist td { padding: 8px 4px; border-bottom: 1px solid var(--border-soft); }
+      .hist td:last-child { text-align: right; white-space: nowrap; }
+      .hist tr { cursor: pointer; }
+      .hist small { display: block; color: var(--text-muted); font-size: 12px; }
+      .hist-tot { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--text-soft); }
+      .hist-tot strong { color: var(--text); }
     `,
   ],
   template: `
@@ -116,6 +125,33 @@ import { formatoFechaCO } from '../../shared/fecha-colombia';
           </div>
         }
       </div>
+
+      @if (esMensajero()) {
+        <section class="panel">
+          <div class="hist-head">
+            <h2>Mis entregas hechas</h2>
+            <app-rango (cambio)="cambiarRango($event)"></app-rango>
+          </div>
+          @if (hechas().length) {
+            <p class="hist-tot" style="margin: 12px 0 4px">
+              <span><strong class="num">{{ hechas().length }}</strong> entregas</span>
+              <span>Domicilios <strong class="num">{{ pesos(totHechas().domicilios) }}</strong></span>
+              <span>Efectivo <strong class="num">{{ pesos(totHechas().efectivo) }}</strong></span>
+              <span>Transferencias <strong class="num">{{ pesos(totHechas().transferencia) }}</strong></span>
+            </p>
+            <table class="hist">
+              @for (p of hechas(); track p.id) {
+                <tr (click)="abierto.set(p.id)">
+                  <td>#{{ p.id }} · {{ p.cliente_nombre }}<small>{{ p.barrio || '' }} · {{ hora(p.entregado_at) }} · {{ p.cuadre_id ? 'cuadrado' : 'por cuadrar' }}</small></td>
+                  <td class="num">{{ pesos(p.total) }}<small>{{ p.tipo_recaudo || '' }}</small></td>
+                </tr>
+              }
+            </table>
+          } @else {
+            <p class="panel-sub" style="margin-top: 12px">No hay entregas en este periodo.</p>
+          }
+        </section>
+      }
     </div>
 
     @if (entregando(); as p) {
@@ -140,6 +176,19 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   entregando = signal<Pedido | null>(null);
   abierto = signal<number | null>(null);
   pesos = pesos;
+
+  hechas = signal<Pedido[]>([]);
+  private rango: RangoFechas | null = null;
+  totHechas = computed(() =>
+    this.hechas().reduce(
+      (a, p) => ({
+        domicilios: a.domicilios + Number(p.valor_domicilio || 0),
+        efectivo: a.efectivo + Number(p.valor_efectivo || 0),
+        transferencia: a.transferencia + Number(p.valor_transferencia || 0),
+      }),
+      { domicilios: 0, efectivo: 0, transferencia: 0 }
+    )
+  );
 
   esMensajero = computed(() => this.sb.tiene('mensajero'));
   pendiente = computed(() => this.pendientes().find((x) => x.mensajero_id === this.sb.usuario()?.id) ?? null);
@@ -179,10 +228,32 @@ export class MisEntregasPage implements OnInit, OnDestroy {
     }
   }
 
+  cambiarRango(r: RangoFechas): void {
+    this.rango = r;
+    void this.cargarHechas();
+  }
+
+  async cargarHechas(): Promise<void> {
+    const yo = this.sb.usuario()?.id;
+    const r = this.rango;
+    if (!yo || !r) return;
+    try {
+      this.hechas.set(
+        await this.ps.entregadosPor(yo, r.desde ? inicioDiaColombia(r.desde).toISOString() : null, r.hasta ? finDiaColombia(r.hasta).toISOString() : null)
+      );
+    } catch (e) {
+      this.toast.error(mensajeError(e));
+    }
+  }
+
+  hora(iso: string | null): string {
+    return iso ? formatoFechaCO(iso, { day: 'numeric', month: 'short' }) + ' ' + formatoHoraCO(iso) : '';
+  }
+
   async alEntregar(p: Pedido): Promise<void> {
     this.entregando.set(null);
     this.toast.ok(`#${p.id} entregado`);
-    await this.cargar();
+    await Promise.all([this.cargar(), this.cargarHechas()]);
   }
 
   async verDetalle(): Promise<void> {

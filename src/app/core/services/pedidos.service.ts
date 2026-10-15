@@ -12,6 +12,8 @@ export interface FiltroPedidos {
   hasta?: string | null; // ISO
   vendedoraId?: number | null;
   mensajeroId?: number | null;
+  rotulo?: 'pendiente' | 'impreso' | null;
+  conItems?: boolean;
   pagina?: number;
   porPagina?: number;
 }
@@ -38,21 +40,50 @@ export class PedidosService {
   async listar(f: FiltroPedidos): Promise<{ filas: Pedido[]; total: number }> {
     const porPagina = f.porPagina ?? 50;
     const pagina = f.pagina ?? 0;
-    let q = this.db.from('pedidos').select(SELECT_PEDIDO, { count: 'estimated' });
+    const campos = f.conItems ? SELECT_PEDIDO + ', pedido_items(id, nombre, cantidad)' : SELECT_PEDIDO;
+    let q = this.db.from('pedidos').select(campos, { count: 'exact' });
     if (f.estado === 'activos') q = q.in('estado', ['por_alistar', 'alistado', 'despachado']);
     else if (f.estado) q = q.eq('estado', f.estado);
     if (f.desde) q = q.gte('created_at', f.desde);
     if (f.hasta) q = q.lte('created_at', f.hasta);
     if (f.vendedoraId) q = q.eq('vendedora_id', f.vendedoraId);
     if (f.mensajeroId) q = q.eq('mensajero_id', f.mensajeroId);
+    if (f.rotulo === 'pendiente') q = q.is('rotulo_impreso_at', null);
+    if (f.rotulo === 'impreso') q = q.not('rotulo_impreso_at', 'is', null);
     const t = (f.texto ?? '').trim().replace(/[,()%]/g, ' ').trim();
     if (t) {
       if (/^\d+$/.test(t)) q = q.or(`id.eq.${t},cliente_telefono.ilike.%${t}%`);
       else q = q.or(`cliente_nombre.ilike.%${t}%,barrio.ilike.%${t}%,direccion.ilike.%${t}%`);
     }
-    const r = await q.order('created_at', { ascending: false }).range(pagina * porPagina, pagina * porPagina + porPagina - 1);
+    // Los alistados van en el orden en que se alistaron (1°, 2°, 3°…), como en Kaesuri
+    q = f.estado === 'alistado'
+      ? q.order('alistado_at', { ascending: true, nullsFirst: true }).order('id')
+      : q.order('created_at', { ascending: false });
+    const r = await q.range(pagina * porPagina, pagina * porPagina + porPagina - 1);
     if (r.error) throw r.error;
-    return { filas: (r.data ?? []) as Pedido[], total: r.count ?? 0 };
+    return { filas: (r.data ?? []) as unknown as Pedido[], total: r.count ?? 0 };
+  }
+
+  /** Pedidos completos (con productos) por id, para imprimir rótulos */
+  async conItems(ids: number[]): Promise<Pedido[]> {
+    if (!ids.length) return [];
+    const r = this.check(await this.db.from('pedidos').select(SELECT_PEDIDO + ', pedido_items(*)').in('id', ids));
+    const porId = new Map(((r ?? []) as unknown as Pedido[]).map((p) => [p.id, p]));
+    return ids.map((id) => porId.get(id)).filter((p): p is Pedido => !!p);
+  }
+
+  /** Alistados sin rótulo, en orden de alistamiento */
+  async alistadosSinRotulo(): Promise<Pedido[]> {
+    const r = this.check(
+      await this.db
+        .from('pedidos')
+        .select(SELECT_PEDIDO + ', pedido_items(*)')
+        .eq('estado', 'alistado')
+        .is('rotulo_impreso_at', null)
+        .order('alistado_at', { ascending: true, nullsFirst: true })
+        .order('id')
+    );
+    return (r ?? []) as unknown as Pedido[];
   }
 
   async conteoPorEstado(): Promise<Record<string, number>> {
@@ -168,9 +199,11 @@ export class PedidosService {
     return this.check(await this.db.rpc('cerrar_cuadre', { p_mensajero: mensajeroId })) as number;
   }
 
-  async historialCuadres(pagina: number, mensajeroId?: number | null): Promise<Cuadre[]> {
+  async historialCuadres(pagina: number, mensajeroId?: number | null, desde?: string | null, hasta?: string | null): Promise<Cuadre[]> {
     let q = this.db.from('cuadres').select('*, mensajero:usuarios!cuadres_mensajero_id_fkey(nombre)');
     if (mensajeroId) q = q.eq('mensajero_id', mensajeroId);
+    if (desde) q = q.gte('cerrado_at', desde);
+    if (hasta) q = q.lte('cerrado_at', hasta);
     return (this.check(await q.order('cerrado_at', { ascending: false }).range(pagina * 30, pagina * 30 + 29)) ??
       []) as unknown as Cuadre[];
   }
@@ -179,6 +212,14 @@ export class PedidosService {
     return (this.check(
       await this.db.from('pedidos').select(SELECT_PEDIDO).eq('cuadre_id', cuadreId).order('entregado_at')
     ) ?? []) as unknown as Pedido[];
+  }
+
+  /** Pedidos que entregó un mensajero en un rango (por fecha de entrega) */
+  async entregadosPor(mensajeroId: number, desde: string | null, hasta: string | null): Promise<Pedido[]> {
+    let q = this.db.from('pedidos').select(SELECT_PEDIDO).eq('mensajero_id', mensajeroId).eq('estado', 'entregado');
+    if (desde) q = q.gte('entregado_at', desde);
+    if (hasta) q = q.lte('entregado_at', hasta);
+    return (this.check(await q.order('entregado_at', { ascending: false }).limit(300)) ?? []) as unknown as Pedido[];
   }
 
   async pendientesDe(mensajeroId: number): Promise<Pedido[]> {

@@ -37,10 +37,6 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/nuevo-pedido/nuevo-pedido.page').then((m) => m.NuevoPedidoPage),
       },
       {
-        path: 'alistamiento', canActivate: [rolGuard], data: { roles: ['admin', 'alistador'] },
-        loadComponent: () => import('./paginas/alistamiento/alistamiento.page').then((m) => m.AlistamientoPage),
-      },
-      {
         path: 'mis-entregas', canActivate: [rolGuard], data: { roles: ['mensajero', 'admin'] },
         loadComponent: () => import('./paginas/mis-entregas/mis-entregas.page').then((m) => m.MisEntregasPage),
       },

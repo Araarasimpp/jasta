@@ -1,10 +1,10 @@
-import { Component, EventEmitter, OnInit, Output, signal } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { hoyColombiaISO } from '../fecha-colombia';
 
-export type Rango = 'hoy' | 'ayer' | '7' | 'mes' | 'mes_pasado' | 'otro';
+export type Rango = 'todo' | 'hoy' | 'ayer' | '7' | 'mes' | 'mes_pasado' | 'otro';
 export interface RangoFechas {
-  desde: string; // YYYY-MM-DD (Colombia)
+  desde: string; // YYYY-MM-DD (Colombia); vacío = sin límite
   hasta: string;
   etiqueta: string;
 }
@@ -31,7 +31,7 @@ export function diaCorto(iso: string): string {
   styles: [`:host { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; } input { width: 140px; }`],
   template: `
     <div class="segmented">
-      @for (r of rangos; track r.id) {
+      @for (r of opciones(); track r.id) {
         <button [class.on]="rango() === r.id" (click)="elegir(r.id)">{{ r.label }}</button>
       }
     </div>
@@ -42,6 +42,10 @@ export function diaCorto(iso: string): string {
   `,
 })
 export class RangoComponent implements OnInit {
+  /** Agrega la opción "Todo" (sin filtro de fechas) */
+  @Input() conTodo = false;
+  /** Periodo con el que arranca */
+  @Input() inicial: Rango = 'hoy';
   @Output() cambio = new EventEmitter<RangoFechas>();
   rangos: { id: Rango; label: string }[] = [
     { id: 'hoy', label: 'Hoy' },
@@ -52,16 +56,23 @@ export class RangoComponent implements OnInit {
     { id: 'otro', label: 'Otro' },
   ];
   rango = signal<Rango>('hoy');
+  opciones = signal(this.rangos);
   desde = hoyColombiaISO();
   hasta = hoyColombiaISO();
 
   ngOnInit(): void {
-    this.elegir('hoy');
+    if (this.conTodo) this.opciones.set([{ id: 'todo', label: 'Todo' }, ...this.rangos]);
+    this.elegir(this.inicial);
   }
 
   elegir(r: Rango): void {
     this.rango.set(r);
     const hoy = hoyColombiaISO();
+    if (r === 'todo') {
+      this.cambio.emit({ desde: '', hasta: '', etiqueta: 'Todas las fechas' });
+      return;
+    }
+    if (r === 'otro' && (!this.desde || !this.hasta)) [this.desde, this.hasta] = [hoy, hoy];
     if (r === 'hoy') [this.desde, this.hasta] = [hoy, hoy];
     if (r === 'ayer') [this.desde, this.hasta] = [sumarDias(hoy, -1), sumarDias(hoy, -1)];
     if (r === '7') [this.desde, this.hasta] = [sumarDias(hoy, -6), hoy];

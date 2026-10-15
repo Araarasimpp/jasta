@@ -6,9 +6,10 @@ import { PedidosService } from '../../core/services/pedidos.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detalle.component';
+import { RangoComponent, RangoFechas } from '../../shared/rango/rango.component';
 import { Cuadre, Pedido } from '../../shared/modelos';
 import { mensajeError, pesos } from '../../shared/formato';
-import { formatoFechaCO, formatoHoraCO } from '../../shared/fecha-colombia';
+import { finDiaColombia, formatoFechaCO, formatoHoraCO, inicioDiaColombia } from '../../shared/fecha-colombia';
 
 interface Pendiente {
   mensajero_id: number;
@@ -23,7 +24,7 @@ interface Pendiente {
 @Component({
   selector: 'app-cuadres',
   standalone: true,
-  imports: [IonIcon, PedidoDetalleComponent],
+  imports: [IonIcon, PedidoDetalleComponent, RangoComponent],
   styles: [
     `
       .cifras { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
@@ -38,6 +39,7 @@ interface Pendiente {
       .mini tr { cursor: pointer; }
       .mini tr:hover td { background: var(--hover); }
       h2 { margin: 0; font-size: 14px; font-weight: 600; }
+      .hist-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
       @media (max-width: 640px) { .cifras { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     `,
   ],
@@ -88,7 +90,21 @@ interface Pendiente {
           }
         </div>
 
-        <h2>Historial</h2>
+        <div class="hist-head">
+          <h2>Historial de cuadres</h2>
+          <app-rango [conTodo]="true" inicial="todo" (cambio)="cambiarRango($event)"></app-rango>
+        </div>
+        @if (historial().length) {
+          <div class="cifras">
+            <div class="cifra"><small>Cuadres</small><strong class="num">{{ historial().length }}{{ historial().length === 30 ? '+' : '' }}</strong></div>
+            <div class="cifra"><small>Pedidos</small><strong class="num">{{ resumenHist().pedidos }}</strong></div>
+            <div class="cifra clave"><small>Efectivo recibido</small><strong class="num">{{ pesos(resumenHist().efectivo - resumenHist().domicilios) }}</strong></div>
+            <div class="cifra"><small>Transferencias</small><strong class="num">{{ pesos(resumenHist().transferencia) }}</strong></div>
+          </div>
+          @if (historial().length === 30) {
+            <p class="ayuda">Las cifras suman los cuadres de esta página.</p>
+          }
+        }
         <div class="tabla-wrap">
           <table class="tabla">
             <thead><tr><th>Fecha</th><th>Mensajero</th><th class="der">Pedidos</th><th class="der">Efectivo</th><th class="der">Transferencia</th><th class="der">Domicilios</th><th>Cerró</th></tr></thead>
@@ -151,6 +167,19 @@ export class CuadresPage implements OnInit {
   pedidosCuadre = signal<Pedido[]>([]);
   abierto = signal<number | null>(null);
 
+  private rango: RangoFechas = { desde: '', hasta: '', etiqueta: '' };
+  resumenHist = computed(() =>
+    this.historial().reduce(
+      (a, c) => ({
+        pedidos: a.pedidos + Number(c.cantidad_pedidos),
+        efectivo: a.efectivo + Number(c.total_efectivo),
+        transferencia: a.transferencia + Number(c.total_transferencia),
+        domicilios: a.domicilios + Number(c.total_domicilios),
+      }),
+      { pedidos: 0, efectivo: 0, transferencia: 0, domicilios: 0 }
+    )
+  );
+
   puedeCerrar = computed(() => this.sb.tiene('admin', 'cuadres'));
   pesos = pesos;
 
@@ -168,7 +197,7 @@ export class CuadresPage implements OnInit {
 
   async cargar(): Promise<void> {
     try {
-      const [p, h] = await Promise.all([this.ps.cuadresPendientes(), this.ps.historialCuadres(this.pagina(), this.soloMio())]);
+      const [p, h] = await Promise.all([this.ps.cuadresPendientes(), this.historialPagina(this.pagina())]);
       this.pendientes.set(p);
       this.historial.set(h);
     } catch (e) {
@@ -178,9 +207,24 @@ export class CuadresPage implements OnInit {
     }
   }
 
+  private historialPagina(n: number) {
+    const r = this.rango;
+    return this.ps.historialCuadres(
+      n,
+      this.soloMio(),
+      r.desde ? inicioDiaColombia(r.desde).toISOString() : null,
+      r.hasta ? finDiaColombia(r.hasta).toISOString() : null
+    );
+  }
+
+  cambiarRango(r: RangoFechas): void {
+    this.rango = r;
+    void this.irPagina(0);
+  }
+
   async irPagina(n: number): Promise<void> {
     this.pagina.set(n);
-    this.historial.set(await this.ps.historialCuadres(n, this.soloMio()));
+    this.historial.set(await this.historialPagina(n));
   }
 
   async verPedidos(id: number): Promise<void> {

@@ -35,7 +35,6 @@ interface ItemMenu {
 const MENU: ItemMenu[] = [
   { label: 'Inicio', path: '/app/inicio', icon: 'bar-chart-outline', roles: ['admin', 'cuadres'] },
   { label: 'Pedidos', path: '/app/pedidos', icon: 'receipt-outline', roles: ['admin', 'vendedora', 'alistador', 'cuadres'] },
-  { label: 'Alistamiento', path: '/app/alistamiento', icon: 'clipboard-outline', roles: ['admin', 'alistador'] },
   { label: 'Mis entregas', path: '/app/mis-entregas', icon: 'bicycle-outline', roles: ['mensajero'] },
   { label: 'Cuadres', path: '/app/cuadres', icon: 'wallet-outline', roles: ['admin', 'cuadres', 'mensajero'] },
   { label: 'Reportes', path: '/app/reportes', icon: 'stats-chart-outline', roles: ['admin', 'cuadres', 'vendedora'] },

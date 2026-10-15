@@ -35,14 +35,21 @@ export class RotulosService {
    * Debe llamarse directo desde el clic (sin await antes): la ventana se abre
    * de inmediato para que el navegador no la bloquee.
    */
-  async imprimir(pedidos: Pedido[]): Promise<boolean> {
-    if (!pedidos.length) return false;
+  async imprimir(fuente: Pedido[] | (() => Promise<Pedido[]>)): Promise<boolean> {
+    if (Array.isArray(fuente) && !fuente.length) return false;
     const ventana = window.open('', '_blank', 'width=480,height=640');
     if (!ventana) {
       this.toast.error('El navegador bloqueó la ventana de impresión. Permite las ventanas emergentes para esta página.');
       return false;
     }
     try {
+      // Los datos se traen después de abrir la ventana (si no, el navegador la bloquea)
+      const pedidos = Array.isArray(fuente) ? fuente : await fuente();
+      if (!pedidos.length) {
+        ventana.close();
+        this.toast.ok('No hay rótulos por imprimir');
+        return false;
+      }
       this.negocio ??= await cargarDatosNegocio(this.sb.client);
       const html = documentoRotulos(
         pedidos.map((p) => rotuloHtml(RotulosService.aRotulo(p), this.negocio!)),

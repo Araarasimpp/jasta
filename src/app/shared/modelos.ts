@@ -50,6 +50,7 @@ export interface Pedido {
   evidencias: string[] | null;
   cuadre_id: number | null;
   rotulo_impreso_at: string | null;
+  alistado_at?: string | null;
   vendedora?: { nombre: string } | null;
   mensajero?: { nombre: string } | null;
   pedido_items?: PedidoItem[];
