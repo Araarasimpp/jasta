@@ -22,7 +22,15 @@ import { formatoFechaCO, formatoHoraCO } from '../fecha-colombia';
   styles: [
     `
       .resumen { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-      .total { font-size: 22px; font-weight: 600; }
+      .total { font-size: 26px; font-weight: 800; font-stretch: 112%; font-variation-settings: 'wdth' 112; }
+      .ruta { list-style: none; margin: -6px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+      .ruta li { display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 500; color: var(--text-muted); }
+      .ruta .punto { height: 6px; border-radius: 3px; background: var(--border); }
+      .ruta li.hecho { color: var(--text-2); }
+      .ruta li.hecho .punto { background: var(--text); }
+      .ruta li.actual { color: var(--text); font-weight: 700; }
+      .ruta li.actual:nth-child(3) .punto { background: var(--cinta); }
+      .ruta li.actual:nth-child(4) .punto, .ruta li.hecho:nth-child(4) .punto { background: var(--efectivo); }
       .lineas { width: 100%; border-collapse: collapse; font-size: 13px; }
       .lineas td { padding: 6px 0; border-bottom: 1px solid var(--border-soft); }
       .lineas td:last-child { text-align: right; white-space: nowrap; }
@@ -46,7 +54,7 @@ import { formatoFechaCO, formatoHoraCO } from '../fecha-colombia';
     <button class="velo" aria-label="Cerrar" (click)="cerrar.emit()"></button>
     <aside class="hoja" role="dialog" aria-labelledby="t-pedido">
       <div class="hoja-head">
-        <h2 id="t-pedido">Pedido #{{ pedidoId }}</h2>
+        <h2 id="t-pedido">Pedido <span class="guia guia-grande">#{{ pedidoId }}</span></h2>
         <button class="b b-icono" aria-label="Cerrar" (click)="cerrar.emit()"><ion-icon name="close-outline"></ion-icon></button>
       </div>
 
@@ -56,6 +64,16 @@ import { formatoFechaCO, formatoHoraCO } from '../fecha-colombia';
             <span class="estado {{ p.estado }}">{{ estadoLabel(p.estado) }}</span>
             <span class="total num">{{ pesos(p.total) }}</span>
           </div>
+
+          @if (p.estado !== 'cancelado' && p.canal !== 'local') {
+            <ol class="ruta" aria-label="Recorrido del pedido">
+              @for (paso of pasos; track paso.id; let i = $index) {
+                <li [class.hecho]="i <= pasoActual()" [class.actual]="i === pasoActual()">
+                  <span class="punto"></span>{{ paso.label }}
+                </li>
+              }
+            </ol>
+          }
 
           <section>
             <h3 class="seccion-titulo">Cliente</h3>
@@ -200,6 +218,14 @@ export class PedidoDetalleComponent implements OnChanges {
   pesos = pesos;
   urlImagen = urlImagen;
   estadoLabel = estadoLabel;
+
+  pasos = [
+    { id: 'por_alistar', label: 'Por alistar' },
+    { id: 'alistado', label: 'Alistado' },
+    { id: 'despachado', label: 'En ruta' },
+    { id: 'entregado', label: 'Entregado' },
+  ];
+  pasoActual = computed(() => this.pasos.findIndex((x) => x.id === this.pedido()?.estado));
 
   puedeAsignar = computed(() => {
     const p = this.pedido();

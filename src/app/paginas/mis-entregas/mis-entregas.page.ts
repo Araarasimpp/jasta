@@ -99,7 +99,7 @@ import { RangoComponent, RangoFechas } from '../../shared/rango/rango.component'
         @for (p of enRuta(); track p.id) {
           <article class="tarjeta">
             <div class="tarjeta-top">
-              <h3 (click)="abierto.set(p.id)">#{{ p.id }} · {{ p.cliente_nombre }}</h3>
+              <h3 (click)="abierto.set(p.id)"><span class="guia">#{{ p.id }}</span> {{ p.cliente_nombre }}</h3>
               <strong class="total num">{{ pesos(p.total) }}</strong>
             </div>
             <p>{{ p.direccion }}<br />{{ p.barrio || 'Sin barrio' }}</p>
@@ -117,7 +117,7 @@ import { RangoComponent, RangoFechas } from '../../shared/rango/rango.component'
                 <a class="b b-wa" [href]="whatsapp(p)" target="_blank" rel="noopener"><ion-icon name="logo-whatsapp"></ion-icon>WhatsApp</a>
               }
               <a class="b" [href]="mapa(p)" target="_blank" rel="noopener"><ion-icon name="navigate-outline"></ion-icon>Mapa</a>
-              <button class="b b-pri" style="flex: 1" (click)="entregando.set(p)">Entregar</button>
+              <button class="b b-ok" style="flex: 1" (click)="entregando.set(p)">Entregar</button>
             </div>
           </article>
         } @empty {

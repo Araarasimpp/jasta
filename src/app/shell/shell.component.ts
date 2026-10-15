@@ -30,6 +30,7 @@ import { SupabaseService } from '../core/services/supabase.service';
 import { ThemeService } from '../core/services/theme.service';
 import { ROLES, Rol } from '../shared/modelos';
 import { ToastComponent } from '../shared/toast/toast.component';
+import { AvatarComponent } from '../shared/avatar/avatar.component';
 
 interface ItemMenu {
   label: string;
@@ -58,7 +59,7 @@ const MENU: ItemMenu[] = [
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, IonIcon, ToastComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, IonIcon, ToastComponent, AvatarComponent],
   styleUrls: ['../shared/pill-nav.scss', './shell.component.scss'],
   template: `
     <div class="shell" [class.collapsed]="colapsado()">
@@ -95,12 +96,15 @@ const MENU: ItemMenu[] = [
         </nav>
 
         <div class="sidebar-footer">
-          @if (!colapsado()) {
-            <div class="usuario">
-              <strong>{{ sb.usuario()?.nombre }}</strong>
-              <span>{{ rolesTexto() }}</span>
-            </div>
-          }
+          <a class="usuario" routerLink="/app/perfil" [attr.aria-label]="'Mi perfil: ' + sb.usuario()?.nombre">
+            <app-avatar [nombre]="sb.usuario()?.nombre" [foto]="sb.usuario()?.avatar_url" [tam]="32"></app-avatar>
+            @if (!colapsado()) {
+              <div>
+                <strong>{{ sb.usuario()?.nombre }}</strong>
+                <span>{{ rolesTexto() }}</span>
+              </div>
+            }
+          </a>
           <button class="footer-btn" (click)="theme.toggle()">
             <ion-icon [name]="theme.isDark() ? 'sunny-outline' : 'moon-outline'"></ion-icon>
             @if (!colapsado()) {

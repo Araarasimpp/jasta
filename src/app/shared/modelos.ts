@@ -101,7 +101,7 @@ export const ROLES: { id: Rol; label: string }[] = [
 export const ESTADOS: { id: EstadoPedido; label: string }[] = [
   { id: 'por_alistar', label: 'Por alistar' },
   { id: 'alistado', label: 'Alistado' },
-  { id: 'despachado', label: 'Despachado' },
+  { id: 'despachado', label: 'En ruta' },
   { id: 'entregado', label: 'Entregado' },
   { id: 'cancelado', label: 'Cancelado' },
 ];

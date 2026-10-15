@@ -131,7 +131,7 @@ type Filtro = EstadoPedido | 'activos' | 'todos';
                 @if (gestiona()) {
                   <td class="col-check"><input type="checkbox" class="check" [checked]="sel().has(p.id)" (change)="alternar(p.id)" [attr.aria-label]="'Seleccionar #' + p.id" /></td>
                 }
-                <td class="num suave"><a class="click" (click)="abrir(p.id)" style="cursor: pointer">#{{ p.id }}</a></td>
+                <td><a class="guia" (click)="abrir(p.id)">#{{ p.id }}</a></td>
                 <td>
                   <div class="cliente">
                     <strong (click)="abrir(p.id)" style="cursor: pointer">{{ p.cliente_nombre }}</strong>
@@ -200,7 +200,7 @@ type Filtro = EstadoPedido | 'activos' | 'todos';
               </div>
               <div class="meta">
                 <span class="estado {{ p.estado }}">{{ estadoLabel(p.estado) }}@if (p.estado === 'alistado' && filtro() === 'alistado') { · {{ pagina() * porPagina + i + 1 }}° }</span>
-                <span>#{{ p.id }} · {{ fecha(p.created_at) }}</span>
+                <span><span class="guia">#{{ p.id }}</span> {{ fecha(p.created_at) }}</span>
               </div>
               @if (gestiona() && (p.estado === 'por_alistar' || p.estado === 'alistado')) {
                 <div class="acciones">

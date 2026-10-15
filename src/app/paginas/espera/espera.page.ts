@@ -11,7 +11,7 @@ import { SupabaseService } from '../../core/services/supabase.service';
       <div class="vacio">
         <span class="vacio-titulo">Tu cuenta está lista, {{ sb.usuario()?.nombre }}</span>
         <p>Todavía no tienes un rol asignado. Pídele al administrador que te dé acceso como vendedora, alistamiento, mensajero o cuadres.</p>
-        <button class="btn" (click)="revisar()" [disabled]="cargando()">{{ cargando() ? 'Revisando…' : 'Ya me asignaron, revisar' }}</button>
+        <button class="b b-pri" (click)="revisar()" [disabled]="cargando()">{{ cargando() ? 'Revisando…' : 'Ya me asignaron, revisar' }}</button>
       </div>
     </div>
   `,

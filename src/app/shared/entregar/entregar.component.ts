@@ -54,7 +54,7 @@ import { mensajeError, pesos } from '../formato';
       </div>
       <div class="hoja-pie">
         <button class="b" (click)="cerrar.emit()">Cancelar</button>
-        <button class="b b-pri" [disabled]="!tipo() || guardando()" (click)="confirmar()">
+        <button class="b b-ok" [disabled]="!tipo() || guardando()" (click)="confirmar()">
           {{ guardando() ? 'Guardando…' : 'Confirmar entrega' }}
         </button>
       </div>

@@ -1,7 +1,6 @@
 // src/app/shared/pill-nav.scss
-// Barra de navegación inferior para celular, compartida por todos los layouts.
-// Conserva el nombre de archivo y la clase .pill-nav para no tocar los styleUrls,
-// pero ahora es una barra estándar de pestañas con ícono y etiqueta.
+// Barra de pestañas inferior para celular: ícono y etiqueta; la activa lleva
+// el ícono sobre una pastilla de tinta clara.
 
 .pill-nav {
   position: fixed;
@@ -33,7 +32,7 @@
   color: var(--text-soft);
   font-family: inherit;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   text-decoration: none;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -46,7 +45,23 @@
 
 .pill-nav a.active,
 .pill-nav .tab.active {
-  color: var(--accent);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.pill-nav a ion-icon,
+.pill-nav .tab ion-icon {
+  width: 44px;
+  height: 26px;
+  padding: 3px 0;
+  box-sizing: border-box;
+  border-radius: 999px;
+  transition: background var(--dur) var(--ease);
+}
+
+.pill-nav a.active ion-icon,
+.pill-nav .tab.active ion-icon {
+  background: var(--selected);
 }
 
 .pill-nav .tab-label {

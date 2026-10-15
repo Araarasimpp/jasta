@@ -62,8 +62,6 @@ const PAGO: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Tra
       .tabla .tienda { color: var(--st-entregado); }
       .tabla .vende { color: var(--accent); }
       .tabla .neg { color: var(--danger); }
-      .tabla a { color: inherit; text-decoration: none; cursor: pointer; }
-      .tabla a:hover { color: var(--accent); text-decoration: underline; }
       .nota { margin: 0; padding: 12px 20px 24px; font-size: 12px; line-height: 1.5; color: var(--text-muted); }
       @media (max-width: 760px) {
         .seccion { padding: 12px 14px 0; }
@@ -157,7 +155,7 @@ const PAGO: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Tra
                 @for (l of lineas(); track l.id) {
                   <tr>
                     <td class="suave">{{ fecha(l.created_at) }}</td>
-                    <td class="num"><a (click)="abierto.set(l.pedido_id)">#{{ l.pedido_id }}</a></td>
+                    <td><a class="guia" (click)="abierto.set(l.pedido_id)">#{{ l.pedido_id }}</a></td>
                     <td class="texto">{{ l.producto }}@if (l.sku) {<small>{{ l.sku }}</small>}</td>
                     <td class="der num">{{ l.cantidad }}</td>
                     <td class="der num">{{ pesos(l.precio_venta) }}</td>
@@ -194,7 +192,7 @@ const PAGO: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Tra
                 @for (p of pedidosV(); track p.id) {
                   <tr>
                     <td class="suave">{{ fecha(p.created_at) }}</td>
-                    <td class="num"><a (click)="abierto.set(p.id)">#{{ p.id }}</a></td>
+                    <td><a class="guia" (click)="abierto.set(p.id)">#{{ p.id }}</a></td>
                     <td class="texto">{{ p.cliente_nombre }}<small>{{ p.barrio || '' }}</small></td>
                     <td class="texto">{{ p.productos }}</td>
                     <td class="der num">{{ p.unidades }}</td>

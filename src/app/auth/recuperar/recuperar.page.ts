@@ -10,6 +10,10 @@ import { SupabaseService } from '../../core/services/supabase.service';
   styleUrls: ['../auth-shell.scss'],
   template: `
     <div class="auth-shell">
+      <aside class="auth-marca" aria-hidden="true">
+        <span class="sello">JASTA</span>
+        <p>Pedidos, despachos y cuadres del día, en un solo lugar.</p>
+      </aside>
       <div class="auth-card">
         <div class="auth-head">
           <img class="brand-mark" src="assets/icon/logo.png" alt="Jasta" />

@@ -24,7 +24,7 @@ type Vista = 'pedidos' | 'cambios';
       .feed li { display: grid; grid-template-columns: 110px 150px 1fr; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border-soft); font-size: 13px; align-items: baseline; }
       .feed time { color: var(--text-muted); font-size: 12px; }
       .feed .quien { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .feed a { color: var(--accent); cursor: pointer; margin-right: 6px; }
+      .feed .guia { margin-right: 6px; }
       .tag { display: inline-block; margin-right: 6px; padding: 0 6px; border-radius: 4px; background: var(--surface-2); color: var(--text-soft); font-size: 11px; }
       @media (max-width: 760px) { .feed { padding: 0 14px 24px; } .feed li { grid-template-columns: 1fr; gap: 2px; } }
     `,
@@ -49,7 +49,7 @@ type Vista = 'pedidos' | 'cambios';
             <time>{{ fecha(r.created_at) }}</time>
             <span class="quien">{{ r.autor || 'Sistema' }}</span>
             <span>
-              @if (r.pedido_id) { <a (click)="abierto.set(r.pedido_id!)">#{{ r.pedido_id }}</a> } @else { <span class="tag">{{ r.tipo }}</span> }
+              @if (r.pedido_id) { <a class="guia" (click)="abierto.set(r.pedido_id!)">#{{ r.pedido_id }}</a> } @else { <span class="tag">{{ r.tipo }}</span> }
               {{ r.texto }}
             </span>
           </li>

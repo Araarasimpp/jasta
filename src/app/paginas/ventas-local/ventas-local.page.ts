@@ -55,7 +55,7 @@ type Metodo = 'todos' | 'efectivo' | 'transferencia' | 'mixto';
             @for (v of filtradas(); track v.id) {
               <tr class="click" (click)="abierto.set(v.id)">
                 <td class="suave">{{ fecha(v.created_at) }}</td>
-                <td class="num suave">#{{ v.id }}</td>
+                <td><span class="guia">#{{ v.id }}</span></td>
                 <td>{{ v.cliente_nombre }}</td>
                 <td class="prods">{{ productos(v) }}</td>
                 <td>{{ v.vendedora?.nombre || '—' }}</td>
