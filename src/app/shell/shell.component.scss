@@ -1,4 +1,5 @@
-// Layout: menú lateral en tinta (escritorio) y barra inferior (celular).
+// Layout: menú lateral de papel (escritorio) y barra inferior (celular).
+// La sección activa lleva el ícono en oro; la acción principal va en tinta.
 
 .shell {
   display: flex;
@@ -10,62 +11,72 @@
 
 // ---------- Menú lateral ----------
 .sidebar {
-  --s-text: rgba(255, 255, 255, 0.92);
-  --s-soft: rgba(255, 255, 255, 0.62);
-  --s-hover: rgba(255, 255, 255, 0.08);
-  --s-on: rgba(255, 255, 255, 0.14);
-  --s-line: rgba(255, 255, 255, 0.1);
-
-  width: 240px;
+  width: 236px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 16px 12px 12px;
+  padding: 14px 12px 12px;
   box-sizing: border-box;
   background: var(--sidebar);
-  color: var(--s-text);
-  transition: width var(--dur) var(--ease);
+  border-right: 1px solid var(--border);
+  color: var(--text);
 }
 
 .shell.collapsed .sidebar {
-  width: 68px;
+  width: 64px;
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
   height: 40px;
-  padding: 0 2px 0 4px;
-  margin-bottom: 14px;
+  padding: 0 2px 0 2px;
+  margin-bottom: 12px;
 }
 
 .brand-mark {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
-  border-radius: 9px;
-  object-fit: cover;
-  box-shadow: 0 0 0 1px var(--s-line);
+  object-fit: contain;
+}
+
+:host-context(.dark) .brand-mark {
+  // La JT es negra con borde dorado: en modo oscuro va sobre una placa clara
+  padding: 3px;
+  box-sizing: border-box;
+  border-radius: var(--radius);
+  background: #f1efe9;
 }
 
 .brand-name {
   flex: 1;
   min-width: 0;
-  font-size: 19px;
-  font-weight: 800;
-  font-stretch: 125%;
-  font-variation-settings: 'wdth' 125;
-  letter-spacing: 0.01em;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   white-space: nowrap;
   overflow: hidden;
-  color: #fff;
+  color: var(--text);
+}
+
+.brand-name small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--oro-texto);
 }
 
 .icon-btn {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -73,14 +84,14 @@
   border: none;
   border-radius: var(--radius-sm);
   background: none;
-  color: var(--s-soft);
-  font-size: 16px;
+  color: var(--text-muted);
+  font-size: 15px;
   cursor: pointer;
 }
 
 .icon-btn:hover {
-  background: var(--s-hover);
-  color: #fff;
+  background: var(--hover);
+  color: var(--text);
 }
 
 .shell.collapsed .brand {
@@ -90,37 +101,33 @@
   padding: 0;
 }
 
-// Acción principal: blanca sobre la tinta
+// Acción principal: tinta llena
 .new-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  height: 40px;
+  gap: 7px;
+  height: 36px;
   padding: 0 12px;
   margin-bottom: 14px;
-  border-radius: var(--radius);
-  background: #fff;
-  color: #14213d;
-  font-size: 14px;
-  font-weight: 700;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 13.5px;
+  font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
   overflow: hidden;
-  transition: transform 80ms var(--ease), box-shadow var(--dur) var(--ease);
+  transition: background var(--dur) var(--ease);
 }
 
 .new-btn ion-icon {
-  font-size: 18px;
+  font-size: 17px;
   flex-shrink: 0;
 }
 
 .new-btn:hover {
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.22);
-}
-
-.new-btn:active {
-  transform: translateY(1px);
+  background: var(--accent-hover);
 }
 
 .shell.collapsed .new-btn {
@@ -133,7 +140,8 @@
   gap: 1px;
   overflow-y: auto;
   min-height: 0;
-  scrollbar-color: var(--s-line) transparent;
+  padding-top: 10px;
+  border-top: var(--perfora);
 }
 
 .menu-item,
@@ -141,13 +149,13 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 11px;
-  height: 36px;
-  padding: 0 11px;
+  gap: 10px;
+  height: 34px;
+  padding: 0 10px;
   border: none;
   border-radius: var(--radius-sm);
   background: none;
-  color: var(--s-soft);
+  color: var(--text-soft);
   font-family: inherit;
   font-size: 13.5px;
   font-weight: 500;
@@ -160,31 +168,26 @@
 
 .menu-item ion-icon,
 .footer-btn ion-icon {
-  font-size: 18px;
+  font-size: 17px;
   flex-shrink: 0;
+  color: var(--text-muted);
+  transition: color var(--dur) var(--ease);
 }
 
 .menu-item:hover,
 .footer-btn:hover {
-  background: var(--s-hover);
-  color: #fff;
+  background: var(--hover);
+  color: var(--text);
 }
 
 .menu-item.active {
-  background: var(--s-on);
-  color: #fff;
-  font-weight: 700;
+  background: var(--hover);
+  color: var(--text);
+  font-weight: 600;
 }
 
-.menu-item.active::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 8px;
-  bottom: 8px;
-  width: 3px;
-  border-radius: 0 3px 3px 0;
-  background: #fff;
+.menu-item.active ion-icon {
+  color: var(--oro);
 }
 
 .shell.collapsed .menu-item,
@@ -199,22 +202,22 @@
   flex-direction: column;
   gap: 1px;
   padding-top: 10px;
-  border-top: 1px solid var(--s-line);
+  border-top: var(--perfora);
 }
 
 .usuario {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 8px 10px;
+  padding: 6px 8px 8px;
   border-radius: var(--radius-sm);
-  color: var(--s-soft);
+  color: var(--text-muted);
   text-decoration: none;
   min-width: 0;
 }
 
 .usuario:hover {
-  background: var(--s-hover);
+  background: var(--hover);
 }
 
 .usuario div {
@@ -227,7 +230,7 @@
 .usuario strong {
   font-size: 13.5px;
   font-weight: 600;
-  color: #fff;
+  color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

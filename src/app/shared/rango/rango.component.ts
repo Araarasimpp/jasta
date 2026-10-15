@@ -28,7 +28,7 @@ export function diaCorto(iso: string): string {
   selector: 'app-rango',
   standalone: true,
   imports: [FormsModule],
-  styles: [`:host { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; } input { width: 140px; }`],
+  styles: [`:host { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; min-width: 0; max-width: 100%; } input { width: 140px; }`],
   template: `
     <div class="segmented">
       @for (r of opciones(); track r.id) {

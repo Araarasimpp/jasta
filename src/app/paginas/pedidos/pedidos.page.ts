@@ -29,27 +29,39 @@ type Filtro = EstadoPedido | 'activos' | 'todos';
     `
       .check { width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent); }
       .col-check { width: 28px; padding-right: 0 !important; }
-      .cliente { display: flex; flex-direction: column; gap: 2px; min-width: 200px; max-width: 320px; white-space: normal; }
+      .cliente { display: flex; flex-direction: column; gap: 2px; min-width: 200px; max-width: 260px; white-space: normal; }
       .cliente strong { font-weight: 500; }
       .cliente small { color: var(--text-muted); font-size: 12px; line-height: 1.35; }
-      .tabla tr.sel td { background: var(--accent-wash); }
+      .tabla tr.sel td { background: var(--oro-wash); }
+      .tabla tr.sel td:first-child { box-shadow: inset 3px 0 0 var(--oro); }
       .tabla td { white-space: nowrap; }
       .alistar { height: 28px; padding: 0 10px; font-size: 12px; }
-      .orden { display: inline-flex; align-items: center; gap: 4px; color: var(--st-entregado); font-size: 12px; font-weight: 500; }
+      .orden { display: inline-flex; align-items: center; gap: 4px; color: var(--oro-texto); font-family: var(--mono-font); font-size: 12px; font-weight: 600; }
       .rot { font-size: 12px; }
-      .rot.pend { color: var(--st-ruta-text); }
+      .rot.pend { color: var(--text); font-weight: 550; }
       .rot.ok { color: var(--text-muted); }
-      .sel-mens { height: 30px; font-size: 12px; max-width: 170px; }
+      .sel-mens { height: 30px; font-size: 12px; min-width: 150px; max-width: 170px; }
+      .tabla td.fecha { font-size: 12.5px; line-height: 1.35; }
       .acciones-fila { display: flex; gap: 6px; align-items: center; }
       .lote { position: fixed; z-index: 150; left: 50%; transform: translateX(-50%); bottom: calc(16px + var(--tabbar-offset, 0px));
         display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; max-width: calc(100vw - 24px);
         padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--shadow-pop); }
-      .lote span { font-size: 13px; font-weight: 500; padding: 0 4px; }
+      .lote span { font-size: 13px; font-weight: 500; padding: 0 4px; white-space: nowrap; }
       .lote select { height: 34px; max-width: 180px; }
       .tarjeta .meta { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--text-muted); }
       .tarjeta .fila-top { display: flex; gap: 10px; align-items: flex-start; }
       .tarjeta .fila-top > div { flex: 1; min-width: 0; cursor: pointer; }
       .rango-wrap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+      .tarjeta.sel { border-color: var(--oro); box-shadow: inset 3px 0 0 var(--oro); background: var(--oro-wash); }
+      @media (max-width: 760px) {
+        .barra.filtros { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-right: 40px;
+          -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent); }
+        .barra.filtros::-webkit-scrollbar { display: none; }
+        .barra.filtros > * { flex-shrink: 0; }
+        .barra.filtros .rango-wrap { flex-wrap: nowrap; }
+        .lote { width: calc(100vw - 24px); box-sizing: border-box; }
+        .lote > span:first-child { width: 100%; text-align: center; }
+      }
     `,
   ],
   template: `
@@ -79,7 +91,7 @@ type Filtro = EstadoPedido | 'activos' | 'todos';
         </div>
       </div>
 
-      <div class="barra">
+      <div class="barra filtros">
         <div class="rango-wrap">
           <app-rango [conTodo]="true" inicial="todo" (cambio)="cambiarRango($event)"></app-rango>
         </div>
@@ -174,7 +186,7 @@ type Filtro = EstadoPedido | 'activos' | 'todos';
                 }
                 <td><span class="estado {{ p.estado }}">{{ estadoLabel(p.estado) }}</span></td>
                 <td class="der num">{{ pesos(p.total) }}</td>
-                <td class="suave">{{ fecha(p.created_at) }}</td>
+                <td class="suave fecha">{{ dia(p.created_at) }}<br />{{ hora(p.created_at) }}</td>
               </tr>
             } @empty {
               <tr><td colspan="10" class="suave">{{ cargando() ? 'Cargando…' : 'No hay pedidos con estos filtros.' }}</td></tr>
@@ -187,7 +199,7 @@ type Filtro = EstadoPedido | 'activos' | 'todos';
       <div class="vista-body solo-cel">
         <div class="tarjetas" style="width: 100%">
           @for (p of filas(); track p.id; let i = $index) {
-            <div class="tarjeta" [style.border-color]="sel().has(p.id) ? 'var(--accent)' : null">
+            <div class="tarjeta" [class.sel]="sel().has(p.id)">
               <div class="fila-top">
                 @if (gestiona()) {
                   <input type="checkbox" class="check" [checked]="sel().has(p.id)" (change)="alternar(p.id)" [attr.aria-label]="'Seleccionar #' + p.id" />
@@ -491,6 +503,14 @@ export class PedidosPage implements OnInit, OnDestroy {
   productosTexto(p: Pedido): string {
     const it = p.pedido_items ?? [];
     return it.map((i) => (i.cantidad > 1 ? `${i.nombre} x${i.cantidad}` : i.nombre)).join(', ') || 'Sin productos';
+  }
+
+  dia(iso: string): string {
+    return formatoFechaCO(iso, { day: 'numeric', month: 'short' });
+  }
+
+  hora(iso: string): string {
+    return formatoHoraCO(iso);
   }
 
   fecha(iso: string): string {

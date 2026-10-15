@@ -36,7 +36,7 @@ const EJEMPLO: PedidoRotulo = {
     `
       .grid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 24px; align-items: start; }
       .form { display: flex; flex-direction: column; gap: 14px; max-width: 520px; }
-      .previa { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; background: #f4f5f7; }
+      .previa { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; background: var(--bg); }
       .previa iframe { display: block; width: 100%; height: 420px; border: 0; }
       .previa p { margin: 0; padding: 10px 14px; font-size: 12px; color: var(--text-soft); background: var(--surface); border-top: 1px solid var(--border); }
       h2 { margin: 0; font-size: 14px; font-weight: 600; }

@@ -67,7 +67,7 @@ const MENU: ItemMenu[] = [
         <div class="brand">
           <img class="brand-mark" src="assets/icon/logo.png" alt="" />
           @if (!colapsado()) {
-            <span class="brand-name">Jasta</span>
+            <span class="brand-name">Jasta<small>Hobbies &amp; Accesorios</small></span>
           }
           <button class="icon-btn" (click)="alternarMenu()" [attr.aria-label]="colapsado() ? 'Expandir menú' : 'Contraer menú'">
             <ion-icon [name]="colapsado() ? 'chevron-forward-outline' : 'chevron-back-outline'"></ion-icon>

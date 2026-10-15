@@ -1,113 +1,123 @@
 // src/theme/tema.scss
-// Sistema visual de Jasta: "piso de despacho".
-// Tinta azul noche para la estructura y las acciones, superficies blancas como
-// papel de rótulo sobre un fondo gris bodega, ámbar de cinta de embalar para lo
-// que va en ruta y verde para la plata y lo entregado. El color de estado solo
-// se usa para estados.
+// Sistema visual de Jasta: "tiquete de caja".
+// Papel blanco, tinta casi negra, cifras tabulares y perforaciones punteadas,
+// como el recibo de un punto de venta. El oro de JT es el único acento: marca
+// lo activo, lo seleccionado y el foco. El color de estado solo se usa para
+// estados.
 
 :root {
-  // Tipografía: Archivo (ancho variable). Normal para leer, expandida para
-  // títulos y números de pedido, como sellos de caja.
-  --ui-font: 'Archivo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --ancho-titulo: 118;
+  // Tipografía: Geist para la interfaz, Geist Mono para cifras, números de
+  // pedido, plata y fechas (lo que en un tiquete sale de la impresora).
+  --ui-font: 'Geist Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono-font: 'Geist Mono Variable', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
   // Marca
-  --tinta: #14213d;
-  --tinta-2: #1d2d50;
-  --cinta: #d98a0b;
-  --efectivo: #0f7b57;
-  --cobalto: #2f4fd8;
+  --tinta: #171511;
+  --oro: #c4920f; // rellenos y marcas (subrayado activo, punto, casillas)
+  --oro-texto: #8a6400; // oro legible sobre papel
+  --oro-wash: #fbf5e4;
+  --oro-soft: #efdfb2;
+  --efectivo: #17794f;
+  --cobalto: #2f55d4;
 
-  // Superficies
-  --bg: #eef1f5;
+  // Superficies: rollo de papel sobre mostrador
+  --bg: #f4f4f2;
   --surface: #ffffff;
-  --surface-2: #f5f7fa;
-  --sidebar: var(--tinta);
-  --hover: #e8ecf2;
-  --selected: #dfe5ee;
+  --surface-2: #f8f8f6;
+  --hover: #f1f0ec;
+  --selected: #ebe9e3;
 
   // Texto
-  --text: #14213d;
-  --text-2: #33415e;
-  --text-soft: #5b6680;
-  --text-muted: #6e7891;
+  --text: #171511;
+  --text-2: #36332c;
+  --text-soft: #5b574e;
+  --text-muted: #6f6b62;
 
-  // Bordes
-  --border: #d9dee6;
-  --border-soft: #e9edf2;
-  --border-strong: #c3cad6;
+  // Bordes y perforación
+  --border: #e3e1db;
+  --border-soft: #eeede8;
+  --border-strong: #cbc8bf;
 
-  // Acción principal (botones, foco, selección): la tinta
-  --accent: #14213d;
-  --accent-hover: #24365f;
-  --accent-soft: #d5dcea;
-  --accent-wash: #eef1f8;
+  // Acción principal (botones): la tinta. Foco y selección: el oro.
+  --accent: #171511;
+  --accent-hover: #34312a;
   --on-accent: #ffffff;
-  --link: var(--cobalto);
 
-  // Estados de pedido
-  --st-pendiente: #6e7891;
-  --st-alistado: var(--cobalto);
-  --st-ruta: var(--cinta);
-  --st-ruta-text: #a6650a;
-  --st-entregado: var(--efectivo);
-  --st-cancelado: #8d95a5;
-  --danger: #b4232f;
-  --danger-wash: #fbebec;
-  --ok-wash: #e7f4ee;
-  --ruta-wash: #fdf2df;
+  // Estados de pedido (cada uno conserva su color)
+  --st-pendiente: #6f6b62;
+  --st-ruta: #c97a00;
+  --st-ruta-text: #9a5b00;
+  --st-cancelado: #9a968d;
+  --danger: #b42318;
+  --danger-wash: #fdeeec;
+  --ok-wash: #e8f4ee;
+  --ruta-wash: #fdf1df;
 
-  // Forma y profundidad: radios según el papel de cada cosa
-  --radius-xs: 3px; // etiquetas y sellos
-  --radius-sm: 6px; // controles
-  --radius: 8px;
-  --radius-lg: 10px; // paneles
-  --radius-xl: 14px; // hojas y diálogos
-  --shadow-pop: 0 12px 32px rgba(20, 33, 61, 0.18), 0 2px 6px rgba(20, 33, 61, 0.1);
-  --dur: 160ms;
-  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  // Forma: esquinas cortas de papel cortado; sombra solo en lo que flota
+  --radius-xs: 3px;
+  --radius-sm: 5px;
+  --radius: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --shadow-pop: 0 10px 30px rgba(23, 21, 17, 0.14), 0 2px 6px rgba(23, 21, 17, 0.08);
+  --dur: 140ms;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
 
   --tabbar-h: 60px;
 }
 
 body.dark {
-  --tinta: #0b1326;
-  --tinta-2: #16213b;
-  --cinta: #f0a531;
-  --efectivo: #3cc08f;
-  --cobalto: #8ea4ff;
+  // Papel térmico de noche: carbón, tinta clara y el mismo oro, más luminoso
+  --tinta: #f1efe9;
+  --oro: #e0b43e;
+  --oro-texto: #e6be55;
+  --oro-wash: #2a2312;
+  --oro-soft: #4a3c17;
+  --efectivo: #45c48a;
+  --cobalto: #8ea6ff;
 
-  --bg: #0d1424;
-  --surface: #131c30;
-  --surface-2: #19243c;
-  --sidebar: #0a1120;
-  --hover: #1f2b46;
-  --selected: #26355a;
+  --bg: #0e0e0c;
+  --surface: #161614;
+  --surface-2: #1b1b18;
+  --hover: #22221e;
+  --selected: #2a2925;
 
-  --text: #e8ecf5;
-  --text-2: #c3cbdd;
-  --text-soft: #9aa5bd;
-  --text-muted: #8590aa;
+  --text: #f1efe9;
+  --text-2: #d6d3cb;
+  --text-soft: #aeaaa0;
+  --text-muted: #96928a;
 
-  --border: #26324d;
-  --border-soft: #1d2840;
-  --border-strong: #34425f;
+  --border: #2c2b27;
+  --border-soft: #22211e;
+  --border-strong: #3d3c36;
 
-  --accent: #dfe5f5;
+  --accent: #f1efe9;
   --accent-hover: #ffffff;
-  --accent-soft: #2b3a5e;
-  --accent-wash: #1a2540;
-  --on-accent: #0d1424;
+  --on-accent: #121210;
 
-  --st-pendiente: #9aa5bd;
+  --st-pendiente: #aeaaa0;
+  --st-ruta: #f0a531;
   --st-ruta-text: #f0a531;
-  --st-cancelado: #6f7a93;
-  --danger: #ff6b73;
-  --danger-wash: #3a1a20;
-  --ok-wash: #12312a;
-  --ruta-wash: #3a2a10;
+  --st-cancelado: #7d7a72;
+  --danger: #ff7a6e;
+  --danger-wash: #3a1915;
+  --ok-wash: #11291f;
+  --ruta-wash: #33240c;
 
-  --shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.35);
+  --shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+// Alias que dependen de otros tokens: se declaran en body para que se
+// recalculen con los valores del tema oscuro (en :root quedarían fijos).
+body {
+  --sidebar: var(--surface);
+  --perfora: 1px dashed var(--border-strong);
+  --accent-soft: var(--oro-soft);
+  --accent-wash: var(--oro-wash);
+  --link: var(--oro-texto);
+  --foco: var(--oro);
+  --st-alistado: var(--cobalto);
+  --st-entregado: var(--efectivo);
 }
 
 // Ionic toma la misma paleta
@@ -122,16 +132,14 @@ body.dark {
 
 body {
   font-family: var(--ui-font);
-  font-variation-settings: 'wdth' 100;
+  font-size: 14px;
   background: var(--bg);
   color: var(--text);
+  font-feature-settings: 'ss01' on;
 }
 
-// Títulos con el ancho expandido de Archivo
 h1,
 h2,
-.titulo-exp {
-  font-stretch: 118%;
-  font-variation-settings: 'wdth' var(--ancho-titulo);
-  letter-spacing: -0.01em;
+h3 {
+  letter-spacing: -0.02em;
 }

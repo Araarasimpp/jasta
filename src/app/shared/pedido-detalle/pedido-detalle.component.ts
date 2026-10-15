@@ -22,28 +22,33 @@ import { formatoFechaCO, formatoHoraCO } from '../fecha-colombia';
   styles: [
     `
       .resumen { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-      .total { font-size: 26px; font-weight: 800; font-stretch: 112%; font-variation-settings: 'wdth' 112; }
+      .total { font-size: 26px; font-weight: 600; letter-spacing: -0.03em; }
       .ruta { list-style: none; margin: -6px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
       .ruta li { display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 500; color: var(--text-muted); }
-      .ruta .punto { height: 6px; border-radius: 3px; background: var(--border); }
+      .ruta .punto { height: 4px; border-radius: 2px; background: var(--border); transition: background 300ms var(--ease); }
       .ruta li.hecho { color: var(--text-2); }
       .ruta li.hecho .punto { background: var(--text); }
-      .ruta li.actual { color: var(--text); font-weight: 700; }
-      .ruta li.actual:nth-child(3) .punto { background: var(--cinta); }
+      .ruta li.actual { color: var(--text); font-weight: 650; }
+      .ruta li.actual:nth-child(2) .punto { background: var(--st-alistado); }
+      .ruta li.actual:nth-child(3) .punto { background: var(--st-ruta); }
       .ruta li.actual:nth-child(4) .punto, .ruta li.hecho:nth-child(4) .punto { background: var(--efectivo); }
       .lineas { width: 100%; border-collapse: collapse; font-size: 13px; }
-      .lineas td { padding: 6px 0; border-bottom: 1px solid var(--border-soft); }
+      .lineas td { padding: 5px 0; vertical-align: baseline; }
       .lineas td:last-child { text-align: right; white-space: nowrap; }
       .lineas .cant { width: 36px; color: var(--text-soft); }
-      .lineas tfoot td { border: none; padding-top: 8px; color: var(--text-soft); }
-      .lineas tfoot tr.fin td { color: var(--text); font-weight: 600; }
+      .lider { display: flex; align-items: baseline; gap: 8px; padding-right: 8px; }
+      .lider::after { content: ''; flex: 1; min-width: 16px; border-bottom: 1px dotted var(--border-strong); transform: translateY(-4px); }
+      .lineas tfoot tr:first-child td { border-top: var(--perfora); padding-top: 9px; }
+      .lineas tfoot td { color: var(--text-soft); }
+      .lineas tfoot tr.fin td { padding-top: 9px; border-bottom: 3px double var(--text); color: var(--text); font-size: 15px; font-weight: 650; }
+      .lineas tfoot tr.fin td:first-child { border-bottom: none; }
       .fotos { display: flex; gap: 8px; flex-wrap: wrap; }
       .fotos a { display: block; width: 88px; height: 88px; border-radius: var(--radius-sm); overflow: hidden;
         border: 1px solid var(--border); background: var(--surface-2); }
       .fotos img { width: 100%; height: 100%; object-fit: cover; }
       .historial { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
       .historial li { display: grid; grid-template-columns: 92px 1fr; gap: 10px; }
-      .historial time { color: var(--text-muted); font-size: 12px; }
+      .historial time { color: var(--text-muted); font-family: var(--mono-font); font-size: 11.5px; }
       .contacto { display: flex; gap: 6px; }
       .despachar { display: flex; gap: 8px; }
       .despachar select { flex: 1; }
@@ -101,12 +106,12 @@ import { formatoFechaCO, formatoHoraCO } from '../fecha-colombia';
             <table class="lineas">
               <tbody>
                 @for (i of p.pedido_items ?? []; track i.id) {
-                  <tr><td class="cant num">{{ i.cantidad }}×</td><td>{{ i.nombre }}</td><td class="num">{{ pesos(i.total) }}</td></tr>
+                  <tr><td class="cant num">{{ i.cantidad }}×</td><td><span class="lider">{{ i.nombre }}</span></td><td class="num">{{ pesos(i.total) }}</td></tr>
                 }
               </tbody>
               <tfoot>
-                <tr><td></td><td>Domicilio</td><td class="num">{{ pesos(p.valor_domicilio) }}</td></tr>
-                <tr class="fin"><td></td><td>Total</td><td class="num">{{ pesos(p.total) }}</td></tr>
+                <tr><td></td><td><span class="lider">Domicilio</span></td><td class="num">{{ pesos(p.valor_domicilio) }}</td></tr>
+                <tr class="fin"><td></td><td><span class="lider">Total</span></td><td class="num">{{ pesos(p.total) }}</td></tr>
               </tfoot>
             </table>
           </section>

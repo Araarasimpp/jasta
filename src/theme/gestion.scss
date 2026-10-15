@@ -1,13 +1,13 @@
 // Piezas comunes de las pantallas de gestión (listas, tablas, paneles, formularios).
-// Sistema "piso de despacho": superficies de papel sobre gris bodega, tinta para
-// la estructura, sellos para los números de pedido y color solo para estados.
+// Sistema "tiquete de caja": papel blanco, perforaciones punteadas entre filas,
+// cifras en mono tabular y el oro de JT solo para lo activo.
 
 // ---------- Vista ----------
 .vista {
   display: flex;
   flex-direction: column;
   min-height: 100%;
-  background: var(--bg);
+  background: var(--surface);
 }
 
 .vista-head {
@@ -16,9 +16,8 @@
   gap: 10px;
   flex-wrap: wrap;
   min-height: 64px;
-  padding: 14px 24px 12px;
+  padding: 14px 28px 10px;
   background: var(--surface);
-  border-bottom: 1px solid var(--border);
 }
 
 .vista-head h1 {
@@ -26,22 +25,22 @@
   display: flex;
   align-items: baseline;
   gap: 10px;
-  font-size: 21px;
-  font-weight: 700;
+  font-size: 22px;
+  font-weight: 650;
   line-height: 1.15;
 }
 
 .vista-head h1 small {
+  font-family: var(--mono-font);
   font-size: 13px;
   font-weight: 500;
-  font-stretch: 100%;
-  font-variation-settings: 'wdth' 100;
+  letter-spacing: 0;
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
 }
 
 .vista-body {
-  padding: 20px 24px;
+  padding: 20px 28px;
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -53,39 +52,40 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 36px;
-  padding: 0 14px;
+  height: 34px;
+  padding: 0 13px;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--text);
   font-family: inherit;
   font-size: 13.5px;
-  font-weight: 600;
+  font-weight: 550;
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
-  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease), transform 80ms var(--ease);
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 
 .b:hover {
-  border-color: var(--text-soft);
+  border-color: var(--text-muted);
   background: var(--surface-2);
 }
 
 .b:active:not(:disabled) {
-  transform: translateY(1px);
+  background: var(--hover);
 }
 
 .b ion-icon {
-  font-size: 17px;
+  font-size: 16px;
 }
 
 .b:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: default;
 }
 
+// Primaria: tinta llena, como el texto impreso en negrita del tiquete
 .b-pri {
   border-color: var(--accent);
   background: var(--accent);
@@ -97,6 +97,10 @@
   background: var(--accent-hover);
 }
 
+.b-pri:active:not(:disabled) {
+  background: var(--accent);
+}
+
 // Acciones que mueven plata o cierran la entrega
 .b-ok {
   border-color: var(--efectivo);
@@ -105,8 +109,12 @@
 }
 
 .b-ok:hover {
-  filter: brightness(1.08);
-  background: var(--efectivo);
+  border-color: var(--efectivo);
+  background: color-mix(in srgb, var(--efectivo) 88%, #000);
+}
+
+body.dark .b-ok {
+  color: #08130e;
 }
 
 .b-peligro {
@@ -119,7 +127,7 @@
 }
 
 .b-grande {
-  height: 48px;
+  height: 46px;
   font-size: 15px;
   border-radius: var(--radius);
 }
@@ -129,13 +137,13 @@
 }
 
 .b-icono {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   padding: 0;
   border: none;
   background: none;
   color: var(--text-soft);
-  font-size: 19px;
+  font-size: 18px;
 }
 
 .b-icono:hover {
@@ -149,9 +157,15 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  padding: 10px 24px;
+  padding: 8px 28px;
   background: var(--surface);
-  border-bottom: 1px solid var(--border-soft);
+}
+
+// La primera barra después del encabezado lleva la perforación del tiquete
+.vista-head + .barra {
+  border-bottom: var(--perfora);
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .buscar {
@@ -160,19 +174,20 @@
   gap: 8px;
   width: 300px;
   max-width: 100%;
-  height: 36px;
-  padding: 0 12px;
+  height: 34px;
+  padding: 0 11px;
   box-sizing: border-box;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background: var(--surface);
+  background: var(--surface-2);
   color: var(--text-muted);
-  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), background var(--dur) var(--ease);
 }
 
 .buscar:focus-within {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  border-color: var(--oro);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--oro-wash);
 }
 
 .buscar input {
@@ -186,10 +201,10 @@
   font-size: 14px;
 }
 
-// Pestañas de filtro: subrayado de tinta, no cajitas
+// Pestañas: texto con el conteo en cifras de tiquete; la activa va subrayada en oro
 .chips {
   display: flex;
-  gap: 2px;
+  gap: 4px;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -201,10 +216,12 @@
 .chip {
   position: relative;
   flex-shrink: 0;
-  height: 34px;
-  padding: 0 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 40px;
+  padding: 0 10px;
   border: none;
-  border-radius: var(--radius-sm);
   background: none;
   color: var(--text-soft);
   font-family: inherit;
@@ -212,35 +229,48 @@
   font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
+  transition: color var(--dur) var(--ease);
+}
+
+.chip::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--oro);
+  transform: scaleX(0);
+  transition: transform 220ms var(--ease);
 }
 
 .chip:hover {
-  background: var(--hover);
   color: var(--text);
 }
 
 .chip.on {
   color: var(--text);
-  font-weight: 700;
-  background: var(--surface-2);
-  box-shadow: inset 0 -2px 0 var(--accent);
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  font-weight: 600;
+}
+
+.chip.on::after {
+  transform: scaleX(1);
 }
 
 .chip .n {
-  margin-left: 5px;
-  padding: 1px 6px;
-  border-radius: 999px;
-  background: var(--selected);
-  color: var(--text-2);
-  font-size: 11.5px;
-  font-weight: 600;
+  margin: 0;
+  padding: 0;
+  font-family: var(--mono-font);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
   font-variant-numeric: tabular-nums;
 }
 
 .chip.on .n {
-  background: var(--accent);
-  color: var(--on-accent);
+  color: var(--oro-texto);
+  font-weight: 600;
 }
 
 // ---------- Campos ----------
@@ -254,7 +284,7 @@
 .campo > label,
 .campo > .etq {
   font-size: 12.5px;
-  font-weight: 600;
+  font-weight: 550;
   color: var(--text-2);
 }
 
@@ -272,6 +302,17 @@
   color: var(--text);
   font-family: inherit;
   font-size: 14.5px;
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+
+select.inp,
+.campo select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 30px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%236f6b62' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 11px center;
 }
 
 .campo textarea {
@@ -282,17 +323,24 @@
   line-height: 1.45;
 }
 
+.inp:hover,
+.campo input:hover,
+.campo select:hover,
+.campo textarea:hover {
+  border-color: var(--text-muted);
+}
+
 .inp:focus,
 .campo input:focus,
 .campo select:focus,
 .campo textarea:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  border-color: var(--oro);
+  box-shadow: 0 0 0 3px var(--oro-wash);
 }
 
 .inp-chico {
-  height: 36px;
+  height: 34px;
   font-size: 13.5px;
   width: auto;
 }
@@ -313,14 +361,14 @@
 .error {
   margin: 0;
   padding: 10px 12px;
-  border-left: 3px solid var(--danger);
-  border-radius: var(--radius-xs);
+  border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
+  border-radius: var(--radius-sm);
   background: var(--danger-wash);
   color: var(--danger);
   font-size: 13.5px;
 }
 
-// ---------- Tabla ----------
+// ---------- Tabla: renglones de tiquete ----------
 .tabla-wrap {
   overflow-x: auto;
   background: var(--surface);
@@ -336,39 +384,59 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  height: 36px;
+  height: 34px;
   padding: 0 12px;
   background: var(--surface);
-  border-bottom: 2px solid var(--text);
-  color: var(--text-2);
-  font-size: 12px;
-  font-weight: 700;
+  border-bottom: 1px solid var(--text);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   text-align: left;
   white-space: nowrap;
 }
 
+.tabla th:first-child,
+.tabla td:first-child {
+  padding-left: 28px;
+}
+
+.tabla th:last-child,
+.tabla td:last-child {
+  padding-right: 28px;
+}
+
 .tabla td {
-  height: 48px;
-  padding: 6px 12px;
-  border-bottom: 1px solid var(--border-soft);
+  height: 46px;
+  padding: 7px 12px;
+  border-bottom: var(--perfora);
   vertical-align: middle;
 }
 
-.tabla tbody tr:nth-child(even) td {
-  background: color-mix(in srgb, var(--surface-2) 55%, var(--surface));
+.tabla tbody tr:last-child td {
+  border-bottom: none;
 }
 
 .tabla tr.click {
   cursor: pointer;
 }
 
-.tabla tr.click:hover td,
+.tabla tbody tr {
+  transition: background var(--dur) var(--ease);
+}
+
 .tabla tbody tr:hover td {
-  background: var(--hover);
+  background: var(--surface-2);
 }
 
 .tabla .der {
   text-align: right;
+}
+
+.tabla td.der {
+  font-family: var(--mono-font);
+  font-variant-numeric: tabular-nums;
 }
 
 .tabla .corta {
@@ -378,98 +446,100 @@
   white-space: nowrap;
 }
 
+// Fila de totales al pie: doble raya, como el TOTAL del tiquete
+.tabla tfoot td {
+  border-top: 1px solid var(--text);
+  border-bottom: none;
+  font-weight: 650;
+}
+
 .paginar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 24px;
+  padding: 12px 28px;
   font-size: 13px;
   color: var(--text-soft);
   background: var(--surface);
-  border-top: 1px solid var(--border-soft);
+  border-top: var(--perfora);
 }
 
-// ---------- Número de pedido: sello de guía ----------
+// ---------- Número de pedido ----------
 .guia {
   display: inline-flex;
   align-items: center;
-  height: 22px;
-  padding: 0 6px;
-  border: 1.5px solid var(--text);
-  border-radius: var(--radius-xs);
+  font-family: var(--mono-font);
   color: var(--text);
-  font-size: 12px;
-  font-weight: 700;
-  font-stretch: 118%;
-  font-variation-settings: 'wdth' 118;
+  font-size: 13px;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
+  letter-spacing: -0.01em;
   white-space: nowrap;
   text-decoration: none;
   cursor: pointer;
 }
 
+a.guia:hover,
 .guia:hover {
-  background: var(--text);
-  color: var(--surface);
+  color: var(--oro-texto);
+  text-decoration: underline;
+  text-decoration-color: var(--oro);
+  text-underline-offset: 3px;
 }
 
 .guia-grande {
-  height: 30px;
-  padding: 0 9px;
-  font-size: 16px;
-  border-width: 2px;
+  font-size: 17px;
 }
 
-// ---------- Estados ----------
+// ---------- Estados: punto de tamaño fijo + nombre ----------
 .estado {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 24px;
-  padding: 0 9px 0 7px;
-  border-radius: 999px;
-  background: var(--surface-2);
+  gap: 7px;
+  height: 22px;
   color: var(--text-2);
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 600;
   white-space: nowrap;
 }
 
 .estado::before {
   content: '';
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: currentColor;
   flex-shrink: 0;
 }
 
 .estado.por_alistar {
-  color: var(--st-pendiente);
-  background: var(--surface-2);
-  box-shadow: inset 0 0 0 1px var(--border);
+  color: var(--text-2);
+}
+
+.estado.por_alistar::before {
+  background: none;
+  box-shadow: inset 0 0 0 1.5px var(--st-pendiente);
 }
 
 .estado.alistado {
   color: var(--st-alistado);
-  background: color-mix(in srgb, var(--st-alistado) 12%, var(--surface));
 }
 
 .estado.despachado {
   color: var(--st-ruta-text);
-  background: var(--ruta-wash);
+}
+
+.estado.despachado::before {
+  background: var(--st-ruta);
 }
 
 .estado.entregado {
   color: var(--st-entregado);
-  background: var(--ok-wash);
 }
 
 .estado.cancelado {
   color: var(--st-cancelado);
-  background: var(--surface-2);
   text-decoration: line-through;
 }
 
@@ -477,7 +547,7 @@
   display: inline-flex;
   align-items: center;
   height: 22px;
-  padding: 0 8px;
+  padding: 0 7px;
   border-radius: var(--radius-xs);
   background: var(--surface-2);
   border: 1px solid var(--border);
@@ -488,13 +558,13 @@
 }
 
 .etiqueta.on {
-  background: var(--accent-wash);
-  border-color: var(--accent-soft);
+  background: var(--oro-wash);
+  border-color: var(--oro-soft);
   color: var(--text);
   font-weight: 600;
 }
 
-// ---------- Tarjetas (listas en celular, colas de trabajo) ----------
+// ---------- Tarjetas: un tiquete por pedido (listas en celular, colas) ----------
 .tarjetas {
   display: flex;
   flex-direction: column;
@@ -505,10 +575,11 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 14px 14px 14px 16px;
+  padding: 16px 20px;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
 }
 
 .tarjeta-top {
@@ -518,10 +589,16 @@
   gap: 10px;
 }
 
+.tarjeta-top strong.num,
+.tarjeta-top .num {
+  font-size: 15px;
+  font-weight: 600;
+}
+
 .tarjeta h3 {
   margin: 0;
   font-size: 15.5px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.25;
 }
 
@@ -536,24 +613,130 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  margin-top: 4px;
+  margin: 4px -20px -16px;
+  padding: 10px 20px 12px;
+  border-top: var(--perfora);
 }
 
+// Renglones de productos con puntos guía hasta el precio
 .items-mini {
   margin: 0;
-  padding: 8px 10px;
+  padding: 2px 0;
   list-style: none;
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--radius-xs);
-  background: var(--surface-2);
   font-size: 13px;
 }
 
 .items-mini li {
   display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 2px 0;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px 0;
+}
+
+.items-mini li > :first-child:not(:last-child) {
+  display: flex;
+  align-items: baseline;
+  flex: 1;
+  min-width: 0;
+  gap: 6px;
+}
+
+.items-mini li > :first-child:not(:last-child)::after {
+  content: '';
+  flex: 1;
+  min-width: 12px;
+  border-bottom: 1px dotted var(--border-strong);
+  transform: translateY(-3px);
+}
+
+.items-mini li > :last-child:not(:first-child) {
+  font-family: var(--mono-font);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+// ---------- Renglones de tiquete: concepto ······ valor, con TOTAL a doble raya ----------
+.renglones {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+}
+
+.renglones > * {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 5px 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.renglones > * > :first-child {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  color: var(--text-soft);
+}
+
+.renglones > * > :first-child::after {
+  content: '';
+  flex: 1;
+  min-width: 16px;
+  border-bottom: 1px dotted var(--border-strong);
+  transform: translateY(-4px);
+}
+
+.renglones > * > :last-child {
+  margin: 0;
+  font-family: var(--mono-font);
+  font-variant-numeric: tabular-nums;
+  font-weight: 550;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+.renglones > * > :last-child small {
+  font-family: var(--ui-font);
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.renglones > a {
+  border-radius: var(--radius-xs);
+  transition: background var(--dur) var(--ease);
+}
+
+.renglones > a:hover > :first-child {
+  color: var(--text);
+}
+
+.renglones .total {
+  margin-top: 8px;
+  padding: 10px 0 8px;
+  border-top: var(--perfora);
+  border-bottom: 3px double var(--text);
+}
+
+.renglones .total > :first-child {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.renglones .total > :first-child::after {
+  border-bottom-color: var(--text-muted);
+}
+
+.renglones .total > :last-child {
+  font-size: 24px;
+  font-weight: 650;
+  letter-spacing: -0.03em;
 }
 
 // ---------- Panel lateral / hoja ----------
@@ -561,10 +744,10 @@
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: rgba(13, 20, 36, 0.42);
+  background: rgba(14, 14, 12, 0.36);
   border: none;
   padding: 0;
-  animation: velo-in 160ms var(--ease);
+  animation: velo-in 180ms var(--ease);
 }
 
 @keyframes velo-in {
@@ -586,12 +769,12 @@
   border-left: 1px solid var(--border);
   box-shadow: var(--shadow-pop);
   padding-top: env(safe-area-inset-top);
-  animation: hoja-in 220ms var(--ease);
+  animation: hoja-in 260ms var(--ease);
 }
 
 @keyframes hoja-in {
   from {
-    transform: translateX(24px);
+    transform: translateX(28px);
     opacity: 0;
   }
 }
@@ -615,20 +798,20 @@
   align-items: center;
   gap: 10px;
   min-height: 60px;
-  padding: 10px 14px 10px 22px;
-  border-bottom: 1px solid var(--border);
+  padding: 10px 14px 10px 24px;
+  border-bottom: var(--perfora);
 }
 
 .hoja-head h2 {
   margin: 0 auto 0 0;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 650;
 }
 
 .hoja-body {
   flex: 1;
   overflow-y: auto;
-  padding: 20px 22px;
+  padding: 20px 24px;
   display: flex;
   flex-direction: column;
   gap: 22px;
@@ -638,15 +821,16 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  padding: 12px 22px calc(12px + env(safe-area-inset-bottom));
-  border-top: 1px solid var(--border);
-  background: var(--surface-2);
+  padding: 12px 24px calc(12px + env(safe-area-inset-bottom));
+  border-top: var(--perfora);
+  background: var(--surface);
 }
 
 .hoja-pie .b {
   flex: 1;
 }
 
+// Datos en dos columnas, como los renglones de un recibo
 .datos {
   display: grid;
   grid-template-columns: 120px 1fr;
@@ -667,11 +851,13 @@
 
 .seccion-titulo {
   margin: 0 0 10px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--border-soft);
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text);
+  padding-bottom: 7px;
+  border-bottom: var(--perfora);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 // ---------- Avisos flotantes ----------
@@ -684,23 +870,24 @@
   max-width: calc(100vw - 32px);
   padding: 11px 16px;
   border-radius: var(--radius);
-  background: var(--tinta);
-  color: #fff;
+  background: var(--accent);
+  color: var(--on-accent);
   font-size: 14px;
   font-weight: 500;
   box-shadow: var(--shadow-pop);
-  animation: toast-in 200ms var(--ease);
+  animation: toast-in 260ms var(--ease);
 }
 
 @keyframes toast-in {
   from {
-    transform: translate(-50%, 8px);
+    transform: translate(-50%, 10px);
     opacity: 0;
   }
 }
 
 .toast.mal {
   background: var(--danger);
+  color: #fff;
 }
 
 .suave {
@@ -713,24 +900,30 @@
   max-width: 100%;
   overflow-x: auto;
   scrollbar-width: none;
-  padding: 3px;
+  padding: 2px;
+  border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--selected);
+  background: var(--surface-2);
+}
+
+.segmented::-webkit-scrollbar {
+  display: none;
 }
 
 .segmented button {
   flex-shrink: 0;
-  height: 30px;
-  padding: 0 11px;
+  height: 28px;
+  padding: 0 10px;
   border: none;
   border-radius: var(--radius-sm);
   background: none;
-  color: var(--text-2);
+  color: var(--text-soft);
   font-family: inherit;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 
 .segmented button:hover {
@@ -738,40 +931,48 @@
 }
 
 .segmented button.on {
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: 0 0 0 1px var(--border-strong), 0 1px 2px rgba(23, 21, 17, 0.06);
 }
 
-// ---------- Cifras resumen ----------
+// ---------- Cifras resumen: celdas de una sola grilla con rayas finas ----------
 .cifras-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-  gap: 10px;
-}
-
-.cifra-t {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 14px 16px;
-  min-width: 0;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
+  overflow: hidden;
+}
+
+// Cada celda dibuja su raya derecha e inferior; las del borde las recorta el contenedor
+.cifra-t {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 14px 16px;
+  min-width: 0;
+  background: var(--surface);
+  box-shadow: 1px 0 0 var(--border), 0 1px 0 var(--border);
 }
 
 .cifra-t small {
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--text-soft);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .cifra-t strong {
+  font-family: var(--mono-font);
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
 .cifra-t em {
@@ -780,19 +981,17 @@
   color: var(--text-muted);
 }
 
-// La cifra clave de cada pantalla va en tinta llena
+// La cifra clave de cada pantalla: el TOTAL del tiquete, con su raya de oro
 .cifra-t.clave {
-  background: var(--tinta);
-  border-color: var(--tinta);
+  background: var(--oro-wash);
 }
 
-.cifra-t.clave small,
-.cifra-t.clave em {
-  color: rgba(255, 255, 255, 0.72);
+.cifra-t.clave small {
+  color: var(--oro-texto);
 }
 
 .cifra-t.clave strong {
-  color: #fff;
+  color: var(--text);
 }
 
 // ---------- Celular ----------
@@ -809,26 +1008,49 @@
     display: flex !important;
   }
 
+  .vista {
+    background: var(--bg);
+  }
+
   .vista-head,
   .barra {
-    padding-left: 14px;
-    padding-right: 14px;
+    padding-left: 16px;
+    padding-right: 16px;
   }
 
   .vista-head h1 {
-    font-size: 19px;
+    font-size: 20px;
   }
 
   .vista-body {
-    padding: 14px;
+    padding: 14px 16px;
   }
 
   .paginar {
-    padding: 12px 14px;
+    padding: 12px 16px;
   }
 
   .buscar {
     width: 100%;
+    height: 40px;
+    order: 5;
+  }
+
+  .b {
+    height: 38px;
+  }
+
+  .b-icono {
+    width: 38px;
+    height: 38px;
+  }
+
+  .chip {
+    height: 44px;
+  }
+
+  .inp-chico {
+    height: 38px;
   }
 
   .hoja {
@@ -850,12 +1072,45 @@
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   }
 
+  .hoja-head {
+    padding-left: 18px;
+  }
+
+  .hoja-body {
+    padding: 18px;
+  }
+
+  .hoja-pie {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
   .datos {
     grid-template-columns: 100px 1fr;
   }
 
   .cifras-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cifra-t {
+    padding: 12px 14px;
+  }
+
+  .renglones .total > :first-child {
+    white-space: nowrap;
+    font-size: 12px;
+  }
+
+  .renglones .total > :last-child {
+    font-size: 20px;
+  }
+
+  // El selector de periodo se desplaza de lado: el borde derecho se desvanece
+  .segmented {
+    padding-right: 28px;
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent);
+    mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent);
   }
 
   .cifra-t strong {
@@ -865,7 +1120,7 @@
 
 @keyframes hoja-sube {
   from {
-    transform: translateY(32px);
+    transform: translateY(40px);
     opacity: 0;
   }
 }
@@ -878,8 +1133,8 @@
   gap: 6px;
   width: 100%;
   box-sizing: border-box;
-  padding: 32px 16px;
-  border: 1.5px dashed var(--border-strong);
+  padding: 36px 16px;
+  border: var(--perfora);
   border-radius: var(--radius-lg);
   background: var(--surface);
   text-align: center;
@@ -890,6 +1145,6 @@
 
 .vacio-titulo {
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 650;
   color: var(--text);
 }

@@ -11,7 +11,7 @@ import { SupabaseService } from '../../core/services/supabase.service';
   template: `
     <div class="auth-shell">
       <aside class="auth-marca" aria-hidden="true">
-        <span class="sello">JASTA</span>
+        <img class="sello" src="assets/icon/logo.png" alt="" />
         <p>Pedidos, despachos y cuadres del día, en un solo lugar.</p>
       </aside>
       <div class="auth-card">

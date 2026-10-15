@@ -1,6 +1,6 @@
 // src/app/shared/pill-nav.scss
 // Barra de pestañas inferior para celular: ícono y etiqueta; la activa lleva
-// el ícono sobre una pastilla de tinta clara.
+// el ícono en oro con una raya de oro arriba, como la pestaña de escritorio.
 
 .pill-nav {
   position: fixed;
@@ -46,22 +46,44 @@
 .pill-nav a.active,
 .pill-nav .tab.active {
   color: var(--text);
-  font-weight: 700;
+  font-weight: 650;
+}
+
+.pill-nav a,
+.pill-nav .tab {
+  position: relative;
+}
+
+.pill-nav a::before,
+.pill-nav .tab::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  width: 28px;
+  height: 2px;
+  margin-left: -14px;
+  border-radius: 0 0 2px 2px;
+  background: var(--oro);
+  transform: scaleX(0);
+  transition: transform 220ms var(--ease);
+}
+
+.pill-nav a.active::before,
+.pill-nav .tab.active::before {
+  transform: scaleX(1);
 }
 
 .pill-nav a ion-icon,
 .pill-nav .tab ion-icon {
-  width: 44px;
-  height: 26px;
-  padding: 3px 0;
-  box-sizing: border-box;
-  border-radius: 999px;
-  transition: background var(--dur) var(--ease);
+  height: 24px;
+  color: var(--text-muted);
+  transition: color var(--dur) var(--ease);
 }
 
 .pill-nav a.active ion-icon,
 .pill-nav .tab.active ion-icon {
-  background: var(--selected);
+  color: var(--oro);
 }
 
 .pill-nav .tab-label {
@@ -76,7 +98,7 @@
   display: none;
 }
 
-// Acción principal (ej. "Nuevo pedido"): misma pestaña, ícono sobre un fondo azul
+// Acción principal (ej. "Nuevo pedido"): misma pestaña, ícono sobre tinta
 .pill-center {
   flex: 1;
   display: flex;
@@ -95,6 +117,10 @@
   background: var(--accent);
   color: var(--on-accent);
   font-size: 22px;
+}
+
+.pill-center .pill-action::before {
+  display: none;
 }
 
 // Hoja "Más" (solo admin): se abre sobre la barra
@@ -132,8 +158,12 @@
 }
 
 .more-sheet a.active {
-  background: var(--selected);
-  font-weight: 500;
+  background: var(--hover);
+  font-weight: 600;
+}
+
+.more-sheet a.active ion-icon {
+  color: var(--oro);
 }
 
 .more-sheet ion-icon {
@@ -145,14 +175,14 @@
   width: 100%;
   margin: 4px 0;
   border: none;
-  border-top: 1px solid var(--border-soft);
+  border-top: var(--perfora);
 }
 
 .more-backdrop {
   position: fixed;
   inset: 0;
   z-index: 99;
-  background: rgba(15, 16, 19, 0.24);
+  background: rgba(14, 14, 12, 0.3);
   border: none;
   padding: 0;
 }
@@ -222,12 +252,12 @@
   background: var(--bg);
 }
 
-// Pestaña "Perfil": la foto de la persona en vez de un ícono; activa = aro azul
+// Pestaña "Perfil": la foto de la persona en vez de un ícono; activa = aro de oro
 .pill-nav .tab-perfil app-avatar {
   box-shadow: 0 0 0 1.5px var(--border-strong);
   transition: box-shadow var(--dur) var(--ease);
 }
 
 .pill-nav .tab-perfil.active app-avatar {
-  box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px var(--accent);
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px var(--oro);
 }

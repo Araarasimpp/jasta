@@ -35,11 +35,11 @@ function rango(p: Periodo): { desde: string; hasta: string } {
       .lista li { display: grid; grid-template-columns: 28px auto 1fr auto; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-soft); }
       .lista li.yo { background: var(--accent-wash); margin: 0 -10px; padding: 10px; border-radius: var(--radius-sm); }
       .puesto { font-weight: 600; color: var(--text-muted); text-align: center; }
-      .puesto.top { color: var(--accent); }
+      .puesto.top { color: var(--oro-texto); }
       .nom { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
       .nom strong { font-weight: 500; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .barra-meta { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
-      .barra-meta span { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+      .barra-meta { height: 4px; border-radius: 2px; background: var(--selected); overflow: hidden; }
+      .barra-meta span { display: block; height: 100%; background: var(--oro); border-radius: 2px; }
       .nom small { font-size: 12px; color: var(--text-muted); }
       .val { text-align: right; font-size: 13px; }
       .val strong { display: block; font-size: 16px; }

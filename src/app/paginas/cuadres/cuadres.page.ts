@@ -32,7 +32,8 @@ interface Pendiente {
       .cifra small { font-size: 12px; color: var(--text-soft); }
       .cifra strong { font-size: 15px; }
       .cifra.clave { background: var(--accent-wash); }
-      .cifra.clave strong { color: var(--accent); }
+      .cifra.clave small { color: var(--oro-texto); }
+      .cifra.clave strong { color: var(--text); }
       .mini { width: 100%; border-collapse: collapse; font-size: 13px; }
       .mini td { padding: 6px 4px; border-bottom: 1px solid var(--border-soft); }
       .mini td:last-child { text-align: right; }

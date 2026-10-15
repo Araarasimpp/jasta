@@ -23,20 +23,21 @@ import { RangoComponent, RangoFechas } from '../../shared/rango/rango.component'
     `
       .tarjeta h3 { cursor: pointer; }
       .total { font-size: 17px; }
-      .b-wa { color: #128c4a; border-color: #9fd8b5; }
-      .b-wa:hover { border-color: #128c4a; }
+      .b-wa { color: var(--efectivo); border-color: color-mix(in srgb, var(--efectivo) 40%, var(--border)); }
+      .b-wa:hover { border-color: var(--efectivo); background: var(--ok-wash); }
       .cuadre { display: flex; flex-direction: column; gap: 12px; }
       .cuadre .panel-head { margin-bottom: 0; }
       .en-ruta { font-size: 13px; color: var(--text-soft); }
-      .entregar-total { display: flex; flex-direction: column; gap: 2px; padding: 14px; border-radius: var(--radius); background: var(--accent-wash); }
-      .entregar-total span { font-size: 13px; color: var(--text-2); }
-      .entregar-total strong { font-size: 28px; font-weight: 600; color: var(--accent); letter-spacing: -0.01em; }
-      .desglose { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; margin: 0; font-size: 13px; }
-      .desglose dt { color: var(--text-soft); }
-      .desglose dd { margin: 0; text-align: right; }
+      .entregar-total { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border-radius: var(--radius); background: var(--oro-wash); }
+      .entregar-total span { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--oro-texto); }
+      .entregar-total strong { font-family: var(--mono-font); font-size: 28px; font-weight: 600; color: var(--text); letter-spacing: -0.03em; }
+      .desglose { display: grid; grid-template-columns: 1fr auto; gap: 6px 0; margin: 0; font-size: 13px; }
+      .desglose dt { display: flex; align-items: baseline; gap: 8px; color: var(--text-soft); }
+      .desglose dt::after { content: ''; flex: 1; min-width: 16px; border-bottom: 1px dotted var(--border-strong); transform: translateY(-4px); }
+      .desglose dd { margin: 0; padding-left: 8px; text-align: right; }
       .hist-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
       .hist { width: 100%; border-collapse: collapse; font-size: 13px; }
-      .hist td { padding: 8px 4px; border-bottom: 1px solid var(--border-soft); }
+      .hist td { padding: 8px 4px; border-bottom: var(--perfora); }
       .hist td:last-child { text-align: right; white-space: nowrap; }
       .hist tr { cursor: pointer; }
       .hist small { display: block; color: var(--text-muted); font-size: 12px; }

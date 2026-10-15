@@ -5,59 +5,49 @@
   min-height: 100vh;
   min-height: 100dvh;
   display: grid;
-  grid-template-columns: minmax(320px, 0.9fr) 1.1fr;
+  grid-template-columns: minmax(320px, 0.85fr) 1.15fr;
   background: var(--surface);
   color: var(--text);
 }
 
-// Panel de marca: tinta con el nombre estampado como en una caja de despacho
+// Panel de marca: el rollo de papel del tiquete, con el borde rasgado
 .auth-marca {
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  gap: 16px;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
   padding: 48px;
-  overflow: hidden;
-  background: var(--tinta);
-  color: #fff;
+  background: var(--bg);
+  text-align: center;
 }
 
-// Cinta de embalar cruzando el panel
-.auth-marca::before {
-  content: '';
-  position: absolute;
-  left: -10%;
-  right: -10%;
-  top: 34%;
-  height: 46px;
-  background: var(--cinta);
-  opacity: 0.92;
-  transform: rotate(-8deg);
+// Perforación del tiquete hacia el formulario
+.auth-marca {
+  border-right: var(--perfora);
 }
 
 .sello {
-  position: relative;
-  align-self: flex-start;
-  padding: 6px 14px 4px;
-  border: 4px solid #fff;
-  border-radius: 6px;
-  font-size: clamp(48px, 7vw, 88px);
-  font-weight: 800;
-  font-stretch: 125%;
-  font-variation-settings: 'wdth' 125;
-  line-height: 1;
-  letter-spacing: 0.04em;
-  transform: rotate(-2deg);
+  width: clamp(150px, 18vw, 220px);
+  height: auto;
+}
+
+:host-context(.dark) .sello {
+  padding: 18px;
+  box-sizing: border-box;
+  border-radius: var(--radius-xl);
+  background: #f1efe9;
 }
 
 .auth-marca p {
-  position: relative;
-  max-width: 300px;
+  max-width: 280px;
   margin: 0;
-  font-size: 16px;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.78);
+  padding-top: 18px;
+  border-top: var(--perfora);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-soft);
 }
 
 .auth-card {
@@ -74,25 +64,18 @@
 @media (max-width: 820px) {
   .auth-shell {
     grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
   }
 
   .auth-marca {
-    min-height: 170px;
-    padding: calc(28px + env(safe-area-inset-top)) 24px 24px;
-  }
-
-  .auth-marca::before {
-    top: 30%;
-    height: 32px;
-  }
-
-  .auth-marca p {
     display: none;
   }
 
+  .brand-mark {
+    display: block !important;
+  }
+
   .auth-card {
-    padding-top: 28px;
+    padding-top: calc(32px + env(safe-area-inset-top));
   }
 }
 
@@ -105,16 +88,22 @@
 
 .brand-mark {
   display: none;
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  object-fit: cover;
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+}
+
+:host-context(.dark) .brand-mark {
+  padding: 6px;
+  box-sizing: border-box;
+  border-radius: var(--radius-lg);
+  background: #f1efe9;
 }
 
 .auth-head h1 {
   margin: 0;
   font-size: 28px;
-  font-weight: 800;
+  font-weight: 650;
   line-height: 1.1;
 }
 
@@ -174,8 +163,8 @@
 
 .field input:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  border-color: var(--oro);
+  box-shadow: 0 0 0 3px var(--oro-wash);
 }
 
 .field input[aria-invalid='true'] {
@@ -236,7 +225,7 @@
   background: var(--accent);
   color: var(--on-accent);
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: background var(--dur) var(--ease);
 }
@@ -265,7 +254,7 @@
 .field-link {
   font-size: 13px;
   font-weight: 500;
-  color: var(--accent);
+  color: var(--link);
   text-decoration: none;
 }
 
@@ -305,14 +294,14 @@
 .switch-link {
   margin: 0;
   padding-top: 20px;
-  border-top: 1px solid var(--border);
+  border-top: var(--perfora);
   font-size: 13px;
   line-height: 1.55;
   color: var(--text-soft);
 }
 
 .switch-link a {
-  color: var(--accent);
+  color: var(--link);
   font-weight: 500;
   text-decoration: none;
 }
@@ -323,6 +312,7 @@
 }
 
 .codigo-input {
+  font-family: var(--mono-font);
   height: 52px !important;
   font-size: 24px !important;
   font-weight: 600;

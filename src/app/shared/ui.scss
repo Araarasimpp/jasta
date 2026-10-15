@@ -1,5 +1,5 @@
 // src/app/shared/ui.scss
-// Piezas de las pantallas tipo "tablero" (Inicio, Mis entregas, Ranking, Perfil).
+// Piezas de las pantallas tipo "tablero" (sistema "tiquete de caja") (Inicio, Mis entregas, Ranking, Perfil).
 // Se agrega en styleUrls junto al .scss propio de cada página. Los botones,
 // campos y el selector segmentado vienen de theme/gestion.scss (globales).
 
@@ -30,15 +30,27 @@
 .head h1 {
   margin: 0;
   font-size: 28px;
-  font-weight: 800;
+  font-weight: 650;
   line-height: 1.05;
 }
 
-.fecha {
-  margin: 0 0 4px;
-  font-size: 13.5px;
+.head h1 small {
+  margin-left: 10px;
+  font-size: 14px;
   font-weight: 500;
-  color: var(--text-soft);
+  letter-spacing: 0;
+  color: var(--text-muted);
+}
+
+.head h1 small::first-letter {
+  text-transform: uppercase;
+}
+
+.fecha {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
 }
 
 .fecha::first-letter {
@@ -48,37 +60,43 @@
 h2 {
   margin: 0;
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 650;
 }
 
-// ---------- KPIs ----------
+// ---------- KPIs: celdas de una sola grilla, separadas por rayas finas ----------
 .kpis {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.kpi {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 14px 16px;
-  min-width: 0;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
+  overflow: hidden;
+}
+
+// Cada celda dibuja su raya derecha e inferior; las del borde las recorta el contenedor
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 14px 16px;
+  min-width: 0;
+  background: var(--surface);
+  box-shadow: 1px 0 0 var(--border), 0 1px 0 var(--border);
 }
 
 .kpi-label {
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--text-soft);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .kpi-valor {
+  font-family: var(--mono-font);
   font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
+  font-weight: 600;
+  letter-spacing: -0.02em;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
@@ -88,24 +106,18 @@ h2 {
   color: var(--text-muted);
 }
 
-// El número que más importa en la pantalla va en tinta llena
+// El número que más importa en la pantalla: el TOTAL del tiquete, en oro
 .kpi-principal {
-  background: var(--tinta);
-  border-color: var(--tinta);
+  background: var(--oro-wash);
 }
 
-.kpi-principal .kpi-label,
-.kpi-principal .kpi-nota {
-  color: rgba(255, 255, 255, 0.72);
-}
-
-.kpi-principal .kpi-valor {
-  color: #fff;
+.kpi-principal .kpi-label {
+  color: var(--oro-texto);
 }
 
 // ---------- Panel ----------
 .panel {
-  padding: 18px;
+  padding: 18px 20px;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
@@ -117,7 +129,9 @@ h2 {
   align-items: flex-start;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 14px;
+  margin: -2px 0 14px;
+  padding-bottom: 12px;
+  border-bottom: var(--perfora);
 }
 
 .panel-sub {
@@ -135,6 +149,13 @@ h2 {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.panel-head > * {
+  min-width: 0;
+  max-width: 100%;
 }
 
 // ---------- Vacío y carga ----------
@@ -144,7 +165,7 @@ h2 {
   align-items: center;
   gap: 6px;
   padding: 32px 16px;
-  border: 1.5px dashed var(--border-strong);
+  border: var(--perfora);
   border-radius: var(--radius-lg);
   background: var(--surface);
   text-align: center;
@@ -164,7 +185,7 @@ h2 {
 
 .vacio-titulo {
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 650;
   color: var(--text);
 }
 
@@ -194,6 +215,10 @@ h2 {
 
   .kpis {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .kpi {
+    padding: 12px 14px;
   }
 
   .kpi-valor {

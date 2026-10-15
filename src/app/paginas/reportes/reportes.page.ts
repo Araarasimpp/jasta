@@ -58,7 +58,7 @@ const PAGO: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Tra
       .tabla td, .tabla th { white-space: nowrap; }
       .tabla td.texto { white-space: normal; min-width: 180px; max-width: 320px; line-height: 1.35; }
       .tabla td.texto small { display: block; color: var(--text-muted); font-size: 12px; }
-      .tabla tfoot td { font-weight: 600; background: var(--surface-2); border-top: 1px solid var(--border); border-bottom: none; }
+      .tabla tfoot td { font-weight: 650; background: var(--surface); border-top: 1px solid var(--text); border-bottom: none; }
       .tabla .tienda { color: var(--st-entregado); }
       .tabla .vende { color: var(--accent); }
       .tabla .neg { color: var(--danger); }

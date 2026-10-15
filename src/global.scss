@@ -5,6 +5,10 @@
 @use './theme/tema.scss' as *;
 @use './theme/gestion.scss';
 
+/* Tipografías servidas desde la app (sin depender de Google Fonts) */
+@import "@fontsource-variable/geist/index.css";
+@import "@fontsource-variable/geist-mono/index.css";
+
 /* Core CSS required for Ionic components to work properly */
 @import "@ionic/angular/css/core.css";
 
@@ -42,27 +46,57 @@ button {
 }
 
 ::selection {
-  background: var(--accent-soft);
+  background: var(--oro-soft);
+  color: var(--text);
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--foco);
   outline-offset: 2px;
 }
 
 a {
-  color: var(--accent);
+  color: var(--link);
+  text-underline-offset: 3px;
 }
 
-/* Cifras alineadas en columnas: plata, cantidades, números de pedido */
+input,
+textarea {
+  caret-color: var(--oro);
+}
+
+input[type='checkbox'],
+input[type='radio'] {
+  accent-color: var(--oro);
+}
+
+/* Cifras como en el tiquete: plata, cantidades, números de pedido y fechas */
 .num {
+  font-family: var(--mono-font);
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
 /* Scrollbars discretos en escritorio */
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--border-strong) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: var(--border-strong) padding-box;
+}
+
+::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -9,7 +9,7 @@ import { Component, Input, computed, signal } from '@angular/core';
       :host { display: inline-flex; flex-shrink: 0; }
       span, img { border-radius: 50%; }
       img { object-fit: cover; background: var(--surface-2); }
-      span { display: flex; align-items: center; justify-content: center; background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+      span { display: flex; align-items: center; justify-content: center; background: var(--oro-wash); color: var(--oro-texto); box-shadow: inset 0 0 0 1px var(--oro-soft); font-weight: 600; }
     `,
   ],
   template: `

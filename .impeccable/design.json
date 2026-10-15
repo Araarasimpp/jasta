@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-15T15:01:43.281058Z",
+  "title": "Design System: Jasta",
+  "extensions": {
+    "colorMeta": {
+      "tinta": {
+        "role": "primary",
+        "displayName": "Tinta de impresora",
+        "canonical": "#171511"
+      },
+      "oro": {
+        "role": "primary",
+        "displayName": "Oro JT",
+        "canonical": "#c4920f",
+        "tonalRamp": [
+          "#3d2d05",
+          "#5c4408",
+          "#7a5a0b",
+          "#9a720d",
+          "#c4920f",
+          "#dcb24a",
+          "#efdfb2",
+          "#fbf5e4"
+        ]
+      },
+      "papel": {
+        "role": "neutral",
+        "displayName": "Papel",
+        "canonical": "#ffffff"
+      },
+      "mostrador": {
+        "role": "neutral",
+        "displayName": "Mostrador",
+        "canonical": "#f4f4f2"
+      },
+      "raya-fuerte": {
+        "role": "neutral",
+        "displayName": "Perforación",
+        "canonical": "#cbc8bf"
+      }
+    },
+    "typographyMeta": {
+      "cifra": {
+        "displayName": "Cifra",
+        "purpose": "Plata, cantidades, # de pedido, conteos y horas."
+      },
+      "total": {
+        "displayName": "Total",
+        "purpose": "Renglón TOTAL con doble raya."
+      },
+      "label": {
+        "displayName": "Etiqueta",
+        "purpose": "Encabezados de tabla y de sección, en mayúsculas."
+      }
+    },
+    "shadows": [
+      {
+        "name": "flotante",
+        "value": "0 10px 30px rgba(23,21,17,.14), 0 2px 6px rgba(23,21,17,.08)",
+        "purpose": "Solo hojas, menús, barra de lote y avisos."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Estados y entradas; 140ms en hover, 220-260ms en subrayados y hojas."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "tarjetas",
+        "value": "760px"
+      },
+      {
+        "name": "barra-inferior",
+        "value": "860px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botón primario",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Acción principal de cada vista.",
+      "html": "<button class=\"ds-btn-pri\">Nuevo pedido</button>",
+      "css": ".ds-btn-pri{height:34px;padding:0 13px;border:1px solid #171511;border-radius:5px;background:#171511;color:#fff;font:550 13.5px 'Geist Variable',system-ui,sans-serif;cursor:pointer;transition:background .14s}.ds-btn-pri:hover{background:#34312a}.ds-btn-pri:focus-visible{outline:2px solid #c4920f;outline-offset:2px}"
+    },
+    {
+      "name": "Botón secundario",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Acciones de fila y de panel.",
+      "html": "<button class=\"ds-btn\">Alistar</button>",
+      "css": ".ds-btn{height:34px;padding:0 13px;border:1px solid #cbc8bf;border-radius:5px;background:#fff;color:#171511;font:550 13.5px 'Geist Variable',system-ui,sans-serif;cursor:pointer}.ds-btn:hover{border-color:#6f6b62;background:#f8f8f6}.ds-btn:focus-visible{outline:2px solid #c4920f;outline-offset:2px}"
+    },
+    {
+      "name": "Campo",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campos de formulario.",
+      "html": "<input class=\"ds-inp\" placeholder=\"Teléfono\" />",
+      "css": ".ds-inp{height:40px;padding:0 11px;border:1px solid #cbc8bf;border-radius:5px;background:#fff;color:#171511;font:400 14.5px 'Geist Variable',system-ui,sans-serif;caret-color:#c4920f}.ds-inp:focus{outline:none;border-color:#c4920f;box-shadow:0 0 0 3px #fbf5e4}"
+    },
+    {
+      "name": "Pestaña de estado",
+      "kind": "chip",
+      "description": "Pestañas con conteo; la activa subrayada en oro.",
+      "html": "<div class=\"ds-tabs\"><button class=\"ds-tab on\">Pendientes <span>4</span></button><button class=\"ds-tab\">Alistados <span>3</span></button></div>",
+      "css": ".ds-tabs{display:flex;gap:4px;border-bottom:1px dashed #cbc8bf}.ds-tab{position:relative;height:40px;padding:0 10px;border:0;background:none;color:#5b574e;font:500 13.5px 'Geist Variable',system-ui,sans-serif;cursor:pointer}.ds-tab span{font-family:'Geist Mono Variable',monospace;font-size:12px;color:#6f6b62}.ds-tab.on{color:#171511;font-weight:600}.ds-tab.on span{color:#8a6400}.ds-tab.on::after{content:'';position:absolute;left:10px;right:10px;bottom:-1px;height:2px;background:#c4920f}.ds-tab:hover{color:#171511}"
+    },
+    {
+      "name": "Renglones de tiquete",
+      "kind": "custom",
+      "description": "Concepto con puntos guía hasta el valor y TOTAL a doble raya.",
+      "html": "<dl class=\"ds-ren\"><div><dt>Efectivo</dt><dd>$ 1.950.000</dd></div><div><dt>Transferencias</dt><dd>$ 1.535.000</dd></div><div class=\"t\"><dt>Ventas entregadas</dt><dd>$ 3.485.000</dd></div></dl>",
+      "css": ".ds-ren{margin:0;font:400 14px 'Geist Variable',system-ui,sans-serif;width:360px}.ds-ren>div{display:flex;align-items:baseline;gap:8px;padding:5px 0}.ds-ren dt{flex:1;display:flex;gap:8px;color:#5b574e}.ds-ren dt::after{content:'';flex:1;border-bottom:1px dotted #cbc8bf;transform:translateY(-4px)}.ds-ren dd{margin:0;font:550 14px 'Geist Mono Variable',monospace;color:#171511}.ds-ren .t{margin-top:8px;padding:10px 0 8px;border-top:1px dashed #cbc8bf;border-bottom:3px double #171511}.ds-ren .t dt{color:#171511;font-size:13px;font-weight:650;letter-spacing:.05em;text-transform:uppercase}.ds-ren .t dd{font-size:24px;font-weight:650}"
+    },
+    {
+      "name": "Estado",
+      "kind": "custom",
+      "description": "Punto fijo + nombre del estado en su color.",
+      "html": "<span class=\"ds-st r\">En ruta</span> <span class=\"ds-st a\">Alistado</span>",
+      "css": ".ds-st{display:inline-flex;align-items:center;gap:7px;font:600 12.5px 'Geist Variable',system-ui,sans-serif}.ds-st::before{content:'';width:8px;height:8px;border-radius:50%;background:currentColor}.ds-st.r{color:#9a5b00}.ds-st.r::before{background:#c97a00}.ds-st.a{color:#2f55d4}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Tiquete de caja",
+    "keyCharacteristics": [
+      "Papel blanco sobre un mostrador gris muy claro; plano, sin sombras en reposo.",
+      "Separadores punteados (perforación) en lugar de líneas sólidas entre renglones.",
+      "Cifras, plata, números de pedido y fechas en Geist Mono tabular; todo lo demás en Geist.",
+      "Un solo acento, el oro, en menos del 5 % de cualquier pantalla.",
+      "Estado del pedido como punto de diámetro fijo más su nombre en su color."
+    ],
+    "rules": [
+      {
+        "name": "The One Gold Rule",
+        "body": "El oro marca estado de interfaz (activo, seleccionado, foco), nunca decora. Si una superficie entera es dorada, está mal.",
+        "section": "colors"
+      },
+      {
+        "name": "The State Color Rule",
+        "body": "Azul, ámbar y verde existen solo para los estados del pedido. El único uso de color de estado fuera de una etiqueta de estado es el botón verde \"Entregar\", porque cierra la entrega y mueve plata.",
+        "section": "colors"
+      },
+      {
+        "name": "The Printer Rule",
+        "body": "Mono solo para lo que una caja registradora imprimiría como número: plata, cantidades, # de pedido, conteos y horas. Nunca para frases, nombres de productos ni etiquetas.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Paper Rule",
+        "body": "Tarjetas, paneles y tablas no llevan sombra. Si algo necesita separarse, lleva una raya punteada.",
+        "section": "elevation"
+      }
+    ]
+  }
+}

@@ -41,15 +41,14 @@ function sumarDias(iso: string, n: number): string {
       .page { max-width: 1100px; }
       .rango { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
       .rango input { width: 140px; }
-      .activos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-      .activo { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border: 1px solid var(--border);
-        border-radius: var(--radius-lg); text-decoration: none; color: var(--text); font-size: 13px; }
-      .activo:hover { border-color: var(--border-strong); background: var(--hover); }
-      .activo strong { font-size: 20px; }
+      .resumen-dia { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+      .renglones dt small { font-size: 12px; }
+      .en-curso > a > :last-child { font-size: 20px; font-weight: 600; }
+      .ir { margin-top: 14px; }
       .dos { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
       .barras { position: relative; display: flex; align-items: flex-end; gap: 2px; height: 160px; padding-top: 8px; border-bottom: 1px solid var(--border); }
       .barra-dia { flex: 1; min-width: 2px; height: 100%; display: flex; align-items: flex-end; cursor: default; position: relative; }
-      .barra-dia span { width: 100%; background: var(--accent); border-radius: 4px 4px 0 0; min-height: 2px; opacity: .85; }
+      .barra-dia span { width: 100%; background: var(--oro); border-radius: 3px 3px 0 0; min-height: 2px; }
       .barra-dia:hover span { opacity: 1; }
       .barra-dia .tip { display: none; position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); z-index: 2;
         padding: 6px 8px; border-radius: 6px; background: var(--text); color: var(--surface); font-size: 12px; white-space: nowrap; pointer-events: none; }
@@ -59,19 +58,16 @@ function sumarDias(iso: string, n: number): string {
       .ranking li { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 13px; }
       .ranking .nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .ranking .val { color: var(--text-soft); text-align: right; }
-      .ranking .pista { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
-      .ranking .pista span { display: block; height: 100%; border-radius: 3px; background: var(--accent); }
-      @media (max-width: 860px) { .dos { grid-template-columns: 1fr; } }
-      @media (max-width: 640px) { .activos { grid-template-columns: 1fr; } }
+      .ranking .pista { grid-column: 1 / -1; height: 4px; border-radius: 2px; background: var(--selected); overflow: hidden; }
+      .ranking .pista span { display: block; height: 100%; border-radius: 2px; background: var(--oro); }
+      @media (max-width: 860px) { .dos, .resumen-dia { grid-template-columns: 1fr; } }
+      @media (max-width: 860px) { .resumen-dia > :last-child { order: -1; } }
     `,
   ],
   template: `
     <div class="page">
       <div class="head">
-        <div>
-          <p class="fecha">{{ etiquetaRango() }}</p>
-          <h1>Inicio</h1>
-        </div>
+        <h1>Inicio<small>{{ etiquetaRango() }}</small></h1>
       </div>
 
       <div class="rango">
@@ -86,40 +82,30 @@ function sumarDias(iso: string, n: number): string {
         }
       </div>
 
-      <div class="activos">
-        <a class="activo" routerLink="/app/pedidos"><span>Por alistar</span><strong class="num">{{ r()?.por_estado?.['por_alistar'] ?? 0 }}</strong></a>
-        <a class="activo" routerLink="/app/pedidos"><span>Alistados sin despachar</span><strong class="num">{{ r()?.por_estado?.['alistado'] ?? 0 }}</strong></a>
-        <a class="activo" routerLink="/app/pedidos"><span>En ruta</span><strong class="num">{{ r()?.por_estado?.['despachado'] ?? 0 }}</strong></a>
-      </div>
+      <div class="resumen-dia">
+        <section class="panel">
+          <div class="panel-head"><div><h2>Resumen</h2><p class="panel-sub">Pedidos entregados en el periodo</p></div></div>
+          <dl class="renglones" [attr.aria-busy]="cargando()">
+            <div><dt>Pedidos entregados</dt><dd>{{ numero(r()?.entregados) }} <small>· {{ numero(r()?.cancelados) }} cancelados</small></dd></div>
+            <div><dt>Ticket promedio</dt><dd>{{ pesos(ticket()) }}</dd></div>
+            <div><dt>Efectivo</dt><dd>{{ pesos(r()?.efectivo) }}</dd></div>
+            <div><dt>Transferencias</dt><dd>{{ pesos(r()?.transferencia) }}</dd></div>
+            <div><dt>Domicilios <small class="suave">(de los mensajeros)</small></dt><dd>{{ pesos(r()?.domicilios) }}</dd></div>
+            <div><dt>Ganancia <small class="suave">(venta − compra)</small></dt><dd>{{ pesos(r()?.ganancia) }}</dd></div>
+            <div><dt>Margen vendedoras <small class="suave">(venta − base)</small></dt><dd>{{ pesos(r()?.margen_vendedoras) }}</dd></div>
+            <div class="total"><dt>Ventas entregadas</dt><dd>{{ cargando() ? '…' : pesos(r()?.ventas) }}</dd></div>
+          </dl>
+        </section>
 
-      <div class="kpis">
-        <div class="kpi kpi-principal">
-          <span class="kpi-label">Ventas entregadas</span>
-          <span class="kpi-valor num">{{ cargando() ? '…' : pesos(r()?.ventas) }}</span>
-          <span class="kpi-nota">Sin domicilios</span>
-        </div>
-        <div class="kpi">
-          <span class="kpi-label">Pedidos entregados</span>
-          <span class="kpi-valor num">{{ cargando() ? '…' : numero(r()?.entregados) }}</span>
-          <span class="kpi-nota">{{ numero(r()?.cancelados) }} cancelados</span>
-        </div>
-        <div class="kpi">
-          <span class="kpi-label">Ganancia</span>
-          <span class="kpi-valor num">{{ cargando() ? '…' : pesos(r()?.ganancia) }}</span>
-          <span class="kpi-nota">Venta − precio de compra</span>
-        </div>
-        <div class="kpi">
-          <span class="kpi-label">Ticket promedio</span>
-          <span class="kpi-valor num">{{ cargando() ? '…' : pesos(ticket()) }}</span>
-          <span class="kpi-nota">Por pedido entregado</span>
-        </div>
-      </div>
-
-      <div class="kpis">
-        <div class="kpi"><span class="kpi-label">Efectivo</span><span class="kpi-valor num">{{ pesos(r()?.efectivo) }}</span></div>
-        <div class="kpi"><span class="kpi-label">Transferencias</span><span class="kpi-valor num">{{ pesos(r()?.transferencia) }}</span></div>
-        <div class="kpi"><span class="kpi-label">Domicilios</span><span class="kpi-valor num">{{ pesos(r()?.domicilios) }}</span></div>
-        <div class="kpi"><span class="kpi-label">Margen vendedoras</span><span class="kpi-valor num">{{ pesos(r()?.margen_vendedoras) }}</span><span class="kpi-nota">Venta − precio base</span></div>
+        <section class="panel">
+          <div class="panel-head"><div><h2>En curso</h2><p class="panel-sub">Lo que falta mover ahora</p></div></div>
+          <div class="renglones en-curso">
+            <a routerLink="/app/pedidos"><span><span class="estado por_alistar">Por alistar</span></span><span>{{ r()?.por_estado?.['por_alistar'] ?? 0 }}</span></a>
+            <a routerLink="/app/pedidos"><span><span class="estado alistado">Alistados sin despachar</span></span><span>{{ r()?.por_estado?.['alistado'] ?? 0 }}</span></a>
+            <a routerLink="/app/pedidos"><span><span class="estado despachado">En ruta</span></span><span>{{ r()?.por_estado?.['despachado'] ?? 0 }}</span></a>
+          </div>
+          <a class="b b-ancho ir" routerLink="/app/pedidos">Ir a pedidos</a>
+        </section>
       </div>
 
       @if ((r()?.por_dia?.length ?? 0) > 1) {
