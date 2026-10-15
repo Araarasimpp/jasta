@@ -1,0 +1,62 @@
+import { inject } from '@angular/core';
+import { Router, Routes } from '@angular/router';
+import { invitadoGuard, rolGuard, sesionGuard } from './core/guards/guards';
+import { SupabaseService } from './core/services/supabase.service';
+
+/** "/" lleva a la pantalla que le toca a cada quien */
+const redirigirInicio = async () => {
+  const sb = inject(SupabaseService);
+  const router = inject(Router);
+  await sb.asegurar();
+  return router.parseUrl(sb.session() ? sb.inicioSegunRoles() : '/auth/login');
+};
+
+export const routes: Routes = [
+  { path: '', pathMatch: 'full', canActivate: [redirigirInicio], children: [] },
+  { path: 'auth/login', canActivate: [invitadoGuard], loadComponent: () => import('./auth/login/login.page').then((m) => m.LoginPage) },
+  { path: 'auth/registro', canActivate: [invitadoGuard], loadComponent: () => import('./auth/registro/registro.page').then((m) => m.RegistroPage) },
+  { path: 'auth/recuperar', loadComponent: () => import('./auth/recuperar/recuperar.page').then((m) => m.RecuperarPage) },
+  { path: 'auth/nueva-clave', loadComponent: () => import('./auth/nueva-clave/nueva-clave.page').then((m) => m.NuevaClavePage) },
+  {
+    path: 'app',
+    canActivate: [sesionGuard],
+    loadComponent: () => import('./shell/shell.component').then((m) => m.ShellComponent),
+    children: [
+      { path: '', pathMatch: 'full', canActivate: [redirigirInicio], children: [] },
+      { path: 'espera', loadComponent: () => import('./paginas/espera/espera.page').then((m) => m.EsperaPage) },
+      {
+        path: 'inicio', canActivate: [rolGuard], data: { roles: ['admin', 'cuadres'] },
+        loadComponent: () => import('./paginas/inicio/inicio.page').then((m) => m.InicioPage),
+      },
+      {
+        path: 'pedidos', canActivate: [rolGuard], data: { roles: ['admin', 'vendedora', 'alistador', 'cuadres'] },
+        loadComponent: () => import('./paginas/pedidos/pedidos.page').then((m) => m.PedidosPage),
+      },
+      {
+        path: 'pedidos/nuevo', canActivate: [rolGuard], data: { roles: ['admin', 'vendedora'] },
+        loadComponent: () => import('./paginas/nuevo-pedido/nuevo-pedido.page').then((m) => m.NuevoPedidoPage),
+      },
+      {
+        path: 'alistamiento', canActivate: [rolGuard], data: { roles: ['admin', 'alistador'] },
+        loadComponent: () => import('./paginas/alistamiento/alistamiento.page').then((m) => m.AlistamientoPage),
+      },
+      {
+        path: 'mis-entregas', canActivate: [rolGuard], data: { roles: ['mensajero', 'admin'] },
+        loadComponent: () => import('./paginas/mis-entregas/mis-entregas.page').then((m) => m.MisEntregasPage),
+      },
+      {
+        path: 'cuadres', canActivate: [rolGuard], data: { roles: ['admin', 'cuadres', 'mensajero'] },
+        loadComponent: () => import('./paginas/cuadres/cuadres.page').then((m) => m.CuadresPage),
+      },
+      {
+        path: 'productos', canActivate: [rolGuard], data: { roles: ['admin'] },
+        loadComponent: () => import('./paginas/productos/productos.page').then((m) => m.ProductosPage),
+      },
+      {
+        path: 'usuarios', canActivate: [rolGuard], data: { roles: ['admin'] },
+        loadComponent: () => import('./paginas/usuarios/usuarios.page').then((m) => m.UsuariosPage),
+      },
+    ],
+  },
+  { path: '**', redirectTo: '' },
+];

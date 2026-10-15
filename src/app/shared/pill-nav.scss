@@ -1,0 +1,218 @@
+// src/app/shared/pill-nav.scss
+// Barra de navegación inferior para celular, compartida por todos los layouts.
+// Conserva el nombre de archivo y la clase .pill-nav para no tocar los styleUrls,
+// pero ahora es una barra estándar de pestañas con ícono y etiqueta.
+
+.pill-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  display: flex;
+  align-items: stretch;
+  height: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+
+.pill-nav a,
+.pill-nav .pill-action,
+.pill-nav .tab {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-soft);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--dur) var(--ease);
+}
+
+.pill-nav ion-icon {
+  font-size: 21px;
+}
+
+.pill-nav a.active,
+.pill-nav .tab.active {
+  color: var(--accent);
+}
+
+.pill-nav .tab-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+// El punto de la versión anterior ya no se usa
+.pill-nav .dot {
+  display: none;
+}
+
+// Acción principal (ej. "Nuevo pedido"): misma pestaña, ícono sobre un fondo azul
+.pill-center {
+  flex: 1;
+  display: flex;
+}
+
+.pill-center .pill-action {
+  color: var(--text);
+}
+
+.pill-center .pill-action ion-icon {
+  width: 40px;
+  height: 28px;
+  padding: 3px 0;
+  box-sizing: border-box;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 22px;
+}
+
+// Hoja "Más" (solo admin): se abre sobre la barra
+.more-sheet {
+  position: fixed;
+  left: 8px;
+  right: 8px;
+  bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 8px);
+  z-index: 101;
+  padding: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-pop);
+  display: flex;
+  flex-direction: column;
+}
+
+.more-sheet a,
+.more-sheet button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 46px;
+  padding: 0 12px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 15px;
+  text-decoration: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.more-sheet a.active {
+  background: var(--selected);
+  font-weight: 500;
+}
+
+.more-sheet ion-icon {
+  font-size: 19px;
+  color: var(--text-soft);
+}
+
+.more-sheet hr {
+  width: 100%;
+  margin: 4px 0;
+  border: none;
+  border-top: 1px solid var(--border-soft);
+}
+
+.more-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+  background: rgba(15, 16, 19, 0.24);
+  border: none;
+  padding: 0;
+}
+
+// Ícono con contador (campana de avisos)
+.icono-badge {
+  position: relative;
+  display: inline-flex;
+}
+
+.badge-num {
+  position: absolute;
+  top: -5px;
+  right: -9px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: var(--danger);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+// La hoja "Más" puede tener muchas opciones: que se desplace si no caben.
+// En iPhone el alto incluye la barra de estado (viewport-fit=cover), por eso se
+// restan las zonas seguras de arriba y de abajo; si no, la hoja se mete debajo
+// de la hora y la batería.
+.more-sheet {
+  --more-max: calc(100vh - var(--tabbar-h) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px);
+  max-height: var(--more-max);
+  max-height: calc(100dvh - var(--tabbar-h) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.more-sheet a,
+.more-sheet button {
+  flex-shrink: 0;
+}
+
+// Franja detrás de la barra de estado del iPhone (app instalada, estilo
+// black-translucent): sin ella el contenido se ve pasar por debajo de la hora.
+.shell::before,
+.layout::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top);
+  // Debajo del fondo oscuro de las hojas (99), encima del contenido
+  z-index: 98;
+  pointer-events: none;
+}
+
+.shell::before {
+  background: var(--surface);
+}
+
+.layout::before {
+  background: var(--bg);
+}
+
+// Pestaña "Perfil": la foto de la persona en vez de un ícono; activa = aro azul
+.pill-nav .tab-perfil app-avatar {
+  box-shadow: 0 0 0 1.5px var(--border-strong);
+  transition: box-shadow var(--dur) var(--ease);
+}
+
+.pill-nav .tab-perfil.active app-avatar {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px var(--accent);
+}

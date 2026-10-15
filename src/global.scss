@@ -1,0 +1,106 @@
+/*
+ * App Global CSS
+ * Estilos que aplican a toda la app. El tema vive en ./theme/tema.scss.
+ */
+@use './theme/tema.scss' as *;
+@use './theme/gestion.scss';
+
+/* Core CSS required for Ionic components to work properly */
+@import "@ionic/angular/css/core.css";
+
+/* Basic CSS for apps built with Ionic */
+@import "@ionic/angular/css/normalize.css";
+@import "@ionic/angular/css/structure.css";
+@import "@ionic/angular/css/typography.css";
+@import "@ionic/angular/css/display.css";
+
+/* Optional CSS utils */
+@import "@ionic/angular/css/padding.css";
+@import "@ionic/angular/css/float-elements.css";
+@import "@ionic/angular/css/text-alignment.css";
+@import "@ionic/angular/css/text-transformation.css";
+@import "@ionic/angular/css/flex-utils.css";
+
+/*
+ * Modo oscuro: lo maneja ThemeService con la clase body.dark.
+ * Se quitó @ionic/angular/css/palettes/dark.system.css porque seguía la
+ * configuración del teléfono y se peleaba con el botón de tema de la app.
+ */
+
+html,
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+a {
+  color: var(--accent);
+}
+
+/* Cifras alineadas en columnas: plata, cantidades, números de pedido */
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Scrollbars discretos en escritorio */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+// ---------- iPhone ----------
+// Sin el destello gris al tocar botones y enlaces, y sin que Safari agrande el
+// texto al girar el teléfono
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  -webkit-tap-highlight-color: transparent;
+}
+
+// Solo Safari de iPhone/iPad: las fechas salían centradas, y vacías se encogían
+// o se salían de su caja
+@supports (-webkit-touch-callout: none) {
+  input[type='date'],
+  input[type='time'] {
+    -webkit-appearance: none;
+    appearance: none;
+    min-height: 1.6em;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  input[type='date']::-webkit-date-and-time-value,
+  input[type='time']::-webkit-date-and-time-value {
+    margin: 0;
+    text-align: left;
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Jasta",
+  "short_name": "Jasta",
+  "description": "Pedidos, alistamiento, mensajeros y cuadres de Jasta",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    { "src": "assets/icon/logo-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icon/logo.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
