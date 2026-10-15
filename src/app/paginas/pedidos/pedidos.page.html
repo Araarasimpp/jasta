@@ -1,0 +1,287 @@
+<div class="pedidos-page">
+  <header class="page-header">
+    <div class="title">
+      <h1>Pedidos</h1>
+      <span class="subtitle">{{ hoy }}</span>
+    </div>
+    <label class="search">
+      <ion-icon name="search-outline" aria-hidden="true"></ion-icon>
+      <input type="search" [(ngModel)]="texto" (ngModelChange)="buscarLuego()" placeholder="Cliente, barrio o número" aria-label="Buscar pedidos" />
+    </label>
+    @if (puedeVender()) {
+      <a class="btn btn-primary" routerLink="/app/pedidos/nuevo">
+        <ion-icon name="add" aria-hidden="true"></ion-icon>
+        <span>Nuevo pedido</span>
+      </a>
+    }
+  </header>
+
+  <div class="toolbar">
+    <nav class="tabs" aria-label="Filtrar por estado">
+      @for (f of filtros; track f.id) {
+        <button class="tab" [class.active]="filtro() === f.id" [attr.aria-pressed]="filtro() === f.id" (click)="cambiarFiltro(f.id)">
+          {{ f.label }}
+          <span class="num count">{{ conteos()[f.id] || 0 }}</span>
+        </button>
+      }
+    </nav>
+    @if (filtro() === 'alistado' && gestiona() && alistadosSinRotulo() > 0) {
+      <button class="btn-imprimir-alistados" (click)="imprimirAlistados()" [disabled]="imprimiendo()"
+        title="Imprime los rótulos pendientes de los alistados, en el orden en que se alistaron">
+        <ion-icon name="print-outline" aria-hidden="true"></ion-icon>
+        {{ imprimiendo() ? 'Preparando…' : 'Imprimir alistados (' + alistadosSinRotulo() + ')' }}
+      </button>
+    }
+    <select class="select-ghost" [(ngModel)]="filtroCanal" (ngModelChange)="cambioCanal()" aria-label="Filtrar por canal de venta">
+      <option ngValue="domicilio">Domicilios</option>
+      <option ngValue="local">Ventas en local</option>
+      <option [ngValue]="null">Domicilios y local</option>
+    </select>
+    @if (filtroCanal !== 'local') {
+      <select class="select-ghost" [(ngModel)]="filtroRotulo" (ngModelChange)="irPagina(0)" aria-label="Filtrar por rótulo">
+        <option [ngValue]="null">Rótulo: todos</option>
+        <option ngValue="pendiente">Rótulo: pendiente</option>
+        <option ngValue="impreso">Rótulo: impreso</option>
+      </select>
+    }
+    @if (gestiona()) {
+      <select class="select-ghost" [(ngModel)]="filtroMensajero" (ngModelChange)="irPagina(0)" aria-label="Filtrar por mensajero">
+        <option [ngValue]="null">Todos los mensajeros</option>
+        @for (m of mensajeros(); track m.id) {
+          <option [ngValue]="m.id">{{ m.nombre }}</option>
+        }
+      </select>
+    }
+  </div>
+  <div class="toolbar toolbar-fechas">
+    <app-rango [conTodo]="true" inicial="todo" (cambio)="cambiarRango($event)"></app-rango>
+  </div>
+
+  @if (error()) {
+    <p class="error-carga" role="alert">{{ error() }} <button class="btn" (click)="cargar()">Reintentar</button></p>
+  }
+
+  @if (!cargando() || filas().length) {
+    @if (grupos().length) {
+      <div class="list">
+        <div class="list-head row-grid">
+          @if (gestiona()) {
+            <input type="checkbox" class="check" [checked]="todosSel()" (change)="alternarTodos()" aria-label="Seleccionar todos" />
+          }
+          <span class="c-num">#</span>
+          <span class="c-st"></span>
+          <span class="c-main">Cliente y productos</span>
+          <span class="c-barrio">Barrio</span>
+          <span class="c-dom">Mensajero</span>
+          <span class="c-rot">Rótulo</span>
+          <span class="c-total">Total</span>
+          <span class="c-fecha">Fecha</span>
+          <span class="c-menu"></span>
+        </div>
+
+        @for (g of grupos(); track g.estado) {
+          <section class="group" [attr.aria-label]="g.etiqueta">
+            <div class="group-head">
+              @if (gestiona()) {
+                <input type="checkbox" class="check" [checked]="grupoSeleccionado(g)" (change)="alternarGrupo(g)" [attr.aria-label]="'Seleccionar ' + g.etiqueta" />
+              }
+              <app-estado-icon [estado]="g.estado"></app-estado-icon>
+              <span class="group-name">{{ g.etiqueta }}</span>
+              <span class="num group-count">{{ g.total }}</span>
+              <span class="num group-sum" [title]="g.completo ? '' : 'Suma de los pedidos de esta página'">
+                {{ pesos(g.subtotal) }}@if (!g.completo) { <small> en esta página</small> }
+              </span>
+            </div>
+
+            @for (p of g.pedidos; track p.id) {
+              <div class="row row-grid" [class.selected]="sel().has(p.id)" [class.closed]="!editable(p)">
+                @if (gestiona()) {
+                  <input type="checkbox" class="check" [checked]="sel().has(p.id)" (change)="alternar(p.id)" [attr.aria-label]="'Seleccionar pedido ' + p.id" />
+                }
+                <a class="c-num num" (click)="abrir(p.id)">#{{ p.id }}</a>
+                <span class="c-st"><app-estado-icon [estado]="p.estado"></app-estado-icon></span>
+
+                <div class="c-main">
+                  <div class="cliente-linea">
+                    <button type="button" class="cliente" (click)="abrir(p.id)">{{ p.cliente_nombre }}</button>
+                    <span class="meta-mobile num">#{{ p.id }}@if (p.barrio) {, {{ p.barrio }}}</span>
+                  </div>
+                  @if (puedeAlistar(p)) {
+                    <button type="button" class="btn-alistar" (click)="alistar([p])" [disabled]="ocupado()" [attr.aria-label]="'Alistar pedido ' + p.id">
+                      <ion-icon name="cube-outline" aria-hidden="true"></ion-icon>
+                      Alistar
+                    </button>
+                  }
+                  @if (p.estado === 'alistado' && ordinal(p)) {
+                    <span class="chip-alistado" [title]="'Alistado en el puesto ' + ordinal(p)">
+                      <ion-icon name="checkmark-circle" aria-hidden="true"></ion-icon>
+                      <span class="num">{{ ordinal(p) }}</span> alistado
+                    </span>
+                  }
+                </div>
+
+                <div class="c-prods">
+                  @if (p.pedido_items && p.pedido_items.length) {
+                    <ul class="prods" [attr.aria-label]="'Productos: ' + productosTexto(p)">
+                      @for (it of p.pedido_items.slice(0, maxProductosVisibles); track it.id) {
+                        <li class="prod">
+                          <button type="button" class="prod-foto" [disabled]="!foto(it)" (click)="verImagen(foto(it), it.nombre, $event)"
+                            [attr.aria-label]="foto(it) ? 'Ver foto de ' + it.nombre : it.nombre + ', sin foto'">
+                            @if (foto(it); as url) {
+                              <img [src]="url" alt="" loading="lazy" decoding="async" />
+                            } @else {
+                              <span class="prod-inicial" aria-hidden="true">{{ inicial(it.nombre) }}</span>
+                            }
+                            @if (it.cantidad > 1) {
+                              <span class="prod-cant num" aria-hidden="true">×{{ it.cantidad }}</span>
+                            }
+                          </button>
+                          <span class="prod-nombre">{{ it.nombre }}</span>
+                        </li>
+                      }
+                      @if (p.pedido_items.length > maxProductosVisibles) {
+                        <li class="prod-mas num" [title]="productosTexto(p)">+{{ p.pedido_items.length - maxProductosVisibles }} más</li>
+                      }
+                    </ul>
+                  } @else {
+                    <span class="productos">Sin productos</span>
+                  }
+                </div>
+
+                <span class="c-barrio">
+                  @if (p.canal === 'local') {
+                    <span class="chip-local">En local</span>
+                  } @else {
+                    {{ p.barrio || '—' }}
+                  }
+                </span>
+
+                <div class="c-dom">
+                  @if (gestiona() && editable(p) && p.canal !== 'local') {
+                    <app-avatar [nombre]="p.mensajero_id ? nombreMensajero(p) : null" [foto]="fotoMensajero(p.mensajero_id)" [tam]="24"></app-avatar>
+                    <select class="dom-select" [class.unassigned]="!p.mensajero_id" (change)="cambioMensajero(p, $event)"
+                      [disabled]="guardandoId() === p.id" [attr.aria-label]="'Mensajero del pedido ' + p.id">
+                      <option value="" [selected]="!p.mensajero_id">{{ p.mensajero_id ? 'Quitar mensajero' : 'Asignar' }}</option>
+                      @for (m of mensajeros(); track m.id) {
+                        <option [value]="m.id" [selected]="m.id === p.mensajero_id">{{ m.nombre }}</option>
+                      }
+                    </select>
+                  } @else if (p.mensajero_id) {
+                    <app-avatar [nombre]="nombreMensajero(p)" [foto]="fotoMensajero(p.mensajero_id)" [tam]="24"></app-avatar>
+                    <span class="dom-name">{{ nombreMensajero(p) }}</span>
+                  } @else {
+                    <span class="muted">—</span>
+                  }
+                </div>
+
+                @if (p.canal !== 'local') {
+                  <span class="c-rot" [class.pending]="!p.rotulo_impreso_at">
+                    <ion-icon name="print-outline" aria-hidden="true"></ion-icon>
+                    {{ p.rotulo_impreso_at ? 'Impreso' : 'Pendiente' }}
+                  </span>
+                } @else {
+                  <span class="c-rot muted">—</span>
+                }
+
+                <span class="c-total num">{{ pesos(p.total) }}</span>
+                <span class="c-fecha num" [title]="fechaCompleta(p.created_at) + ', vendió ' + (p.vendedora?.nombre || 'desconocido')">
+                  {{ fecha(p.created_at) }}
+                </span>
+
+                <div class="c-menu">
+                  <button class="icon-btn" (click)="alternarMenu(p.id)" [attr.aria-expanded]="menuAbierto() === p.id" [attr.aria-label]="'Más acciones del pedido ' + p.id">
+                    <ion-icon name="ellipsis-horizontal"></ion-icon>
+                  </button>
+                  @if (menuAbierto() === p.id) {
+                    <button class="popover-backdrop" aria-label="Cerrar" (click)="menuAbierto.set(null)"></button>
+                    <div class="popover" role="menu">
+                      <p class="popover-meta">Vendió {{ p.vendedora?.nombre || 'desconocido' }}</p>
+                      <button role="menuitem" (click)="abrir(p.id)">Ver pedido</button>
+                      @if (puedeEditar(p)) {
+                        <a role="menuitem" [routerLink]="['/app/pedidos', p.id, 'editar']" (click)="menuAbierto.set(null)">Editar pedido</a>
+                      }
+                      @if (puedeAlistar(p)) {
+                        <button role="menuitem" (click)="alistar([p])">Alistar</button>
+                      }
+                      @if (gestiona() && p.estado === 'alistado') {
+                        <button role="menuitem" (click)="quitarAlistado(p)">Quitar de alistados</button>
+                      }
+                      @if (puedeCancelar(p)) {
+                        <button role="menuitem" (click)="cancelar(p)">Cancelar pedido</button>
+                      }
+                      @if (esAdmin() && p.estado !== 'entregado') {
+                        <button role="menuitem" class="danger" (click)="eliminar(p)">Eliminar pedido</button>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </section>
+        }
+
+        @if (totalCerrados() > porPagina) {
+          <div class="paginar">
+            <span class="num">Entregados y cancelados: {{ pagina() * porPagina + 1 }}–{{ min((pagina() + 1) * porPagina, totalCerrados()) }} de {{ numero(totalCerrados()) }}</span>
+            <span class="paginar-btns">
+              <button class="btn" [disabled]="pagina() === 0" (click)="irPagina(pagina() - 1)">Anterior</button>
+              <button class="btn" [disabled]="(pagina() + 1) * porPagina >= totalCerrados()" (click)="irPagina(pagina() + 1)">Siguiente</button>
+            </span>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="empty">
+        @if (hayFiltros()) {
+          <p class="empty-title">Ningún pedido coincide</p>
+          <p class="empty-text">Prueba con otro nombre, barrio o número, o cambia el filtro de estado.</p>
+          <button class="btn" (click)="quitarFiltros()">Quitar filtros</button>
+        } @else {
+          <p class="empty-title">{{ vacioTitulo() }}</p>
+          <p class="empty-text">Los pedidos que crean las vendedoras aparecen aquí al instante.</p>
+          @if (puedeVender()) {
+            <a class="btn btn-primary" routerLink="/app/pedidos/nuevo">Crear pedido</a>
+          }
+        }
+      </div>
+    }
+  } @else {
+    <div class="list skeleton" aria-busy="true" aria-label="Cargando pedidos">
+      @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+        <div class="sk-row"><span class="sk sk-a"></span><span class="sk sk-b"></span><span class="sk sk-c"></span></div>
+      }
+    </div>
+  }
+
+  @if (sel().size) {
+    <div class="selection-bar" role="toolbar" aria-label="Acciones de selección">
+      <span class="num sel-count">{{ sel().size }} {{ sel().size === 1 ? 'seleccionado' : 'seleccionados' }}</span>
+      <select class="bar-select" (change)="asignarLote($event)" [disabled]="ocupado() || !mensajeros().length" aria-label="Asignar mensajero a la selección">
+        <option value="" selected disabled>{{ ocupado() ? 'Asignando…' : 'Asignar mensajero' }}</option>
+        @for (m of mensajeros(); track m.id) {
+          <option [value]="m.id">{{ m.nombre }}</option>
+        }
+      </select>
+      @if (selPorAlistar().length) {
+        <button class="bar-btn" (click)="alistar(selPorAlistar())" [disabled]="ocupado()">
+          <ion-icon name="cube-outline" aria-hidden="true"></ion-icon>
+          {{ ocupado() ? 'Alistando…' : 'Alistar (' + selPorAlistar().length + ')' }}
+        </button>
+      }
+      <button class="bar-btn" (click)="imprimirSeleccion()" [disabled]="imprimiendo()">
+        <ion-icon name="print-outline" aria-hidden="true"></ion-icon>
+        {{ imprimiendo() ? 'Preparando…' : 'Imprimir rótulos' }}
+      </button>
+      <button class="bar-icon" (click)="limpiarSel()" aria-label="Quitar selección">
+        <ion-icon name="close"></ion-icon>
+      </button>
+    </div>
+  }
+
+  @if (imagen(); as img) {
+    <app-imagen-preview [url]="img.url" [alt]="img.alt" (cerrar)="imagen.set(null)"></app-imagen-preview>
+  }
+  @if (abierto(); as id) {
+    <app-pedido-detalle [pedidoId]="id" (cerrar)="cerrarDetalle()" (cambiado)="cargar()"></app-pedido-detalle>
+  }
+</div>

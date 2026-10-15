@@ -7,6 +7,8 @@ export const SELECT_PEDIDO =
 
 export interface FiltroPedidos {
   estado?: EstadoPedido | null;
+  /** Varios estados a la vez (tiene prioridad sobre `estado`) */
+  estados?: EstadoPedido[] | null;
   texto?: string;
   desde?: string | null; // ISO
   hasta?: string | null; // ISO
@@ -42,22 +44,15 @@ export class PedidosService {
   async listar(f: FiltroPedidos): Promise<{ filas: Pedido[]; total: number }> {
     const porPagina = f.porPagina ?? 50;
     const pagina = f.pagina ?? 0;
-    const campos = f.conItems ? SELECT_PEDIDO + ', pedido_items(id, nombre, cantidad)' : SELECT_PEDIDO;
+    const campos = f.conItems
+      ? SELECT_PEDIDO + ', pedido_items(id, nombre, cantidad, producto:productos(imagen_url))'
+      : SELECT_PEDIDO;
     let q = this.db.from('pedidos').select(campos, { count: 'exact' });
-    if (f.estado) q = q.eq('estado', f.estado);
-    if (f.desde) q = q.gte('created_at', f.desde);
-    if (f.hasta) q = q.lte('created_at', f.hasta);
+    if (f.estados?.length) q = q.in('estado', f.estados);
+    else if (f.estado) q = q.eq('estado', f.estado);
     if (f.vendedoraId) q = q.eq('vendedora_id', f.vendedoraId);
-    if (f.mensajeroId) q = q.eq('mensajero_id', f.mensajeroId);
-    if (f.canal) q = q.eq('canal', f.canal);
     if (f.tipoRecaudo) q = q.eq('tipo_recaudo', f.tipoRecaudo);
-    if (f.rotulo === 'pendiente') q = q.is('rotulo_impreso_at', null);
-    if (f.rotulo === 'impreso') q = q.not('rotulo_impreso_at', 'is', null);
-    const t = (f.texto ?? '').trim().replace(/[,()%]/g, ' ').trim();
-    if (t) {
-      if (/^\d+$/.test(t)) q = q.or(`id.eq.${t},cliente_telefono.ilike.%${t}%`);
-      else q = q.or(`cliente_nombre.ilike.%${t}%,barrio.ilike.%${t}%,direccion.ilike.%${t}%`);
-    }
+    q = this.filtrosComunes(q, f);
     // Los alistados van en el orden en que se alistaron (1°, 2°, 3°…), como en Kaesuri
     q = f.estado === 'alistado'
       ? q.order('alistado_at', { ascending: true, nullsFirst: true }).order('id')
@@ -89,20 +84,30 @@ export class PedidosService {
     return (r ?? []) as unknown as Pedido[];
   }
 
-  /** Cuántos pedidos hay en cada estado, con los mismos filtros de la lista (menos la búsqueda) */
-  async conteoPorEstado(f: Pick<FiltroPedidos, 'desde' | 'hasta' | 'canal' | 'rotulo' | 'mensajeroId'> = {}): Promise<Record<string, number>> {
+  /** Filtros que comparten la lista y los conteos: fechas, canal, mensajero, rótulo y búsqueda */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private filtrosComunes<Q extends { gte: any; lte: any; eq: any; is: any; not: any; or: any }>(q: Q, f: FiltroPedidos): Q {
+    if (f.desde) q = q.gte('created_at', f.desde);
+    if (f.hasta) q = q.lte('created_at', f.hasta);
+    if (f.canal) q = q.eq('canal', f.canal);
+    if (f.mensajeroId) q = q.eq('mensajero_id', f.mensajeroId);
+    if (f.rotulo === 'pendiente') q = q.is('rotulo_impreso_at', null);
+    if (f.rotulo === 'impreso') q = q.not('rotulo_impreso_at', 'is', null);
+    const t = (f.texto ?? '').trim().replace(/^#/, '').replace(/[,()%]/g, ' ').trim();
+    if (t) {
+      if (/^\d+$/.test(t)) q = q.or(`id.eq.${t},cliente_telefono.ilike.%${t}%`);
+      else q = q.or(`cliente_nombre.ilike.%${t}%,barrio.ilike.%${t}%,direccion.ilike.%${t}%`);
+    }
+    return q;
+  }
+
+  /** Cuántos pedidos hay en cada estado, con los mismos filtros de la lista */
+  async conteoPorEstado(
+    f: Pick<FiltroPedidos, 'desde' | 'hasta' | 'canal' | 'rotulo' | 'mensajeroId' | 'texto'> = {}
+  ): Promise<Record<string, number>> {
     const estados: EstadoPedido[] = ['por_alistar', 'alistado', 'despachado', 'entregado', 'cancelado'];
     const res = await Promise.all(
-      estados.map((e) => {
-        let q = this.db.from('pedidos').select('id', { count: 'exact', head: true }).eq('estado', e);
-        if (f.desde) q = q.gte('created_at', f.desde);
-        if (f.hasta) q = q.lte('created_at', f.hasta);
-        if (f.canal) q = q.eq('canal', f.canal);
-        if (f.mensajeroId) q = q.eq('mensajero_id', f.mensajeroId);
-        if (f.rotulo === 'pendiente') q = q.is('rotulo_impreso_at', null);
-        if (f.rotulo === 'impreso') q = q.not('rotulo_impreso_at', 'is', null);
-        return q;
-      })
+      estados.map((e) => this.filtrosComunes(this.db.from('pedidos').select('id', { count: 'exact', head: true }).eq('estado', e), f))
     );
     const out: Record<string, number> = {};
     estados.forEach((e, i) => (out[e] = res[i].count ?? 0));
@@ -189,8 +194,24 @@ export class PedidosService {
     this.check(await this.db.rpc('cambiar_estado', { p_pedido: id, p_estado: estado, p_mensajero: mensajeroId }));
   }
 
-  async asignarMensajero(id: number, mensajeroId: number): Promise<void> {
+  async asignarMensajero(id: number, mensajeroId: number | null): Promise<void> {
     this.check(await this.db.rpc('asignar_mensajero', { p_pedido: id, p_mensajero: mensajeroId }));
+  }
+
+  /** Puesto (1°, 2°…) de cada alistado según el orden en que se alistó, sin importar los filtros */
+  async ordenAlistados(): Promise<Map<number, number>> {
+    const r = this.check(
+      await this.db.from('pedidos').select('id').eq('estado', 'alistado')
+        .order('alistado_at', { ascending: true, nullsFirst: true }).order('id').limit(1000)
+    );
+    return new Map(((r ?? []) as { id: number }[]).map((p, i) => [p.id, i + 1]));
+  }
+
+  /** Borra un pedido que no se ha entregado (solo el admin; los productos se borran con él) */
+  async eliminar(id: number): Promise<void> {
+    const r = await this.db.from('pedidos').delete({ count: 'exact' }).eq('id', id).neq('estado', 'entregado');
+    if (r.error) throw r.error;
+    if (!r.count) throw new Error('No se pudo eliminar el pedido');
   }
 
   async entregar(id: number, tipo: TipoRecaudo, efectivo: number, transferencia: number): Promise<void> {
