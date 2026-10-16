@@ -265,7 +265,9 @@
   // Nada se arrastra de lado (Ionic ya deja el body fijo; no se toca html)
   overflow-x: hidden;
   overscroll-behavior-x: none;
-  -webkit-overflow-scrolling: touch;
+  // Sin -webkit-overflow-scrolling: en iPhone crea una capa propia y todo lo
+  // que se abre desde una página (hojas, ajustar foto) quedaba DEBAJO de la
+  // barra inferior, tapando sus botones. El desplazamiento suave ya es normal.
   background: var(--bg);
   color: var(--text);
 }

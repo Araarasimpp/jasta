@@ -64,7 +64,8 @@ export class RecortarFotoComponent implements OnInit, OnDestroy {
   @Output() recortada = new EventEmitter<Blob>();
   @Output() cancelar = new EventEmitter<void>();
 
-  readonly lado = Math.min(300, (typeof window !== 'undefined' ? window.innerWidth : 360) - 64);
+  // Cabe en pantallas bajitas (iPhone SE) sin esconder los botones de abajo
+  readonly lado = Math.max(200, Math.min(300, window.innerWidth - 64, window.innerHeight - 380));
   readonly zoomMax = ZOOM_MAX;
   url = signal<string | null>(null);
   anchoBase = signal(0);

@@ -833,7 +833,6 @@ select.inp,
   flex: 1;
   overflow-y: auto;
   overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
   padding: 20px 24px;
   display: flex;
   flex-direction: column;
@@ -1274,4 +1273,12 @@ select.inp,
   font-size: 16px;
   font-weight: 650;
   color: var(--text);
+}
+
+// Celular: mientras hay una hoja abierta (detalle, editar, ajustar foto…) la
+// barra inferior se esconde, para que nunca tape los botones de la hoja
+@media (max-width: 860px) {
+  body:has(.velo) .pill-nav {
+    visibility: hidden;
+  }
 }
