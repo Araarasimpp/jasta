@@ -130,7 +130,7 @@
                     <ul class="prods" [attr.aria-label]="'Productos: ' + productosTexto(p)">
                       @for (it of p.pedido_items.slice(0, maxProductosVisibles); track it.id) {
                         <li class="prod">
-                          <button type="button" class="prod-foto" [disabled]="!foto(it)" (click)="verImagen(foto(it), it.nombre, $event)"
+                          <button type="button" class="prod-foto" [disabled]="!foto(it)" (click)="verFotos(p, it, $event)"
                             [attr.aria-label]="foto(it) ? 'Ver foto de ' + it.nombre : it.nombre + ', sin foto'">
                             @if (foto(it); as url) {
                               <img [src]="url" alt="" loading="lazy" decoding="async" />
@@ -280,9 +280,6 @@
     </div>
   }
 
-  @if (imagen(); as img) {
-    <app-imagen-preview [url]="img.url" [alt]="img.alt" (cerrar)="imagen.set(null)"></app-imagen-preview>
-  }
   @if (abierto(); as id) {
     <app-pedido-detalle [pedidoId]="id" [chat]="abiertoEnChat()" (cerrar)="cerrarDetalle()" (cambiado)="cargar()"></app-pedido-detalle>
   }

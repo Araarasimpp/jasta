@@ -39,7 +39,7 @@ function normal(s: string): string {
       .resultados { display: flex; flex-direction: column; max-height: 300px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); }
       .res { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: none; border-bottom: 1px solid var(--border-soft);
         background: none; color: var(--text); text-align: left; cursor: pointer; font-size: 13px; }
-      .res:hover { background: var(--hover); }
+      @media (hover: hover) { .res:hover { background: var(--hover); } }
       .res img, .res .ph { width: 36px; height: 36px; border-radius: 6px; object-fit: cover; background: var(--surface-2); flex-shrink: 0; }
       .res .nom { flex: 1; min-width: 0; }
       .res .nom small { display: block; color: var(--text-muted); font-size: 12px; }

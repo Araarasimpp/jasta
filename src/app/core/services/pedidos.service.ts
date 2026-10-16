@@ -135,7 +135,7 @@ export class PedidosService {
 
   async detalle(id: number): Promise<{ pedido: Pedido; notas: Nota[] }> {
     const [p, n] = await Promise.all([
-      this.db.from('pedidos').select(SELECT_PEDIDO + ', pedido_items(*)').eq('id', id).single(),
+      this.db.from('pedidos').select(SELECT_PEDIDO + ', pedido_items(*, producto:productos(imagen_url))').eq('id', id).single(),
       this.db.from('pedido_notas').select('id, created_at, autor, nota').eq('pedido_id', id).order('created_at').order('id'),
     ]);
     return { pedido: this.check(p) as unknown as Pedido, notas: (this.check(n) ?? []) as Nota[] };

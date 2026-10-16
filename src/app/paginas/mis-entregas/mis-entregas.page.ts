@@ -30,7 +30,7 @@ import { DiaComponent } from '../../shared/rango/dia.component';
       .chip-mensaje ion-icon { font-size: 15px; }
       .total { font-size: 17px; }
       .b-wa { color: var(--efectivo); border-color: color-mix(in srgb, var(--efectivo) 40%, var(--border)); }
-      .b-wa:hover { border-color: var(--efectivo); background: var(--ok-wash); }
+      @media (hover: hover) { .b-wa:hover { border-color: var(--efectivo); background: var(--ok-wash); } }
       .cuadre { display: flex; flex-direction: column; gap: 12px; }
       .cuadre .panel-head { margin-bottom: 0; }
       .en-ruta { font-size: 13px; color: var(--text-soft); }

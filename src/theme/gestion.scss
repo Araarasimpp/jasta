@@ -67,9 +67,11 @@
   transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 
-.b:hover {
-  border-color: var(--text-muted);
-  background: var(--surface-2);
+@media (hover: hover) {
+  .b:hover {
+    border-color: var(--text-muted);
+    background: var(--surface-2);
+  }
 }
 
 .b:active:not(:disabled) {
@@ -92,9 +94,11 @@
   color: var(--on-accent);
 }
 
-.b-pri:hover {
-  border-color: var(--accent-hover);
-  background: var(--accent-hover);
+@media (hover: hover) {
+  .b-pri:hover {
+    border-color: var(--accent-hover);
+    background: var(--accent-hover);
+  }
 }
 
 .b-pri:active:not(:disabled) {
@@ -108,9 +112,11 @@
   color: #fff;
 }
 
-.b-ok:hover {
-  border-color: var(--efectivo);
-  background: color-mix(in srgb, var(--efectivo) 88%, #000);
+@media (hover: hover) {
+  .b-ok:hover {
+    border-color: var(--efectivo);
+    background: color-mix(in srgb, var(--efectivo) 88%, #000);
+  }
 }
 
 body.dark .b-ok {
@@ -121,9 +127,11 @@ body.dark .b-ok {
   color: var(--danger);
 }
 
-.b-peligro:hover {
-  border-color: var(--danger);
-  background: var(--danger-wash);
+@media (hover: hover) {
+  .b-peligro:hover {
+    border-color: var(--danger);
+    background: var(--danger-wash);
+  }
 }
 
 .b-grande {
@@ -146,9 +154,11 @@ body.dark .b-ok {
   font-size: 18px;
 }
 
-.b-icono:hover {
-  background: var(--hover);
-  color: var(--text);
+@media (hover: hover) {
+  .b-icono:hover {
+    background: var(--hover);
+    color: var(--text);
+  }
 }
 
 // ---------- Filtros ----------
@@ -245,8 +255,10 @@ body.dark .b-ok {
   transition: transform 220ms var(--ease);
 }
 
-.chip:hover {
-  color: var(--text);
+@media (hover: hover) {
+  .chip:hover {
+    color: var(--text);
+  }
 }
 
 .chip.on {
@@ -323,11 +335,13 @@ select.inp,
   line-height: 1.45;
 }
 
-.inp:hover,
-.campo input:hover,
-.campo select:hover,
-.campo textarea:hover {
-  border-color: var(--text-muted);
+@media (hover: hover) {
+  .inp:hover,
+  .campo input:hover,
+  .campo select:hover,
+  .campo textarea:hover {
+    border-color: var(--text-muted);
+  }
 }
 
 .inp:focus,
@@ -426,8 +440,10 @@ select.inp,
   transition: background var(--dur) var(--ease);
 }
 
-.tabla tbody tr:hover td {
-  background: var(--surface-2);
+@media (hover: hover) {
+  .tabla tbody tr:hover td {
+    background: var(--surface-2);
+  }
 }
 
 .tabla .der {
@@ -480,12 +496,14 @@ select.inp,
   cursor: pointer;
 }
 
-a.guia:hover,
-.guia:hover {
-  color: var(--oro-texto);
-  text-decoration: underline;
-  text-decoration-color: var(--oro);
-  text-underline-offset: 3px;
+@media (hover: hover) {
+  a.guia:hover,
+  .guia:hover {
+    color: var(--oro-texto);
+    text-decoration: underline;
+    text-decoration-color: var(--oro);
+    text-underline-offset: 3px;
+  }
 }
 
 .guia-grande {
@@ -710,8 +728,10 @@ a.guia:hover,
   transition: background var(--dur) var(--ease);
 }
 
-.renglones > a:hover > :first-child {
-  color: var(--text);
+@media (hover: hover) {
+  .renglones > a:hover > :first-child {
+    color: var(--text);
+  }
 }
 
 .renglones .total {
@@ -748,6 +768,7 @@ a.guia:hover,
   border: none;
   padding: 0;
   animation: velo-in 180ms var(--ease);
+  touch-action: none;
 }
 
 @keyframes velo-in {
@@ -811,6 +832,8 @@ a.guia:hover,
 .hoja-body {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   padding: 20px 24px;
   display: flex;
   flex-direction: column;
@@ -926,8 +949,10 @@ a.guia:hover,
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 
-.segmented button:hover {
-  color: var(--text);
+@media (hover: hover) {
+  .segmented button:hover {
+    color: var(--text);
+  }
 }
 
 .segmented button.on {
@@ -1051,7 +1076,7 @@ a.guia:hover,
       border-bottom: var(--perfora);
     }
 
-    > tbody > tr:has(> td.media) {
+    &.con-foto > tbody > tr {
       grid-template-columns: auto minmax(0, 1fr);
     }
 
@@ -1103,7 +1128,7 @@ a.guia:hover,
       padding: 2px 0 0;
     }
 
-    > tbody > tr:has(> td.media) > td:not(.media) {
+    &.con-foto > tbody > tr > td:not(.media) {
       grid-column: 2;
     }
 
@@ -1145,6 +1170,24 @@ a.guia:hover,
     border-top: 1px solid var(--border);
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     animation-name: hoja-sube;
+  }
+
+  // Agarradera: la hoja se cierra arrastrándola hacia abajo desde arriba
+  .hoja::before {
+    content: '';
+    position: absolute;
+    z-index: 1;
+    top: 7px;
+    left: 50%;
+    width: 38px;
+    height: 4px;
+    margin-left: -19px;
+    border-radius: 2px;
+    background: var(--border-strong);
+  }
+
+  .hoja-head {
+    touch-action: none;
   }
 
   .hoja-centro {

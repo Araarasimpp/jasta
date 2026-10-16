@@ -148,9 +148,3 @@ body {
   }
 }
 
-// iPhone: la app no se desliza de lado ni rebota cuando algo es un poco más ancho
-html,
-body {
-  overflow-x: hidden;
-  overscroll-behavior-x: none;
-}

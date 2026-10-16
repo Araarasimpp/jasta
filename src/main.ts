@@ -8,7 +8,9 @@ import { AppComponent } from './app/app.component';
 bootstrapApplication(AppComponent, {
   providers: [
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
-    provideIonicAngular(),
+    // Sin el gesto de "deslizar desde el borde para volver" de Ionic: la app es
+    // una sola página con su propio menú y ese gesto atrapaba toques en el borde
+    provideIonicAngular({ swipeBackEnabled: false }),
     provideRouter(routes, withPreloading(PreloadAllModules), withComponentInputBinding()),
   ],
 });

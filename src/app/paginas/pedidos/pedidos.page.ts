@@ -14,7 +14,7 @@ import { RotulosService } from '../../shared/rotulo/rotulos.service';
 import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detalle.component';
 import { AvatarComponent } from '../../shared/avatar/avatar.component';
 import { EstadoIconComponent } from '../../shared/estado-icon/estado-icon.component';
-import { ImagenPreviewComponent } from '../../shared/imagen-preview/imagen-preview.component';
+import { VisorService } from '../../shared/visor/visor.service';
 import { EstadoPedido, Pedido, PedidoItem, Usuario } from '../../shared/modelos';
 import { mensajeError, numero, pesos, urlImagen } from '../../shared/formato';
 import { diaColombiaDe, formatoFechaCO, formatoHoraCO, hoyColombiaISO } from '../../shared/fecha-colombia';
@@ -55,13 +55,14 @@ const ETIQUETA_GRUPO: Record<EstadoPedido, string> = {
 @Component({
   selector: 'app-pedidos',
   standalone: true,
-  imports: [FormsModule, RouterLink, IonIcon, PedidoDetalleComponent, AvatarComponent, EstadoIconComponent, ImagenPreviewComponent],
+  imports: [FormsModule, RouterLink, IonIcon, PedidoDetalleComponent, AvatarComponent, EstadoIconComponent],
   templateUrl: './pedidos.page.html',
   styleUrls: ['./pedidos.page.scss'],
 })
 export class PedidosPage implements OnInit, OnDestroy {
   private ps = inject(PedidosService);
   private sb = inject(SupabaseService);
+  private visor = inject(VisorService);
   private toast = inject(ToastService);
   private rotulos = inject(RotulosService);
   private route = inject(ActivatedRoute);
@@ -100,7 +101,6 @@ export class PedidosPage implements OnInit, OnDestroy {
   guardandoId = signal<number | null>(null);
   ocupado = signal(false);
   imprimiendo = signal(false);
-  imagen = signal<{ url: string; alt: string } | null>(null);
   texto = '';
   filtroRotulo: 'pendiente' | 'impreso' | null = null;
   filtroMensajero: number | null = null;
@@ -480,9 +480,14 @@ export class PedidosPage implements OnInit, OnDestroy {
     return urlImagen(it.producto?.imagen_url);
   }
 
-  verImagen(url: string | null, alt: string, evento: Event): void {
+  /** Abre en el visor las fotos de los productos del pedido, empezando por la tocada */
+  verFotos(p: Pedido, it: PedidoItem, evento: Event): void {
     evento.stopPropagation();
-    if (url) this.imagen.set({ url, alt });
+    const conFoto = (p.pedido_items ?? []).filter((x) => this.foto(x));
+    this.visor.abrir(
+      conFoto.map((x) => ({ url: this.foto(x)!, titulo: x.nombre })),
+      conFoto.findIndex((x) => x.id === it.id)
+    );
   }
 
   inicial(nombre: string): string {

@@ -39,7 +39,7 @@ interface Pendiente {
       .mini td { padding: 6px 4px; border-bottom: 1px solid var(--border-soft); }
       .mini td:last-child { text-align: right; }
       .mini tr { cursor: pointer; }
-      .mini tr:hover td { background: var(--hover); }
+      @media (hover: hover) { .mini tr:hover td { background: var(--hover); } }
       h2 { margin: 0; font-size: 14px; font-weight: 600; }
       .hist-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
       @media (max-width: 640px) { .cifras { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

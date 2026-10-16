@@ -193,9 +193,11 @@
   cursor: pointer;
 }
 
-.reveal-btn:hover {
-  background: var(--hover);
-  color: var(--text);
+@media (hover: hover) {
+  .reveal-btn:hover {
+    background: var(--hover);
+    color: var(--text);
+  }
 }
 
 .error-msg {
@@ -230,8 +232,10 @@
   transition: background var(--dur) var(--ease);
 }
 
-.submit-btn:hover {
-  background: var(--accent-hover);
+@media (hover: hover) {
+  .submit-btn:hover {
+    background: var(--accent-hover);
+  }
 }
 
 .submit-secundario {
@@ -240,8 +244,10 @@
   color: var(--text);
 }
 
-.submit-secundario:hover {
-  background: var(--hover);
+@media (hover: hover) {
+  .submit-secundario:hover {
+    background: var(--hover);
+  }
 }
 
 .submit-link {
@@ -258,9 +264,11 @@
   text-decoration: none;
 }
 
-.field-link:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+@media (hover: hover) {
+  .field-link:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
 }
 
 .warn-msg {
@@ -306,9 +314,11 @@
   text-decoration: none;
 }
 
-.switch-link a:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+@media (hover: hover) {
+  .switch-link a:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
 }
 
 .codigo-input {

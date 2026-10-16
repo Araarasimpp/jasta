@@ -27,7 +27,7 @@ interface Cliente {
       .tabla td { white-space: nowrap; }
       .lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
       .lista li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border-soft); font-size: 13px; cursor: pointer; }
-      .lista li:hover { color: var(--accent); }
+      @media (hover: hover) { .lista li:hover { color: var(--accent); } }
       .lista small { display: block; color: var(--text-muted); font-size: 12px; }
     `,
   ],

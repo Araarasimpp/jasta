@@ -108,8 +108,10 @@
   transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 
-.btn:hover {
-  border-color: var(--text-muted);
+@media (hover: hover) {
+  .btn:hover {
+    border-color: var(--text-muted);
+  }
 }
 
 .btn ion-icon {
@@ -122,9 +124,11 @@
   color: var(--on-accent);
 }
 
-.btn-primary:hover {
-  border-color: var(--accent-hover);
-  background: var(--accent-hover);
+@media (hover: hover) {
+  .btn-primary:hover {
+    border-color: var(--accent-hover);
+    background: var(--accent-hover);
+  }
 }
 
 .icon-btn {
@@ -199,8 +203,10 @@
   transition: transform 220ms var(--ease);
 }
 
-.tab:hover {
-  color: var(--text);
+@media (hover: hover) {
+  .tab:hover {
+    color: var(--text);
+  }
 }
 
 .tab.active {
@@ -344,8 +350,10 @@
   transition: background var(--dur) var(--ease);
 }
 
-.row:hover {
-  background: var(--surface-2);
+@media (hover: hover) {
+  .row:hover {
+    background: var(--surface-2);
+  }
 }
 
 .row.selected {
@@ -409,8 +417,10 @@
   cursor: default;
 }
 
-.prod-foto:not(:disabled):hover {
-  border-color: var(--text-muted);
+@media (hover: hover) {
+  .prod-foto:not(:disabled):hover {
+    border-color: var(--text-muted);
+  }
 }
 
 .prod-foto img {
@@ -515,8 +525,10 @@
   text-overflow: ellipsis;
 }
 
-.dom-select:hover {
-  background: var(--hover);
+@media (hover: hover) {
+  .dom-select:hover {
+    background: var(--hover);
+  }
 }
 
 .dom-select.unassigned {
@@ -619,9 +631,11 @@
   cursor: pointer;
 }
 
-.popover button:hover,
-.popover a:hover {
-  background: var(--hover);
+@media (hover: hover) {
+  .popover button:hover,
+  .popover a:hover {
+    background: var(--hover);
+  }
 }
 
 .popover button.danger {
@@ -685,9 +699,11 @@
   font-size: 15px;
 }
 
-.bar-select:hover,
-.bar-btn:hover {
-  background: color-mix(in srgb, var(--bg) 22%, var(--text));
+@media (hover: hover) {
+  .bar-select:hover,
+  .bar-btn:hover {
+    background: color-mix(in srgb, var(--bg) 22%, var(--text));
+  }
 }
 
 .bar-select:disabled,
@@ -1035,9 +1051,11 @@
   transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
 }
 
-.btn-alistar:hover:not(:disabled) {
-  border-color: var(--text-muted);
-  background: var(--surface-2);
+@media (hover: hover) {
+  .btn-alistar:hover:not(:disabled) {
+    border-color: var(--text-muted);
+    background: var(--surface-2);
+  }
 }
 
 .btn-alistar:disabled {
@@ -1115,9 +1133,11 @@
   text-decoration: none;
 }
 
-.c-num:hover {
-  color: var(--text);
-  text-decoration: underline;
+@media (hover: hover) {
+  .c-num:hover {
+    color: var(--text);
+    text-decoration: underline;
+  }
 }
 
 // El nombre del cliente abre el pedido
@@ -1132,9 +1152,11 @@ button.cliente {
   cursor: pointer;
 }
 
-button.cliente:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
+@media (hover: hover) {
+  button.cliente:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
 }
 
 .group-sum small {

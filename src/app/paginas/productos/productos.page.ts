@@ -9,6 +9,7 @@ import { ToastService } from '../../shared/toast/toast.service';
 import { Producto } from '../../shared/modelos';
 import { mensajeError, numero, pesos, urlImagen } from '../../shared/formato';
 import { STOCK_BAJO } from '../../shared/stock';
+import { VisorService } from '../../shared/visor/visor.service';
 
 type Filtro = 'activos' | 'agotados' | 'bajo' | 'inactivos' | 'todos';
 
@@ -27,6 +28,7 @@ const VACIO: Omit<Producto, 'id'> = {
   imports: [FormsModule, IonIcon],
   styles: [
     `
+      .foto-btn { display: block; padding: 0; border: none; background: none; cursor: zoom-in; border-radius: 8px; }
       .foto { width: 34px; height: 34px; border-radius: 6px; object-fit: cover; background: var(--surface-2); display: block; }
       .neg { color: var(--danger); font-weight: 500; }
       .check { display: flex; align-items: center; gap: 8px; font-size: 14px; }
@@ -52,7 +54,7 @@ const VACIO: Omit<Producto, 'id'> = {
         </div>
       </div>
       <div class="tabla-wrap">
-        <table class="tabla tarjetas-cel">
+        <table class="tabla tarjetas-cel con-foto">
           <thead>
             <tr><th></th><th>Producto</th><th>SKU</th><th class="der">Venta</th><th class="der">Base</th><th class="der">Compra</th><th class="der">Stock</th></tr>
           </thead>
@@ -61,7 +63,9 @@ const VACIO: Omit<Producto, 'id'> = {
               <tr class="click" (click)="editar(p)">
                 <td class="media" style="width: 34px">
                   @if (p.imagen_url) {
-                    <img class="foto" [src]="urlImagen(p.imagen_url)" alt="" loading="lazy" />
+                    <button type="button" class="foto-btn" (click)="verFoto(p.imagen_url, p.nombre, $event)" [attr.aria-label]="'Ver foto de ' + p.nombre">
+                      <img class="foto" [src]="urlImagen(p.imagen_url)" alt="" loading="lazy" />
+                    </button>
                   } @else {
                     <span class="foto"></span>
                   }
@@ -113,7 +117,9 @@ const VACIO: Omit<Producto, 'id'> = {
           <label class="check"><input type="checkbox" [(ngModel)]="f.activo" />Activo (aparece al crear pedidos)</label>
           <div class="campo"><label for="pi">Foto (URL)</label><input id="pi" [(ngModel)]="f.imagen_url" placeholder="https://…" /></div>
           @if (f.imagen_url) {
-            <img [src]="urlImagen(f.imagen_url)" alt="" style="width: 120px; height: 120px; object-fit: cover; border-radius: 8px" />
+            <button type="button" class="foto-btn" (click)="verFoto(f.imagen_url, f.nombre, $event)" aria-label="Ver foto en grande">
+              <img [src]="urlImagen(f.imagen_url)" alt="" style="width: 120px; height: 120px; object-fit: cover; border-radius: 8px; display: block" />
+            </button>
           }
           @if (error()) {
             <p class="error" role="alert">{{ error() }}</p>
@@ -131,6 +137,7 @@ export class ProductosPage implements OnInit {
   private sb = inject(SupabaseService);
   private toast = inject(ToastService);
   private route = inject(ActivatedRoute);
+  private visor = inject(VisorService);
 
   productos = signal<Producto[]>([]);
   cargando = signal(true);
@@ -225,5 +232,11 @@ export class ProductosPage implements OnInit {
     this.toast.ok(id ? 'Producto actualizado' : 'Producto creado');
     this.form.set(null);
     await this.cargar();
+  }
+
+  /** La foto en grande, sin abrir el formulario de edición */
+  verFoto(ruta: string | null, nombre: string, e: Event): void {
+    e.stopPropagation();
+    this.visor.abrir([{ url: urlImagen(ruta) ?? '', titulo: nombre }]);
   }
 }

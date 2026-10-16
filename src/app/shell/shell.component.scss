@@ -89,9 +89,11 @@
   cursor: pointer;
 }
 
-.icon-btn:hover {
-  background: var(--hover);
-  color: var(--text);
+@media (hover: hover) {
+  .icon-btn:hover {
+    background: var(--hover);
+    color: var(--text);
+  }
 }
 
 .shell.collapsed .brand {
@@ -126,8 +128,10 @@
   flex-shrink: 0;
 }
 
-.new-btn:hover {
-  background: var(--accent-hover);
+@media (hover: hover) {
+  .new-btn:hover {
+    background: var(--accent-hover);
+  }
 }
 
 .shell.collapsed .new-btn {
@@ -174,10 +178,12 @@
   transition: color var(--dur) var(--ease);
 }
 
-.menu-item:hover,
-.footer-btn:hover {
-  background: var(--hover);
-  color: var(--text);
+@media (hover: hover) {
+  .menu-item:hover,
+  .footer-btn:hover {
+    background: var(--hover);
+    color: var(--text);
+  }
 }
 
 .menu-item.active {
@@ -216,8 +222,10 @@
   min-width: 0;
 }
 
-.usuario:hover {
-  background: var(--hover);
+@media (hover: hover) {
+  .usuario:hover {
+    background: var(--hover);
+  }
 }
 
 .usuario div {
@@ -254,6 +262,9 @@
   height: 100vh;
   height: 100dvh;
   overflow-y: auto;
+  // Nada se arrastra de lado (Ionic ya deja el body fijo; no se toca html)
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
   -webkit-overflow-scrolling: touch;
   background: var(--bg);
   color: var(--text);

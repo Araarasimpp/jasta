@@ -62,7 +62,7 @@ const RAPIDOS_TIENDA = [
       .rapidos::-webkit-scrollbar { display: none; }
       .rapido { flex-shrink: 0; height: 30px; padding: 0 11px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface);
         color: var(--text-2); font: inherit; font-size: 12.5px; white-space: nowrap; cursor: pointer; }
-      .rapido:hover:not(:disabled) { border-color: var(--oro); color: var(--text); }
+      @media (hover: hover) { .rapido:hover:not(:disabled) { border-color: var(--oro); color: var(--text); } }
       .rapido:disabled { opacity: .5; cursor: progress; }
       .escribir { display: flex; gap: 8px; align-items: flex-end; }
       .escribir textarea { flex: 1; min-height: 40px; max-height: 120px; padding: 9px 11px; resize: none; box-sizing: border-box;

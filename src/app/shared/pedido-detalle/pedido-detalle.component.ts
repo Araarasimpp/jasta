@@ -10,10 +10,11 @@ import { ToastService } from '../toast/toast.service';
 import { EntregarComponent } from '../entregar/entregar.component';
 import { RotulosService } from '../rotulo/rotulos.service';
 import { enlaceWhatsapp } from '../whatsapp';
-import { EstadoPedido, Nota, Pedido, Usuario, estadoLabel } from '../modelos';
+import { EstadoPedido, Nota, Pedido, PedidoItem, Usuario, estadoLabel } from '../modelos';
 import { mensajeError, pesos, urlImagen } from '../formato';
 import { formatoFechaCO, formatoHoraCO } from '../fecha-colombia';
 import { ChatPedidoComponent } from '../chat-pedido/chat-pedido.component';
+import { VisorService } from '../visor/visor.service';
 
 /** Hoja lateral con todo el pedido y las acciones que le tocan a cada rol */
 @Component({
@@ -44,9 +45,13 @@ import { ChatPedidoComponent } from '../chat-pedido/chat-pedido.component';
       .lineas tfoot tr.fin td { padding-top: 9px; border-bottom: 3px double var(--text); color: var(--text); font-size: 15px; font-weight: 650; }
       .lineas tfoot tr.fin td:first-child { border-bottom: none; }
       .fotos { display: flex; gap: 8px; flex-wrap: wrap; }
-      .fotos a { display: block; width: 88px; height: 88px; border-radius: var(--radius-sm); overflow: hidden;
-        border: 1px solid var(--border); background: var(--surface-2); }
-      .fotos img { width: 100%; height: 100%; object-fit: cover; }
+      .fotos button { display: block; width: 88px; height: 88px; padding: 0; border-radius: var(--radius-sm); overflow: hidden;
+        border: 1px solid var(--border); background: var(--surface-2); cursor: zoom-in; }
+      .fotos img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .mini-foto { flex-shrink: 0; width: 30px; height: 30px; padding: 0; align-self: center; border: 1px solid var(--border);
+        border-radius: 6px; overflow: hidden; background: var(--surface-2); cursor: zoom-in; }
+      .mini-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .lineas td { vertical-align: middle; }
       .historial { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
       .historial li { display: grid; grid-template-columns: 92px 1fr; gap: 10px; }
       .historial time { color: var(--text-muted); font-family: var(--mono-font); font-size: 11.5px; }
@@ -107,7 +112,7 @@ import { ChatPedidoComponent } from '../chat-pedido/chat-pedido.component';
             <table class="lineas">
               <tbody>
                 @for (i of p.pedido_items ?? []; track i.id) {
-                  <tr><td class="cant num">{{ i.cantidad }}×</td><td><span class="lider">{{ i.nombre }}</span></td><td class="num">{{ pesos(i.total) }}</td></tr>
+                  <tr><td class="cant num">{{ i.cantidad }}×</td><td><span class="lider">@if (urlImagen(i.producto?.imagen_url); as u) {<button type="button" class="mini-foto" (click)="verProducto(i)" [attr.aria-label]="'Ver foto de ' + i.nombre"><img [src]="u" alt="" loading="lazy" /></button>}{{ i.nombre }}</span></td><td class="num">{{ pesos(i.total) }}</td></tr>
                 }
               </tbody>
               <tfoot>
@@ -156,7 +161,7 @@ import { ChatPedidoComponent } from '../chat-pedido/chat-pedido.component';
               <h3 class="seccion-titulo">Comprobantes</h3>
               <div class="fotos">
                 @for (f of p.evidencias; track f) {
-                  <a [href]="urlImagen(f)" target="_blank" rel="noopener"><img [src]="urlImagen(f)" alt="Comprobante" loading="lazy" /></a>
+                  <button type="button" (click)="verComprobantes(f)" aria-label="Ver comprobante"><img [src]="urlImagen(f)" alt="" loading="lazy" /></button>
                 }
               </div>
             </section>
@@ -224,6 +229,7 @@ export class PedidoDetalleComponent implements OnChanges {
   private router = inject(Router);
   private toast = inject(ToastService);
   private rotulos = inject(RotulosService);
+  private visor = inject(VisorService);
 
   pedido = signal<Pedido | null>(null);
   notas = signal<Nota[]>([]);
@@ -363,5 +369,21 @@ export class PedidoDetalleComponent implements OnChanges {
 
   fechaCorta(iso: string): string {
     return formatoFechaCO(iso, { day: 'numeric', month: 'short' }) + ' ' + formatoHoraCO(iso);
+  }
+
+  verComprobantes(f: string): void {
+    const fotos = this.pedido()?.evidencias ?? [];
+    this.visor.abrir(
+      fotos.map((x, n) => ({ url: urlImagen(x) ?? '', titulo: `Comprobante ${n + 1} de #${this.pedidoId}` })),
+      fotos.indexOf(f)
+    );
+  }
+
+  verProducto(it: PedidoItem): void {
+    const conFoto = (this.pedido()?.pedido_items ?? []).filter((x) => urlImagen(x.producto?.imagen_url));
+    this.visor.abrir(
+      conFoto.map((x) => ({ url: urlImagen(x.producto?.imagen_url)!, titulo: x.nombre })),
+      conFoto.findIndex((x) => x.id === it.id)
+    );
   }
 }
