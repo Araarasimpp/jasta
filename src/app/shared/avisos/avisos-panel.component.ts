@@ -95,7 +95,8 @@ import { NotificacionesService, Aviso } from '../../core/services/notificaciones
           max-height: var(--panel-max);
         }
       }
-      @keyframes subir { from { opacity: 0; transform: translateY(6px); } }
+      /* Solo opacidad: en iPhone, mover con transform un panel con lista desplazable a veces la dejaba en blanco */
+      @keyframes subir { from { opacity: 0; } }
       .panel > * { align-self: stretch; box-sizing: border-box; }
       .panel header, .panel .lista { width: 100%; }
       header { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px; border-bottom: var(--perfora); }
@@ -111,7 +112,7 @@ import { NotificacionesService, Aviso } from '../../core/services/notificaciones
       .permiso p { margin: 0 0 8px; }
       .permiso button { height: 32px; padding: 0 12px; border: none; border-radius: var(--radius-sm); background: var(--accent); color: var(--on-accent); font-size: 13px; font-weight: 550; cursor: pointer; }
       .permiso-off { background: var(--surface-2); color: var(--text-soft); }
-      .lista { flex: 1 1 auto; min-height: 0; max-height: calc(var(--panel-max) - 100px); overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y; padding: 6px; }
+      .lista { flex: 1 1 auto; min-height: 0; max-height: calc(var(--panel-max) - 100px); overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; padding: 6px; }
       .aviso { width: 100%; display: flex; gap: 10px; padding: 9px 10px; touch-action: pan-y; -webkit-tap-highlight-color: transparent; border: none; border-radius: var(--radius); background: none; color: var(--text); text-align: left; cursor: pointer; }
       .aviso + .aviso { margin-top: 2px; }
       @media (hover: hover) { .aviso:hover { background: var(--hover); } }
