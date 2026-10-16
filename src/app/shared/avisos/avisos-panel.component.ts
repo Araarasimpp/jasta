@@ -80,9 +80,13 @@ import { NotificacionesService, Aviso } from '../../core/services/notificaciones
       .fondo { position: fixed; inset: 0; z-index: 140; border: none; padding: 0; background: rgba(14, 14, 12, 0.2); }
       .panel {
         position: fixed; z-index: 141; left: 244px; bottom: 16px; width: 380px;
-        --panel-max: min(560px, calc(100vh - 32px)); max-height: var(--panel-max); display: flex; flex-direction: column;
+        --panel-max: min(560px, calc(100vh - 32px)); max-height: var(--panel-max);
+        /* El panel entero se desplaza (el título queda fijo arriba). Antes la lista
+           tenía su propio scroll dentro de un flex y Safari de iPhone la dejaba con
+           alto 0 cuando arriba se mostraba el estado de los avisos. */
+        display: block; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
         background: var(--surface); color: var(--text); border: 1px solid var(--border);
-        border-radius: var(--radius-lg); box-shadow: var(--shadow-pop); overflow: hidden;
+        border-radius: var(--radius-lg); box-shadow: var(--shadow-pop);
         animation: subir 200ms var(--ease);
       }
       /* Celular: hoja sobre la barra inferior, como máximo el 65% de la pantalla
@@ -97,9 +101,8 @@ import { NotificacionesService, Aviso } from '../../core/services/notificaciones
       }
       /* Solo opacidad: en iPhone, mover con transform un panel con lista desplazable a veces la dejaba en blanco */
       @keyframes subir { from { opacity: 0; } }
-      .panel > * { align-self: stretch; box-sizing: border-box; }
-      .panel header, .panel .lista { width: 100%; }
-      header { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px; border-bottom: var(--perfora); }
+      .panel > * { box-sizing: border-box; }
+      header { position: sticky; top: 0; z-index: 1; background: var(--surface); display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px; border-bottom: var(--perfora); }
       h2 { margin: 0; font-size: 15px; font-weight: 650; }
       .estado-avisos { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 10px 14px 0; }
       .estado-avisos .permiso-ok { margin: 0; flex: 1 1 auto; min-width: 0; line-height: 1.35; }
@@ -112,7 +115,7 @@ import { NotificacionesService, Aviso } from '../../core/services/notificaciones
       .permiso p { margin: 0 0 8px; }
       .permiso button { height: 32px; padding: 0 12px; border: none; border-radius: var(--radius-sm); background: var(--accent); color: var(--on-accent); font-size: 13px; font-weight: 550; cursor: pointer; }
       .permiso-off { background: var(--surface-2); color: var(--text-soft); }
-      .lista { flex: 1 1 auto; min-height: 0; max-height: calc(var(--panel-max) - 100px); overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; padding: 6px; }
+      .lista { padding: 6px; }
       .aviso { width: 100%; display: flex; gap: 10px; padding: 9px 10px; touch-action: pan-y; -webkit-tap-highlight-color: transparent; border: none; border-radius: var(--radius); background: none; color: var(--text); text-align: left; cursor: pointer; }
       .aviso + .aviso { margin-top: 2px; }
       @media (hover: hover) { .aviso:hover { background: var(--hover); } }
