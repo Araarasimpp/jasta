@@ -240,6 +240,14 @@ export class PedidosService {
     return (r ?? []) as Usuario[];
   }
 
+  /** Vendedoras, también las inactivas (para filtrar reportes de meses anteriores) */
+  async vendedoras(): Promise<Usuario[]> {
+    const r = this.check(
+      await this.db.from('usuarios').select('*').contains('roles', ['vendedora']).order('activo', { ascending: false }).order('nombre')
+    );
+    return (r ?? []) as Usuario[];
+  }
+
   async usuarios(): Promise<Usuario[]> {
     return (this.check(await this.db.from('usuarios').select('*').order('activo', { ascending: false }).order('nombre')) ??
       []) as Usuario[];

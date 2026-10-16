@@ -6,7 +6,8 @@ import { PedidosService } from '../../core/services/pedidos.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detalle.component';
-import { RangoComponent, RangoFechas } from '../../shared/rango/rango.component';
+import { RangoFechas } from '../../shared/rango/rango.component';
+import { DiaComponent } from '../../shared/rango/dia.component';
 import { Cuadre, Pedido } from '../../shared/modelos';
 import { mensajeError, pesos } from '../../shared/formato';
 import { finDiaColombia, formatoFechaCO, formatoHoraCO, inicioDiaColombia } from '../../shared/fecha-colombia';
@@ -24,7 +25,7 @@ interface Pendiente {
 @Component({
   selector: 'app-cuadres',
   standalone: true,
-  imports: [IonIcon, PedidoDetalleComponent, RangoComponent],
+  imports: [IonIcon, PedidoDetalleComponent, DiaComponent],
   styles: [
     `
       .cifras { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
@@ -93,7 +94,7 @@ interface Pendiente {
 
         <div class="hist-head">
           <h2>Historial de cuadres</h2>
-          <app-rango [conTodo]="true" inicial="todo" (cambio)="cambiarRango($event)"></app-rango>
+          <app-dia (cambio)="cambiarRango($event)"></app-dia>
         </div>
         @if (historial().length) {
           <div class="cifras">
@@ -132,7 +133,7 @@ interface Pendiente {
                   </td></tr>
                 }
               } @empty {
-                <tr><td colspan="7" class="suave">Sin cuadres todavía.</td></tr>
+                <tr><td colspan="7" class="suave">No se cerraron cuadres este día.</td></tr>
               }
             </tbody>
           </table>

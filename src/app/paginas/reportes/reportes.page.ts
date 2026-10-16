@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
@@ -6,10 +6,12 @@ import { downloadOutline, searchOutline } from 'ionicons/icons';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detalle.component';
-import { RangoComponent, RangoFechas, diaCorto } from '../../shared/rango/rango.component';
+import { RangoFechas, diaCorto, diaLargo } from '../../shared/rango/rango.component';
+import { PedidosService } from '../../core/services/pedidos.service';
+import { Usuario } from '../../shared/modelos';
 import { descargarCsv } from '../../shared/exportar';
 import { mensajeError, numero, pesos } from '../../shared/formato';
-import { finDiaColombia, formatoFechaCO, formatoHoraCO, inicioDiaColombia } from '../../shared/fecha-colombia';
+import { finDiaColombia, formatoFechaCO, formatoHoraCO, hoyColombiaISO, inicioDiaColombia } from '../../shared/fecha-colombia';
 
 // ---------- Tipos ----------
 interface Totales {
@@ -41,11 +43,20 @@ type Pestana = 'detalle' | 'pedidos' | 'vendedoras' | 'productos' | 'mensajeros'
 const POR_PAGINA = 100;
 const suma = <T>(filas: T[], f: (x: T) => number) => filas.reduce((a, x) => a + Number(f(x) || 0), 0);
 const PAGO: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Transferencia', mixto: 'Mixto' };
+type EstadoFiltro = 'entregado' | 'por_alistar' | 'alistado' | 'despachado' | 'cancelado' | 'todos';
+const ESTADOS: { id: EstadoFiltro; label: string }[] = [
+  { id: 'entregado', label: 'Entregados' },
+  { id: 'por_alistar', label: 'Por alistar' },
+  { id: 'alistado', label: 'Alistados' },
+  { id: 'despachado', label: 'En ruta' },
+  { id: 'cancelado', label: 'Cancelados' },
+  { id: 'todos', label: 'Todos los estados' },
+];
 
 @Component({
   selector: 'app-reportes',
   standalone: true,
-  imports: [FormsModule, IonIcon, RangoComponent, PedidoDetalleComponent],
+  imports: [FormsModule, IonIcon, PedidoDetalleComponent],
   styles: [
     `
       .periodo { margin: 0 0 0 auto; font-size: 13px; color: var(--text-soft); }
@@ -55,6 +66,14 @@ const PAGO: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Tra
       .pestanas .chips { padding-bottom: 10px; }
       .filtros { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 10px 20px; border-bottom: 1px solid var(--border-soft); }
       .filtros select { width: auto; min-width: 180px; }
+      .filtros-rep { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+      .filtros-rep label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-soft); }
+      .filtros-rep input { width: 150px; }
+      .filtros-rep select { width: auto; min-width: 170px; }
+      @media (max-width: 760px) {
+        .filtros-rep { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+        .filtros-rep input, .filtros-rep select { width: 100%; min-width: 0; }
+      }
       .tabla td, .tabla th { white-space: nowrap; }
       .tabla td.texto { white-space: normal; min-width: 180px; max-width: 320px; line-height: 1.35; }
       .tabla td.texto small { display: block; color: var(--text-muted); font-size: 12px; }
@@ -81,8 +100,28 @@ const PAGO: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Tra
       </div>
 
       <div class="barra">
-        <app-rango (cambio)="cambiarRango($event)"></app-rango>
-        <p class="periodo">{{ etiqueta() }} · pedidos entregados</p>
+        <div class="filtros-rep">
+          <label>Desde<input class="inp inp-chico num" type="date" [(ngModel)]="desde" [max]="hoy" (change)="aplicar()" /></label>
+          <label>Hasta<input class="inp inp-chico num" type="date" [(ngModel)]="hasta" [max]="hoy" (change)="aplicar()" /></label>
+          @if (veTodo()) {
+            <label>Vendedora
+              <select class="inp inp-chico" [(ngModel)]="vendedoraSel" (ngModelChange)="aplicar()">
+                <option [ngValue]="null">Todas las vendedoras</option>
+                @for (v of vendedoras(); track v.id) {
+                  <option [ngValue]="v.id">{{ v.nombre }}{{ v.activo ? '' : ' (inactiva)' }}</option>
+                }
+              </select>
+            </label>
+          }
+          <label>Estado del pedido
+            <select class="inp inp-chico" [(ngModel)]="estadoSel" (ngModelChange)="aplicar()">
+              @for (e of estados; track e.id) {
+                <option [ngValue]="e.id">{{ e.label }}</option>
+              }
+            </select>
+          </label>
+        </div>
+        <p class="periodo">{{ etiqueta() }} · {{ etiquetaEstado() }}</p>
       </div>
 
       <!-- Resumen del periodo -->
@@ -95,12 +134,12 @@ const PAGO: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Tra
             <div class="cifra-t"><small>Costo (precio de compra)</small><strong class="num">{{ pesos(t()?.costo) }}</strong></div>
             <div class="cifra-t clave"><small>Ganancia tienda</small><strong class="num">{{ pesos(t()?.ganancia_tienda) }}</strong><em>Precio base − compra</em></div>
             <div class="cifra-t"><small>Ganancia vendedoras</small><strong class="num">{{ pesos(t()?.ganancia_vendedoras) }}</strong><em>Precio venta − base</em></div>
-            <div class="cifra-t"><small>Pedidos entregados</small><strong class="num">{{ numero(t()?.pedidos) }}</strong><em>{{ numero(t()?.cancelados) }} cancelados</em></div>
+            <div class="cifra-t"><small>Pedidos</small><strong class="num">{{ numero(t()?.pedidos) }}</strong><em>{{ numero(t()?.cancelados) }} cancelados en el periodo</em></div>
             <div class="cifra-t"><small>Unidades vendidas</small><strong class="num">{{ numero(t()?.unidades) }}</strong></div>
             <div class="cifra-t"><small>Efectivo</small><strong class="num">{{ pesos(t()?.efectivo) }}</strong></div>
             <div class="cifra-t"><small>Transferencias</small><strong class="num">{{ pesos(t()?.transferencia) }}</strong></div>
           } @else {
-            <div class="cifra-t"><small>Pedidos entregados</small><strong class="num">{{ numero(t()?.pedidos) }}</strong></div>
+            <div class="cifra-t"><small>Pedidos</small><strong class="num">{{ numero(t()?.pedidos) }}</strong></div>
             <div class="cifra-t"><small>Unidades vendidas</small><strong class="num">{{ numero(t()?.unidades) }}</strong></div>
             <div class="cifra-t"><small>Ventas</small><strong class="num">{{ pesos(t()?.ventas) }}</strong></div>
             <div class="cifra-t clave"><small>Tu ganancia</small><strong class="num">{{ pesos(t()?.ganancia_vendedoras) }}</strong><em>Precio de venta − precio base</em></div>
@@ -123,14 +162,6 @@ const PAGO: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Tra
             <input type="search" [placeholder]="pestana() === 'detalle' ? 'Producto, cliente o pedido' : 'Cliente, barrio o pedido'"
               [(ngModel)]="texto" (ngModelChange)="buscarLuego()" />
           </label>
-          @if (veTodo()) {
-            <select class="inp inp-chico" [(ngModel)]="vendedoraSel" (change)="irPagina(0)" aria-label="Vendedora">
-              <option [ngValue]="null">Todas las vendedoras</option>
-              @for (v of agrupado()?.vendedoras ?? []; track v.nombre) {
-                <option [ngValue]="v.nombre">{{ v.nombre }}</option>
-              }
-            </select>
-          }
           <span class="suave num" style="font-size: 13px; margin-left: auto">{{ numero(totalFilas()) }} {{ pestana() === 'detalle' ? 'líneas' : 'pedidos' }}</span>
         </div>
       }
@@ -171,7 +202,7 @@ const PAGO: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Tra
                     <td class="suave">{{ pago(l.tipo_recaudo) }}</td>
                   </tr>
                 } @empty {
-                  <tr><td [attr.colspan]="15" class="suave">{{ cargandoFilas() ? 'Cargando…' : 'No hay ventas en este periodo.' }}</td></tr>
+                  <tr><td [attr.colspan]="15" class="suave">{{ cargandoFilas() ? 'Cargando…' : 'No hay ventas con estos filtros.' }}</td></tr>
                 }
               </tbody>
             </table>
@@ -211,7 +242,7 @@ const PAGO: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Tra
                     <td class="der num">{{ p.tipo_recaudo ? pesos(p.valor_transferencia) : '—' }}</td>
                   </tr>
                 } @empty {
-                  <tr><td [attr.colspan]="16" class="suave">{{ cargandoFilas() ? 'Cargando…' : 'No hay pedidos entregados en este periodo.' }}</td></tr>
+                  <tr><td [attr.colspan]="16" class="suave">{{ cargandoFilas() ? 'Cargando…' : 'No hay pedidos con estos filtros.' }}</td></tr>
                 }
               </tbody>
             </table>
@@ -322,7 +353,7 @@ const PAGO: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Tra
       }
 
       <p class="nota">
-        Solo cuentan pedidos <strong>entregados</strong>, según la fecha en que se crearon.
+        Cuentan los pedidos del estado elegido (por defecto <strong>entregados</strong>), según la fecha en que se crearon.
         Ganancia tienda = (precio base − precio de compra) × cantidad. Ganancia vendedora = (precio de venta − precio base) × cantidad.
         El domicilio lo cobra el mensajero y no entra en las ganancias. "Descargar Excel" baja la pestaña que estás viendo, completa.
       </p>
@@ -333,9 +364,10 @@ const PAGO: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Tra
     }
   `,
 })
-export class ReportesPage {
+export class ReportesPage implements OnInit {
   private sb = inject(SupabaseService);
   private toast = inject(ToastService);
+  private ps = inject(PedidosService);
 
   readonly porPagina = POR_PAGINA;
   veTodo = computed(() => this.sb.tiene('admin', 'cuadres'));
@@ -363,7 +395,14 @@ export class ReportesPage {
   exportando = signal(false);
   abierto = signal<number | null>(null);
   texto = '';
-  vendedoraSel: string | null = null;
+  vendedoraSel: number | null = null;
+  estadoSel: EstadoFiltro = 'entregado';
+  readonly estados = ESTADOS;
+  readonly hoy = hoyColombiaISO();
+  desde = this.hoy;
+  hasta = this.hoy;
+  vendedoras = signal<Usuario[]>([]);
+  etiquetaEstado = signal('pedidos entregados');
   rango: RangoFechas | null = null;
   private timer?: ReturnType<typeof setTimeout>;
 
@@ -395,20 +434,38 @@ export class ReportesPage {
     addIcons({ downloadOutline, searchOutline });
   }
 
-  vacio(): string {
-    return this.cargando() ? 'Cargando…' : 'No hay pedidos entregados en este periodo.';
+  ngOnInit(): void {
+    if (this.veTodo()) this.ps.vendedoras().then((v) => this.vendedoras.set(v)).catch(() => undefined);
+    void this.aplicar();
   }
 
-  async cambiarRango(r: RangoFechas): Promise<void> {
+  vacio(): string {
+    return this.cargando() ? 'Cargando…' : 'No hay pedidos con estos filtros.';
+  }
+
+  /** Aplica los filtros de fecha, vendedora y estado */
+  async aplicar(): Promise<void> {
+    if (!this.desde || !this.hasta) return;
+    if (this.desde > this.hasta) [this.desde, this.hasta] = [this.hasta, this.desde];
+    const r: RangoFechas = {
+      desde: this.desde,
+      hasta: this.hasta,
+      etiqueta: this.desde === this.hasta ? diaLargo(this.desde) : `${diaLargo(this.desde)} – ${diaLargo(this.hasta)}`,
+    };
     this.rango = r;
     this.etiqueta.set(r.etiqueta);
+    const est = ESTADOS.find((e) => e.id === this.estadoSel)!;
+    this.etiquetaEstado.set(est.id === 'todos' ? 'todos los estados' : 'pedidos ' + est.label.toLowerCase());
     this.cargando.set(true);
     this.pagina.set(0);
     void this.cargarFilas();
+    const args = { p_desde: r.desde, p_hasta: r.hasta, p_estado: this.estadoSel, p_vendedora: this.vendedoraSel };
     const [a, b] = await Promise.all([
-      this.sb.client.rpc('reporte', { p_desde: r.desde, p_hasta: r.hasta }),
-      this.sb.client.rpc('reporte_totales', { p_desde: r.desde, p_hasta: r.hasta }),
+      this.sb.client.rpc('reporte_filtrado', args),
+      this.sb.client.rpc('reporte_totales_filtrado', args),
     ]);
+    // Si mientras tanto cambiaron los filtros, esta respuesta ya no sirve
+    if (this.rango !== r) return;
     this.cargando.set(false);
     if (a.error || b.error) return this.toast.error(mensajeError(a.error ?? b.error));
     this.agrupado.set(a.data as Agrupado);
@@ -436,10 +493,10 @@ export class ReportesPage {
     let q = this.sb.client
       .from(vista)
       .select('*', conteo ? { count: 'exact' } : undefined)
-      .eq('estado', 'entregado')
       .gte('created_at', inicioDiaColombia(r.desde).toISOString())
       .lte('created_at', finDiaColombia(r.hasta).toISOString());
-    if (this.vendedoraSel) q = q.eq('vendedora', this.vendedoraSel);
+    if (this.estadoSel !== 'todos') q = q.eq('estado', this.estadoSel);
+    if (this.vendedoraSel) q = q.eq('vendedora_id', this.vendedoraSel);
     const t = this.texto.trim().replace(/[,()%]/g, ' ').trim();
     if (t) {
       const idCol = vista === 'ventas_detalle' ? 'pedido_id' : 'id';

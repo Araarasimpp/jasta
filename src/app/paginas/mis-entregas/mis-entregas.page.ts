@@ -13,13 +13,14 @@ import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detal
 import { Pedido } from '../../shared/modelos';
 import { mensajeError, pesos } from '../../shared/formato';
 import { finDiaColombia, formatoFechaCO, formatoHoraCO, inicioDiaColombia } from '../../shared/fecha-colombia';
-import { RangoComponent, RangoFechas } from '../../shared/rango/rango.component';
+import { RangoFechas } from '../../shared/rango/rango.component';
+import { DiaComponent } from '../../shared/rango/dia.component';
 
 /** Pantalla del mensajero: lo que tiene en ruta y lo que lleva por cuadrar */
 @Component({
   selector: 'app-mis-entregas',
   standalone: true,
-  imports: [IonIcon, EntregarComponent, PedidoDetalleComponent, RangoComponent],
+  imports: [IonIcon, EntregarComponent, PedidoDetalleComponent, DiaComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -145,7 +146,7 @@ import { RangoComponent, RangoFechas } from '../../shared/rango/rango.component'
         <section class="panel">
           <div class="hist-head">
             <h2>Mis entregas hechas</h2>
-            <app-rango (cambio)="cambiarRango($event)"></app-rango>
+            <app-dia (cambio)="cambiarRango($event)"></app-dia>
           </div>
           @if (hechas().length) {
             <p class="hist-tot" style="margin: 12px 0 4px">

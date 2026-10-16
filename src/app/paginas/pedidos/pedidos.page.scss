@@ -249,8 +249,8 @@
 
 .row-grid {
   display: grid;
-  grid-template-columns: 16px 52px 16px minmax(0, 1fr) 120px 180px 92px 104px 84px 28px;
-  grid-template-areas: 'chk num st main barrio dom rot total fecha menu';
+  grid-template-columns: 16px 52px 16px minmax(0, 1fr) 120px 180px 92px 104px 28px;
+  grid-template-areas: 'chk num st main barrio dom rot total menu';
   align-items: center;
   column-gap: 12px;
   padding: 0 28px;
@@ -274,8 +274,8 @@
 // a lo ancho desde la columna del cliente hasta el final.
 .row.row-grid {
   grid-template-areas:
-    'chk num st main barrio dom rot total fecha menu'
-    '. . . prods prods prods prods prods prods prods';
+    'chk num st main barrio dom rot total menu'
+    '. . . prods prods prods prods prods prods';
   row-gap: 8px;
   padding-top: 10px;
   padding-bottom: 12px;
@@ -284,7 +284,6 @@
 .c-dom { grid-area: dom; }
 .c-rot { grid-area: rot; }
 .c-total { grid-area: total; text-align: right; }
-.c-fecha { grid-area: fecha; text-align: right; }
 .c-menu { grid-area: menu; position: relative; display: flex; justify-content: flex-end; }
 
 .list-head {
@@ -771,14 +770,14 @@
 // ---------- Tablet y celular ----------
 @media (max-width: 1180px) {
   .row-grid {
-    grid-template-columns: 16px 16px minmax(0, 1fr) 160px 92px 96px 64px 28px;
-    grid-template-areas: 'chk st main dom rot total fecha menu';
+    grid-template-columns: 16px 16px minmax(0, 1fr) 160px 92px 96px 28px;
+    grid-template-areas: 'chk st main dom rot total menu';
   }
 
   .row.row-grid {
     grid-template-areas:
-      'chk st main dom rot total fecha menu'
-      '. . prods prods prods prods prods prods';
+      'chk st main dom rot total menu'
+      '. . prods prods prods prods prods';
   }
 
   // El número y el barrio pasan a la línea del cliente (meta-mobile)
@@ -879,7 +878,7 @@
     grid-template-areas:
       'chk st main total'
       '. . prods prods'
-      '. . rot fecha'
+      '. . rot rot'
       '. . dom menu';
     row-gap: 8px;
     padding: 12px 16px;
@@ -1090,6 +1089,15 @@
 // ---------- Propio de Jasta ----------
 .toolbar-fechas .espacio {
   flex: 1;
+}
+
+// Fecha en que se subió el pedido, debajo del nombre del cliente
+.subido {
+  margin-top: 2px;
+  font-family: var(--mono-font);
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .toolbar-fechas {

@@ -6,19 +6,33 @@ import { AvatarComponent } from '../../shared/avatar/avatar.component';
 import { mensajeError, pesos } from '../../shared/formato';
 import { hoyColombiaISO } from '../../shared/fecha-colombia';
 
-type Periodo = 'hoy' | 'semana' | 'mes';
 interface Fila {
   usuario_id: number; nombre: string; avatar_url: string | null; tipo: 'vendedora' | 'mensajero';
   cantidad: number; ventas: number | null; meta: number | null; puesto: number; avance: number | null;
 }
 
-function rango(p: Periodo): { desde: string; hasta: string } {
+/** Primer y último día del mes (YYYY-MM); el mes en curso llega hasta hoy */
+function rangoMes(mes: string): { desde: string; hasta: string } {
   const hoy = hoyColombiaISO();
-  if (p === 'hoy') return { desde: hoy, hasta: hoy };
-  if (p === 'mes') return { desde: hoy.slice(0, 8) + '01', hasta: hoy };
-  const d = new Date(hoy + 'T12:00:00Z');
-  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); // lunes
-  return { desde: d.toISOString().slice(0, 10), hasta: hoy };
+  if (hoy.startsWith(mes)) return { desde: mes + '-01', hasta: hoy };
+  const [a, m] = mes.split('-').map(Number);
+  const fin = new Date(Date.UTC(a, m, 0)).toISOString().slice(0, 10);
+  return { desde: mes + '-01', hasta: fin };
+}
+
+/** Los últimos 24 meses, del más reciente al más antiguo */
+function ultimosMeses(): { id: string; label: string }[] {
+  const hoy = hoyColombiaISO();
+  let a = Number(hoy.slice(0, 4));
+  let m = Number(hoy.slice(5, 7));
+  const out: { id: string; label: string }[] = [];
+  for (let i = 0; i < 24; i++) {
+    const id = `${a}-${String(m).padStart(2, '0')}`;
+    const label = new Date(Date.UTC(a, m - 1, 15)).toLocaleDateString('es-CO', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+    out.push({ id, label: label.charAt(0).toUpperCase() + label.slice(1) });
+    if (--m === 0) [a, m] = [a - 1, 12];
+  }
+  return out;
 }
 
 /** Ranking de vendedoras (ventas entregadas) y mensajeros (entregas), con metas del mes */
@@ -44,6 +58,7 @@ function rango(p: Periodo): { desde: string; hasta: string } {
       .val { text-align: right; font-size: 13px; }
       .val strong { display: block; font-size: 16px; }
       .meta-inp { width: 70px; height: 30px; font-size: 13px; }
+      .mes { width: auto; min-width: 190px; }
       .val { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
       @media (max-width: 860px) { .dos { grid-template-columns: 1fr; } }
       /* Celular: el nombre puede usar dos líneas y la meta va debajo de las cifras */
@@ -59,17 +74,17 @@ function rango(p: Periodo): { desde: string; hasta: string } {
     <div class="page">
       <div class="head">
         <div><p class="fecha">{{ subtitulo() }}</p><h1>Ranking</h1></div>
-        <div class="segmented">
-          @for (p of periodos; track p.id) {
-            <button [class.on]="periodo() === p.id" (click)="elegir(p.id)">{{ p.label }}</button>
+        <select class="inp mes" [ngModel]="mes()" (ngModelChange)="elegir($event)" aria-label="Mes">
+          @for (m of meses; track m.id) {
+            <option [ngValue]="m.id">{{ m.label }}</option>
           }
-        </div>
+        </select>
       </div>
       <div class="dos">
         @for (g of grupos; track g.tipo) {
           <section class="panel">
             <div class="panel-head">
-              <div><h2>{{ g.titulo }}</h2><p class="panel-sub">{{ g.sub }}{{ periodo() === 'mes' ? ' · meta del mes' : '' }}</p></div>
+              <div><h2>{{ g.titulo }}</h2><p class="panel-sub">{{ g.sub }}{{ esMesActual() ? ' · meta del mes' : '' }}</p></div>
             </div>
             <ol class="lista">
               @for (f of filas(g.tipo); track f.usuario_id) {
@@ -78,7 +93,7 @@ function rango(p: Periodo): { desde: string; hasta: string } {
                   <app-avatar [nombre]="f.nombre" [foto]="f.avatar_url" [tam]="34"></app-avatar>
                   <span class="nom">
                     <strong>{{ f.nombre }}</strong>
-                    @if (periodo() === 'mes' && f.meta) {
+                    @if (esMesActual() && f.meta) {
                       <span class="barra-meta"><span [style.width.%]="f.avance ?? 0"></span></span>
                       <small>{{ f.cantidad }} de {{ f.meta }} · {{ f.avance ?? 0 }}%</small>
                     }
@@ -86,7 +101,7 @@ function rango(p: Periodo): { desde: string; hasta: string } {
                   <span class="val">
                     <strong class="num">{{ f.cantidad }}</strong>
                     @if (f.ventas !== null && g.tipo === 'vendedora') { <span class="suave num">{{ pesos(f.ventas) }}</span> }
-                    @if (esAdmin() && periodo() === 'mes') {
+                    @if (esAdmin() && esMesActual()) {
                       <input class="inp meta-inp num" type="number" min="0" [ngModel]="f.meta" (change)="guardarMeta(f, $any($event.target).value)"
                         placeholder="Meta" [attr.aria-label]="'Meta de ' + f.nombre" />
                     }
@@ -106,21 +121,18 @@ export class RankingPage implements OnInit {
   private sb = inject(SupabaseService);
   private toast = inject(ToastService);
 
-  periodos: { id: Periodo; label: string }[] = [
-    { id: 'hoy', label: 'Hoy' },
-    { id: 'semana', label: 'Semana' },
-    { id: 'mes', label: 'Mes' },
-  ];
+  meses = ultimosMeses();
   grupos = [
     { tipo: 'vendedora' as const, titulo: 'Vendedoras', sub: 'Ventas entregadas' },
     { tipo: 'mensajero' as const, titulo: 'Mensajeros', sub: 'Entregas a domicilio' },
   ];
-  periodo = signal<Periodo>('mes');
+  mes = signal(this.meses[0].id);
+  esMesActual = computed(() => this.mes() === this.meses[0].id);
   datos = signal<Fila[]>([]);
   cargando = signal(true);
   yo = computed(() => this.sb.usuario()?.id ?? null);
   esAdmin = computed(() => this.sb.tiene('admin'));
-  subtitulo = computed(() => ({ hoy: 'Hoy', semana: 'Esta semana', mes: 'Este mes' })[this.periodo()]);
+  subtitulo = computed(() => (this.esMesActual() ? 'Este mes' : this.meses.find((m) => m.id === this.mes())?.label ?? ''));
   pesos = pesos;
 
   ngOnInit(): void {
@@ -129,18 +141,18 @@ export class RankingPage implements OnInit {
 
   filas(tipo: 'vendedora' | 'mensajero'): Fila[] {
     return this.datos()
-      .filter((f) => f.tipo === tipo && (f.cantidad > 0 || f.meta || this.periodo() === 'mes'))
+      .filter((f) => f.tipo === tipo && (f.cantidad > 0 || this.esMesActual()))
       .sort((a, b) => a.puesto - b.puesto);
   }
 
-  elegir(p: Periodo): void {
-    this.periodo.set(p);
+  elegir(m: string): void {
+    this.mes.set(m);
     void this.cargar();
   }
 
   async cargar(): Promise<void> {
     this.cargando.set(true);
-    const r = rango(this.periodo());
+    const r = rangoMes(this.mes());
     const { data, error } = await this.sb.client.rpc('ranking', { p_desde: r.desde, p_hasta: r.hasta });
     this.cargando.set(false);
     if (error) return this.toast.error(mensajeError(error));

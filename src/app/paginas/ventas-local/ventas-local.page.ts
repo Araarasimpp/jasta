@@ -7,7 +7,8 @@ import { add } from 'ionicons/icons';
 import { PedidosService } from '../../core/services/pedidos.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detalle.component';
-import { RangoComponent, RangoFechas } from '../../shared/rango/rango.component';
+import { RangoFechas } from '../../shared/rango/rango.component';
+import { DiaComponent } from '../../shared/rango/dia.component';
 import { Pedido } from '../../shared/modelos';
 import { mensajeError, numero, pesos } from '../../shared/formato';
 import { finDiaColombia, formatoFechaCO, formatoHoraCO, inicioDiaColombia } from '../../shared/fecha-colombia';
@@ -18,7 +19,7 @@ type Metodo = 'todos' | 'efectivo' | 'transferencia' | 'mixto';
 @Component({
   selector: 'app-ventas-local',
   standalone: true,
-  imports: [FormsModule, RouterLink, IonIcon, RangoComponent, PedidoDetalleComponent],
+  imports: [FormsModule, RouterLink, IonIcon, DiaComponent, PedidoDetalleComponent],
   styles: [
     `
       .seccion { padding: 16px 20px 0; }
@@ -34,7 +35,7 @@ type Metodo = 'todos' | 'efectivo' | 'transferencia' | 'mixto';
         <a class="b b-pri" routerLink="/app/venta-local"><ion-icon name="add"></ion-icon>Nueva venta</a>
       </div>
       <div class="barra">
-        <app-rango (cambio)="cambiarRango($event)"></app-rango>
+        <app-dia (cambio)="cambiarRango($event)"></app-dia>
         <div class="chips">
           @for (m of metodos; track m.id) {
             <button class="chip" [class.on]="metodo() === m.id" (click)="metodo.set(m.id)">{{ m.label }}</button>

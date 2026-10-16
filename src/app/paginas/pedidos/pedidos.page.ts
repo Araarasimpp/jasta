@@ -12,13 +12,13 @@ import { NotificacionesService } from '../../core/services/notificaciones.servic
 import { ToastService } from '../../shared/toast/toast.service';
 import { RotulosService } from '../../shared/rotulo/rotulos.service';
 import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detalle.component';
-import { RangoComponent, RangoFechas } from '../../shared/rango/rango.component';
 import { AvatarComponent } from '../../shared/avatar/avatar.component';
 import { EstadoIconComponent } from '../../shared/estado-icon/estado-icon.component';
 import { ImagenPreviewComponent } from '../../shared/imagen-preview/imagen-preview.component';
 import { EstadoPedido, Pedido, PedidoItem, Usuario } from '../../shared/modelos';
 import { mensajeError, numero, pesos, urlImagen } from '../../shared/formato';
-import { finDiaColombia, formatoFechaCO, formatoHoraCO, inicioDiaColombia } from '../../shared/fecha-colombia';
+import { diaColombiaDe, formatoFechaCO, formatoHoraCO, hoyColombiaISO } from '../../shared/fecha-colombia';
+import { sumarDias } from '../../shared/rango/rango.component';
 
 type Filtro = EstadoPedido | 'todos';
 
@@ -55,7 +55,7 @@ const ETIQUETA_GRUPO: Record<EstadoPedido, string> = {
 @Component({
   selector: 'app-pedidos',
   standalone: true,
-  imports: [FormsModule, RouterLink, IonIcon, PedidoDetalleComponent, RangoComponent, AvatarComponent, EstadoIconComponent, ImagenPreviewComponent],
+  imports: [FormsModule, RouterLink, IonIcon, PedidoDetalleComponent, AvatarComponent, EstadoIconComponent, ImagenPreviewComponent],
   templateUrl: './pedidos.page.html',
   styleUrls: ['./pedidos.page.scss'],
 })
@@ -105,7 +105,6 @@ export class PedidosPage implements OnInit, OnDestroy {
   filtroRotulo: 'pendiente' | 'impreso' | null = null;
   filtroMensajero: number | null = null;
   filtroCanal: 'domicilio' | 'local' | null = 'domicilio';
-  private rango: RangoFechas = { desde: '', hasta: '', etiqueta: '' };
 
   puedeVender = computed(() => this.sb.tiene('admin', 'vendedora'));
   /** Admin y alistamiento alistan, despachan e imprimen rótulos desde aquí */
@@ -138,7 +137,7 @@ export class PedidosPage implements OnInit, OnDestroy {
   alistadosSinRotulo = computed(() => this.filas().filter((p) => p.estado === 'alistado' && !p.rotulo_impreso_at && p.canal !== 'local').length);
   hayFiltros = computed(() => {
     this.filas();
-    return !!(this.texto.trim() || this.filtroRotulo || this.filtroMensajero || this.rango.desde || this.rango.hasta);
+    return !!(this.texto.trim() || this.filtroRotulo || this.filtroMensajero);
   });
   vacioTitulo = computed(() => {
     const f = this.filtro();
@@ -154,7 +153,6 @@ export class PedidosPage implements OnInit, OnDestroy {
 
   private timer?: ReturnType<typeof setTimeout>;
   private dejarDeEscuchar?: () => void;
-  private iniciado = false;
   private subParams?: { unsubscribe(): void };
   private cargaPendiente = false;
   private enCarga = false;
@@ -173,6 +171,10 @@ export class PedidosPage implements OnInit, OnDestroy {
       }
     });
     this.ps.mensajeros().then((m) => this.mensajeros.set(m)).catch(() => undefined);
+    // Desde Inicio ("Necesita atención") llega ?estado=alistado, por ejemplo
+    const est = this.route.snapshot.queryParamMap.get('estado') as Filtro | null;
+    if (est && this.filtros.some((f) => f.id === est)) this.filtro.set(est);
+    this.irPagina(0);
     // Los cambios de otros (realtime) llegan seguidos: se agrupan en una sola recarga
     this.dejarDeEscuchar = this.ps.escuchar(() => {
       clearTimeout(this.timer);
@@ -186,15 +188,8 @@ export class PedidosPage implements OnInit, OnDestroy {
     clearTimeout(this.timer);
   }
 
-  cambiarRango(r: RangoFechas): void {
-    this.rango = r;
-    this.iniciado = true;
-    this.irPagina(0);
-  }
-
   /** Nunca dos cargas a la vez: si llega otra mientras tanto, se repite al final */
   async cargar(): Promise<void> {
-    if (!this.iniciado) return;
     if (this.enCarga) {
       this.cargaPendiente = true;
       return;
@@ -207,8 +202,6 @@ export class PedidosPage implements OnInit, OnDestroy {
       const base = {
         texto: this.texto,
         idsProducto: await this.ps.idsPorProducto(this.texto),
-        desde: this.rango.desde ? inicioDiaColombia(this.rango.desde).toISOString() : null,
-        hasta: this.rango.hasta ? finDiaColombia(this.rango.hasta).toISOString() : null,
         rotulo: this.filtroCanal === 'local' ? null : this.filtroRotulo,
         canal: this.filtroCanal,
         mensajeroId: this.filtroMensajero,
@@ -509,10 +502,15 @@ export class PedidosPage implements OnInit, OnDestroy {
     return (p.pedido_items ?? []).map((i) => (i.cantidad > 1 ? `${i.nombre} ×${i.cantidad}` : i.nombre)).join(', ');
   }
 
-  /** Hora si el pedido es de hoy; si no, día y mes */
+  /** "hoy, 8:32 p. m.", "ayer, …" o "12 oct, …" (y el año si no es este) */
   fecha(iso: string): string {
-    const dia = (x: string) => formatoFechaCO(x, { year: 'numeric', month: 'numeric', day: 'numeric' });
-    return dia(iso) === dia(new Date().toISOString()) ? formatoHoraCO(iso) : formatoFechaCO(iso, { day: 'numeric', month: 'short' });
+    const dia = diaColombiaDe(iso);
+    const hoy = hoyColombiaISO();
+    const hora = formatoHoraCO(iso);
+    if (dia === hoy) return `hoy, ${hora}`;
+    if (dia === sumarDias(hoy, -1)) return `ayer, ${hora}`;
+    const conAno = dia.slice(0, 4) !== hoy.slice(0, 4);
+    return formatoFechaCO(iso, { day: 'numeric', month: 'short', ...(conAno ? { year: 'numeric' } : {}) }) + `, ${hora}`;
   }
 
   fechaCompleta(iso: string): string {

@@ -27,7 +27,6 @@
     </nav>
   </div>
   <div class="toolbar toolbar-fechas">
-    <app-rango [conTodo]="true" inicial="todo" (cambio)="cambiarRango($event)"></app-rango>
     <span class="espacio"></span>
     @if (filtro() === 'alistado' && gestiona() && alistadosSinRotulo() > 0) {
       <button class="btn-imprimir-alistados" (click)="imprimirAlistados()" [disabled]="imprimiendo()"
@@ -76,7 +75,6 @@
           <span class="c-dom">Mensajero</span>
           <span class="c-rot">Rótulo</span>
           <span class="c-total">Total</span>
-          <span class="c-fecha">Fecha</span>
           <span class="c-menu"></span>
         </div>
 
@@ -112,6 +110,7 @@
                     }
                     <span class="meta-mobile"><span class="num">#{{ p.id }}</span>@if (p.barrio) {, {{ p.barrio }}}</span>
                   </div>
+                  <span class="subido" [title]="'Vendió ' + (p.vendedora?.nombre || 'desconocido')">Subido {{ fecha(p.created_at) }}</span>
                   @if (puedeAlistar(p)) {
                     <button type="button" class="btn-alistar" (click)="alistar([p])" [disabled]="ocupado()" [attr.aria-label]="'Alistar pedido ' + p.id">
                       <ion-icon name="cube-outline" aria-hidden="true"></ion-icon>
@@ -190,9 +189,6 @@
                 }
 
                 <span class="c-total num">{{ pesos(p.total) }}</span>
-                <span class="c-fecha num" [title]="fechaCompleta(p.created_at) + ', vendió ' + (p.vendedora?.nombre || 'desconocido')">
-                  {{ fecha(p.created_at) }}
-                </span>
 
                 <div class="c-menu">
                   <button class="icon-btn" (click)="alternarMenu(p.id)" [attr.aria-expanded]="menuAbierto() === p.id" [attr.aria-label]="'Más acciones del pedido ' + p.id">

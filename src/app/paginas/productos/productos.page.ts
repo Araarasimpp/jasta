@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import { add, searchOutline, closeOutline } from 'ionicons/icons';
@@ -7,8 +8,9 @@ import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { Producto } from '../../shared/modelos';
 import { mensajeError, numero, pesos, urlImagen } from '../../shared/formato';
+import { STOCK_BAJO } from '../../shared/stock';
 
-type Filtro = 'activos' | 'agotados' | 'inactivos' | 'todos';
+type Filtro = 'activos' | 'agotados' | 'bajo' | 'inactivos' | 'todos';
 
 function normal(s: string): string {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -128,6 +130,7 @@ const VACIO: Omit<Producto, 'id'> = {
 export class ProductosPage implements OnInit {
   private sb = inject(SupabaseService);
   private toast = inject(ToastService);
+  private route = inject(ActivatedRoute);
 
   productos = signal<Producto[]>([]);
   cargando = signal(true);
@@ -142,6 +145,7 @@ export class ProductosPage implements OnInit {
   filtros: { id: Filtro; label: string }[] = [
     { id: 'activos', label: 'Activos' },
     { id: 'agotados', label: 'Sin stock' },
+    { id: 'bajo', label: 'Stock bajo' },
     { id: 'inactivos', label: 'Inactivos' },
     { id: 'todos', label: 'Todos' },
   ];
@@ -153,6 +157,7 @@ export class ProductosPage implements OnInit {
       if (f === 'activos' && !p.activo) return false;
       if (f === 'inactivos' && p.activo) return false;
       if (f === 'agotados' && !(p.activo && p.controla_stock && p.stock <= 0)) return false;
+      if (f === 'bajo' && !(p.activo && p.controla_stock && p.stock > 0 && p.stock < STOCK_BAJO)) return false;
       if (!t) return true;
       return normal(`${p.nombre} ${p.sku ?? ''} ${p.codigo_barras ?? ''}`).includes(t);
     });
@@ -168,6 +173,9 @@ export class ProductosPage implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
+    // Desde "Necesita atención" en Inicio llega ?filtro=agotados o ?filtro=bajo
+    const f = this.route.snapshot.queryParamMap.get('filtro') as Filtro | null;
+    if (f && this.filtros.some((x) => x.id === f)) this.filtro.set(f);
     await this.cargar();
   }
 
