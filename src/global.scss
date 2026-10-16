@@ -137,4 +137,20 @@ body {
     margin: 0;
     text-align: left;
   }
+
+  // Safari de iPhone/iPad agranda la pantalla al tocar un campo con letra de
+  // menos de 16 px y la deja corrida (parte de la app queda fuera de la vista).
+  // Con 16 px no hace zoom.
+  input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+// iPhone: la app no se desliza de lado ni rebota cuando algo es un poco más ancho
+html,
+body {
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
 }

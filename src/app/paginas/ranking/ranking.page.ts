@@ -44,7 +44,15 @@ function rango(p: Periodo): { desde: string; hasta: string } {
       .val { text-align: right; font-size: 13px; }
       .val strong { display: block; font-size: 16px; }
       .meta-inp { width: 70px; height: 30px; font-size: 13px; }
+      .val { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
       @media (max-width: 860px) { .dos { grid-template-columns: 1fr; } }
+      /* Celular: el nombre puede usar dos líneas y la meta va debajo de las cifras */
+      @media (max-width: 640px) {
+        .lista li { grid-template-columns: 22px auto minmax(0, 1fr) auto; gap: 8px; }
+        .nom strong { white-space: normal; overflow-wrap: anywhere; line-height: 1.25; }
+        .val .suave { font-size: 12px; }
+        .meta-inp { width: 84px; height: 34px; }
+      }
     `,
   ],
   template: `

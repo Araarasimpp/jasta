@@ -107,18 +107,18 @@ interface Pendiente {
           }
         }
         <div class="tabla-wrap">
-          <table class="tabla">
+          <table class="tabla tarjetas-cel">
             <thead><tr><th>Fecha</th><th>Mensajero</th><th class="der">Pedidos</th><th class="der">Efectivo</th><th class="der">Transferencia</th><th class="der">Domicilios</th><th>Cerró</th></tr></thead>
             <tbody>
               @for (c of historial(); track c.id) {
                 <tr class="click" (click)="verCuadre(c)">
-                  <td class="suave">{{ fecha(c.cerrado_at) }}</td>
-                  <td>{{ c.mensajero?.nombre || '—' }}</td>
-                  <td class="der num">{{ c.cantidad_pedidos }}</td>
-                  <td class="der num">{{ pesos(c.total_efectivo) }}</td>
-                  <td class="der num">{{ pesos(c.total_transferencia) }}</td>
-                  <td class="der num">{{ pesos(c.total_domicilios) }}</td>
-                  <td class="suave corta">{{ c.cerrado_por_nombre || '—' }}</td>
+                  <td class="suave" data-etq="Fecha">{{ fecha(c.cerrado_at) }}</td>
+                  <td data-etq="Mensajero">{{ c.mensajero?.nombre || '—' }}</td>
+                  <td class="der num" data-etq="Pedidos">{{ c.cantidad_pedidos }}</td>
+                  <td class="der num" data-etq="Efectivo">{{ pesos(c.total_efectivo) }}</td>
+                  <td class="der num" data-etq="Transferencia">{{ pesos(c.total_transferencia) }}</td>
+                  <td class="der num" data-etq="Domicilios">{{ pesos(c.total_domicilios) }}</td>
+                  <td class="suave corta" data-etq="Cerró">{{ c.cerrado_por_nombre || '—' }}</td>
                 </tr>
                 @if (cuadreAbierto() === c.id) {
                   <tr><td colspan="7">

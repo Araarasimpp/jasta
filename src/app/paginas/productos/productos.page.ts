@@ -50,26 +50,26 @@ const VACIO: Omit<Producto, 'id'> = {
         </div>
       </div>
       <div class="tabla-wrap">
-        <table class="tabla">
+        <table class="tabla tarjetas-cel">
           <thead>
-            <tr><th></th><th>Producto</th><th>SKU</th><th class="der">Venta</th><th class="der solo-pc">Base</th><th class="der solo-pc">Compra</th><th class="der">Stock</th></tr>
+            <tr><th></th><th>Producto</th><th>SKU</th><th class="der">Venta</th><th class="der">Base</th><th class="der">Compra</th><th class="der">Stock</th></tr>
           </thead>
           <tbody>
             @for (p of visibles(); track p.id) {
               <tr class="click" (click)="editar(p)">
-                <td style="width: 34px">
+                <td class="media" style="width: 34px">
                   @if (p.imagen_url) {
                     <img class="foto" [src]="urlImagen(p.imagen_url)" alt="" loading="lazy" />
                   } @else {
                     <span class="foto"></span>
                   }
                 </td>
-                <td class="corta" style="max-width: 320px">{{ p.nombre }}</td>
-                <td class="suave">{{ p.sku || '—' }}</td>
-                <td class="der num">{{ pesos(p.precio_venta) }}</td>
-                <td class="der num suave solo-pc">{{ pesos(p.precio_base) }}</td>
-                <td class="der num suave solo-pc">{{ pesos(p.precio_compra) }}</td>
-                <td class="der num" [class.neg]="p.controla_stock && p.stock <= 0">{{ p.controla_stock ? p.stock : '—' }}</td>
+                <td class="corta titulo" style="max-width: 320px">{{ p.nombre }}</td>
+                <td class="suave" data-etq="SKU">{{ p.sku || '—' }}</td>
+                <td class="der num" data-etq="Venta">{{ pesos(p.precio_venta) }}</td>
+                <td class="der num suave" data-etq="Base">{{ pesos(p.precio_base) }}</td>
+                <td class="der num suave" data-etq="Compra">{{ pesos(p.precio_compra) }}</td>
+                <td class="der num" data-etq="Stock" [class.neg]="p.controla_stock && p.stock <= 0">{{ p.controla_stock ? p.stock : '—' }}</td>
               </tr>
             } @empty {
               <tr><td colspan="7" class="suave">{{ cargando() ? 'Cargando…' : 'No hay productos.' }}</td></tr>

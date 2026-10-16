@@ -1033,6 +1033,89 @@ a.guia:hover,
   .buscar {
     width: 100%;
     height: 40px;
+  }
+
+  // Tablas que en el celular se vuelven tarjetas: cada fila es un recibo con
+  // sus datos uno debajo del otro ("Etiqueta ······ valor"). Cada celda dice su
+  // etiqueta en data-etq; .titulo es el renglón principal y .media la foto.
+  body .tabla.tarjetas-cel {
+    > thead {
+      display: none;
+    }
+
+    > tbody > tr {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      column-gap: 12px;
+      padding: 12px 16px;
+      border-bottom: var(--perfora);
+    }
+
+    > tbody > tr:has(> td.media) {
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    > tbody > tr:last-child {
+      border-bottom: none;
+    }
+
+    > tbody > tr > td,
+    > tbody > tr > td:first-child,
+    > tbody > tr > td:last-child {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      height: auto;
+      max-width: none;
+      padding: 2px 0;
+      border: none;
+      white-space: normal;
+      text-align: right;
+      font-size: 14px;
+    }
+
+    > tbody > tr > td[data-etq]::before {
+      content: attr(data-etq);
+      flex-shrink: 0;
+      color: var(--text-muted);
+      font-family: var(--ui-font);
+      font-size: 12.5px;
+      font-weight: 400;
+      text-align: left;
+    }
+
+    > tbody > tr > td.titulo {
+      display: block;
+      order: -1;
+      padding-bottom: 4px;
+      text-align: left;
+      font-size: 15px;
+      font-weight: 600;
+      overflow: visible;
+      white-space: normal;
+    }
+
+    > tbody > tr > td.media {
+      grid-column: 1;
+      grid-row: 1 / span 20;
+      align-self: start;
+      padding: 2px 0 0;
+    }
+
+    > tbody > tr:has(> td.media) > td:not(.media) {
+      grid-column: 2;
+    }
+
+    // Fila de "vacío" o "cargando": una sola celda
+    > tbody > tr > td[colspan] {
+      display: block;
+      text-align: left;
+    }
+  }
+
+  // En el encabezado de cada vista, el buscador baja a su propia línea
+  .vista-head .buscar {
     order: 5;
   }
 
@@ -1057,6 +1140,7 @@ a.guia:hover,
     top: auto;
     width: 100vw;
     max-height: 92dvh;
+    padding-top: 0;
     border-left: none;
     border-top: 1px solid var(--border);
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;

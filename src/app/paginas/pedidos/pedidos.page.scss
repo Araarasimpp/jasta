@@ -771,19 +771,19 @@
 // ---------- Tablet y celular ----------
 @media (max-width: 1180px) {
   .row-grid {
-    grid-template-columns: 16px 16px minmax(0, 1fr) 160px 92px 96px 28px;
-    grid-template-areas: 'chk st main dom rot total menu';
+    grid-template-columns: 16px 16px minmax(0, 1fr) 160px 92px 96px 64px 28px;
+    grid-template-areas: 'chk st main dom rot total fecha menu';
   }
 
   .row.row-grid {
     grid-template-areas:
-      'chk st main dom rot total menu'
-      '. . prods prods prods prods prods';
+      'chk st main dom rot total fecha menu'
+      '. . prods prods prods prods prods prods';
   }
 
+  // El número y el barrio pasan a la línea del cliente (meta-mobile)
   .c-num,
-  .c-barrio,
-  .c-fecha {
+  .c-barrio {
     display: none;
   }
 
@@ -859,7 +859,7 @@
   }
 
   .select-ghost {
-    display: none;
+    height: 36px;
   }
 
   .list-head {
@@ -879,6 +879,7 @@
     grid-template-areas:
       'chk st main total'
       '. . prods prods'
+      '. . rot fecha'
       '. . dom menu';
     row-gap: 8px;
     padding: 12px 16px;
@@ -909,8 +910,15 @@
 
 
 
+  // Estado del rótulo y fecha: en una línea debajo de los productos
   .c-rot {
-    display: none;
+    font-size: 12.5px;
+  }
+
+  .c-fecha {
+    display: block;
+    align-self: center;
+    font-size: 12px;
   }
 
   .c-total {
@@ -1157,6 +1165,16 @@ button.cliente:hover {
 @media (max-width: 720px) {
   .toolbar-fechas {
     padding: 0 12px;
+    gap: 8px;
+  }
+
+  // En la fila que se desliza nada se encoge: se ve completo y se desliza de lado
+  .toolbar-fechas > * {
+    flex-shrink: 0;
+  }
+
+  .toolbar-fechas .espacio {
+    display: none;
   }
 
   .paginar {

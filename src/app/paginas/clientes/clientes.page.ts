@@ -41,17 +41,17 @@ interface Cliente {
         </label>
       </div>
       <div class="tabla-wrap">
-        <table class="tabla">
+        <table class="tabla tarjetas-cel">
           <thead><tr><th>Cliente</th><th>Teléfono</th><th>Barrio</th><th class="der">Pedidos</th><th class="der">Comprado</th><th>Último pedido</th></tr></thead>
           <tbody>
             @for (c of clientes(); track c.telefono) {
               <tr class="click" (click)="abrir(c)">
-                <td>{{ c.nombre }}</td>
-                <td class="num">{{ c.telefono }}</td>
-                <td class="suave corta">{{ c.barrio || '—' }}</td>
-                <td class="der num">{{ c.entregados }}<span class="suave"> / {{ c.pedidos }}</span></td>
-                <td class="der num">{{ pesos(c.total) }}</td>
-                <td class="suave">{{ fecha(c.ultimo) }}</td>
+                <td class="titulo">{{ c.nombre }}</td>
+                <td class="num" data-etq="Teléfono">{{ c.telefono }}</td>
+                <td class="suave corta" data-etq="Barrio">{{ c.barrio || '—' }}</td>
+                <td class="der num" data-etq="Pedidos (entregados / total)"><span>{{ c.entregados }}<span class="suave"> / {{ c.pedidos }}</span></span></td>
+                <td class="der num" data-etq="Comprado">{{ pesos(c.total) }}</td>
+                <td class="suave" data-etq="Último pedido">{{ fecha(c.ultimo) }}</td>
               </tr>
             } @empty {
               <tr><td colspan="6" class="suave">{{ cargando() ? 'Cargando…' : 'No hay clientes con esa búsqueda.' }}</td></tr>

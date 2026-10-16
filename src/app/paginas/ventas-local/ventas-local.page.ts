@@ -49,20 +49,20 @@ type Metodo = 'todos' | 'efectivo' | 'transferencia' | 'mixto';
         </div>
       </div>
       <div class="tabla-wrap" style="margin-top: 16px">
-        <table class="tabla">
+        <table class="tabla tarjetas-cel">
           <thead><tr><th>Hora</th><th>N.º</th><th>Cliente</th><th>Productos</th><th>Vendió</th><th>Pago</th><th class="der">Efectivo</th><th class="der">Transferencia</th><th class="der">Total</th></tr></thead>
           <tbody>
             @for (v of filtradas(); track v.id) {
               <tr class="click" (click)="abierto.set(v.id)">
-                <td class="suave">{{ fecha(v.created_at) }}</td>
-                <td><span class="guia">#{{ v.id }}</span></td>
-                <td>{{ v.cliente_nombre }}</td>
-                <td class="prods">{{ productos(v) }}</td>
-                <td>{{ v.vendedora?.nombre || '—' }}</td>
-                <td>{{ pago(v.tipo_recaudo) }}</td>
-                <td class="der num">{{ pesos(v.valor_efectivo) }}</td>
-                <td class="der num">{{ pesos(v.valor_transferencia) }}</td>
-                <td class="der num">{{ pesos(v.total) }}</td>
+                <td class="suave" data-etq="Hora">{{ fecha(v.created_at) }}</td>
+                <td data-etq="N.º"><span class="guia">#{{ v.id }}</span></td>
+                <td class="titulo">{{ v.cliente_nombre }}</td>
+                <td class="prods" data-etq="Productos">{{ productos(v) }}</td>
+                <td data-etq="Vendió">{{ v.vendedora?.nombre || '—' }}</td>
+                <td data-etq="Pago">{{ pago(v.tipo_recaudo) }}</td>
+                <td class="der num" data-etq="Efectivo">{{ pesos(v.valor_efectivo) }}</td>
+                <td class="der num" data-etq="Transferencia">{{ pesos(v.valor_transferencia) }}</td>
+                <td class="der num" data-etq="Total">{{ pesos(v.total) }}</td>
               </tr>
             } @empty {
               <tr><td colspan="9" class="suave">{{ cargando() ? 'Cargando…' : 'No hay ventas en el local en este periodo.' }}</td></tr>

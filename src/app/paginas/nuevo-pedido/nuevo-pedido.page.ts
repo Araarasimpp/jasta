@@ -60,7 +60,16 @@ function normal(s: string): string {
       .tipo { height: 40px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface);
         color: var(--text); font-size: 14px; font-weight: 500; cursor: pointer; }
       .tipo.on { border-color: var(--accent); background: var(--accent-wash); color: var(--accent); }
-      @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } .linea { grid-template-columns: 1fr auto auto; } .linea .precio { grid-column: 1 / 3; width: 100%; } }
+      @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+      /* Celular: nombre arriba; cantidad, precio y quitar en la línea de abajo */
+      @media (max-width: 900px) {
+        .linea { grid-template-columns: auto minmax(0, 1fr) auto; row-gap: 8px; padding: 10px 0; }
+        .linea .nom { grid-column: 1 / -1; font-size: 14px; }
+        .linea .precio { width: 100%; height: 38px; }
+        .cant button { width: 38px; height: 38px; font-size: 18px; }
+        .cant span { min-width: 28px; }
+        .res { padding: 10px; font-size: 14px; }
+      }
     `,
   ],
   template: `
