@@ -14,10 +14,6 @@ import { mensajeError, numero, pesos } from '../../shared/formato';
 import { finDiaColombia, formatoFechaCO, formatoHoraCO, hoyColombiaISO, inicioDiaColombia } from '../../shared/fecha-colombia';
 
 // ---------- Tipos ----------
-interface Totales {
-  pedidos: number; unidades: number; ventas: number; domicilios: number; cobrado: number; costo: number;
-  ganancia_tienda: number; ganancia_vendedoras: number; efectivo: number; transferencia: number; cancelados: number;
-}
 interface FilaVendedora { nombre: string; pedidos: number; unidades: number; ventas: number; base: number; ganancia_vendedora: number; ganancia_tienda: number }
 interface FilaMensajero { nombre: string; entregas: number; domicilios: number; efectivo: number; transferencia: number; total: number }
 interface FilaProducto { nombre: string; unidades: number; ventas: number; costo: number; ganancia: number; ganancia_vendedora: number; ganancia_tienda: number }
@@ -61,7 +57,6 @@ const ESTADOS: { id: EstadoFiltro; label: string }[] = [
     `
       .periodo { margin: 0 0 0 auto; font-size: 13px; color: var(--text-soft); }
       .periodo::first-letter { text-transform: uppercase; }
-      .seccion { padding: 16px 20px 0; }
       .pestanas { padding: 12px 20px 0; border-bottom: 1px solid var(--border-soft); }
       .pestanas .chips { padding-bottom: 10px; }
       .filtros { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 10px 20px; border-bottom: 1px solid var(--border-soft); }
@@ -83,7 +78,6 @@ const ESTADOS: { id: EstadoFiltro; label: string }[] = [
       .tabla .neg { color: var(--danger); }
       .nota { margin: 0; padding: 12px 20px 24px; font-size: 12px; line-height: 1.5; color: var(--text-muted); }
       @media (max-width: 760px) {
-        .seccion { padding: 12px 14px 0; }
         .pestanas, .filtros { padding-left: 14px; padding-right: 14px; }
         .periodo { margin: 0; width: 100%; }
         .nota { padding: 12px 14px 24px; }
@@ -122,29 +116,6 @@ const ESTADOS: { id: EstadoFiltro; label: string }[] = [
           </label>
         </div>
         <p class="periodo">{{ etiqueta() }} · {{ etiquetaEstado() }}</p>
-      </div>
-
-      <!-- Resumen del periodo -->
-      <div class="seccion">
-        <div class="cifras-grid">
-          @if (veTodo()) {
-            <div class="cifra-t"><small>Ventas de productos</small><strong class="num">{{ pesos(t()?.ventas) }}</strong><em>Sin domicilios</em></div>
-            <div class="cifra-t"><small>Domicilios cobrados</small><strong class="num">{{ pesos(t()?.domicilios) }}</strong><em>Son de los mensajeros</em></div>
-            <div class="cifra-t"><small>Total cobrado</small><strong class="num">{{ pesos(t()?.cobrado) }}</strong><em>Productos + domicilios</em></div>
-            <div class="cifra-t"><small>Costo (precio de compra)</small><strong class="num">{{ pesos(t()?.costo) }}</strong></div>
-            <div class="cifra-t clave"><small>Ganancia tienda</small><strong class="num">{{ pesos(t()?.ganancia_tienda) }}</strong><em>Precio base − compra</em></div>
-            <div class="cifra-t"><small>Ganancia vendedoras</small><strong class="num">{{ pesos(t()?.ganancia_vendedoras) }}</strong><em>Precio venta − base</em></div>
-            <div class="cifra-t"><small>Pedidos</small><strong class="num">{{ numero(t()?.pedidos) }}</strong><em>{{ numero(t()?.cancelados) }} cancelados en el periodo</em></div>
-            <div class="cifra-t"><small>Unidades vendidas</small><strong class="num">{{ numero(t()?.unidades) }}</strong></div>
-            <div class="cifra-t"><small>Efectivo</small><strong class="num">{{ pesos(t()?.efectivo) }}</strong></div>
-            <div class="cifra-t"><small>Transferencias</small><strong class="num">{{ pesos(t()?.transferencia) }}</strong></div>
-          } @else {
-            <div class="cifra-t"><small>Pedidos</small><strong class="num">{{ numero(t()?.pedidos) }}</strong></div>
-            <div class="cifra-t"><small>Unidades vendidas</small><strong class="num">{{ numero(t()?.unidades) }}</strong></div>
-            <div class="cifra-t"><small>Ventas</small><strong class="num">{{ pesos(t()?.ventas) }}</strong></div>
-            <div class="cifra-t clave"><small>Tu ganancia</small><strong class="num">{{ pesos(t()?.ganancia_vendedoras) }}</strong><em>Precio de venta − precio base</em></div>
-          }
-        </div>
       </div>
 
       <div class="pestanas">
@@ -384,7 +355,6 @@ export class ReportesPage implements OnInit {
 
   pestana = signal<Pestana>('detalle');
   etiqueta = signal('');
-  t = signal<Totales | null>(null);
   agrupado = signal<Agrupado | null>(null);
   cargando = signal(true);
   lineas = signal<LineaVenta[]>([]);
@@ -460,16 +430,12 @@ export class ReportesPage implements OnInit {
     this.pagina.set(0);
     void this.cargarFilas();
     const args = { p_desde: r.desde, p_hasta: r.hasta, p_estado: this.estadoSel, p_vendedora: this.vendedoraSel };
-    const [a, b] = await Promise.all([
-      this.sb.client.rpc('reporte_filtrado', args),
-      this.sb.client.rpc('reporte_totales_filtrado', args),
-    ]);
+    const a = await this.sb.client.rpc('reporte_filtrado', args);
     // Si mientras tanto cambiaron los filtros, esta respuesta ya no sirve
     if (this.rango !== r) return;
     this.cargando.set(false);
-    if (a.error || b.error) return this.toast.error(mensajeError(a.error ?? b.error));
+    if (a.error) return this.toast.error(mensajeError(a.error));
     this.agrupado.set(a.data as Agrupado);
-    this.t.set(b.data as Totales);
   }
 
   cambiarPestana(p: Pestana): void {
