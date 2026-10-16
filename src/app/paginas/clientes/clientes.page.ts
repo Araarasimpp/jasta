@@ -10,7 +10,7 @@ import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detal
 import { Pedido, estadoLabel } from '../../shared/modelos';
 import { mensajeError, numero, pesos } from '../../shared/formato';
 import { formatoFechaCO } from '../../shared/fecha-colombia';
-import { enlaceWhatsapp } from '../../shared/whatsapp';
+import { enlaceWhatsapp, mensajeSeguimiento } from '../../shared/whatsapp';
 
 interface Cliente {
   telefono: string; nombre: string; barrio: string | null; direccion: string | null;
@@ -155,15 +155,19 @@ export class ClientesPage implements OnInit {
     this.sel.set(c);
     this.pedidosCli.set([]);
     try {
-      const r = await this.ps.listar({ texto: c.telefono, porPagina: 100 });
+      const r = await this.ps.listar({ texto: c.telefono, porPagina: 100, conItems: true });
       this.pedidosCli.set(r.filas);
     } catch (e) {
       this.toast.error(mensajeError(e));
     }
   }
 
+  /** Mensaje de seguimiento con lo que compró en su último pedido entregado */
   whatsapp(c: Cliente): string {
-    return enlaceWhatsapp(c.telefono, `Hola ${c.nombre.split(' ')[0]}, te escribimos de Jasta.`);
+    const pedidos = this.pedidosCli();
+    const ultimo = pedidos.find((p) => p.estado === 'entregado') ?? pedidos.find((p) => p.estado !== 'cancelado');
+    const productos = (ultimo?.pedido_items ?? []).map((i) => i.nombre);
+    return enlaceWhatsapp(c.telefono, mensajeSeguimiento(c.nombre, productos));
   }
 
   fecha(iso: string): string {

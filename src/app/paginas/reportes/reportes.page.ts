@@ -18,9 +18,9 @@ interface Totales {
 }
 interface FilaVendedora { nombre: string; pedidos: number; unidades: number; ventas: number; base: number; ganancia_vendedora: number; ganancia_tienda: number }
 interface FilaMensajero { nombre: string; entregas: number; domicilios: number; efectivo: number; transferencia: number; total: number }
-interface FilaProducto { nombre: string; unidades: number; ventas: number; costo: number; ganancia: number }
-interface FilaBarrio { barrio: string; pedidos: number; ventas: number; domicilios: number }
-interface FilaDia { dia: string; pedidos: number; ventas: number; domicilios: number; efectivo: number; transferencia: number }
+interface FilaProducto { nombre: string; unidades: number; ventas: number; costo: number; ganancia: number; ganancia_vendedora: number; ganancia_tienda: number }
+interface FilaBarrio { barrio: string; pedidos: number; ventas: number; domicilios: number; ganancia_vendedora: number; ganancia_tienda: number }
+interface FilaDia { dia: string; pedidos: number; ventas: number; domicilios: number; efectivo: number; transferencia: number; ganancia_vendedora: number; ganancia_tienda: number }
 interface Agrupado { vendedoras: FilaVendedora[]; mensajeros: FilaMensajero[]; productos: FilaProducto[]; barrios: FilaBarrio[]; dias: FilaDia[] }
 
 interface LineaVenta {
@@ -237,16 +237,20 @@ const PAGO: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Tra
           @case ('productos') {
             <table class="tabla">
               <thead><tr><th>Producto</th><th class="der">Unidades</th><th class="der">Ventas</th>
-                @if (veTodo()) { <th class="der">Costo</th><th class="der">Ganancia total</th> }</tr></thead>
+                @if (veTodo()) { <th class="der">Costo</th> }<th class="der">Ganancia vendedora</th>
+                @if (veTodo()) { <th class="der">Ganancia tienda</th><th class="der">Ganancia total</th> }</tr></thead>
               <tbody>
                 @for (f of agrupado()?.productos ?? []; track f.nombre) {
                   <tr><td class="texto">{{ f.nombre }}</td><td class="der num">{{ numero(f.unidades) }}</td><td class="der num">{{ pesos(f.ventas) }}</td>
-                    @if (veTodo()) { <td class="der num suave">{{ pesos(f.costo) }}</td><td class="der num tienda">{{ pesos(f.ganancia) }}</td> }</tr>
-                } @empty { <tr><td colspan="5" class="suave">{{ vacio() }}</td></tr> }
+                    @if (veTodo()) { <td class="der num suave">{{ pesos(f.costo) }}</td> }
+                    <td class="der num vende" [class.neg]="f.ganancia_vendedora < 0">{{ pesos(f.ganancia_vendedora) }}</td>
+                    @if (veTodo()) { <td class="der num tienda" [class.neg]="f.ganancia_tienda < 0">{{ pesos(f.ganancia_tienda) }}</td><td class="der num">{{ pesos(f.ganancia) }}</td> }</tr>
+                } @empty { <tr><td colspan="7" class="suave">{{ vacio() }}</td></tr> }
               </tbody>
               @if (agrupado()?.productos?.length) {
                 <tfoot><tr><td>Total</td><td class="der num">{{ numero(tot().pUnidades) }}</td><td class="der num">{{ pesos(tot().pVentas) }}</td>
-                  @if (veTodo()) { <td class="der num">{{ pesos(tot().pCosto) }}</td><td class="der num">{{ pesos(tot().pGan) }}</td> }</tr></tfoot>
+                  @if (veTodo()) { <td class="der num">{{ pesos(tot().pCosto) }}</td> }<td class="der num">{{ pesos(tot().pGanV) }}</td>
+                  @if (veTodo()) { <td class="der num">{{ pesos(tot().pGanT) }}</td><td class="der num">{{ pesos(tot().pGan) }}</td> }</tr></tfoot>
               }
             </table>
           }
@@ -268,29 +272,39 @@ const PAGO: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Tra
           }
           @case ('barrios') {
             <table class="tabla">
-              <thead><tr><th>Barrio</th><th class="der">Pedidos</th><th class="der">Ventas</th><th class="der">Domicilios</th></tr></thead>
+              <thead><tr><th>Barrio</th><th class="der">Pedidos</th><th class="der">Ventas</th><th class="der">Domicilios</th>
+                <th class="der">Ganancia vendedora</th>@if (veTodo()) { <th class="der">Ganancia tienda</th> }</tr></thead>
               <tbody>
                 @for (f of agrupado()?.barrios ?? []; track f.barrio) {
-                  <tr><td>{{ f.barrio }}</td><td class="der num">{{ numero(f.pedidos) }}</td><td class="der num">{{ pesos(f.ventas) }}</td><td class="der num">{{ pesos(f.domicilios) }}</td></tr>
-                } @empty { <tr><td colspan="4" class="suave">{{ vacio() }}</td></tr> }
+                  <tr><td>{{ f.barrio }}</td><td class="der num">{{ numero(f.pedidos) }}</td><td class="der num">{{ pesos(f.ventas) }}</td><td class="der num">{{ pesos(f.domicilios) }}</td>
+                    <td class="der num vende">{{ pesos(f.ganancia_vendedora) }}</td>@if (veTodo()) { <td class="der num tienda">{{ pesos(f.ganancia_tienda) }}</td> }</tr>
+                } @empty { <tr><td colspan="6" class="suave">{{ vacio() }}</td></tr> }
               </tbody>
+              @if (agrupado()?.barrios?.length) {
+                <tfoot><tr><td>Total</td><td class="der num">{{ numero(tot().bPedidos) }}</td><td class="der num">{{ pesos(tot().bVentas) }}</td>
+                  <td class="der num">{{ pesos(tot().bDom) }}</td><td class="der num">{{ pesos(tot().bGanV) }}</td>
+                  @if (veTodo()) { <td class="der num">{{ pesos(tot().bGanT) }}</td> }</tr></tfoot>
+              }
             </table>
           }
           @case ('dias') {
             <table class="tabla">
               <thead><tr><th>Día</th><th class="der">Pedidos</th><th class="der">Ventas</th><th class="der">Domicilios</th>
-                @if (veTodo()) { <th class="der">Efectivo</th><th class="der">Transferencias</th> }</tr></thead>
+                @if (veTodo()) { <th class="der">Efectivo</th><th class="der">Transferencias</th> }
+                <th class="der">Ganancia vendedora</th>@if (veTodo()) { <th class="der">Ganancia tienda</th> }</tr></thead>
               <tbody>
                 @for (f of agrupado()?.dias ?? []; track f.dia) {
                   <tr><td>{{ diaCorto(f.dia) }}</td><td class="der num">{{ numero(f.pedidos) }}</td><td class="der num">{{ pesos(f.ventas) }}</td>
                     <td class="der num">{{ pesos(f.domicilios) }}</td>
-                    @if (veTodo()) { <td class="der num">{{ pesos(f.efectivo) }}</td><td class="der num">{{ pesos(f.transferencia) }}</td> }</tr>
-                } @empty { <tr><td colspan="6" class="suave">{{ vacio() }}</td></tr> }
+                    @if (veTodo()) { <td class="der num">{{ pesos(f.efectivo) }}</td><td class="der num">{{ pesos(f.transferencia) }}</td> }
+                    <td class="der num vende">{{ pesos(f.ganancia_vendedora) }}</td>@if (veTodo()) { <td class="der num tienda">{{ pesos(f.ganancia_tienda) }}</td> }</tr>
+                } @empty { <tr><td colspan="8" class="suave">{{ vacio() }}</td></tr> }
               </tbody>
               @if (agrupado()?.dias?.length) {
                 <tfoot><tr><td>Total</td><td class="der num">{{ numero(tot().dPedidos) }}</td><td class="der num">{{ pesos(tot().dVentas) }}</td>
                   <td class="der num">{{ pesos(tot().dDom) }}</td>
-                  @if (veTodo()) { <td class="der num">{{ pesos(tot().dEf) }}</td><td class="der num">{{ pesos(tot().dTr) }}</td> }</tr></tfoot>
+                  @if (veTodo()) { <td class="der num">{{ pesos(tot().dEf) }}</td><td class="der num">{{ pesos(tot().dTr) }}</td> }
+                  <td class="der num">{{ pesos(tot().dGanV) }}</td>@if (veTodo()) { <td class="der num">{{ pesos(tot().dGanT) }}</td> }</tr></tfoot>
               }
             </table>
           }
@@ -368,8 +382,12 @@ export class ReportesPage {
       mEf: suma(d.mensajeros, (x) => x.efectivo), mTr: suma(d.mensajeros, (x) => x.transferencia), mTotal: suma(d.mensajeros, (x) => x.total),
       pUnidades: suma(d.productos, (x) => x.unidades), pVentas: suma(d.productos, (x) => x.ventas),
       pCosto: suma(d.productos, (x) => x.costo), pGan: suma(d.productos, (x) => x.ganancia),
+      pGanV: suma(d.productos, (x) => x.ganancia_vendedora), pGanT: suma(d.productos, (x) => x.ganancia_tienda),
+      bPedidos: suma(d.barrios, (x) => x.pedidos), bVentas: suma(d.barrios, (x) => x.ventas), bDom: suma(d.barrios, (x) => x.domicilios),
+      bGanV: suma(d.barrios, (x) => x.ganancia_vendedora), bGanT: suma(d.barrios, (x) => x.ganancia_tienda),
       dPedidos: suma(d.dias, (x) => x.pedidos), dVentas: suma(d.dias, (x) => x.ventas), dDom: suma(d.dias, (x) => x.domicilios),
       dEf: suma(d.dias, (x) => x.efectivo), dTr: suma(d.dias, (x) => x.transferencia),
+      dGanV: suma(d.dias, (x) => x.ganancia_vendedora), dGanT: suma(d.dias, (x) => x.ganancia_tienda),
     };
   });
 
@@ -536,7 +554,11 @@ export class ReportesPage {
             { titulo: 'Producto', valor: (f: FilaProducto) => f.nombre },
             { titulo: 'Unidades', valor: (f) => f.unidades },
             { titulo: 'Ventas', valor: (f) => f.ventas },
-            ...(todo ? [{ titulo: 'Costo', valor: (f: FilaProducto) => f.costo }, { titulo: 'Ganancia', valor: (f: FilaProducto) => f.ganancia }] : []),
+            ...(todo ? [{ titulo: 'Costo', valor: (f: FilaProducto) => f.costo }] : []),
+            { titulo: 'Ganancia vendedora', valor: (f) => f.ganancia_vendedora },
+            ...(todo
+              ? [{ titulo: 'Ganancia tienda', valor: (f: FilaProducto) => f.ganancia_tienda }, { titulo: 'Ganancia total', valor: (f: FilaProducto) => f.ganancia }]
+              : []),
           ], a?.productos ?? []);
           break;
         case 'mensajeros':
@@ -555,6 +577,8 @@ export class ReportesPage {
             { titulo: 'Pedidos', valor: (f) => f.pedidos },
             { titulo: 'Ventas', valor: (f) => f.ventas },
             { titulo: 'Domicilios', valor: (f) => f.domicilios },
+            { titulo: 'Ganancia vendedora', valor: (f) => f.ganancia_vendedora },
+            ...(todo ? [{ titulo: 'Ganancia tienda', valor: (f: FilaBarrio) => f.ganancia_tienda }] : []),
           ], a?.barrios ?? []);
           break;
         case 'dias':
@@ -566,6 +590,8 @@ export class ReportesPage {
             ...(todo
               ? [{ titulo: 'Efectivo', valor: (f: FilaDia) => f.efectivo }, { titulo: 'Transferencias', valor: (f: FilaDia) => f.transferencia }]
               : []),
+            { titulo: 'Ganancia vendedora', valor: (f) => f.ganancia_vendedora },
+            ...(todo ? [{ titulo: 'Ganancia tienda', valor: (f: FilaDia) => f.ganancia_tienda }] : []),
           ], a?.dias ?? []);
           break;
       }

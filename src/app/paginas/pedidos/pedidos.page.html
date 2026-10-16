@@ -6,7 +6,7 @@
     </div>
     <label class="search">
       <ion-icon name="search-outline" aria-hidden="true"></ion-icon>
-      <input type="search" [(ngModel)]="texto" (ngModelChange)="buscarLuego()" placeholder="Cliente, barrio o número" aria-label="Buscar pedidos" />
+      <input type="search" [(ngModel)]="texto" (ngModelChange)="buscarLuego()" placeholder="Cliente, barrio, producto o número" aria-label="Buscar pedidos" />
     </label>
     @if (puedeVender()) {
       <a class="btn btn-primary" routerLink="/app/pedidos/nuevo">
@@ -235,7 +235,7 @@
       <div class="empty">
         @if (hayFiltros()) {
           <p class="empty-title">Ningún pedido coincide</p>
-          <p class="empty-text">Prueba con otro nombre, barrio o número, o cambia el filtro de estado.</p>
+          <p class="empty-text">Prueba con otro nombre, barrio, producto o número, o cambia el filtro de estado.</p>
           <button class="btn" (click)="quitarFiltros()">Quitar filtros</button>
         } @else {
           <p class="empty-title">{{ vacioTitulo() }}</p>

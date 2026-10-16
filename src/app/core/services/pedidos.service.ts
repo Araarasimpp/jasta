@@ -10,6 +10,8 @@ export interface FiltroPedidos {
   /** Varios estados a la vez (tiene prioridad sobre `estado`) */
   estados?: EstadoPedido[] | null;
   texto?: string;
+  /** Pedidos que tienen un producto que coincide con el texto (de idsPorProducto) */
+  idsProducto?: number[] | null;
   desde?: string | null; // ISO
   hasta?: string | null; // ISO
   vendedoraId?: number | null;
@@ -95,10 +97,21 @@ export class PedidosService {
     if (f.rotulo === 'impreso') q = q.not('rotulo_impreso_at', 'is', null);
     const t = (f.texto ?? '').trim().replace(/^#/, '').replace(/[,()%]/g, ' ').trim();
     if (t) {
-      if (/^\d+$/.test(t)) q = q.or(`id.eq.${t},cliente_telefono.ilike.%${t}%`);
-      else q = q.or(`cliente_nombre.ilike.%${t}%,barrio.ilike.%${t}%,direccion.ilike.%${t}%`);
+      const porProducto = f.idsProducto?.length ? `,id.in.(${f.idsProducto.join(',')})` : '';
+      if (/^\d+$/.test(t)) q = q.or(`id.eq.${t},cliente_telefono.ilike.%${t}%${porProducto}`);
+      else q = q.or(`cliente_nombre.ilike.%${t}%,barrio.ilike.%${t}%,direccion.ilike.%${t}%${porProducto}`);
     }
     return q;
+  }
+
+  /** Pedidos (los más recientes) que tienen un producto cuyo nombre contiene el texto */
+  async idsPorProducto(texto: string): Promise<number[]> {
+    const t = texto.trim().replace(/^#/, '').replace(/[,()%]/g, ' ').trim();
+    if (t.length < 3 || /^\d+$/.test(t)) return [];
+    const r = this.check(
+      await this.db.from('pedido_items').select('pedido_id').ilike('nombre', `%${t}%`).order('pedido_id', { ascending: false }).limit(400)
+    );
+    return [...new Set(((r ?? []) as { pedido_id: number }[]).map((x) => x.pedido_id))];
   }
 
   /** Cuántos pedidos hay en cada estado, con los mismos filtros de la lista */

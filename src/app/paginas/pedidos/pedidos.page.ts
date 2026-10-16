@@ -193,6 +193,7 @@ export class PedidosPage implements OnInit, OnDestroy {
       const f = this.filtro();
       const base = {
         texto: this.texto,
+        idsProducto: await this.ps.idsPorProducto(this.texto),
         desde: this.rango.desde ? inicioDiaColombia(this.rango.desde).toISOString() : null,
         hasta: this.rango.hasta ? finDiaColombia(this.rango.hasta).toISOString() : null,
         rotulo: this.filtroCanal === 'local' ? null : this.filtroRotulo,
