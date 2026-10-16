@@ -22,6 +22,7 @@ import {
   storefrontOutline,
   listOutline,
   trophyOutline,
+  bookOutline,
   peopleCircleOutline,
   timeOutline,
   personCircleOutline,
@@ -49,6 +50,7 @@ const MENU: ItemMenu[] = [
   { label: 'Venta en local', path: '/app/venta-local', icon: 'storefront-outline', roles: ['admin', 'vendedora', 'alistador'] },
   { label: 'Ventas del local', path: '/app/ventas-local', icon: 'list-outline', roles: ['admin', 'vendedora', 'alistador', 'cuadres'] },
   { label: 'Cuadres', path: '/app/cuadres', icon: 'wallet-outline', roles: ['admin', 'cuadres', 'mensajero'] },
+  { label: 'Catálogo', path: '/app/catalogo', icon: 'book-outline', roles: ['admin', 'vendedora'] },
   { label: 'Ranking', path: '/app/ranking', icon: 'trophy-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador'] },
   { label: 'Clientes', path: '/app/clientes', icon: 'people-circle-outline', roles: ['admin'] },
   { label: 'Productos', path: '/app/productos', icon: 'cube-outline', roles: ['admin'] },
@@ -217,7 +219,7 @@ export class ShellComponent implements OnInit, OnDestroy {
     addIcons({
       add, barChartOutline, chevronBackOutline, chevronForwardOutline, cubeOutline, ellipsisHorizontal,
       logOutOutline, moonOutline, peopleOutline, receiptOutline, bicycleOutline, clipboardOutline, sunnyOutline, walletOutline, statsChartOutline, settingsOutline,
-      storefrontOutline, listOutline, trophyOutline, peopleCircleOutline, timeOutline, personCircleOutline, notificationsOutline,
+      storefrontOutline, listOutline, trophyOutline, bookOutline, peopleCircleOutline, timeOutline, personCircleOutline, notificationsOutline,
     });
   }
 

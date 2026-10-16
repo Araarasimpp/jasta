@@ -19,7 +19,7 @@ function normal(s: string): string {
 
 const VACIO: Omit<Producto, 'id'> = {
   nombre: '', sku: '', codigo_barras: '', precio_venta: 0, precio_base: 0, precio_compra: 0,
-  stock: 0, controla_stock: true, imagen_url: null, activo: true,
+  stock: 0, controla_stock: true, imagen_url: null, activo: true, descripcion: '',
 };
 
 @Component({
@@ -115,6 +115,8 @@ const VACIO: Omit<Producto, 'id'> = {
           </div>
           <label class="check"><input type="checkbox" [(ngModel)]="f.controla_stock" />Controlar inventario (descuenta al entregar)</label>
           <label class="check"><input type="checkbox" [(ngModel)]="f.activo" />Activo (aparece al crear pedidos)</label>
+          <div class="campo"><label for="pd">Descripción <small class="suave">(sale en el catálogo)</small></label>
+            <textarea id="pd" rows="3" [(ngModel)]="f.descripcion" placeholder="Ej: color sujeto a disponibilidad, medidas, material…"></textarea></div>
           <div class="campo"><label for="pi">Foto (URL)</label><input id="pi" [(ngModel)]="f.imagen_url" placeholder="https://…" /></div>
           @if (f.imagen_url) {
             <button type="button" class="foto-btn" (click)="verFoto(f.imagen_url, f.nombre, $event)" aria-label="Ver foto en grande">
@@ -221,6 +223,7 @@ export class ProductosPage implements OnInit {
       controla_stock: !!f.controla_stock,
       activo: !!f.activo,
       imagen_url: f.imagen_url?.trim() || null,
+      descripcion: f.descripcion?.trim() || null,
       updated_at: new Date().toISOString(),
     };
     const id = this.editId();

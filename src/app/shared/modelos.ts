@@ -26,6 +26,8 @@ export interface Producto {
   controla_stock: boolean;
   imagen_url: string | null;
   activo: boolean;
+  /** Texto para el catálogo (opcional) */
+  descripcion?: string | null;
 }
 
 export interface Pedido {
