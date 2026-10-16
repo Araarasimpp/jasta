@@ -176,6 +176,20 @@ const ESTADOS: { id: EstadoFiltro; label: string }[] = [
                   <tr><td [attr.colspan]="15" class="suave">{{ cargandoFilas() ? 'Cargando…' : 'No hay ventas con estos filtros.' }}</td></tr>
                 }
               </tbody>
+              @if (lineas().length && sumas(); as s) {
+                <tfoot>
+                  <tr>
+                    <td>Total</td><td class="num">{{ numero(s['filas']) }} lín.</td><td></td>
+                    <td class="der num">{{ numero(s['cantidad']) }}</td>
+                    <td></td><td></td>@if (veTodo()) { <td></td> }
+                    <td class="der num">{{ pesos(s['total']) }}</td>
+                    @if (veTodo()) { <td class="der num">{{ pesos(s['ganancia_tienda']) }}</td> }
+                    <td class="der num">{{ pesos(s['ganancia_vendedora']) }}</td>
+                    @if (veTodo()) { <td></td> }
+                    <td></td><td class="der num">{{ pesos(s['domicilio']) }}</td><td></td><td></td>
+                  </tr>
+                </tfoot>
+              }
             </table>
           }
           @case ('pedidos') {
@@ -216,6 +230,23 @@ const ESTADOS: { id: EstadoFiltro; label: string }[] = [
                   <tr><td [attr.colspan]="16" class="suave">{{ cargandoFilas() ? 'Cargando…' : 'No hay pedidos con estos filtros.' }}</td></tr>
                 }
               </tbody>
+              @if (pedidosV().length && sumas(); as s) {
+                <tfoot>
+                  <tr>
+                    <td>Total</td><td class="num">{{ numero(s['filas']) }} ped.</td><td></td><td></td>
+                    <td class="der num">{{ numero(s['unidades']) }}</td>
+                    <td class="der num">{{ pesos(s['subtotal']) }}</td>
+                    <td class="der num">{{ pesos(s['domicilio']) }}</td>
+                    <td class="der num">{{ pesos(s['total']) }}</td>
+                    @if (veTodo()) { <td class="der num">{{ pesos(s['costo']) }}</td><td class="der num">{{ pesos(s['ganancia_tienda']) }}</td> }
+                    <td class="der num">{{ pesos(s['ganancia_vendedora']) }}</td>
+                    @if (veTodo()) { <td></td> }
+                    <td></td><td></td>
+                    <td class="der num">{{ pesos(s['efectivo']) }}</td>
+                    <td class="der num">{{ pesos(s['transferencia']) }}</td>
+                  </tr>
+                </tfoot>
+              }
             </table>
           }
           @case ('vendedoras') {
@@ -359,6 +390,8 @@ export class ReportesPage implements OnInit {
   cargando = signal(true);
   lineas = signal<LineaVenta[]>([]);
   pedidosV = signal<PedidoVenta[]>([]);
+  /** Sumas de todas las filas filtradas (no solo de la página que se ve) */
+  sumas = signal<Record<string, number> | null>(null);
   totalFilas = signal(0);
   pagina = signal(0);
   cargandoFilas = signal(false);
@@ -463,7 +496,7 @@ export class ReportesPage implements OnInit {
       .lte('created_at', finDiaColombia(r.hasta).toISOString());
     if (this.estadoSel !== 'todos') q = q.eq('estado', this.estadoSel);
     if (this.vendedoraSel) q = q.eq('vendedora_id', this.vendedoraSel);
-    const t = this.texto.trim().replace(/[,()%]/g, ' ').trim();
+    const t = this.textoLimpio();
     if (t) {
       const idCol = vista === 'ventas_detalle' ? 'pedido_id' : 'id';
       if (/^\d+$/.test(t)) q = q.eq(idCol, Number(t));
@@ -473,18 +506,36 @@ export class ReportesPage implements OnInit {
     return q;
   }
 
+  /** El texto de búsqueda sin los caracteres que rompen el filtro */
+  private textoLimpio(): string {
+    return this.texto.trim().replace(/[,()%]/g, ' ').trim();
+  }
+
   async cargarFilas(): Promise<void> {
     const p = this.pestana();
     if (!this.rango || (p !== 'detalle' && p !== 'pedidos')) return;
     this.cargandoFilas.set(true);
     const vista = p === 'detalle' ? 'ventas_detalle' : 'ventas_pedidos';
     const desde = this.pagina() * POR_PAGINA;
-    const r = await this.consulta(vista, true)
-      .order('created_at', { ascending: false })
-      .order(p === 'detalle' ? 'pedido_id' : 'id', { ascending: false })
-      .range(desde, desde + POR_PAGINA - 1);
+    const rango = this.rango;
+    const [r, sumas] = await Promise.all([
+      this.consulta(vista, true)
+        .order('created_at', { ascending: false })
+        .order(p === 'detalle' ? 'pedido_id' : 'id', { ascending: false })
+        .range(desde, desde + POR_PAGINA - 1),
+      this.sb.client.rpc(p === 'detalle' ? 'sumas_ventas_detalle' : 'sumas_ventas_pedidos', {
+        p_desde: inicioDiaColombia(rango.desde).toISOString(),
+        p_hasta: finDiaColombia(rango.hasta).toISOString(),
+        p_estado: this.estadoSel,
+        p_vendedora: this.vendedoraSel,
+        p_texto: this.textoLimpio(),
+      }),
+    ]);
+    // Si mientras tanto cambió la pestaña o los filtros, esta respuesta ya no sirve
+    if (this.rango !== rango || this.pestana() !== p) return;
     this.cargandoFilas.set(false);
     if (r.error) return this.toast.error(mensajeError(r.error));
+    this.sumas.set(sumas.error ? null : (sumas.data as Record<string, number>));
     this.totalFilas.set(r.count ?? 0);
     if (p === 'detalle') this.lineas.set((r.data ?? []) as LineaVenta[]);
     else this.pedidosV.set((r.data ?? []) as PedidoVenta[]);
