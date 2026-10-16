@@ -285,8 +285,18 @@
 
   .content {
     padding-top: env(safe-area-inset-top);
-    padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
     --tabbar-offset: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+    // Al enfocar un campo o botón con el teclado, que no quede bajo la barra
+    scroll-padding-bottom: calc(var(--tabbar-offset) + 16px);
+  }
+
+  // Espacio al final para que lo último (p. ej. "Crear pedido") quede encima
+  // de la barra inferior. Safari de iPhone no siempre respeta el padding-bottom
+  // de un contenedor con scroll, así que va como un bloque real al final.
+  .content::after {
+    content: '';
+    display: block;
+    height: calc(var(--tabbar-offset) + 24px);
   }
 }
 
