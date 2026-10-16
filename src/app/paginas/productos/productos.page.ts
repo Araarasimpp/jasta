@@ -11,6 +11,7 @@ import { mensajeError, numero, pesos, urlImagen } from '../../shared/formato';
 import { STOCK_BAJO } from '../../shared/stock';
 import { VisorService } from '../../shared/visor/visor.service';
 import { ColoresProductoComponent } from '../../shared/colores-producto/colores-producto.component';
+import { ElegirFotoComponent } from '../../shared/elegir-foto/elegir-foto.component';
 
 type Filtro = 'activos' | 'agotados' | 'bajo' | 'inactivos' | 'todos';
 
@@ -26,7 +27,7 @@ const VACIO: Omit<Producto, 'id'> = {
 @Component({
   selector: 'app-productos',
   standalone: true,
-  imports: [FormsModule, IonIcon, ColoresProductoComponent],
+  imports: [FormsModule, IonIcon, ColoresProductoComponent, ElegirFotoComponent],
   styles: [
     `
       .tonos { display: inline-flex; gap: 3px; margin-left: 8px; vertical-align: middle; }
@@ -127,12 +128,10 @@ const VACIO: Omit<Producto, 'id'> = {
           <label class="check"><input type="checkbox" [(ngModel)]="f.activo" />Activo (aparece al crear pedidos)</label>
           <div class="campo"><label for="pd">Descripción <small class="suave">(sale en el catálogo)</small></label>
             <textarea id="pd" rows="3" [(ngModel)]="f.descripcion" placeholder="Ej: color sujeto a disponibilidad, medidas, material…"></textarea></div>
-          <div class="campo"><label for="pi">Foto (URL)</label><input id="pi" [(ngModel)]="f.imagen_url" placeholder="https://…" /></div>
-          @if (f.imagen_url) {
-            <button type="button" class="foto-btn" (click)="verFoto(f.imagen_url, f.nombre, $event)" aria-label="Ver foto en grande">
-              <img [src]="urlImagen(f.imagen_url)" alt="" style="width: 120px; height: 120px; object-fit: cover; border-radius: 8px; display: block" />
-            </button>
-          }
+          <div class="campo">
+            <span class="etq">Foto</span>
+            <app-elegir-foto [url]="f.imagen_url" [titulo]="f.nombre" (cambio)="f.imagen_url = $event"></app-elegir-foto>
+          </div>
           <section class="colores-sec">
             <h3 class="seccion-titulo">Colores y fotos</h3>
             @if (editId(); as pid) {

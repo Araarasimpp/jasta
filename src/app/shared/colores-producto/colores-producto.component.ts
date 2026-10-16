@@ -7,6 +7,7 @@ import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../toast/toast.service';
 import { ProductoColor } from '../modelos';
 import { mensajeError, urlImagen } from '../formato';
+import { subirFoto } from '../fotos';
 
 /** Colores de uso común para elegir de una vez (nombre + tono) */
 export const COLORES_RAPIDOS: { nombre: string; hex: string }[] = [
@@ -25,21 +26,6 @@ export const COLORES_RAPIDOS: { nombre: string; hex: string }[] = [
   { nombre: 'Dorado', hex: '#c4920f' },
   { nombre: 'Plateado', hex: '#c0c4c9' },
 ];
-
-/** Achica la foto (máx. 1200 px) y la deja en JPEG para subirla rápido */
-async function prepararFoto(archivo: File): Promise<Blob> {
-  const bmp = await createImageBitmap(archivo);
-  const k = Math.min(1, 1200 / Math.max(bmp.width, bmp.height));
-  const c = document.createElement('canvas');
-  c.width = Math.round(bmp.width * k);
-  c.height = Math.round(bmp.height * k);
-  const ctx = c.getContext('2d')!;
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, c.width, c.height);
-  ctx.drawImage(bmp, 0, 0, c.width, c.height);
-  bmp.close?.();
-  return new Promise((ok, mal) => c.toBlob((b) => (b ? ok(b) : mal(new Error('No se pudo leer la foto'))), 'image/jpeg', 0.86));
-}
 
 interface Borrador {
   id: number | null;
@@ -232,11 +218,7 @@ export class ColoresProductoComponent implements OnInit {
     if (!archivo || !b) return;
     this.subiendo.set(true);
     try {
-      const blob = await prepararFoto(archivo);
-      const ruta = `colores/${this.productoId}/${Date.now()}.jpg`;
-      const { error } = await this.sb.client.storage.from('wp').upload(ruta, blob, { contentType: 'image/jpeg', upsert: false });
-      if (error) throw error;
-      const url = this.sb.client.storage.from('wp').getPublicUrl(ruta).data.publicUrl;
+      const url = await subirFoto(this.sb.client, archivo, `colores/${this.productoId}`);
       // Puede que mientras subía se haya cerrado o cambiado de color
       const actual = this.borrador();
       if (actual && actual.id === b.id) this.borrador.set({ ...actual, imagen_url: url });
