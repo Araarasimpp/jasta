@@ -4,24 +4,15 @@ import { Router } from '@angular/router';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { AvatarComponent } from '../../shared/avatar/avatar.component';
+import { RecortarFotoComponent } from '../../shared/recortar-foto/recortar-foto.component';
 import { ROLES } from '../../shared/modelos';
 import { mensajeError } from '../../shared/formato';
-
-/** Reduce la foto a un cuadrado de 400 px en JPG antes de subirla */
-async function fotoCuadrada(archivo: File): Promise<Blob> {
-  const img = await createImageBitmap(archivo);
-  const lado = Math.min(img.width, img.height);
-  const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = 400;
-  canvas.getContext('2d')!.drawImage(img, (img.width - lado) / 2, (img.height - lado) / 2, lado, lado, 0, 0, 400, 400);
-  return new Promise((ok, mal) => canvas.toBlob((b) => (b ? ok(b) : mal(new Error('No se pudo leer la foto'))), 'image/jpeg', 0.85));
-}
 
 /** Mi perfil y mi seguridad: nombre, teléfono, foto, contraseña y sesiones */
 @Component({
   selector: 'app-perfil',
   standalone: true,
-  imports: [FormsModule, AvatarComponent],
+  imports: [FormsModule, AvatarComponent, RecortarFotoComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -43,13 +34,16 @@ async function fotoCuadrada(archivo: File): Promise<Blob> {
           <app-avatar [nombre]="nombre" [foto]="foto()" [tam]="72"></app-avatar>
           <div class="fila">
             <label class="b">{{ subiendo() ? 'Subiendo…' : 'Cambiar foto' }}
-              <input type="file" accept="image/*" (change)="subirFoto($event)" [disabled]="subiendo()" />
+              <input type="file" accept="image/*" (change)="elegirFoto($event)" [disabled]="subiendo()" />
             </label>
             @if (foto()) {
               <button class="b" (click)="quitarFoto()">Quitar foto</button>
             }
           </div>
         </div>
+        @if (porRecortar(); as archivo) {
+          <app-recortar-foto [archivo]="archivo" [guardando]="subiendo()" (recortada)="subirFoto($event)" (cancelar)="porRecortar.set(null)"></app-recortar-foto>
+        }
         <div class="campo"><label for="pn">Nombre</label><input id="pn" [(ngModel)]="nombre" autocomplete="name" /></div>
         <div class="campo"><label for="pt">Teléfono</label><input id="pt" type="tel" [(ngModel)]="telefono" autocomplete="tel" /></div>
         <div class="campo"><span class="etq">Correo</span><span class="suave">{{ sb.usuario()?.email }}</span></div>
@@ -92,6 +86,8 @@ export class PerfilPage implements OnInit {
   foto = signal<string | null>(null);
   guardando = signal(false);
   subiendo = signal(false);
+  /** Foto elegida que se está ajustando antes de subir */
+  porRecortar = signal<File | null>(null);
   cambiando = signal(false);
   roles = computed(() => this.sb.roles().map((r) => ROLES.find((x) => x.id === r)?.label ?? r));
 
@@ -118,26 +114,36 @@ export class PerfilPage implements OnInit {
     this.guardando.set(false);
   }
 
-  async subirFoto(ev: Event): Promise<void> {
-    const archivo = (ev.target as HTMLInputElement).files?.[0];
+  elegirFoto(ev: Event): void {
+    const input = ev.target as HTMLInputElement;
+    const archivo = input.files?.[0];
+    input.value = '';
+    if (!archivo) return;
+    if (!archivo.type.startsWith('image/') && !/\.(heic|heif|jpe?g|png|webp)$/i.test(archivo.name)) {
+      return this.toast.error('Elige una foto (JPG, PNG o HEIC).');
+    }
+    this.porRecortar.set(archivo);
+  }
+
+  async subirFoto(blob: Blob): Promise<void> {
     const uid = this.sb.session()?.user.id;
-    if (!archivo || !uid) return;
+    if (!uid) return;
     this.subiendo.set(true);
     try {
-      const blob = await fotoCuadrada(archivo);
+      // Nombre nuevo cada vez: no reemplaza archivos y la foto nueva se ve de una vez (sin caché)
       const ruta = `${uid}/foto-${Date.now()}.jpg`;
-      const { error } = await this.sb.client.storage.from('avatars').upload(ruta, blob, { contentType: 'image/jpeg', upsert: true });
+      const { error } = await this.sb.client.storage.from('avatars').upload(ruta, blob, { contentType: 'image/jpeg', upsert: false });
       if (error) throw error;
       const url = this.sb.client.storage.from('avatars').getPublicUrl(ruta).data.publicUrl;
       if (await this.guardarPerfil(url)) {
         this.foto.set(url);
+        this.porRecortar.set(null);
         this.toast.ok('Foto actualizada');
       }
     } catch (e) {
       this.toast.error(mensajeError(e));
     } finally {
       this.subiendo.set(false);
-      (ev.target as HTMLInputElement).value = '';
     }
   }
 
