@@ -30,6 +30,16 @@ function normal(s: string): string {
       .foto { position: relative; display: block; width: 100%; aspect-ratio: 1; padding: 0; border: none; border-bottom: var(--perfora);
         background: #fff; cursor: zoom-in; }
       .foto img { width: 100%; height: 100%; object-fit: contain; padding: 8px; box-sizing: border-box; display: block; }
+      .foto img.capa { position: absolute; inset: 0; opacity: 0; transform: scale(0.97); transition: opacity 320ms var(--ease), transform 420ms var(--ease); }
+      .foto img.capa.on { opacity: 1; transform: none; }
+      .tonos { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 2px 0 1px; }
+      .tono { width: 20px; height: 20px; padding: 0; border-radius: 50%; border: 2px solid var(--surface); background: var(--tono);
+        box-shadow: 0 0 0 1px var(--border-strong); cursor: pointer; transition: transform 160ms var(--ease), box-shadow 160ms var(--ease); }
+      .tono.on { box-shadow: 0 0 0 2px var(--oro); transform: scale(1.12); }
+      .tono:active { transform: scale(0.92); }
+      .tono-nombre { font-size: 12px; color: var(--text-soft); animation: aparece 220ms var(--ease); }
+      @keyframes aparece { from { opacity: 0; transform: translateX(-3px); } }
+      @media (prefers-reduced-motion: reduce) { .foto img.capa, .tono { transition: none; } }
       .foto .inicial { display: grid; place-items: center; width: 100%; height: 100%; background: var(--oro-wash); color: var(--oro-texto);
         font-size: 40px; font-weight: 650; cursor: default; }
       .agotado { position: absolute; top: 8px; left: 8px; padding: 3px 7px; border-radius: 5px; background: rgba(23, 21, 17, 0.72); color: #fff;
@@ -86,9 +96,12 @@ function normal(s: string): string {
       <div class="rejilla">
         @for (p of visibles(); track p.id) {
           <article class="prod">
-            @if (urlImagen(p.imagen_url); as u) {
-              <button type="button" class="foto" (click)="verFoto(p)" [attr.aria-label]="'Ver foto de ' + p.nombre">
-                <img [src]="u" alt="" loading="lazy" decoding="async" />
+            @if (fotos(p).length) {
+              <button type="button" class="foto" (click)="verFoto(p)" [attr.aria-label]="'Ver fotos de ' + p.nombre">
+                <!-- Todas las fotos apiladas: al cambiar de color se funden una en otra -->
+                @for (f of fotos(p); track f.url) {
+                  <img [src]="f.url" alt="" loading="lazy" decoding="async" class="capa" [class.on]="f.color === colorActivo(p)" />
+                }
                 @if (agotado(p)) { <span class="agotado">Sin stock</span> }
               </button>
             } @else {
@@ -97,6 +110,15 @@ function normal(s: string): string {
             }
             <div class="datos-prod">
               <h2 class="nombre">{{ p.nombre }}</h2>
+              @if (p.colores?.length) {
+                <div class="tonos" role="group" [attr.aria-label]="'Colores de ' + p.nombre">
+                  @for (c of p.colores!; track c.id) {
+                    <button type="button" class="tono" [class.on]="colorActivo(p) === c.id" [style.--tono]="c.hex || '#ccc'"
+                      [attr.aria-label]="c.nombre" [title]="c.nombre" (click)="elegirColor(p, c.id)"></button>
+                  }
+                  <span class="tono-nombre">{{ nombreColor(p) }}</span>
+                </div>
+              }
               @if (p.descripcion) { <p class="desc">{{ p.descripcion }}</p> }
               @if (p.controla_stock && p.stock > 0) {
                 <span class="stock" [class.bajo]="p.stock < 5">{{ p.stock === 1 ? 'Queda 1' : 'Quedan ' + p.stock }}</span>
@@ -124,6 +146,8 @@ export class CatalogoPage implements OnInit {
   cargando = signal(true);
   q = signal('');
   filtro = signal<Filtro>('todos');
+  /** Color elegido en cada tarjeta (id del producto → id del color) */
+  colorElegido = signal<Record<number, number>>({});
   limite = signal(60);
   generando = signal(false);
   progreso = signal(0);
@@ -133,7 +157,7 @@ export class CatalogoPage implements OnInit {
     const t = normal(this.q().trim());
     return this.productos().filter((p) => {
       if (this.filtro() === 'disponibles' && this.agotado(p)) return false;
-      return !t || normal(`${p.nombre} ${p.sku ?? ''} ${p.descripcion ?? ''}`).includes(t);
+      return !t || normal(`${p.nombre} ${p.sku ?? ''} ${p.descripcion ?? ''} ${(p.colores ?? []).map((c) => c.nombre).join(' ')}`).includes(t);
     });
   });
   visibles = computed(() => this.filtrados().slice(0, this.limite()));
@@ -149,7 +173,7 @@ export class CatalogoPage implements OnInit {
   async ngOnInit(): Promise<void> {
     const { data, error } = await this.sb.client
       .from('productos')
-      .select('id, nombre, sku, codigo_barras, precio_venta, precio_base, stock, controla_stock, imagen_url, activo, descripcion')
+      .select('id, nombre, sku, codigo_barras, precio_venta, precio_base, stock, controla_stock, imagen_url, activo, descripcion, colores:producto_colores(id, nombre, hex, imagen_url, orden)')
       .eq('activo', true)
       .order('nombre');
     this.cargando.set(false);
@@ -161,8 +185,50 @@ export class CatalogoPage implements OnInit {
     return p.controla_stock && p.stock <= 0;
   }
 
+  /** Fotos del producto: la principal y la de cada color (color = null es la principal) */
+  fotos(p: Producto): { url: string; titulo: string; color: number | null }[] {
+    const lista: { url: string; titulo: string; color: number | null }[] = [];
+    const principal = urlImagen(p.imagen_url);
+    if (principal) lista.push({ url: principal, titulo: p.nombre, color: null });
+    for (const c of p.colores ?? []) {
+      const u = urlImagen(c.imagen_url);
+      if (!u) continue;
+      const igual = lista.find((x) => x.url === u);
+      // Si la foto del color es la misma principal, esa foto queda como de ese color
+      if (igual) {
+        if (igual.color === null) Object.assign(igual, { titulo: `${p.nombre} · ${c.nombre}`, color: c.id });
+      } else lista.push({ url: u, titulo: `${p.nombre} · ${c.nombre}`, color: c.id });
+    }
+    return lista;
+  }
+
+  /** Color elegido en la tarjeta; si ese color no tiene foto se sigue viendo la principal */
+  colorActivo(p: Producto): number | null {
+    const id = this.colorElegido()[p.id] ?? null;
+    return id !== null && this.fotos(p).some((f) => f.color === id) ? id : this.fotos(p)[0]?.color ?? null;
+  }
+
+  nombreColor(p: Producto): string {
+    const id = this.colorElegido()[p.id];
+    const c = (p.colores ?? []).find((x) => x.id === id);
+    return c ? c.nombre : `${p.colores!.length} ${p.colores!.length === 1 ? 'color' : 'colores'}`;
+  }
+
+  elegirColor(p: Producto, id: number): void {
+    this.colorElegido.update((m) => ({ ...m, [p.id]: id }));
+  }
+
   verFoto(p: Producto): void {
-    // El visor recorre las fotos de lo que se está viendo, empezando por la tocada
+    // Con colores: la galería del producto, empezando por el color que se ve
+    const propias = this.fotos(p);
+    if (propias.length > 1) {
+      this.visor.abrir(
+        propias.map((f) => ({ url: f.url, titulo: `${f.titulo} · ${pesos(p.precio_venta)}` })),
+        Math.max(0, propias.findIndex((f) => f.color === this.colorActivo(p)))
+      );
+      return;
+    }
+    // Sin colores: recorre las fotos de lo que se está viendo, empezando por la tocada
     const conFoto = this.filtrados().filter((x) => urlImagen(x.imagen_url));
     this.visor.abrir(
       conFoto.map((x) => ({ url: urlImagen(x.imagen_url)!, titulo: `${x.nombre} · ${pesos(x.precio_venta)}` })),

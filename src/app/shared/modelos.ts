@@ -28,6 +28,17 @@ export interface Producto {
   activo: boolean;
   /** Texto para el catálogo (opcional) */
   descripcion?: string | null;
+  colores?: ProductoColor[];
+}
+
+/** Variante de color de un producto, con su propia foto */
+export interface ProductoColor {
+  id: number;
+  producto_id: number;
+  nombre: string;
+  hex: string | null;
+  imagen_url: string | null;
+  orden: number;
 }
 
 export interface Pedido {

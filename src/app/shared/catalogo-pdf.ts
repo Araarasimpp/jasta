@@ -98,7 +98,8 @@ async function fotos(productos: Producto[], avance?: (f: number) => void): Promi
   const trabajador = async () => {
     while (i < productos.length) {
       const p = productos[i++];
-      const url = urlImagen(p.imagen_url);
+      // Sin foto principal, sirve la del primer color que tenga
+      const url = urlImagen(p.imagen_url) ?? urlImagen((p.colores ?? []).find((c) => c.imagen_url)?.imagen_url);
       const dato = url ? await fotoCuadrada(url) : null;
       if (dato) out.set(p.id, dato);
       avance?.(++hechas / productos.length);
@@ -252,9 +253,32 @@ function tarjeta(doc: jsPDF, p: Producto, foto: string | null, x: number, y: num
     doc.setFontSize(7.2);
     doc.setTextColor(...GRIS);
     const d = doc.splitTextToSize(desc.replace(/\n+/g, ' '), lado) as string[];
-    const ld = d.slice(0, 2);
-    if (d.length > 2) ld[1] = ld[1].replace(/\s*\S*$/, '') + '...';
+    // Con colores queda espacio para una sola línea de descripción
+    const max = p.colores?.length ? 1 : 2;
+    const ld = d.slice(0, max);
+    if (d.length > max) ld[max - 1] = ld[max - 1].replace(/\s*\S*$/, '') + '...';
     doc.text(ld, x + pad, ty + 0.4, { lineHeightFactor: 1.2 });
+  }
+
+  // Colores disponibles: bolitas con el tono y cuántos hay
+  const colores = (p.colores ?? []).filter((c) => c.hex);
+  if (colores.length) {
+    const cy = y + h - 12.6;
+    const r = 1.5;
+    let cx = x + pad + r;
+    for (const c of colores.slice(0, 8)) {
+      const hex = c.hex!.replace('#', '');
+      doc.setFillColor(parseInt(hex.slice(0, 2), 16), parseInt(hex.slice(2, 4), 16), parseInt(hex.slice(4, 6), 16));
+      doc.setDrawColor(...LINEA);
+      doc.setLineWidth(0.25);
+      doc.circle(cx, cy, r, 'FD');
+      cx += r * 2 + 1.2;
+    }
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6.8);
+    doc.setTextColor(...GRIS);
+    const n = (p.colores ?? []).length;
+    doc.text(`${n} ${n === 1 ? 'color' : 'colores'}`, cx + 0.6, cy + 0.9);
   }
 
   // Precio abajo, en letra de tiquete, con raya de oro

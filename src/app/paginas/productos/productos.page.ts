@@ -6,10 +6,11 @@ import { addIcons } from 'ionicons';
 import { add, searchOutline, closeOutline } from 'ionicons/icons';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
-import { Producto } from '../../shared/modelos';
+import { Producto, ProductoColor } from '../../shared/modelos';
 import { mensajeError, numero, pesos, urlImagen } from '../../shared/formato';
 import { STOCK_BAJO } from '../../shared/stock';
 import { VisorService } from '../../shared/visor/visor.service';
+import { ColoresProductoComponent } from '../../shared/colores-producto/colores-producto.component';
 
 type Filtro = 'activos' | 'agotados' | 'bajo' | 'inactivos' | 'todos';
 
@@ -25,9 +26,12 @@ const VACIO: Omit<Producto, 'id'> = {
 @Component({
   selector: 'app-productos',
   standalone: true,
-  imports: [FormsModule, IonIcon],
+  imports: [FormsModule, IonIcon, ColoresProductoComponent],
   styles: [
     `
+      .tonos { display: inline-flex; gap: 3px; margin-left: 8px; vertical-align: middle; }
+      .tonos span { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 0 1px var(--border-strong); }
+      .colores-sec { padding-top: 6px; }
       .foto-btn { display: block; padding: 0; border: none; background: none; cursor: zoom-in; border-radius: 8px; }
       .foto { width: 34px; height: 34px; border-radius: 6px; object-fit: cover; background: var(--surface-2); display: block; }
       .neg { color: var(--danger); font-weight: 500; }
@@ -70,7 +74,13 @@ const VACIO: Omit<Producto, 'id'> = {
                     <span class="foto"></span>
                   }
                 </td>
-                <td class="corta titulo" style="max-width: 320px">{{ p.nombre }}</td>
+                <td class="corta titulo" style="max-width: 320px">{{ p.nombre }}
+                  @if (p.colores?.length) {
+                    <span class="tonos" [title]="p.colores!.length + ' colores'">
+                      @for (c of p.colores!.slice(0, 6); track c.id) { <span [style.background]="c.hex || '#ccc'"></span> }
+                    </span>
+                  }
+                </td>
                 <td class="suave" data-etq="SKU">{{ p.sku || '—' }}</td>
                 <td class="der num" data-etq="Venta">{{ pesos(p.precio_venta) }}</td>
                 <td class="der num suave" data-etq="Base">{{ pesos(p.precio_base) }}</td>
@@ -123,6 +133,14 @@ const VACIO: Omit<Producto, 'id'> = {
               <img [src]="urlImagen(f.imagen_url)" alt="" style="width: 120px; height: 120px; object-fit: cover; border-radius: 8px; display: block" />
             </button>
           }
+          <section class="colores-sec">
+            <h3 class="seccion-titulo">Colores y fotos</h3>
+            @if (editId(); as pid) {
+              <app-colores-producto [productoId]="pid" [nombreProducto]="f.nombre" (cambio)="coloresCambiaron(pid, $event)"></app-colores-producto>
+            } @else {
+              <p class="ayuda">Guarda el producto primero y luego agrega sus colores con sus fotos.</p>
+            }
+          </section>
           @if (error()) {
             <p class="error" role="alert">{{ error() }}</p>
           }
@@ -189,7 +207,7 @@ export class ProductosPage implements OnInit {
   }
 
   async cargar(): Promise<void> {
-    const { data, error } = await this.sb.client.from('productos').select('*').order('nombre');
+    const { data, error } = await this.sb.client.from('productos').select('*, colores:producto_colores(id, nombre, hex, imagen_url, orden)').order('nombre');
     this.cargando.set(false);
     if (error) return this.toast.error(mensajeError(error));
     this.productos.set((data ?? []) as Producto[]);
@@ -241,5 +259,10 @@ export class ProductosPage implements OnInit {
   verFoto(ruta: string | null, nombre: string, e: Event): void {
     e.stopPropagation();
     this.visor.abrir([{ url: urlImagen(ruta) ?? '', titulo: nombre }]);
+  }
+
+  /** Al cambiar los colores en la hoja, la lista también se actualiza */
+  coloresCambiaron(id: number, colores: ProductoColor[]): void {
+    this.productos.update((l) => l.map((p) => (p.id === id ? { ...p, colores } : p)));
   }
 }
