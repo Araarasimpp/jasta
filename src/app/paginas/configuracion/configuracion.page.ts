@@ -15,6 +15,7 @@ import {
   rotuloHtml,
 } from '../../shared/rotulo/rotulo';
 import { mensajeError } from '../../shared/formato';
+import { TelegramPanelComponent } from '../../shared/telegram/telegram-panel.component';
 
 const EJEMPLO: PedidoRotulo = {
   numero: 23270,
@@ -31,7 +32,7 @@ const EJEMPLO: PedidoRotulo = {
 @Component({
   selector: 'app-configuracion',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, TelegramPanelComponent],
   styles: [
     `
       .grid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 24px; align-items: start; }
@@ -41,6 +42,8 @@ const EJEMPLO: PedidoRotulo = {
       .previa p { margin: 0; padding: 10px 14px; font-size: 12px; color: var(--text-soft); background: var(--surface); border-top: 1px solid var(--border); }
       h2 { margin: 0; font-size: 14px; font-weight: 600; }
       .acciones { display: flex; gap: 8px; flex-wrap: wrap; }
+      .tg { max-width: 760px; margin-top: 32px; padding-top: 22px; border-top: var(--perfora); }
+      .tg > p { margin: 4px 0 6px; }
       @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
     `,
   ],
@@ -72,6 +75,12 @@ const EJEMPLO: PedidoRotulo = {
             </div>
           </section>
         </div>
+
+        <section class="tg">
+          <h2>Despacho por Telegram</h2>
+          <p class="ayuda">Quien despacha manda la foto del rótulo al grupo de cada mensajero y el pedido se le asigna solo, en el orden de las fotos.</p>
+          <app-telegram-panel modo="admin"></app-telegram-panel>
+        </section>
       </div>
     </div>
   `,

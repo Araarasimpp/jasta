@@ -5,6 +5,7 @@ import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { AvatarComponent } from '../../shared/avatar/avatar.component';
 import { RecortarFotoComponent } from '../../shared/recortar-foto/recortar-foto.component';
+import { TelegramPanelComponent } from '../../shared/telegram/telegram-panel.component';
 import { ROLES } from '../../shared/modelos';
 import { mensajeError } from '../../shared/formato';
 
@@ -12,7 +13,7 @@ import { mensajeError } from '../../shared/formato';
 @Component({
   selector: 'app-perfil',
   standalone: true,
-  imports: [FormsModule, AvatarComponent, RecortarFotoComponent],
+  imports: [FormsModule, AvatarComponent, RecortarFotoComponent, TelegramPanelComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -56,6 +57,13 @@ import { mensajeError } from '../../shared/formato';
         <div><button class="b b-pri" [disabled]="guardando()" (click)="guardar()">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button></div>
       </section>
 
+      @if (despacha()) {
+        <section class="panel">
+          <h2>Telegram</h2>
+          <app-telegram-panel modo="perfil"></app-telegram-panel>
+        </section>
+      }
+
       <section class="panel">
         <h2>Contraseña</h2>
         <div class="fila-campos">
@@ -89,6 +97,8 @@ export class PerfilPage implements OnInit {
   /** Foto elegida que se está ajustando antes de subir */
   porRecortar = signal<File | null>(null);
   cambiando = signal(false);
+  /** Admin y alistamiento despachan (pueden subir fotos de rótulos a Telegram) */
+  despacha = computed(() => this.sb.tiene('admin', 'alistador'));
   roles = computed(() => this.sb.roles().map((r) => ROLES.find((x) => x.id === r)?.label ?? r));
 
   ngOnInit(): void {

@@ -1,6 +1,7 @@
 // Rótulo de entrega en etiqueta adhesiva de 100 × 100 mm (mismo diseño de Home ALS).
 // Lo usan el detalle del pedido, Alistamiento (impresión en lote) y Configuración (vista previa).
 import { SupabaseClient } from '@supabase/supabase-js';
+import qrcode from 'qrcode-generator';
 
 export interface DatosNegocio {
   nombre_negocio: string;
@@ -77,6 +78,18 @@ function lineasTelefono(telefonos: string | null): string[] {
     .filter(Boolean);
 }
 
+/**
+ * Código QR del pedido ("JASTA-23345"). Lo lee el bot de Telegram cuando
+ * quien despacha manda la foto del rótulo al grupo del mensajero. Texto corto
+ * = QR pequeño y con cuadros grandes, fácil de leer aunque la foto salga regular.
+ */
+export function qrPedido(numero: number): string {
+  const q = qrcode(0, 'M');
+  q.addData(`JASTA-${numero}`);
+  q.make();
+  return q.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+}
+
 /** Un rótulo. Todo el texto que viene de la base de datos se escapa. */
 export function rotuloHtml(p: PedidoRotulo, n: DatosNegocio): string {
   const telefonos = lineasTelefono(n.telefonos)
@@ -100,6 +113,8 @@ export function rotuloHtml(p: PedidoRotulo, n: DatosNegocio): string {
   <section class="rotulo">
     <header class="cabecera">
       <div class="marca"><img class="logo" src="${urlLogo()}" alt="" /><span class="nombre">${esc(n.nombre_negocio)}</span></div>
+
+      <div class="qr">${qrPedido(p.numero)}<span>#${esc(p.numero)}</span></div>
 
       <div class="contacto">
         <div class="fecha">
@@ -175,6 +190,10 @@ export const ROTULO_CSS = `
     padding-bottom: 1.5mm;
     border-bottom: 0.3mm solid #000;
   }
+  /* QR del pedido, en el centro de la cabecera (lo lee el bot de Telegram) */
+  .qr { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 0.6mm; margin: 0 auto; }
+  .qr svg { display: block; width: 19mm; height: 19mm; }
+  .qr span { font-size: 7pt; font-weight: bold; letter-spacing: 0.04em; }
   .marca { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-start; gap: 1mm; max-width: 44mm; }
   .logo { width: 22mm; height: 22mm; object-fit: contain; }
   .nombre { font-size: 11pt; font-weight: bold; line-height: 1.1; }
