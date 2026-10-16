@@ -1,0 +1,149 @@
+import { Component, Input, inject } from '@angular/core';
+import { NotificacionesService, Aviso } from '../../core/services/notificaciones.service';
+
+/**
+ * Panel de avisos, como en Home ALS. Se abre con la campana del menú.
+ * posicion = 'sidebar': junto al menú lateral (escritorio)
+ * posicion = 'barra':   sobre la barra inferior (celular)
+ */
+@Component({
+  selector: 'app-avisos-panel',
+  standalone: true,
+  template: `
+    @if (avisos.abierto()) {
+      <button class="fondo" aria-label="Cerrar avisos" (click)="avisos.cerrar()"></button>
+      <section class="panel" [class.barra]="posicion === 'barra'" role="dialog" aria-label="Avisos">
+        <header>
+          <h2>Avisos</h2>
+          @if (avisos.noLeidas()) {
+            <button class="link" (click)="avisos.marcarTodasLeidas()">Marcar todo como leído</button>
+          }
+        </header>
+
+        @if (avisos.push() === 'instalar-ios') {
+          <p class="permiso">
+            En iPhone, para recibir avisos con la app cerrada, agrégala a la pantalla de inicio:
+            toca <strong>Compartir</strong> y luego <strong>Agregar a inicio</strong>. Después ábrela desde ese ícono.
+          </p>
+        } @else if (avisos.permiso() === 'default') {
+          <div class="permiso">
+            <p>Activa los avisos para enterarte de pedidos, mensajes y cuadres aunque la app esté cerrada.</p>
+            <button (click)="avisos.pedirPermiso()">Activar avisos</button>
+          </div>
+        } @else if (avisos.permiso() === 'denied') {
+          <p class="permiso permiso-off">
+            Los avisos están bloqueados en este navegador. Actívalos desde el candado junto a la dirección
+            (o en Ajustes → Notificaciones del celular) y vuelve a abrir la app.
+          </p>
+        } @else if (avisos.push() === 'error') {
+          <div class="permiso permiso-off">
+            <p>No se pudieron activar los avisos con la app cerrada en este dispositivo.</p>
+            <button (click)="avisos.pedirPermiso()">Intentar de nuevo</button>
+          </div>
+        } @else if (avisos.push() === 'activo') {
+          <div class="estado-avisos">
+            <p class="permiso-ok">Avisos activos en este dispositivo, también con la app cerrada.</p>
+            <button class="link link-off" (click)="avisos.desactivar()" [disabled]="avisos.cambiando()">
+              {{ avisos.cambiando() ? 'Desactivando…' : 'Desactivar' }}
+            </button>
+          </div>
+        } @else if (avisos.push() === 'desactivado') {
+          <div class="permiso permiso-off">
+            <p>Avisos desactivados en este dispositivo: no llegan con la app cerrada ni suenan. Aquí en la campana los sigues viendo.</p>
+            <button (click)="avisos.reactivar()" [disabled]="avisos.cambiando()">
+              {{ avisos.cambiando() ? 'Activando…' : 'Volver a activar' }}
+            </button>
+          </div>
+        }
+
+        <div class="lista">
+          @for (a of avisos.avisos(); track a.id) {
+            <button class="aviso" [class.nuevo]="!a.leida" (click)="avisos.abrirAviso(a)">
+              <span class="punto" [attr.data-tipo]="a.tipo" aria-hidden="true"></span>
+              <span class="texto">
+                <span class="titulo">{{ a.titulo }}</span>
+                @if (a.cuerpo) {
+                  <span class="cuerpo">{{ a.cuerpo }}</span>
+                }
+                <span class="hora">{{ hace(a) }}</span>
+              </span>
+            </button>
+          } @empty {
+            <p class="vacio">No tienes avisos todavía. Aquí verás pedidos nuevos, asignaciones, mensajes y cuadres.</p>
+          }
+        </div>
+      </section>
+    }
+  `,
+  styles: [
+    `
+      .fondo { position: fixed; inset: 0; z-index: 140; border: none; padding: 0; background: rgba(14, 14, 12, 0.2); }
+      .panel {
+        position: fixed; z-index: 141; left: 244px; bottom: 16px; width: 380px;
+        --panel-max: min(560px, calc(100vh - 32px)); max-height: var(--panel-max); display: flex; flex-direction: column;
+        background: var(--surface); color: var(--text); border: 1px solid var(--border);
+        border-radius: var(--radius-lg); box-shadow: var(--shadow-pop); overflow: hidden;
+        animation: subir 200ms var(--ease);
+      }
+      /* Celular: hoja sobre la barra inferior, como máximo el 65% de la pantalla
+         y sin meterse debajo de la barra de estado del iPhone (notch). */
+      @media (max-width: 860px) {
+        .panel {
+          --panel-max: min(65vh, calc(100vh - var(--tabbar-h) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px));
+          left: 8px; right: 8px; width: auto; margin: 0 auto; max-width: 480px;
+          bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 8px);
+          max-height: var(--panel-max);
+        }
+      }
+      @keyframes subir { from { opacity: 0; transform: translateY(6px); } }
+      .panel > * { align-self: stretch; box-sizing: border-box; }
+      .panel header, .panel .lista { width: 100%; }
+      header { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px; border-bottom: var(--perfora); }
+      h2 { margin: 0; font-size: 15px; font-weight: 650; }
+      .estado-avisos { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 10px 14px 0; }
+      .estado-avisos .permiso-ok { margin: 0; flex: 1 1 auto; min-width: 0; line-height: 1.35; }
+      .estado-avisos .link-off { flex: 0 0 auto; }
+      .permiso-ok { flex-shrink: 0; margin: 10px 14px 0; font-size: 12px; color: var(--st-entregado); }
+      .link-off { color: var(--text-soft) !important; white-space: nowrap; text-decoration: underline; }
+      .link-off:disabled, .permiso button:disabled { opacity: .6; cursor: progress; }
+      .link { border: none; background: none; padding: 4px 0; color: var(--oro-texto); font-size: 12px; font-weight: 550; cursor: pointer; }
+      .permiso { flex-shrink: 0; margin: 10px 12px 0; padding: 10px 12px; border-radius: var(--radius); background: var(--oro-wash); font-size: 13px; line-height: 1.45; }
+      .permiso p { margin: 0 0 8px; }
+      .permiso button { height: 32px; padding: 0 12px; border: none; border-radius: var(--radius-sm); background: var(--accent); color: var(--on-accent); font-size: 13px; font-weight: 550; cursor: pointer; }
+      .permiso-off { background: var(--surface-2); color: var(--text-soft); }
+      .lista { flex: 1 1 auto; min-height: 0; max-height: calc(var(--panel-max) - 100px); overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y; padding: 6px; }
+      .aviso { width: 100%; display: flex; gap: 10px; padding: 9px 10px; touch-action: pan-y; -webkit-tap-highlight-color: transparent; border: none; border-radius: var(--radius); background: none; color: var(--text); text-align: left; cursor: pointer; }
+      .aviso + .aviso { margin-top: 2px; }
+      @media (hover: hover) { .aviso:hover { background: var(--hover); } }
+      .aviso.nuevo { background: var(--oro-wash); }
+      .punto { width: 8px; height: 8px; margin-top: 6px; flex-shrink: 0; border-radius: 50%; background: var(--border-strong); }
+      .aviso.nuevo .punto { background: var(--oro); }
+      .punto[data-tipo='pedido_cancelado'] { background: var(--danger) !important; }
+      .punto[data-tipo='pedido_entregado'], .punto[data-tipo='cuadre_confirmado'] { background: var(--st-entregado) !important; }
+      .punto[data-tipo='pedido_asignado'] { background: var(--st-ruta) !important; }
+      .texto { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+      .titulo { font-size: 14px; font-weight: 550; line-height: 1.3; }
+      .cuerpo { font-size: 13px; color: var(--text-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .hora { font-family: var(--mono-font); font-size: 11px; color: var(--text-muted); }
+      .vacio { margin: 0; padding: 24px 12px; text-align: center; font-size: 13px; line-height: 1.5; color: var(--text-soft); }
+    `,
+  ],
+})
+export class AvisosPanelComponent {
+  @Input() posicion: 'sidebar' | 'barra' = 'sidebar';
+  avisos = inject(NotificacionesService);
+
+  hace(a: Aviso): string {
+    const s = Math.round((Date.now() - new Date(a.created_at).getTime()) / 1000);
+    if (s < 60) return 'Hace un momento';
+    if (s < 3600) return `Hace ${Math.floor(s / 60)} min`;
+    if (s < 86400) return `Hace ${Math.floor(s / 3600)} h`;
+    return new Date(a.created_at).toLocaleDateString('es-CO', {
+      day: 'numeric',
+      month: 'short',
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZone: 'America/Bogota',
+    });
+  }
+}

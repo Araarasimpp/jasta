@@ -13,12 +13,13 @@ import { enlaceWhatsapp } from '../whatsapp';
 import { EstadoPedido, Nota, Pedido, Usuario, estadoLabel } from '../modelos';
 import { mensajeError, pesos, urlImagen } from '../formato';
 import { formatoFechaCO, formatoHoraCO } from '../fecha-colombia';
+import { ChatPedidoComponent } from '../chat-pedido/chat-pedido.component';
 
 /** Hoja lateral con todo el pedido y las acciones que le tocan a cada rol */
 @Component({
   selector: 'app-pedido-detalle',
   standalone: true,
-  imports: [FormsModule, IonIcon, EntregarComponent],
+  imports: [FormsModule, IonIcon, EntregarComponent, ChatPedidoComponent],
   styles: [
     `
       .resumen { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -116,6 +117,16 @@ import { formatoFechaCO, formatoHoraCO } from '../fecha-colombia';
             </table>
           </section>
 
+          @if (participa()) {
+            <section>
+              <h3 class="seccion-titulo">Mensajes del pedido</h3>
+              <!-- Una conversación nueva por pedido (si cambia el pedido abierto, se vuelve a crear) -->
+              @for (id of [pedidoId]; track id) {
+                <app-chat-pedido [pedidoId]="id" [enfocar]="chat"></app-chat-pedido>
+              }
+            </section>
+          }
+
           <section>
             <h3 class="seccion-titulo">Seguimiento</h3>
             <dl class="datos">
@@ -203,6 +214,8 @@ import { formatoFechaCO, formatoHoraCO } from '../fecha-colombia';
 })
 export class PedidoDetalleComponent implements OnChanges {
   @Input({ required: true }) pedidoId!: number;
+  /** Abre el pedido directo en la conversación (desde un aviso de mensaje) */
+  @Input() chat = false;
   @Output() cerrar = new EventEmitter<void>();
   @Output() cambiado = new EventEmitter<void>();
 
@@ -231,6 +244,13 @@ export class PedidoDetalleComponent implements OnChanges {
     { id: 'entregado', label: 'Entregado' },
   ];
   pasoActual = computed(() => this.pasos.findIndex((x) => x.id === this.pedido()?.estado));
+
+  /** La conversación la ven admin, alistamiento y la vendedora y el mensajero del pedido */
+  participa = computed(() => {
+    const p = this.pedido();
+    const yo = this.sb.usuario()?.id;
+    return !!p && (this.sb.tiene('admin', 'alistador') || p.vendedora_id === yo || p.mensajero_id === yo);
+  });
 
   puedeAsignar = computed(() => {
     const p = this.pedido();

@@ -278,3 +278,13 @@
     --tabbar-offset: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
   }
 }
+
+// Campana de avisos en el menú lateral
+.avisos-btn.on {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.avisos-btn .icono-badge {
+  display: inline-flex;
+}

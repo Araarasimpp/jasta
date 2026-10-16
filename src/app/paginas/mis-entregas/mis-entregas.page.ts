@@ -1,10 +1,12 @@
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { refreshOutline, callOutline, navigateOutline, logoWhatsapp } from 'ionicons/icons';
+import { refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses } from 'ionicons/icons';
 import { enlaceWhatsapp } from '../../shared/whatsapp';
 import { PedidosService } from '../../core/services/pedidos.service';
 import { SupabaseService } from '../../core/services/supabase.service';
+import { NotificacionesService } from '../../core/services/notificaciones.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { EntregarComponent } from '../../shared/entregar/entregar.component';
 import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detalle.component';
@@ -22,6 +24,9 @@ import { RangoComponent, RangoFechas } from '../../shared/rango/rango.component'
   styles: [
     `
       .tarjeta h3 { cursor: pointer; }
+      .chip-mensaje { align-self: flex-start; display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 12px; border: none;
+        border-radius: 999px; background: var(--oro); color: #171511; font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; }
+      .chip-mensaje ion-icon { font-size: 15px; }
       .total { font-size: 17px; }
       .b-wa { color: var(--efectivo); border-color: color-mix(in srgb, var(--efectivo) 40%, var(--border)); }
       .b-wa:hover { border-color: var(--efectivo); background: var(--ok-wash); }
@@ -100,9 +105,14 @@ import { RangoComponent, RangoFechas } from '../../shared/rango/rango.component'
         @for (p of enRuta(); track p.id) {
           <article class="tarjeta">
             <div class="tarjeta-top">
-              <h3 (click)="abierto.set(p.id)"><span class="guia">#{{ p.id }}</span> {{ p.cliente_nombre }}</h3>
+              <h3 (click)="abrir(p.id)"><span class="guia">#{{ p.id }}</span> {{ p.cliente_nombre }}</h3>
               <strong class="total num">{{ pesos(p.total) }}</strong>
             </div>
+            @if (avisos.pedidosConMensajes().has(p.id)) {
+              <button type="button" class="chip-mensaje" (click)="abrir(p.id, true)">
+                <ion-icon name="chatbubble-ellipses" aria-hidden="true"></ion-icon>Mensaje nuevo de la tienda
+              </button>
+            }
             <p>{{ p.direccion }}<br />{{ p.barrio || 'Sin barrio' }}</p>
             @if (p.observaciones) {
               <p style="color: var(--st-ruta-text)">{{ p.observaciones }}</p>
@@ -163,7 +173,7 @@ import { RangoComponent, RangoFechas } from '../../shared/rango/rango.component'
       <app-entregar [pedido]="p" (cerrar)="entregando.set(null)" (entregado)="alEntregar(p)"></app-entregar>
     }
     @if (abierto(); as id) {
-      <app-pedido-detalle [pedidoId]="id" (cerrar)="abierto.set(null)" (cambiado)="cargar()"></app-pedido-detalle>
+      <app-pedido-detalle [pedidoId]="id" [chat]="abiertoEnChat()" (cerrar)="cerrarDetalle()" (cambiado)="cargar()"></app-pedido-detalle>
     }
   `,
 })
@@ -171,6 +181,9 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   private ps = inject(PedidosService);
   private sb = inject(SupabaseService);
   private toast = inject(ToastService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  avisos = inject(NotificacionesService);
 
   enRuta = signal<Pedido[]>([]);
   pendientes = signal<
@@ -180,6 +193,7 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   cargando = signal(true);
   entregando = signal<Pedido | null>(null);
   abierto = signal<number | null>(null);
+  abiertoEnChat = signal(false);
   pesos = pesos;
 
   hechas = signal<Pedido[]>([]);
@@ -199,14 +213,23 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   pendiente = computed(() => this.pendientes().find((x) => x.mensajero_id === this.sb.usuario()?.id) ?? null);
 
   private dejar?: () => void;
+  private subParams?: { unsubscribe(): void };
   private timer?: ReturnType<typeof setTimeout>;
 
   constructor() {
-    addIcons({ refreshOutline, callOutline, navigateOutline, logoWhatsapp });
+    addIcons({ refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses });
   }
 
   ngOnInit(): void {
     void this.cargar();
+    // Al tocar un aviso (mensaje o pedido asignado) se abre ese pedido
+    this.subParams = this.route.queryParamMap.subscribe((q) => {
+      const id = Number(q.get('id'));
+      if (id) {
+        this.abiertoEnChat.set(q.get('chat') === '1');
+        this.abierto.set(id);
+      }
+    });
     this.dejar = this.ps.escuchar(() => {
       clearTimeout(this.timer);
       this.timer = setTimeout(() => this.cargar(), 600);
@@ -214,8 +237,20 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.subParams?.unsubscribe();
     this.dejar?.();
     clearTimeout(this.timer);
+  }
+
+  abrir(id: number, chat = false): void {
+    this.abiertoEnChat.set(chat);
+    this.abierto.set(id);
+    void this.router.navigate([], { queryParams: { id, chat: chat ? 1 : null }, replaceUrl: true });
+  }
+
+  cerrarDetalle(): void {
+    this.abierto.set(null);
+    void this.router.navigate([], { queryParams: {}, replaceUrl: true });
   }
 
   async cargar(): Promise<void> {

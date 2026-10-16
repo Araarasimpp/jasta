@@ -4,10 +4,11 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import {
-  add, searchOutline, printOutline, cubeOutline, checkmarkCircle, close, ellipsisHorizontal,
+  add, searchOutline, printOutline, cubeOutline, checkmarkCircle, close, ellipsisHorizontal, chatbubbleEllipses,
 } from 'ionicons/icons';
 import { PedidosService } from '../../core/services/pedidos.service';
 import { SupabaseService } from '../../core/services/supabase.service';
+import { NotificacionesService } from '../../core/services/notificaciones.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { RotulosService } from '../../shared/rotulo/rotulos.service';
 import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detalle.component';
@@ -65,6 +66,8 @@ export class PedidosPage implements OnInit, OnDestroy {
   private rotulos = inject(RotulosService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  /** Avisos: para marcar los pedidos con mensajes sin leer */
+  avisos = inject(NotificacionesService);
 
   readonly filtros: { id: Filtro; label: string }[] = [
     { id: 'por_alistar', label: 'Pendientes' },
@@ -89,6 +92,8 @@ export class PedidosPage implements OnInit, OnDestroy {
   conteos = signal<Record<string, number>>({});
   ordenAlistado = signal<Map<number, number>>(new Map());
   abierto = signal<number | null>(null);
+  /** El pedido se abrió desde un aviso de mensaje: va directo a la conversación */
+  abiertoEnChat = signal(false);
   mensajeros = signal<Usuario[]>([]);
   sel = signal<Set<number>>(new Set());
   menuAbierto = signal<number | null>(null);
@@ -150,16 +155,23 @@ export class PedidosPage implements OnInit, OnDestroy {
   private timer?: ReturnType<typeof setTimeout>;
   private dejarDeEscuchar?: () => void;
   private iniciado = false;
+  private subParams?: { unsubscribe(): void };
   private cargaPendiente = false;
   private enCarga = false;
 
   constructor() {
-    addIcons({ add, searchOutline, printOutline, cubeOutline, checkmarkCircle, close, ellipsisHorizontal });
+    addIcons({ add, searchOutline, printOutline, cubeOutline, checkmarkCircle, close, ellipsisHorizontal, chatbubbleEllipses });
   }
 
   ngOnInit(): void {
-    const id = Number(this.route.snapshot.queryParamMap.get('id'));
-    if (id) this.abierto.set(id);
+    // También cuando se toca un aviso estando ya en esta página
+    this.subParams = this.route.queryParamMap.subscribe((q) => {
+      const id = Number(q.get('id'));
+      if (id) {
+        this.abiertoEnChat.set(q.get('chat') === '1');
+        this.abierto.set(id);
+      }
+    });
     this.ps.mensajeros().then((m) => this.mensajeros.set(m)).catch(() => undefined);
     // Los cambios de otros (realtime) llegan seguidos: se agrupan en una sola recarga
     this.dejarDeEscuchar = this.ps.escuchar(() => {
@@ -169,6 +181,7 @@ export class PedidosPage implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.subParams?.unsubscribe();
     this.dejarDeEscuchar?.();
     clearTimeout(this.timer);
   }
@@ -450,10 +463,15 @@ export class PedidosPage implements OnInit, OnDestroy {
   }
 
   // ---------- Detalle, menú y fotos ----------
-  abrir(id: number): void {
+  abrir(id: number, chat = false): void {
     this.menuAbierto.set(null);
+    this.abiertoEnChat.set(chat);
     this.abierto.set(id);
-    this.router.navigate([], { queryParams: { id }, replaceUrl: true });
+    this.router.navigate([], { queryParams: { id, chat: chat ? 1 : null }, replaceUrl: true });
+  }
+
+  abrirChat(id: number): void {
+    this.abrir(id, true);
   }
 
   cerrarDetalle(): void {

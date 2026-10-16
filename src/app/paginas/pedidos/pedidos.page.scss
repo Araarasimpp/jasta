@@ -1163,3 +1163,25 @@ button.cliente:hover {
     padding: 12px 16px;
   }
 }
+
+// Pedido con mensajes sin leer
+.chip-mensaje {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 999px;
+  background: var(--oro);
+  color: #171511;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.chip-mensaje ion-icon {
+  font-size: 13px;
+}

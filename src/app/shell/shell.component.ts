@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
@@ -25,12 +25,15 @@ import {
   peopleCircleOutline,
   timeOutline,
   personCircleOutline,
+  notificationsOutline,
 } from 'ionicons/icons';
 import { SupabaseService } from '../core/services/supabase.service';
 import { ThemeService } from '../core/services/theme.service';
 import { ROLES, Rol } from '../shared/modelos';
 import { ToastComponent } from '../shared/toast/toast.component';
 import { AvatarComponent } from '../shared/avatar/avatar.component';
+import { AvisosPanelComponent } from '../shared/avisos/avisos-panel.component';
+import { NotificacionesService } from '../core/services/notificaciones.service';
 
 interface ItemMenu {
   label: string;
@@ -59,7 +62,7 @@ const MENU: ItemMenu[] = [
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, IonIcon, ToastComponent, AvatarComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, IonIcon, ToastComponent, AvatarComponent, AvisosPanelComponent],
   styleUrls: ['../shared/pill-nav.scss', './shell.component.scss'],
   template: `
     <div class="shell" [class.collapsed]="colapsado()">
@@ -96,6 +99,18 @@ const MENU: ItemMenu[] = [
         </nav>
 
         <div class="sidebar-footer">
+          <button class="footer-btn avisos-btn" [class.on]="avisos.abierto()" (click)="avisos.toggle()" [attr.aria-expanded]="avisos.abierto()"
+            [attr.aria-label]="'Avisos' + (avisos.noLeidas() ? ', ' + avisos.noLeidas() + ' sin leer' : '')">
+            <span class="icono-badge">
+              <ion-icon name="notifications-outline"></ion-icon>
+              @if (avisos.noLeidas()) {
+                <span class="badge-num num">{{ avisos.noLeidas() > 9 ? '9+' : avisos.noLeidas() }}</span>
+              }
+            </span>
+            @if (!colapsado()) {
+              <span>Avisos</span>
+            }
+          </button>
           <a class="usuario" routerLink="/app/perfil" [attr.aria-label]="'Mi perfil: ' + sb.usuario()?.nombre">
             <app-avatar [nombre]="sb.usuario()?.nombre" [foto]="sb.usuario()?.avatar_url" [tam]="32"></app-avatar>
             @if (!colapsado()) {
@@ -134,16 +149,26 @@ const MENU: ItemMenu[] = [
               </a>
             </div>
           }
-          <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.path === '/app/pedidos' }" (click)="mas.set(false)">
+          <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.path === '/app/pedidos' }" (click)="mas.set(false); avisos.cerrar()">
             <ion-icon [name]="item.icon"></ion-icon>
             <span class="tab-label">{{ item.label }}</span>
           </a>
         }
-        <button class="tab" [class.active]="mas()" (click)="mas.set(!mas())" [attr.aria-expanded]="mas()">
+        <button class="tab" [class.active]="avisos.abierto()" (click)="mas.set(false); avisos.toggle()" [attr.aria-expanded]="avisos.abierto()">
+          <span class="icono-badge">
+            <ion-icon name="notifications-outline"></ion-icon>
+            @if (avisos.noLeidas()) {
+              <span class="badge-num num">{{ avisos.noLeidas() > 9 ? '9+' : avisos.noLeidas() }}</span>
+            }
+          </span>
+          <span class="tab-label">Avisos</span>
+        </button>
+        <button class="tab" [class.active]="mas()" (click)="avisos.cerrar(); mas.set(!mas())" [attr.aria-expanded]="mas()">
           <ion-icon name="ellipsis-horizontal"></ion-icon>
           <span class="tab-label">Más</span>
         </button>
       </nav>
+      <app-avisos-panel [posicion]="'barra'"></app-avisos-panel>
 
       @if (mas()) {
         <button class="more-backdrop" aria-label="Cerrar menú" (click)="mas.set(false)"></button>
@@ -167,9 +192,10 @@ const MENU: ItemMenu[] = [
     </div>
   `,
 })
-export class ShellComponent {
+export class ShellComponent implements OnInit, OnDestroy {
   sb = inject(SupabaseService);
   theme = inject(ThemeService);
+  avisos = inject(NotificacionesService);
   private router = inject(Router);
 
   colapsado = signal(this.leerColapsado());
@@ -179,9 +205,9 @@ export class ShellComponent {
     const roles = this.sb.roles();
     return MENU.filter((m) => m.roles.some((r) => roles.includes(r)));
   });
-  /** En el celular caben 3 secciones en la barra; el resto va en "Más" */
-  tabs = computed(() => this.menu().slice(0, 3));
-  masItems = computed(() => this.menu().slice(3));
+  /** En el celular caben 2 secciones en la barra (más Nuevo, Avisos y Más); el resto va en "Más" */
+  tabs = computed(() => this.menu().slice(0, 2));
+  masItems = computed(() => this.menu().slice(2));
   puedeVender = computed(() => this.sb.roles().some((r) => r === 'admin' || r === 'vendedora'));
   rolesTexto = computed(() =>
     this.sb.roles().map((r) => ROLES.find((x) => x.id === r)?.label ?? r).join(' · ') || 'Sin rol asignado'
@@ -191,8 +217,16 @@ export class ShellComponent {
     addIcons({
       add, barChartOutline, chevronBackOutline, chevronForwardOutline, cubeOutline, ellipsisHorizontal,
       logOutOutline, moonOutline, peopleOutline, receiptOutline, bicycleOutline, clipboardOutline, sunnyOutline, walletOutline, statsChartOutline, settingsOutline,
-      storefrontOutline, listOutline, trophyOutline, peopleCircleOutline, timeOutline, personCircleOutline,
+      storefrontOutline, listOutline, trophyOutline, peopleCircleOutline, timeOutline, personCircleOutline, notificationsOutline,
     });
+  }
+
+  ngOnInit(): void {
+    void this.avisos.iniciar();
+  }
+
+  ngOnDestroy(): void {
+    this.avisos.detener();
   }
 
   private leerColapsado(): boolean {
@@ -214,6 +248,7 @@ export class ShellComponent {
 
   async salir(): Promise<void> {
     this.mas.set(false);
+    await this.avisos.salir();
     await this.sb.logout();
     this.router.navigateByUrl('/auth/login');
   }

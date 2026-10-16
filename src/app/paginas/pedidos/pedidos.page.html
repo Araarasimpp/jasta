@@ -105,6 +105,11 @@
                 <div class="c-main">
                   <div class="cliente-linea">
                     <button type="button" class="cliente" (click)="abrir(p.id)">{{ p.cliente_nombre }}</button>
+                    @if (avisos.pedidosConMensajes().has(p.id)) {
+                      <button type="button" class="chip-mensaje" (click)="abrirChat(p.id)" title="Mensajes sin leer">
+                        <ion-icon name="chatbubble-ellipses" aria-hidden="true"></ion-icon>Mensaje nuevo
+                      </button>
+                    }
                     <span class="meta-mobile"><span class="num">#{{ p.id }}</span>@if (p.barrio) {, {{ p.barrio }}}</span>
                   </div>
                   @if (puedeAlistar(p)) {
@@ -283,6 +288,6 @@
     <app-imagen-preview [url]="img.url" [alt]="img.alt" (cerrar)="imagen.set(null)"></app-imagen-preview>
   }
   @if (abierto(); as id) {
-    <app-pedido-detalle [pedidoId]="id" (cerrar)="cerrarDetalle()" (cambiado)="cargar()"></app-pedido-detalle>
+    <app-pedido-detalle [pedidoId]="id" [chat]="abiertoEnChat()" (cerrar)="cerrarDetalle()" (cambiado)="cargar()"></app-pedido-detalle>
   }
 </div>
