@@ -37,11 +37,11 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/nuevo-pedido/nuevo-pedido.page').then((m) => m.NuevoPedidoPage),
       },
       {
-        path: 'venta-local', canActivate: [rolGuard], data: { roles: ['admin', 'vendedora', 'alistador'], modo: 'local' },
+        path: 'venta-local', canActivate: [rolGuard], data: { roles: ['admin', 'venta_local'], modo: 'local' },
         loadComponent: () => import('./paginas/nuevo-pedido/nuevo-pedido.page').then((m) => m.NuevoPedidoPage),
       },
       {
-        path: 'ventas-local', canActivate: [rolGuard], data: { roles: ['admin', 'vendedora', 'alistador', 'cuadres'] },
+        path: 'ventas-local', canActivate: [rolGuard], data: { roles: ['admin', 'venta_local', 'cuadres'] },
         loadComponent: () => import('./paginas/ventas-local/ventas-local.page').then((m) => m.VentasLocalPage),
       },
       {

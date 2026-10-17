@@ -1,4 +1,4 @@
-export type Rol = 'admin' | 'vendedora' | 'mensajero' | 'alistador' | 'cuadres';
+export type Rol = 'admin' | 'vendedora' | 'mensajero' | 'alistador' | 'cuadres' | 'venta_local';
 export type EstadoPedido = 'por_alistar' | 'alistado' | 'despachado' | 'entregado' | 'cancelado';
 export type TipoRecaudo = 'efectivo' | 'transferencia' | 'mixto';
 
@@ -110,6 +110,7 @@ export const ROLES: { id: Rol; label: string }[] = [
   { id: 'alistador', label: 'Alistamiento' },
   { id: 'mensajero', label: 'Mensajero' },
   { id: 'cuadres', label: 'Cuadres' },
+  { id: 'venta_local', label: 'Venta local' },
 ];
 
 export const ESTADOS: { id: EstadoPedido; label: string }[] = [

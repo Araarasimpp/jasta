@@ -85,6 +85,7 @@ export class SupabaseService {
     if (this.tiene('admin', 'cuadres')) return '/app/inicio';
     if (this.tiene('alistador', 'vendedora')) return '/app/pedidos';
     if (this.tiene('mensajero')) return '/app/mis-entregas';
+    if (this.tiene('venta_local')) return '/app/venta-local';
     return '/app/espera';
   }
 }

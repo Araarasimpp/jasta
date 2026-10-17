@@ -47,8 +47,8 @@ const MENU: ItemMenu[] = [
   { label: 'Inicio', path: '/app/inicio', icon: 'bar-chart-outline', roles: ['admin', 'cuadres'] },
   { label: 'Pedidos', path: '/app/pedidos', icon: 'receipt-outline', roles: ['admin', 'vendedora', 'alistador', 'cuadres'] },
   { label: 'Mis entregas', path: '/app/mis-entregas', icon: 'bicycle-outline', roles: ['mensajero'] },
-  { label: 'Venta en local', path: '/app/venta-local', icon: 'storefront-outline', roles: ['admin', 'vendedora', 'alistador'] },
-  { label: 'Ventas del local', path: '/app/ventas-local', icon: 'list-outline', roles: ['admin', 'vendedora', 'alistador', 'cuadres'] },
+  { label: 'Venta en local', path: '/app/venta-local', icon: 'storefront-outline', roles: ['admin', 'venta_local'] },
+  { label: 'Ventas del local', path: '/app/ventas-local', icon: 'list-outline', roles: ['admin', 'venta_local', 'cuadres'] },
   { label: 'Cuadres', path: '/app/cuadres', icon: 'wallet-outline', roles: ['admin', 'cuadres', 'mensajero'] },
   { label: 'Catálogo', path: '/app/catalogo', icon: 'book-outline', roles: ['admin', 'vendedora'] },
   { label: 'Ranking', path: '/app/ranking', icon: 'trophy-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador'] },
@@ -58,7 +58,7 @@ const MENU: ItemMenu[] = [
   { label: 'Reportes', path: '/app/reportes', icon: 'stats-chart-outline', roles: ['admin', 'cuadres', 'vendedora'] },
   { label: 'Actividad', path: '/app/actividad', icon: 'time-outline', roles: ['admin'] },
   { label: 'Configuración', path: '/app/configuracion', icon: 'settings-outline', roles: ['admin'] },
-  { label: 'Mi perfil', path: '/app/perfil', icon: 'person-circle-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador'] },
+  { label: 'Mi perfil', path: '/app/perfil', icon: 'person-circle-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador', 'venta_local'] },
 ];
 
 @Component({

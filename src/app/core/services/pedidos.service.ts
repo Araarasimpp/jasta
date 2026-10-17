@@ -149,9 +149,11 @@ export class PedidosService {
     tipo: string;
     efectivo: number;
     transferencia: number;
+    /** Vendedora a la que se le suma la venta (su ganancia); null = sin vendedora */
+    vendedora: number | null;
   }): Promise<number> {
     return this.check(
-      await this.db.rpc('crear_venta_local', {
+      await this.db.rpc('registrar_venta_local', {
         p_cliente_nombre: datos.cliente_nombre,
         p_cliente_telefono: datos.cliente_telefono,
         p_observaciones: datos.observaciones,
@@ -159,6 +161,7 @@ export class PedidosService {
         p_tipo: datos.tipo,
         p_efectivo: datos.efectivo,
         p_transferencia: datos.transferencia,
+        p_vendedora: datos.vendedora,
       })
     ) as number;
   }

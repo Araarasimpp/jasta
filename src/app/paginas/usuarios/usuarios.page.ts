@@ -130,6 +130,7 @@ export class UsuariosPage implements OnInit {
     alistador: 'Alista y despacha pedidos',
     mensajero: 'Entrega pedidos y ve sus cuadres',
     cuadres: 'Cierra cuadres y ve reportes',
+    venta_local: 'Registra las ventas del local y elige a qué vendedora se le suman',
   };
   filtros: { id: Filtro; label: string }[] = [
     { id: 'activos', label: 'Activos' },

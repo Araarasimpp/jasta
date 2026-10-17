@@ -7,7 +7,7 @@ import { add, remove, closeOutline, searchOutline } from 'ionicons/icons';
 import { PedidosService } from '../../core/services/pedidos.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
-import { Producto, TipoRecaudo } from '../../shared/modelos';
+import { Producto, TipoRecaudo, Usuario } from '../../shared/modelos';
 import { mensajeError, pesos, urlImagen } from '../../shared/formato';
 
 interface Linea {
@@ -123,6 +123,18 @@ function normal(s: string): string {
               <label for="obs">Observaciones</label>
               <textarea id="obs" [(ngModel)]="observaciones" [placeholder]="local() ? '' : 'Ej: llamar antes, entregar antes de las 3 pm'"></textarea>
             </div>
+            @if (local() && !editId()) {
+              <div class="campo">
+                <label for="vend">Vendedora</label>
+                <select id="vend" [(ngModel)]="vendedora" class="inp">
+                  <option [ngValue]="null">Sin vendedora (venta de la tienda)</option>
+                  @for (v of vendedoras(); track v.id) {
+                    <option [ngValue]="v.id">{{ v.nombre }}</option>
+                  }
+                </select>
+                <p class="ayuda">La venta queda a su nombre: su ganancia (precio de venta − base) suma en Reportes y Ranking, y le llega el aviso.</p>
+              </div>
+            }
             @if (local()) {
               <div class="campo">
                 <span class="etq">¿Cómo pagó?</span>
@@ -226,6 +238,9 @@ export class NuevoPedidoPage implements OnInit {
   error = signal('');
   domicilioS = signal(0);
   tipo = signal<TipoRecaudo | null>(null);
+  /** Venta en el local: a qué vendedora se le suma */
+  vendedoras = signal<Usuario[]>([]);
+  vendedora: number | null = null;
   tipos: { id: TipoRecaudo; label: string }[] = [
     { id: 'efectivo', label: 'Efectivo' },
     { id: 'transferencia', label: 'Transferencia' },
@@ -262,6 +277,9 @@ export class NuevoPedidoPage implements OnInit {
   async ngOnInit(): Promise<void> {
     try {
       const [p, b] = await Promise.all([this.ps.productosActivos(), this.local() ? Promise.resolve([]) : this.ps.barrios()]);
+      if (this.local() && !this.editId()) {
+        this.ps.vendedoras().then((v) => this.vendedoras.set(v.filter((x) => x.activo))).catch(() => undefined);
+      }
       this.productos.set(p);
       this.barrios.set(b);
       if (this.editId()) await this.cargarPedido(this.editId()!);
@@ -399,8 +417,10 @@ export class NuevoPedidoPage implements OnInit {
           tipo: this.tipo()!,
           efectivo: Number(this.efectivo) || 0,
           transferencia: Number(this.transferencia) || 0,
+          vendedora: this.vendedora,
         });
-        this.toast.ok(`Venta #${id} registrada`);
+        const v = this.vendedoras().find((x) => x.id === this.vendedora);
+        this.toast.ok(v ? `Venta #${id} registrada a nombre de ${v.nombre}` : `Venta #${id} registrada`);
         this.router.navigate(['/app/ventas-local']);
       } else {
         const id = await this.ps.crear({
