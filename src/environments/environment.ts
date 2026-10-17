@@ -5,6 +5,6 @@ export const environment = {
   supabaseKey: 'sb_publishable_oejAL5ZoXxdyFCRLCLyj8A_tNlI49IX',
   // Fotos que vinieron del WordPress (productos y comprobantes), copiadas a Supabase Storage con la misma ruta
   // Llave pública (site key) de Cloudflare Turnstile. Vacía = sin verificación anti-robots.
-  turnstileSiteKey: '',
+  turnstileSiteKey: '0x4AAAAAAFZVvIoDg68UGInx',
   uploadsUrl: 'https://ktksdoedeazkvohewqzx.supabase.co/storage/v1/object/public/wp/',
 };
