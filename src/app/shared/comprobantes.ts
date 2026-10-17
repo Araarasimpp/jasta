@@ -25,8 +25,12 @@ export async function urlsComprobantes(sb: SupabaseClient, rutas: string[]): Pro
   const privadas = rutas.filter((r) => r.startsWith(PREFIJO)).map((r) => r.slice(PREFIJO.length));
   const firmadas = new Map<string, string>();
   if (privadas.length) {
-    const { data } = await sb.storage.from('comprobantes').createSignedUrls(privadas, 3600);
-    for (const f of data ?? []) if (f.path && f.signedUrl) firmadas.set(f.path, f.signedUrl);
+    try {
+      const { data } = await sb.storage.from('comprobantes').createSignedUrls(privadas, 3600);
+      for (const f of data ?? []) if (f.path && f.signedUrl) firmadas.set(f.path, f.signedUrl);
+    } catch {
+      /* sin enlace: la foto se muestra vacía */
+    }
   }
   return rutas.map((r) => (r.startsWith(PREFIJO) ? firmadas.get(r.slice(PREFIJO.length)) ?? '' : urlImagen(r) ?? ''));
 }

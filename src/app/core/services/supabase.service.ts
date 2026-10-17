@@ -92,6 +92,7 @@ export class SupabaseService {
     if (this.tiene('vendedora')) return '/app/mi-panel';
     if (this.tiene('mensajero')) return '/app/mis-entregas';
     if (this.tiene('venta_local')) return '/app/venta-local';
+    if (this.tiene('recolector')) return '/app/recolector';
     return '/app/espera';
   }
 }

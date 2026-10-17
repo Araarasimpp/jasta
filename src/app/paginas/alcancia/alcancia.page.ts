@@ -95,6 +95,7 @@ type Atajo = 'hoy' | '7' | 'mes' | 'mes_pasado' | null;
       .mov .monto { font-family: var(--mono-font); font-size: 14px; font-weight: 650; white-space: nowrap; }
       .vacio-txt { margin: 0; padding: 12px 0 4px; text-align: center; font-size: 13.5px; color: var(--text-soft); }
       .hoja-centro .hoja-body { gap: 14px; }
+      .hoja-head h2 { margin: 0 auto 0 0; }
 
       @media (max-width: 860px) { .cols { grid-template-columns: minmax(0, 1fr); } }
       @media (max-width: 640px) {

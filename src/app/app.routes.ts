@@ -49,6 +49,10 @@ export const routes: Routes = [
         path: 'ventas-local', canActivate: [rolGuard], data: { roles: ['admin', 'venta_local'] },
         loadComponent: () => import('./paginas/ventas-local/ventas-local.page').then((m) => m.VentasLocalPage),
       },
+      {
+        path: 'recolector', canActivate: [rolGuard], data: { roles: ['admin', 'recolector'] },
+        loadComponent: () => import('./paginas/recolector/recolector.page').then((m) => m.RecolectorPage),
+      },
       { path: 'alcancia', redirectTo: 'servicio-local', pathMatch: 'full' },
       {
         path: 'servicio-local', canActivate: [rolGuard], data: { roles: ['admin', 'venta_local', 'cuadres'] },

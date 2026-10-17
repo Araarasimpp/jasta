@@ -126,6 +126,7 @@ import { NotificacionesService, Aviso } from '../../core/services/notificaciones
       .punto[data-tipo='pedido_entregado'], .punto[data-tipo='cuadre_confirmado'] { background: var(--st-entregado) !important; }
       .punto[data-tipo='pedido_asignado'] { background: var(--st-ruta) !important; }
       .punto[data-tipo='venta_local'] { background: var(--oro) !important; }
+      .punto[data-tipo='base_recolector'] { background: var(--efectivo) !important; }
       .texto { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
       .titulo { font-size: 14px; font-weight: 550; line-height: 1.3; }
       .cuerpo { font-size: 13px; color: var(--text-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
