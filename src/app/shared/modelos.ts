@@ -65,6 +65,8 @@ export interface Pedido {
   tipo_recaudo: TipoRecaudo | null;
   valor_efectivo: number | null;
   valor_transferencia: number | null;
+  /** Venta en el local: lo que se le descontó a la vendedora para la alcancía */
+  aporte_alcancia?: number | null;
   evidencias: string[] | null;
   cuadre_id: number | null;
   rotulo_impreso_at: string | null;

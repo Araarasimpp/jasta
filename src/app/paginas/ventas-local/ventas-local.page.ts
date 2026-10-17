@@ -3,10 +3,10 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { add } from 'ionicons/icons';
+import { add, receiptOutline } from 'ionicons/icons';
 import { PedidosService } from '../../core/services/pedidos.service';
 import { ToastService } from '../../shared/toast/toast.service';
-import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detalle.component';
+import { VentaLocalDetalleComponent } from './venta-local-detalle.component';
 import { RangoFechas } from '../../shared/rango/rango.component';
 import { DiaComponent } from '../../shared/rango/dia.component';
 import { Pedido } from '../../shared/modelos';
@@ -20,12 +20,14 @@ type Metodo = 'todos' | 'efectivo' | 'transferencia' | 'mixto';
 @Component({
   selector: 'app-ventas-local',
   standalone: true,
-  imports: [FormsModule, RouterLink, IonIcon, DiaComponent, PedidoDetalleComponent],
+  imports: [FormsModule, RouterLink, IonIcon, DiaComponent, VentaLocalDetalleComponent],
   styles: [
     `
       .seccion { padding: 16px 20px 0; }
       .prods { white-space: normal; min-width: 220px; max-width: 360px; font-size: 12px; color: var(--text-soft); line-height: 1.35; }
       .tabla td { white-space: nowrap; }
+      .clip { margin-left: 6px; vertical-align: -2px; color: var(--st-entregado); }
+      .cancel { margin-left: 6px; font-size: 11.5px; font-weight: 600; color: var(--danger); }
       @media (max-width: 760px) { .seccion { padding: 12px 14px 0; } }
     `,
   ],
@@ -48,6 +50,7 @@ type Metodo = 'todos' | 'efectivo' | 'transferencia' | 'mixto';
           <div class="cifra-t clave"><small>Total vendido</small><strong class="num">{{ pesos(tot().total) }}</strong><em>{{ tot().n }} ventas</em></div>
           <div class="cifra-t"><small>Efectivo</small><strong class="num">{{ pesos(tot().efectivo) }}</strong></div>
           <div class="cifra-t"><small>Transferencias</small><strong class="num">{{ pesos(tot().transferencia) }}</strong></div>
+          <a class="cifra-t" routerLink="/app/alcancia" style="color: inherit; text-decoration: none"><small>Para la alcancía</small><strong class="num">{{ pesos(tot().alcancia) }}</strong><em>Ver alcancía ›</em></a>
         </div>
       </div>
       <div class="tabla-wrap" style="margin-top: 16px">
@@ -61,7 +64,8 @@ type Metodo = 'todos' | 'efectivo' | 'transferencia' | 'mixto';
                 <td class="titulo">{{ v.cliente_nombre }}</td>
                 <td class="prods" data-etq="Productos">{{ productos(v) }}</td>
                 <td data-etq="Vendió">{{ v.vendedora?.nombre || '—' }}</td>
-                <td data-etq="Pago">{{ pago(v.tipo_recaudo) }}</td>
+                <td data-etq="Pago">{{ pago(v.tipo_recaudo) }}@if (v.evidencias?.length) { <ion-icon name="receipt-outline" class="clip" title="Con comprobante" aria-label="Con comprobante"></ion-icon> }
+                  @if (v.estado === 'cancelado') { <span class="cancel">Cancelada</span> }</td>
                 <td class="der num" data-etq="Efectivo">{{ pesos(v.valor_efectivo) }}</td>
                 <td class="der num" data-etq="Transferencia">{{ pesos(v.valor_transferencia) }}</td>
                 <td class="der num" data-etq="Total">{{ pesos(v.total) }}</td>
@@ -74,7 +78,7 @@ type Metodo = 'todos' | 'efectivo' | 'transferencia' | 'mixto';
       </div>
     </div>
     @if (abierto(); as id) {
-      <app-pedido-detalle [pedidoId]="id" (cerrar)="abierto.set(null)" (cambiado)="cargar()"></app-pedido-detalle>
+      <app-venta-local-detalle [pedidoId]="id" (cerrar)="abierto.set(null)" (cambiado)="cargar()"></app-venta-local-detalle>
     }
   `,
 })
@@ -104,8 +108,9 @@ export class VentasLocalPage implements OnInit, OnDestroy {
         total: a.total + (v.estado === 'cancelado' ? 0 : Number(v.total)),
         efectivo: a.efectivo + (v.estado === 'cancelado' ? 0 : Number(v.valor_efectivo || 0)),
         transferencia: a.transferencia + (v.estado === 'cancelado' ? 0 : Number(v.valor_transferencia || 0)),
+        alcancia: a.alcancia + (v.estado === 'cancelado' ? 0 : Number(v.aporte_alcancia || 0)),
       }),
-      { n: 0, total: 0, efectivo: 0, transferencia: 0 }
+      { n: 0, total: 0, efectivo: 0, transferencia: 0, alcancia: 0 }
     )
   );
 
@@ -113,7 +118,7 @@ export class VentasLocalPage implements OnInit, OnDestroy {
   numero = numero;
 
   constructor() {
-    addIcons({ add });
+    addIcons({ add, receiptOutline });
   }
 
   ngOnInit(): void {

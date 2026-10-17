@@ -26,6 +26,8 @@ interface Panel {
   unidades: number;
   en_curso: number;
   ganancia_en_curso: number;
+  /** Lo que aportó a la alcancía del local (ya descontado de la ganancia) */
+  alcancia?: number;
   cancelados: number;
   por_dia: { dia: string; ganancia: number }[];
 }
@@ -191,7 +193,7 @@ const POR_PAGINA = 20;
         <div class="kpi kpi-principal" role="listitem">
           <span class="kpi-label">Mi ganancia</span>
           <span class="kpi-valor num gana">{{ panel() ? pesos(panel()!.ganancia) : '…' }}</span>
-          <span class="kpi-nota">Pedidos entregados</span>
+          <span class="kpi-nota">{{ panel()?.alcancia ? 'Ya sin ' + pesos(panel()!.alcancia) + ' de la alcancía' : 'Pedidos entregados' }}</span>
         </div>
         <div class="kpi" role="listitem">
           <span class="kpi-label">Por ganar</span>
@@ -265,7 +267,7 @@ const POR_PAGINA = 20;
             <div class="chart" [class.cargando]="cargando()">
               <canvas #lienzo role="img" [attr.aria-label]="'Gráfica de mi ganancia, ' + etiqueta()"></canvas>
             </div>
-            <p class="panel-foot">Ganancia = (precio de venta − precio base) × cantidad, de los pedidos entregados, por el día en que se subieron.</p>
+            <p class="panel-foot">Ganancia = (precio de venta − precio base) × cantidad, de los pedidos entregados, por el día en que se subieron. En las ventas del local se descuenta el aporte a la alcancía.</p>
           </section>
 
           <!-- Mis pedidos -->

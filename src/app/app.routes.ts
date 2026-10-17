@@ -50,6 +50,10 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/ventas-local/ventas-local.page').then((m) => m.VentasLocalPage),
       },
       {
+        path: 'alcancia', canActivate: [rolGuard], data: { roles: ['admin', 'venta_local', 'cuadres'] },
+        loadComponent: () => import('./paginas/alcancia/alcancia.page').then((m) => m.AlcanciaPage),
+      },
+      {
         path: 'ranking',
         loadComponent: () => import('./paginas/ranking/ranking.page').then((m) => m.RankingPage),
       },

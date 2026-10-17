@@ -3,12 +3,14 @@ import { FormsModule } from '@angular/forms';
 import { PedidosService } from '../../core/services/pedidos.service';
 import { Pedido, TipoRecaudo } from '../modelos';
 import { mensajeError, pesos } from '../formato';
+import { pideComprobante } from '../comprobantes';
+import { ComprobantesInputComponent } from '../comprobantes/comprobantes-input.component';
 
 /** Hoja para registrar la entrega y cómo pagó el cliente */
 @Component({
   selector: 'app-entregar',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, ComprobantesInputComponent],
   styles: [
     `
       .tipos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -48,13 +50,16 @@ import { mensajeError, pesos } from '../formato';
           </div>
           <p class="ayuda">Deben sumar {{ pesos(pedido.total) }}.</p>
         }
+        @if (pideComprobante(tipo())) {
+          <app-comprobantes-input [rutas]="evidencias()" (cambio)="evidencias.set($event); error.set('')"></app-comprobantes-input>
+        }
         @if (error()) {
           <p class="error" role="alert">{{ error() }}</p>
         }
       </div>
       <div class="hoja-pie">
         <button class="b" (click)="cerrar.emit()">Cancelar</button>
-        <button class="b b-ok" [disabled]="!tipo() || guardando()" (click)="confirmar()">
+        <button class="b b-ok" [disabled]="!tipo() || guardando() || (pideComprobante(tipo()) && !evidencias().length)" (click)="confirmar()">
           {{ guardando() ? 'Guardando…' : 'Confirmar entrega' }}
         </button>
       </div>
@@ -77,6 +82,8 @@ export class EntregarComponent {
   efectivo = 0;
   transferencia = 0;
   guardando = signal(false);
+  evidencias = signal<string[]>([]);
+  pideComprobante = pideComprobante;
   error = signal('');
 
   async confirmar(): Promise<void> {
@@ -86,10 +93,15 @@ export class EntregarComponent {
       this.error.set(`Efectivo + transferencia debe dar ${pesos(this.pedido.total)}.`);
       return;
     }
+    if (pideComprobante(tipo) && !this.evidencias().length) {
+      this.error.set('Sube la foto del comprobante de la transferencia.');
+      return;
+    }
     this.guardando.set(true);
     this.error.set('');
     try {
-      await this.ps.entregar(this.pedido.id, tipo, Number(this.efectivo) || 0, Number(this.transferencia) || 0);
+      await this.ps.entregar(this.pedido.id, tipo, Number(this.efectivo) || 0, Number(this.transferencia) || 0,
+        pideComprobante(tipo) ? this.evidencias() : []);
       this.entregado.emit();
     } catch (e) {
       this.error.set(mensajeError(e));

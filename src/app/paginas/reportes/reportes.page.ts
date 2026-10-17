@@ -356,7 +356,7 @@ const ESTADOS: { id: EstadoFiltro; label: string }[] = [
 
       <p class="nota">
         Cuentan los pedidos del estado elegido (por defecto <strong>entregados</strong>), según la fecha en que se crearon.
-        Ganancia tienda = (precio base − precio de compra) × cantidad. Ganancia vendedora = (precio de venta − precio base) × cantidad.
+        Ganancia tienda = (precio base − precio de compra) × cantidad. Ganancia vendedora = (precio de venta − precio base) × cantidad; en las ventas del local se le descuenta el aporte a la alcancía.
         El domicilio lo cobra el mensajero y no entra en las ganancias. "Descargar Excel" baja la pestaña que estás viendo, completa.
       </p>
     </div>

@@ -154,6 +154,8 @@ export class PedidosService {
     transferencia: number;
     /** Vendedora a la que se le suma la venta (su ganancia); null = sin vendedora */
     vendedora: number | null;
+    /** Fotos del comprobante (obligatorias con transferencia o mixto) */
+    evidencias: string[];
   }): Promise<number> {
     return this.check(
       await this.db.rpc('registrar_venta_local', {
@@ -165,6 +167,7 @@ export class PedidosService {
         p_efectivo: datos.efectivo,
         p_transferencia: datos.transferencia,
         p_vendedora: datos.vendedora,
+        p_evidencias: datos.evidencias,
       })
     ) as number;
   }
@@ -233,9 +236,9 @@ export class PedidosService {
     if (!r.count) throw new Error('No se pudo eliminar el pedido');
   }
 
-  async entregar(id: number, tipo: TipoRecaudo, efectivo: number, transferencia: number): Promise<void> {
+  async entregar(id: number, tipo: TipoRecaudo, efectivo: number, transferencia: number, evidencias: string[]): Promise<void> {
     this.check(
-      await this.db.rpc('entregar_pedido', { p_pedido: id, p_tipo: tipo, p_efectivo: efectivo, p_transferencia: transferencia })
+      await this.db.rpc('entregar_pedido', { p_pedido: id, p_tipo: tipo, p_efectivo: efectivo, p_transferencia: transferencia, p_evidencias: evidencias })
     );
   }
 

@@ -16,6 +16,7 @@ import { formatoFechaCO, formatoHoraCO } from '../fecha-colombia';
 import { ChatPedidoComponent } from '../chat-pedido/chat-pedido.component';
 import { VisorService } from '../visor/visor.service';
 import { fotoDeItem, nombreConVariante, variante } from '../variante';
+import { urlsComprobantes } from '../comprobantes';
 
 /** Hoja lateral con todo el pedido y las acciones que le tocan a cada rol */
 @Component({
@@ -163,8 +164,8 @@ import { fotoDeItem, nombreConVariante, variante } from '../variante';
             <section>
               <h3 class="seccion-titulo">Comprobantes</h3>
               <div class="fotos">
-                @for (f of p.evidencias; track f) {
-                  <button type="button" (click)="verComprobantes(f)" aria-label="Ver comprobante"><img [src]="urlImagen(f)" alt="" loading="lazy" /></button>
+                @for (f of p.evidencias; track f; let i = $index) {
+                  <button type="button" (click)="verComprobantes(i)" aria-label="Ver comprobante"><img [src]="comprobantes()[i]" alt="" loading="lazy" /></button>
                 }
               </div>
             </section>
@@ -235,6 +236,8 @@ export class PedidoDetalleComponent implements OnChanges {
   private visor = inject(VisorService);
 
   pedido = signal<Pedido | null>(null);
+  /** Direcciones (firmadas si son privadas) de las fotos de los comprobantes */
+  comprobantes = signal<string[]>([]);
   notas = signal<Nota[]>([]);
   mensajeros = signal<Usuario[]>([]);
   error = signal('');
@@ -304,6 +307,7 @@ export class PedidoDetalleComponent implements OnChanges {
       const { pedido, notas } = await this.ps.detalle(this.pedidoId);
       this.pedido.set(pedido);
       this.notas.set(notas);
+      if (pedido.evidencias?.length) urlsComprobantes(this.sb.client, pedido.evidencias).then((u) => this.comprobantes.set(u)).catch(() => undefined);
       this.mensajeroSel = pedido.mensajero_id;
     } catch (e) {
       this.error.set('No se pudo cargar el pedido: ' + mensajeError(e));
@@ -376,11 +380,10 @@ export class PedidoDetalleComponent implements OnChanges {
     return formatoFechaCO(iso, { day: 'numeric', month: 'short' }) + ' ' + formatoHoraCO(iso);
   }
 
-  verComprobantes(f: string): void {
-    const fotos = this.pedido()?.evidencias ?? [];
+  verComprobantes(i: number): void {
     this.visor.abrir(
-      fotos.map((x, n) => ({ url: urlImagen(x) ?? '', titulo: `Comprobante ${n + 1} de #${this.pedidoId}` })),
-      fotos.indexOf(f)
+      this.comprobantes().map((url, n) => ({ url, titulo: `Comprobante ${n + 1} de #${this.pedidoId}` })),
+      i
     );
   }
 

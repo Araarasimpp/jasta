@@ -10,6 +10,8 @@ import { ToastService } from '../../shared/toast/toast.service';
 import { Producto, TipoRecaudo, Usuario } from '../../shared/modelos';
 import { mensajeError, pesos, urlImagen } from '../../shared/formato';
 import { VisorService } from '../../shared/visor/visor.service';
+import { pideComprobante } from '../../shared/comprobantes';
+import { ComprobantesInputComponent } from '../../shared/comprobantes/comprobantes-input.component';
 
 interface Linea {
   /** Para seguir la línea en la lista aunque se repita el producto */
@@ -39,7 +41,7 @@ function normal(s: string): string {
 @Component({
   selector: 'app-nuevo-pedido',
   standalone: true,
-  imports: [FormsModule, IonIcon],
+  imports: [FormsModule, IonIcon, ComprobantesInputComponent],
   styles: [
     `
       .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 20px; align-items: start; }
@@ -85,6 +87,8 @@ function normal(s: string): string {
       .totales { display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
       .totales div { display: flex; justify-content: space-between; color: var(--text-soft); }
       .totales .fin { color: var(--text); font-size: 18px; font-weight: 600; margin-top: 4px; }
+      .comision { margin: 0; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--oro-wash); font-size: 13px; color: var(--text-soft); }
+      .comision strong { color: var(--oro-texto); }
       .cliente-previo { margin: 0; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--accent-wash); font-size: 13px; }
       .tipos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
       .tipo { height: 40px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface);
@@ -166,7 +170,12 @@ function normal(s: string): string {
                     <option [ngValue]="v.id">{{ v.nombre }}</option>
                   }
                 </select>
-                <p class="ayuda">La venta queda a su nombre: su ganancia (precio de venta − base) suma en Reportes y Ranking, y le llega el aviso.</p>
+                <p class="ayuda">La venta queda a su nombre: su ganancia (precio de venta − base) suma en Reportes y Ranking, y le llega el aviso.
+                  De su ganancia se aparta {{ pesos(aporte()) }} para la alcancía del local.</p>
+                @if (vendedora && lineas().length) {
+                  <p class="comision">Ganancia de la vendedora: <span class="num">{{ pesos(gananciaVend()) }}</span> − <span class="num">{{ pesos(aporteVenta()) }}</span> alcancía =
+                    <strong class="num">{{ pesos(gananciaVend() - aporteVenta()) }}</strong></p>
+                }
               </div>
             }
             @if (local()) {
@@ -185,6 +194,9 @@ function normal(s: string): string {
                   <div class="campo"><label for="tr">Transferencia</label>
                     <input id="tr" type="number" inputmode="numeric" [(ngModel)]="transferencia" /></div>
                 </div>
+              }
+              @if (!editId() && pideComprobante(tipo())) {
+                <app-comprobantes-input [rutas]="evidencias()" (cambio)="evidencias.set($event); error.set('')"></app-comprobantes-input>
               }
             }
           </section>
@@ -314,6 +326,11 @@ export class NuevoPedidoPage implements OnInit {
   /** Venta en el local: a qué vendedora se le suma */
   vendedoras = signal<Usuario[]>([]);
   vendedora: number | null = null;
+  /** Comprobantes de la transferencia (venta en el local) */
+  evidencias = signal<string[]>([]);
+  /** Lo que se le aparta a la vendedora de cada venta del local para la alcancía */
+  aporte = signal(2000);
+  pideComprobante = pideComprobante;
   tipos: { id: TipoRecaudo; label: string }[] = [
     { id: 'efectivo', label: 'Efectivo' },
     { id: 'transferencia', label: 'Transferencia' },
@@ -342,6 +359,9 @@ export class NuevoPedidoPage implements OnInit {
   });
 
   subtotal = computed(() => this.lineas().reduce((a, l) => a + l.cantidad * l.precio, 0));
+  gananciaVend = computed(() => this.lineas().reduce((a, l) => a + l.cantidad * (l.precio - Number(l.producto.precio_base || 0)), 0));
+  /** Nunca deja la ganancia en negativo (igual que en el servidor) */
+  aporteVenta = computed(() => Math.min(this.aporte(), Math.max(0, this.gananciaVend())));
 
   constructor() {
     addIcons({ add, remove, closeOutline, searchOutline });
@@ -352,6 +372,8 @@ export class NuevoPedidoPage implements OnInit {
       const [p, b] = await Promise.all([this.ps.productosActivos(), this.local() ? Promise.resolve([]) : this.ps.barrios()]);
       if (this.local() && !this.editId()) {
         this.ps.vendedoras().then((v) => this.vendedoras.set(v.filter((x) => x.activo))).catch(() => undefined);
+        this.sb.client.from('configuracion').select('aporte_alcancia').limit(1).maybeSingle()
+          .then(({ data }) => data && this.aporte.set(Number(data.aporte_alcancia) || 0));
       }
       this.productos.set(p);
       this.barrios.set(b);
@@ -560,6 +582,7 @@ export class NuevoPedidoPage implements OnInit {
       if (!this.tipo()) return this.error.set('Escoge cómo pagó el cliente.');
       if (this.tipo() === 'mixto' && Number(this.efectivo) + Number(this.transferencia) !== this.subtotal())
         return this.error.set(`Efectivo + transferencia debe dar ${pesos(this.subtotal())}.`);
+      if (pideComprobante(this.tipo()) && !this.evidencias().length) return this.error.set('Sube la foto del comprobante de la transferencia.');
     }
     const sinElegir = this.lineas().find((l) => this.falta(l));
     if (sinElegir) {
@@ -600,6 +623,7 @@ export class NuevoPedidoPage implements OnInit {
           efectivo: Number(this.efectivo) || 0,
           transferencia: Number(this.transferencia) || 0,
           vendedora: this.vendedora,
+          evidencias: pideComprobante(this.tipo()) ? this.evidencias() : [],
         });
         const v = this.vendedoras().find((x) => x.id === this.vendedora);
         this.toast.ok(v ? `Venta #${id} registrada a nombre de ${v.nombre}` : `Venta #${id} registrada`);
