@@ -5,9 +5,9 @@ import { addIcons } from 'ionicons';
 import { downloadOutline, searchOutline, shareOutline } from 'ionicons/icons';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
-import { VisorService } from '../../shared/visor/visor.service';
 import { Producto } from '../../shared/modelos';
 import { mensajeError, numero, pesos, urlImagen } from '../../shared/formato';
+import { FotoCatalogo, ProductoDetalleComponent } from './producto-detalle.component';
 
 type Filtro = 'todos' | 'disponibles';
 
@@ -19,16 +19,20 @@ function normal(s: string): string {
 @Component({
   selector: 'app-catalogo',
   standalone: true,
-  imports: [FormsModule, IonIcon],
+  imports: [FormsModule, IonIcon, ProductoDetalleComponent],
   styles: [
     `
       .barra-cat { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; padding: 0 28px 14px; }
       .barra-cat .buscar { flex: 1 1 260px; max-width: 420px; }
       .rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; padding: 4px 28px 28px; }
       .prod { display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--border); border-radius: var(--radius-lg);
-        background: var(--surface); overflow: hidden; }
+        background: var(--surface); overflow: hidden; cursor: pointer; transition: border-color 160ms var(--ease), box-shadow 160ms var(--ease), transform 160ms var(--ease); }
+      @media (hover: hover) { .prod:hover { border-color: var(--border-strong); box-shadow: var(--shadow-pop); } }
+      .prod:active { transform: scale(0.985); }
+      .prod:focus-visible { outline: 2px solid var(--oro); outline-offset: 2px; }
+      .ver-mas { font-size: 12px; font-weight: 600; color: var(--oro-texto); }
       .foto { position: relative; display: block; width: 100%; aspect-ratio: 1; padding: 0; border: none; border-bottom: var(--perfora);
-        background: #fff; cursor: zoom-in; }
+        background: #fff; cursor: pointer; }
       .foto img { width: 100%; height: 100%; object-fit: contain; padding: 8px; box-sizing: border-box; display: block; }
       .foto img.capa { position: absolute; inset: 0; opacity: 0; transform: scale(0.97); transition: opacity 320ms var(--ease), transform 420ms var(--ease); }
       .foto img.capa.on { opacity: 1; transform: none; }
@@ -98,9 +102,9 @@ function normal(s: string): string {
 
       <div class="rejilla">
         @for (p of visibles(); track p.id) {
-          <article class="prod">
+          <article class="prod" tabindex="0" role="button" [attr.aria-label]="'Ver todo de ' + p.nombre" (click)="abrir(p)" (keydown.enter)="abrir(p)">
             @if (fotos(p).length) {
-              <button type="button" class="foto" (click)="verFoto(p)" [attr.aria-label]="'Ver fotos de ' + p.nombre">
+              <button type="button" class="foto" tabindex="-1" aria-hidden="true">
                 <!-- Todas las fotos apiladas: al cambiar de color se funden una en otra -->
                 @for (f of fotos(p); track f.url) {
                   <img [src]="f.url" alt="" loading="lazy" decoding="async" class="capa" [class.on]="f.color === colorActivo(p)" />
@@ -118,7 +122,7 @@ function normal(s: string): string {
                 <div class="tonos" role="group" [attr.aria-label]="'Colores de ' + p.nombre">
                   @for (c of p.colores!; track c.id) {
                     <button type="button" class="tono" [class.on]="colorActivo(p) === c.id" [style.--tono]="c.hex || '#ccc'"
-                      [attr.aria-label]="c.nombre" [title]="c.nombre" (click)="elegirColor(p, c.id)"></button>
+                      [attr.aria-label]="c.nombre" [title]="c.nombre" (click)="elegirColor(p, c.id); $event.stopPropagation()" (keydown.enter)="$event.stopPropagation()"></button>
                   }
                   <span class="tono-nombre">{{ nombreColor(p) }}</span>
                 </div>
@@ -134,10 +138,14 @@ function normal(s: string): string {
                 <span class="precio num">{{ pesos(p.precio_venta) }}</span>
                 <span class="base num" title="Precio base: lo mínimo que puedes cobrar">Base {{ pesos(p.precio_base) }}</span>
               </div>
+              <span class="ver-mas">Ver todo ›</span>
             </div>
           </article>
         }
       </div>
+      @if (abierto(); as p) {
+        <app-producto-detalle [producto]="p" [fotos]="galeria(p)" [colorInicial]="colorActivo(p)" (cerrar)="abierto.set(null)"></app-producto-detalle>
+      }
       @if (filtrados().length > visibles().length) {
         <div class="mas"><button class="b" (click)="limite.update((n) => n + 60)">Ver más ({{ filtrados().length - visibles().length }})</button></div>
       }
@@ -147,7 +155,6 @@ function normal(s: string): string {
 export class CatalogoPage implements OnInit {
   private sb = inject(SupabaseService);
   private toast = inject(ToastService);
-  private visor = inject(VisorService);
 
   productos = signal<Producto[]>([]);
   cargando = signal(true);
@@ -156,6 +163,8 @@ export class CatalogoPage implements OnInit {
   /** Color elegido en cada tarjeta (id del producto → id del color) */
   colorElegido = signal<Record<number, number>>({});
   limite = signal(60);
+  /** Producto con la ficha abierta */
+  abierto = signal<Producto | null>(null);
   generando = signal(false);
   progreso = signal(0);
   readonly compartir = typeof navigator !== 'undefined' && 'canShare' in navigator && /iPhone|iPad|Android/i.test(navigator.userAgent);
@@ -209,8 +218,8 @@ export class CatalogoPage implements OnInit {
     return lista;
   }
 
-  /** Todas las fotos del producto para el visor: principal, colores y las adicionales */
-  galeria(p: Producto): { url: string; titulo: string; color: number | null }[] {
+  /** Todas las fotos del producto para la ficha: principal, colores y las adicionales */
+  galeria(p: Producto): FotoCatalogo[] {
     const lista = this.fotos(p);
     (p.imagenes ?? []).forEach((ruta, i) => {
       const u = urlImagen(ruta);
@@ -235,22 +244,8 @@ export class CatalogoPage implements OnInit {
     this.colorElegido.update((m) => ({ ...m, [p.id]: id }));
   }
 
-  verFoto(p: Producto): void {
-    // Con colores o más fotos: la galería del producto, empezando por la que se ve
-    const propias = this.galeria(p);
-    if (propias.length > 1) {
-      this.visor.abrir(
-        propias.map((f) => ({ url: f.url, titulo: `${f.titulo} · ${pesos(p.precio_venta)}` })),
-        Math.max(0, propias.findIndex((f) => f.color === this.colorActivo(p)))
-      );
-      return;
-    }
-    // Sin colores: recorre las fotos de lo que se está viendo, empezando por la tocada
-    const conFoto = this.filtrados().filter((x) => urlImagen(x.imagen_url));
-    this.visor.abrir(
-      conFoto.map((x) => ({ url: urlImagen(x.imagen_url)!, titulo: `${x.nombre} · ${pesos(x.precio_venta)}` })),
-      conFoto.findIndex((x) => x.id === p.id)
-    );
+  abrir(p: Producto): void {
+    this.abierto.set(p);
   }
 
   /** Arma el PDF con lo que está filtrado. En el celular abre "Compartir" (WhatsApp, Guardar en Archivos…) */

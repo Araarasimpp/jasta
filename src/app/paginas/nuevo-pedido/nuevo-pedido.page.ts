@@ -356,6 +356,7 @@ export class NuevoPedidoPage implements OnInit {
       this.productos.set(p);
       this.barrios.set(b);
       if (this.editId()) await this.cargarPedido(this.editId()!);
+      else this.agregarDesdeCatalogo();
     } catch (e) {
       this.error.set('No se pudieron cargar los datos: ' + mensajeError(e));
     }
@@ -391,6 +392,16 @@ export class NuevoPedidoPage implements OnInit {
     } finally {
       this.cargandoPedido.set(false);
     }
+  }
+
+  /** Desde la ficha del catálogo llega ?producto=…&color=… */
+  private agregarDesdeCatalogo(): void {
+    const q = this.route.snapshot.queryParamMap;
+    const p = this.productos().find((x) => x.id === Number(q.get('producto')));
+    if (!p) return;
+    this.agregar(p);
+    const color = q.get('color');
+    if (color && p.colores?.some((c) => c.nombre === color) && this.lineas().at(-1)?.color !== color) this.elegir(this.lineas().length - 1, 'color', color);
   }
 
   async buscarCliente(): Promise<void> {
