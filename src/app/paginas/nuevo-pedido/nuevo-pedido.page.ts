@@ -171,9 +171,9 @@ function normal(s: string): string {
                   }
                 </select>
                 <p class="ayuda">La venta queda a su nombre: su ganancia (precio de venta − base) suma en Reportes y Ranking, y le llega el aviso.
-                  De su ganancia se aparta {{ pesos(aporte()) }} para la alcancía del local.</p>
+                  De su ganancia se aparta {{ pesos(aporte()) }} para el servicio local.</p>
                 @if (vendedora && lineas().length) {
-                  <p class="comision">Ganancia de la vendedora: <span class="num">{{ pesos(gananciaVend()) }}</span> − <span class="num">{{ pesos(aporteVenta()) }}</span> alcancía =
+                  <p class="comision">Ganancia de la vendedora: <span class="num">{{ pesos(gananciaVend()) }}</span> − <span class="num">{{ pesos(aporteVenta()) }}</span> servicio local =
                     <strong class="num">{{ pesos(gananciaVend() - aporteVenta()) }}</strong></p>
                 }
               </div>

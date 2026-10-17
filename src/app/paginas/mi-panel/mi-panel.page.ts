@@ -193,7 +193,7 @@ const POR_PAGINA = 20;
         <div class="kpi kpi-principal" role="listitem">
           <span class="kpi-label">Mi ganancia</span>
           <span class="kpi-valor num gana">{{ panel() ? pesos(panel()!.ganancia) : '…' }}</span>
-          <span class="kpi-nota">{{ panel()?.alcancia ? 'Ya sin ' + pesos(panel()!.alcancia) + ' de la alcancía' : 'Pedidos entregados' }}</span>
+          <span class="kpi-nota">{{ panel()?.alcancia ? 'Ya sin ' + pesos(panel()!.alcancia) + ' del servicio local' : 'Pedidos entregados' }}</span>
         </div>
         <div class="kpi" role="listitem">
           <span class="kpi-label">Por ganar</span>
@@ -267,7 +267,7 @@ const POR_PAGINA = 20;
             <div class="chart" [class.cargando]="cargando()">
               <canvas #lienzo role="img" [attr.aria-label]="'Gráfica de mi ganancia, ' + etiqueta()"></canvas>
             </div>
-            <p class="panel-foot">Ganancia = (precio de venta − precio base) × cantidad, de los pedidos entregados, por el día en que se subieron. En las ventas del local se descuenta el aporte a la alcancía.</p>
+            <p class="panel-foot">Ganancia = (precio de venta − precio base) × cantidad, de los pedidos entregados, por el día en que se subieron. En las ventas del local se descuenta el aporte al servicio local.</p>
           </section>
 
           <!-- Mis pedidos -->

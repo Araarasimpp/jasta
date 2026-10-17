@@ -9,7 +9,7 @@ import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../toast/toast.service';
 import { EntregarComponent } from '../entregar/entregar.component';
 import { RotulosService } from '../rotulo/rotulos.service';
-import { enlaceWhatsapp } from '../whatsapp';
+import { enlaceWhatsapp, productosDelPedido } from '../whatsapp';
 import { EstadoPedido, Nota, Pedido, PedidoItem, Usuario, estadoLabel } from '../modelos';
 import { mensajeError, pesos, urlImagen } from '../formato';
 import { formatoFechaCO, formatoHoraCO } from '../fecha-colombia';
@@ -369,7 +369,14 @@ export class PedidoDetalleComponent implements OnChanges {
   }
 
   whatsapp(tel: string): string {
-    return enlaceWhatsapp(tel, `Hola ${this.pedido()?.cliente_nombre.split(' ')[0] ?? ''}, te escribimos de Jasta por tu pedido #${this.pedidoId}.`);
+    const p = this.pedido();
+    const nombre = p?.cliente_nombre.split(' ')[0] ?? '';
+    const que = p?.pedido_items?.length ? `tu pedido de ${productosDelPedido(p.pedido_items)}` : 'tu pedido';
+    // El mensajero escribe en camino; los demás, desde Jasta
+    const texto = this.sb.tiene('mensajero') && p?.mensajero_id === this.sb.usuario()?.id
+      ? `Hola ${nombre}, soy ${this.sb.usuario()?.nombre.split(' ')[0] ?? ''}, mensajero de Jasta. Voy en camino con ${que} por ${pesos(p?.total)}.`
+      : `Hola ${nombre}, te escribimos de Jasta por ${que}.`;
+    return enlaceWhatsapp(tel, texto);
   }
 
   fecha(iso: string): string {

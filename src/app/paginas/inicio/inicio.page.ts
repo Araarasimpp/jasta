@@ -213,7 +213,7 @@ interface Tarea {
               <div><dt>Transferencias</dt><dd>{{ pesos(r()?.transferencia) }}</dd></div>
               <div><dt>Domicilios <small class="suave">(de los mensajeros)</small></dt><dd>{{ pesos(r()?.domicilios) }}</dd></div>
               <div><dt>Ganancia vendedoras</dt><dd>{{ pesos(r()?.margen_vendedoras) }}</dd></div>
-              @if (r()?.alcancia) { <div><dt>Alcancía <small class="suave">(ventas del local)</small></dt><dd>{{ pesos(r()?.alcancia) }}</dd></div> }
+              @if (r()?.alcancia) { <div><dt>Servicio local <small class="suave">(ventas del local)</small></dt><dd>{{ pesos(r()?.alcancia) }}</dd></div> }
               <div class="total"><dt>Ganancia tienda</dt><dd>{{ pesos(gananciaHoy()) }}</dd></div>
             </dl>
           </section>

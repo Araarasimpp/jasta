@@ -113,7 +113,7 @@ type Atajo = 'hoy' | '7' | 'mes' | 'mes_pasado' | null;
   template: `
     <div class="page">
       <div class="head">
-        <div><h1>Alcancía</h1><p class="sub">Para mantener el punto físico</p></div>
+        <div><h1>Servicio local</h1><p class="sub">Para mantener el punto físico</p></div>
         @if (esAdmin()) {
           <div class="acciones"><button class="b" (click)="abrirRetiro()" [disabled]="!d() || d()!.saldo <= 0"><ion-icon name="remove-circle-outline"></ion-icon>Registrar retiro</button></div>
         }
@@ -121,7 +121,7 @@ type Atajo = 'hoy' | '7' | 'mes' | 'mes_pasado' | null;
 
       <div class="saldo">
         <div>
-          <small>En la alcancía</small>
+          <small>Disponible</small>
           <strong>{{ d() ? pesos(d()!.saldo) : '…' }}</strong>
           <p class="nota">Cada venta del local a nombre de una vendedora aporta <strong style="display: inline; font-size: inherit; font-family: inherit">{{ pesos(d()?.aporte ?? 2000) }}</strong> de su ganancia.
             @if (esAdmin()) { <button type="button" (click)="abrirAporte()">Cambiar</button> }</p>
@@ -205,10 +205,10 @@ type Atajo = 'hoy' | '7' | 'mes' | 'mes_pasado' | null;
     @if (retiro()) {
       <button class="velo" aria-label="Cerrar" (click)="retiro.set(false)"></button>
       <div class="hoja hoja-centro" role="dialog" aria-labelledby="t-retiro">
-        <div class="hoja-head"><h2 id="t-retiro">Retiro de la alcancía</h2>
+        <div class="hoja-head"><h2 id="t-retiro">Retiro del servicio local</h2>
           <button class="b b-icono" aria-label="Cerrar" (click)="retiro.set(false)"><ion-icon name="close-outline"></ion-icon></button></div>
         <div class="hoja-body">
-          <p class="ayuda" style="margin: 0">Hay {{ pesos(d()?.saldo) }} en la alcancía.</p>
+          <p class="ayuda" style="margin: 0">Hay {{ pesos(d()?.saldo) }} en el servicio local.</p>
           <div class="campo"><label for="rm">Valor</label><input id="rm" class="inp num" type="number" inputmode="numeric" min="0" step="1000" [(ngModel)]="monto" /></div>
           <div class="campo"><label for="rc">¿En qué se usó?</label><input id="rc" class="inp" maxlength="200" [(ngModel)]="concepto" placeholder="Ej: bombillos, aseo, arreglo de la vitrina" /></div>
           @if (errorForm()) { <p class="error" role="alert">{{ errorForm() }}</p> }
@@ -226,7 +226,7 @@ type Atajo = 'hoy' | '7' | 'mes' | 'mes_pasado' | null;
         <div class="hoja-head"><h2 id="t-aporte">Aporte por venta</h2>
           <button class="b b-icono" aria-label="Cerrar" (click)="editAporte.set(false)"><ion-icon name="close-outline"></ion-icon></button></div>
         <div class="hoja-body">
-          <p class="ayuda" style="margin: 0">Lo que se le descuenta a la vendedora de su ganancia en cada venta del local, para la alcancía. Aplica a las ventas nuevas.</p>
+          <p class="ayuda" style="margin: 0">Lo que se le descuenta a la vendedora de su ganancia en cada venta del local, para el servicio local. Aplica a las ventas nuevas.</p>
           <div class="campo"><label for="ap">Valor</label><input id="ap" class="inp num" type="number" inputmode="numeric" min="0" step="500" [(ngModel)]="nuevoAporte" /></div>
           @if (errorForm()) { <p class="error" role="alert">{{ errorForm() }}</p> }
         </div>
@@ -337,7 +337,7 @@ export class AlcanciaPage implements OnInit, OnDestroy {
     const monto = Number(this.monto) || 0;
     if (monto <= 0) return this.errorForm.set('Escribe el valor del retiro.');
     if (!this.concepto.trim()) return this.errorForm.set('Escribe en qué se usó la plata.');
-    if (monto > Number(this.d()?.saldo ?? 0)) return this.errorForm.set(`En la alcancía solo hay ${pesos(this.d()?.saldo)}.`);
+    if (monto > Number(this.d()?.saldo ?? 0)) return this.errorForm.set(`En el servicio local solo hay ${pesos(this.d()?.saldo)}.`);
     this.guardando.set(true);
     const { error } = await this.sb.client.rpc('alcancia_retirar', { p_monto: monto, p_concepto: this.concepto.trim() });
     this.guardando.set(false);

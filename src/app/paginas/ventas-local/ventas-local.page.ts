@@ -50,7 +50,7 @@ type Metodo = 'todos' | 'efectivo' | 'transferencia' | 'mixto';
           <div class="cifra-t clave"><small>Total vendido</small><strong class="num">{{ pesos(tot().total) }}</strong><em>{{ tot().n }} ventas</em></div>
           <div class="cifra-t"><small>Efectivo</small><strong class="num">{{ pesos(tot().efectivo) }}</strong></div>
           <div class="cifra-t"><small>Transferencias</small><strong class="num">{{ pesos(tot().transferencia) }}</strong></div>
-          <a class="cifra-t" routerLink="/app/alcancia" style="color: inherit; text-decoration: none"><small>Para la alcancía</small><strong class="num">{{ pesos(tot().alcancia) }}</strong><em>Ver alcancía ›</em></a>
+          <a class="cifra-t" routerLink="/app/servicio-local" style="color: inherit; text-decoration: none"><small>Servicio local</small><strong class="num">{{ pesos(tot().alcancia) }}</strong><em>Ver servicio local ›</em></a>
         </div>
       </div>
       <div class="tabla-wrap" style="margin-top: 16px">

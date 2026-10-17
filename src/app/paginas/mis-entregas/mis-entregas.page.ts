@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import { refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses } from 'ionicons/icons';
-import { enlaceWhatsapp } from '../../shared/whatsapp';
+import { enlaceWhatsapp, productosDelPedido } from '../../shared/whatsapp';
 import { PedidosService } from '../../core/services/pedidos.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { NotificacionesService } from '../../core/services/notificaciones.service';
@@ -315,7 +315,9 @@ export class MisEntregasPage implements OnInit, OnDestroy {
     const yo = this.sb.usuario()?.nombre.split(' ')[0] ?? '';
     return enlaceWhatsapp(
       p.cliente_telefono,
-      `Hola ${cliente}, soy ${yo}, mensajero de Jasta. Voy en camino con tu pedido #${p.id} por ${pesos(p.total)}.`
+      (p.pedido_items?.length
+        ? `Hola ${cliente}, soy ${yo}, mensajero de Jasta. Voy en camino con tu pedido de ${productosDelPedido(p.pedido_items)} por ${pesos(p.total)}.`
+        : `Hola ${cliente}, soy ${yo}, mensajero de Jasta. Voy en camino con tu pedido por ${pesos(p.total)}.`)
     );
   }
 

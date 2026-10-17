@@ -9,9 +9,22 @@ export function enlaceWhatsapp(telefono: string | null | undefined, mensaje = ''
 export const CANAL_WHATSAPP = 'https://whatsapp.com/channel/0029Vb72Rzw9MF8xwEjkqR0c';
 
 /** "a", "a y b", "a, b y c" */
-function enLista(cosas: string[]): string {
+export function enLista(cosas: string[]): string {
   if (cosas.length <= 1) return cosas[0] ?? '';
   return cosas.slice(0, -1).join(', ') + ' y ' + cosas[cosas.length - 1];
+}
+
+/**
+ * Lo que lleva el pedido, para el mensaje: "Cadena cubana y 2 Gorras trucker (Negro)".
+ * Con más de 3 productos: "Cadena cubana, Gorra y 2 productos más".
+ */
+export function productosDelPedido(items: { nombre: string; cantidad: number; color?: string | null; talla?: string | null }[]): string {
+  const partes = items.map((i) => {
+    const v = [i.color, i.talla ? 'talla ' + i.talla : null].filter(Boolean).join(', ');
+    return `${i.cantidad > 1 ? i.cantidad + ' ' : ''}${i.nombre.trim()}${v ? ` (${v})` : ''}`;
+  });
+  if (partes.length > 3) return `${partes.slice(0, 2).join(', ')} y ${partes.length - 2} productos más`;
+  return enLista(partes);
 }
 
 /**

@@ -72,7 +72,7 @@ const PAGO: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Tra
             <span class="ico" aria-hidden="true"><ion-icon name="storefront-outline"></ion-icon></span>
             <div><p>{{ fecha(v.created_at) }}</p><strong>{{ v.cliente_nombre }}</strong></div>
           </div>
-          @if (v.estado === 'cancelado') { <p class="cancelada">Esta venta fue cancelada: no suma en caja, ganancias ni alcancía.</p> }
+          @if (v.estado === 'cancelado') { <p class="cancelada">Esta venta fue cancelada: no suma en caja, ganancias ni servicio local.</p> }
 
           <section>
             <h3 class="seccion-titulo">Productos</h3>
@@ -98,9 +98,9 @@ const PAGO: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Tra
               @if (registro()) { <dt>Registró</dt><dd>{{ registro() }}</dd> }
               @if (v.vendedora_id && veGanancias()) {
                 <dt>Su ganancia</dt><dd><span class="num gana">{{ pesos(ganancia() - aporte()) }}</span>
-                  @if (aporte() > 0) { <span class="sin" style="display: block">{{ pesos(ganancia()) }} − {{ pesos(aporte()) }} para la alcancía</span> }</dd>
+                  @if (aporte() > 0) { <span class="sin" style="display: block">{{ pesos(ganancia()) }} − {{ pesos(aporte()) }} para el servicio local</span> }</dd>
               }
-              @if (aporte() > 0) { <dt>Alcancía</dt><dd class="num">{{ pesos(aporte()) }}</dd> }
+              @if (aporte() > 0) { <dt>Servicio local</dt><dd class="num">{{ pesos(aporte()) }}</dd> }
             </dl>
           </section>
 
@@ -211,7 +211,7 @@ export class VentaLocalDetalleComponent implements OnInit {
   }
 
   async cancelar(): Promise<void> {
-    if (!confirm(`¿Cancelar la venta #${this.pedidoId}? Se devuelve el stock y deja de sumar en caja, ganancias y alcancía.`)) return;
+    if (!confirm(`¿Cancelar la venta #${this.pedidoId}? Se devuelve el stock y deja de sumar en caja, ganancias y servicio local.`)) return;
     this.ocupado.set(true);
     try {
       await this.ps.cambiarEstado(this.pedidoId, 'cancelado');

@@ -42,16 +42,16 @@ interface Cliente {
       </div>
       <div class="tabla-wrap">
         <table class="tabla tarjetas-cel">
-          <thead><tr><th>Cliente</th><th>Teléfono</th><th>Barrio</th><th class="der">Pedidos</th><th class="der">Comprado</th><th>Último pedido</th></tr></thead>
+          <thead><tr><th>Cliente</th><th>Teléfono</th><th>Barrio</th><th class="der">Compras</th><th class="der">Comprado</th><th>Última compra</th></tr></thead>
           <tbody>
             @for (c of clientes(); track c.telefono) {
               <tr class="click" (click)="abrir(c)">
                 <td class="titulo">{{ c.nombre }}</td>
                 <td class="num" data-etq="Teléfono">{{ c.telefono }}</td>
                 <td class="suave corta" data-etq="Barrio">{{ c.barrio || '—' }}</td>
-                <td class="der num" data-etq="Pedidos (entregados / total)"><span>{{ c.entregados }}<span class="suave"> / {{ c.pedidos }}</span></span></td>
+                <td class="der num" data-etq="Compras">{{ c.entregados }}</td>
                 <td class="der num" data-etq="Comprado">{{ pesos(c.total) }}</td>
-                <td class="suave" data-etq="Último pedido">{{ fecha(c.ultimo) }}</td>
+                <td class="suave" data-etq="Última compra">{{ fecha(c.ultimo) }}</td>
               </tr>
             } @empty {
               <tr><td colspan="6" class="suave">{{ cargando() ? 'Cargando…' : 'No hay clientes con esa búsqueda.' }}</td></tr>
@@ -68,7 +68,7 @@ interface Cliente {
           </span>
         </div>
       }
-      <div class="vista-body"><p class="ayuda">"Pedidos" muestra entregados / total. "Comprado" suma solo los entregados.</p></div>
+      <div class="vista-body"><p class="ayuda">Solo aparecen los clientes que ya recibieron al menos un pedido. "Compras" y "Comprado" cuentan solo los pedidos entregados.</p></div>
     </div>
 
     @if (sel(); as c) {
@@ -87,7 +87,7 @@ interface Cliente {
           </dl>
           <a class="b" [href]="whatsapp(c)" target="_blank" rel="noopener"><ion-icon name="logo-whatsapp"></ion-icon>Escribir por WhatsApp</a>
           <section>
-            <h3 class="seccion-titulo">Pedidos</h3>
+            <h3 class="seccion-titulo">Lo que ha comprado</h3>
             <ul class="lista">
               @for (p of pedidosCli(); track p.id) {
                 <li (click)="abierto.set(p.id)">
@@ -155,7 +155,8 @@ export class ClientesPage implements OnInit {
     this.sel.set(c);
     this.pedidosCli.set([]);
     try {
-      const r = await this.ps.listar({ texto: c.telefono, porPagina: 100, conItems: true });
+      // Solo lo que de verdad recibió (sin cancelados ni pendientes)
+      const r = await this.ps.listar({ texto: c.telefono, estado: 'entregado', porPagina: 100, conItems: true });
       this.pedidosCli.set(r.filas);
     } catch (e) {
       this.toast.error(mensajeError(e));
@@ -165,7 +166,7 @@ export class ClientesPage implements OnInit {
   /** Mensaje de seguimiento con lo que compró en su último pedido entregado */
   whatsapp(c: Cliente): string {
     const pedidos = this.pedidosCli();
-    const ultimo = pedidos.find((p) => p.estado === 'entregado') ?? pedidos.find((p) => p.estado !== 'cancelado');
+    const ultimo = pedidos.find((p) => p.estado === 'entregado');
     const productos = (ultimo?.pedido_items ?? []).map((i) => i.nombre);
     return enlaceWhatsapp(c.telefono, mensajeSeguimiento(c.nombre, productos));
   }
