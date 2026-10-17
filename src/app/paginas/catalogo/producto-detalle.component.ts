@@ -2,7 +2,7 @@ import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, O
 import { Router } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { addOutline, chevronBackOutline, chevronForwardOutline, closeOutline, copyOutline, expandOutline, shareSocialOutline } from 'ionicons/icons';
+import { addOutline, checkmarkOutline, chevronBackOutline, chevronForwardOutline, closeOutline, copyOutline, expandOutline, shareSocialOutline } from 'ionicons/icons';
 import { ToastService } from '../../shared/toast/toast.service';
 import { VisorService } from '../../shared/visor/visor.service';
 import { Producto } from '../../shared/modelos';
@@ -86,6 +86,14 @@ export interface FotoCatalogo {
       .tallas { display: flex; flex-wrap: wrap; gap: 6px; }
       .tallas span { min-width: 36px; height: 32px; padding: 0 10px; display: inline-grid; place-items: center; border: 1px solid var(--border-strong); border-radius: 7px;
         font-family: var(--mono-font); font-size: 13px; font-weight: 600; }
+      .desc-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+      .desc-head h4 { margin: 0; }
+      .copiar { display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 11px; border: 1px solid var(--border-strong); border-radius: 15px;
+        background: var(--surface); color: var(--text-soft); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: color 150ms, border-color 150ms, background 150ms; }
+      .copiar ion-icon { font-size: 15px; }
+      @media (hover: hover) { .copiar:hover { color: var(--text); border-color: var(--text-muted); } }
+      .copiar:active { transform: scale(0.96); }
+      .copiar.hecho { color: var(--st-entregado); border-color: var(--st-entregado); background: color-mix(in srgb, var(--st-entregado) 8%, transparent); }
       .desc { margin: 0; font-size: 14px; line-height: 1.55; color: var(--text-soft); white-space: pre-line; }
       .datos { grid-template-columns: 110px 1fr; }
       .datos dt { color: var(--text-muted); }
@@ -183,7 +191,12 @@ export interface FotoCatalogo {
 
           @if (producto.descripcion) {
             <div class="bloque">
-              <h4>Descripción</h4>
+              <div class="desc-head">
+                <h4>Descripción</h4>
+                <button type="button" class="copiar" [class.hecho]="copiado()" (click)="copiarDescripcion()" [attr.aria-label]="copiado() ? 'Descripción copiada' : 'Copiar descripción'">
+                  <ion-icon [name]="copiado() ? 'checkmark-outline' : 'copy-outline'" aria-hidden="true"></ion-icon>{{ copiado() ? 'Copiada' : 'Copiar' }}
+                </button>
+              </div>
               <p class="desc">{{ producto.descripcion }}</p>
             </div>
           }
@@ -230,6 +243,9 @@ export class ProductoDetalleComponent implements AfterViewInit, OnDestroy {
   /** Color tocado aunque no tenga foto propia */
   colorTocado = signal<number | null>(null);
   compartiendo = signal(false);
+  /** Se acaba de copiar la descripción (el botón muestra "Copiada" un momento) */
+  copiado = signal(false);
+  private timerCopia?: ReturnType<typeof setTimeout>;
   /** % de descarga del video para compartir (null = no se está descargando) */
   progreso = signal<number | null>(null);
   /** Archivos ya preparados (foto + video) para compartir con un solo toque */
@@ -258,7 +274,7 @@ export class ProductoDetalleComponent implements AfterViewInit, OnDestroy {
   };
 
   constructor() {
-    addIcons({ addOutline, chevronBackOutline, chevronForwardOutline, closeOutline, copyOutline, expandOutline, shareSocialOutline });
+    addIcons({ addOutline, checkmarkOutline, chevronBackOutline, chevronForwardOutline, closeOutline, copyOutline, expandOutline, shareSocialOutline });
   }
 
   ngAfterViewInit(): void {
@@ -270,6 +286,7 @@ export class ProductoDetalleComponent implements AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     document.removeEventListener('keydown', this.teclas);
     cancelAnimationFrame(this.raf);
+    clearTimeout(this.timerCopia);
   }
 
   /** Lleva el carrusel a la foto i */
@@ -305,6 +322,29 @@ export class ProductoDetalleComponent implements AfterViewInit, OnDestroy {
     if (i >= 0) this.ir(i);
     // Sin foto propia: solo se marca el color
     else this.colorTocado.set(id);
+  }
+
+  async copiarDescripcion(): Promise<void> {
+    const texto = (this.producto.descripcion ?? '').trim();
+    if (!texto) return;
+    try {
+      await navigator.clipboard.writeText(texto);
+    } catch {
+      // Navegadores sin portapapeles moderno: se copia con un campo oculto
+      const t = document.createElement('textarea');
+      t.value = texto;
+      t.setAttribute('readonly', '');
+      t.style.position = 'fixed';
+      t.style.opacity = '0';
+      document.body.appendChild(t);
+      t.select();
+      const ok = document.execCommand('copy');
+      t.remove();
+      if (!ok) return this.toast.error('No se pudo copiar');
+    }
+    this.copiado.set(true);
+    clearTimeout(this.timerCopia);
+    this.timerCopia = setTimeout(() => this.copiado.set(false), 1800);
   }
 
   /** El visor es solo de fotos */
