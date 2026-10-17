@@ -21,6 +21,15 @@ export const rolGuard: CanActivateFn = async (route) => {
   return router.parseUrl(sb.inicioSegunRoles());
 };
 
+/** La vendedora (sin otro rol que vea pedidos) va a Mi panel, con el mismo ?id=…&chat=… */
+export const pedidosGuard: CanActivateFn = async (route) => {
+  const sb = inject(SupabaseService);
+  const router = inject(Router);
+  await sb.asegurar();
+  if (sb.tiene('admin', 'alistador', 'cuadres') || !sb.tiene('vendedora')) return true;
+  return router.createUrlTree(['/app/mi-panel'], { queryParams: route.queryParams });
+};
+
 /** Para login/registro: si ya hay sesión, se va al inicio */
 export const invitadoGuard: CanActivateFn = async () => {
   const sb = inject(SupabaseService);

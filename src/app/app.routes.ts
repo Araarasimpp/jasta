@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { Router, Routes } from '@angular/router';
-import { invitadoGuard, rolGuard, sesionGuard } from './core/guards/guards';
+import { invitadoGuard, pedidosGuard, rolGuard, sesionGuard } from './core/guards/guards';
 import { SupabaseService } from './core/services/supabase.service';
 
 /** "/" lleva a la pantalla que le toca a cada quien */
@@ -29,8 +29,13 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/inicio/inicio.page').then((m) => m.InicioPage),
       },
       {
-        path: 'pedidos', canActivate: [rolGuard], data: { roles: ['admin', 'vendedora', 'alistador', 'cuadres'] },
+        // La vendedora no ve la lista de pedidos: sus avisos (?id=…&chat=1) la llevan a Mi panel
+        path: 'pedidos', canActivate: [pedidosGuard, rolGuard], data: { roles: ['admin', 'alistador', 'cuadres'] },
         loadComponent: () => import('./paginas/pedidos/pedidos.page').then((m) => m.PedidosPage),
+      },
+      {
+        path: 'mi-panel', canActivate: [rolGuard], data: { roles: ['vendedora'] },
+        loadComponent: () => import('./paginas/mi-panel/mi-panel.page').then((m) => m.MiPanelPage),
       },
       {
         path: 'pedidos/:id/editar', canActivate: [rolGuard], data: { roles: ['admin', 'vendedora'] },
@@ -41,7 +46,7 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/nuevo-pedido/nuevo-pedido.page').then((m) => m.NuevoPedidoPage),
       },
       {
-        path: 'ventas-local', canActivate: [rolGuard], data: { roles: ['admin', 'venta_local', 'cuadres'] },
+        path: 'ventas-local', canActivate: [rolGuard], data: { roles: ['admin', 'venta_local'] },
         loadComponent: () => import('./paginas/ventas-local/ventas-local.page').then((m) => m.VentasLocalPage),
       },
       {

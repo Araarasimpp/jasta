@@ -80,10 +80,16 @@ export class SupabaseService {
     this.usuario.set(null);
   }
 
+  /** Dónde ve sus pedidos quien acaba de crear o editar uno */
+  rutaPedidos(): string {
+    return this.tiene('admin', 'alistador', 'cuadres') ? '/app/pedidos' : '/app/mi-panel';
+  }
+
   /** Primera pantalla según los roles */
   inicioSegunRoles(): string {
     if (this.tiene('admin', 'cuadres')) return '/app/inicio';
-    if (this.tiene('alistador', 'vendedora')) return '/app/pedidos';
+    if (this.tiene('alistador')) return '/app/pedidos';
+    if (this.tiene('vendedora')) return '/app/mi-panel';
     if (this.tiene('mensajero')) return '/app/mis-entregas';
     if (this.tiene('venta_local')) return '/app/venta-local';
     return '/app/espera';

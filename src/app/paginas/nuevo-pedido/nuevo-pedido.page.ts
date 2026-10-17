@@ -377,7 +377,7 @@ export class NuevoPedidoPage implements OnInit {
   }
 
   volver(): void {
-    this.router.navigate(['/app/pedidos'], { queryParams: { id: this.editId() } });
+    this.router.navigate([this.sb.rutaPedidos()], { queryParams: { id: this.editId() } });
   }
 
   async guardar(): Promise<void> {
@@ -433,7 +433,7 @@ export class NuevoPedidoPage implements OnInit {
           items,
         });
         this.toast.ok(`Pedido #${id} creado`);
-        this.router.navigate(['/app/pedidos'], { queryParams: { id } });
+        this.router.navigate([this.sb.rutaPedidos()], { queryParams: { id } });
       }
     } catch (e) {
       const m = mensajeError(e);
