@@ -532,7 +532,7 @@ select.inp,
 }
 
 .estado.por_alistar {
-  color: var(--text-2);
+  color: var(--st-pendiente-text);
 }
 
 .estado.por_alistar::before {
@@ -541,7 +541,11 @@ select.inp,
 }
 
 .estado.alistado {
-  color: var(--st-alistado);
+  color: var(--info-text);
+}
+
+.estado.alistado::before {
+  background: var(--info);
 }
 
 .estado.despachado {
@@ -553,11 +557,15 @@ select.inp,
 }
 
 .estado.entregado {
-  color: var(--st-entregado);
+  color: var(--st-entregado-text);
+}
+
+.estado.entregado::before {
+  background: var(--st-entregado);
 }
 
 .estado.cancelado {
-  color: var(--st-cancelado);
+  color: var(--st-cancelado-text);
   text-decoration: line-through;
 }
 
@@ -954,11 +962,12 @@ select.inp,
   }
 }
 
+// Selección de módulo (Vendedoras/Mensajeros, Hoy/Semana/Mes…): dorado
 .segmented button.on {
-  background: var(--surface);
+  background: var(--oro-wash);
   color: var(--text);
-  font-weight: 600;
-  box-shadow: 0 0 0 1px var(--border-strong), 0 1px 2px rgba(17, 24, 39, 0.06);
+  font-weight: 650;
+  box-shadow: 0 0 0 1px var(--oro), 0 1px 2px rgba(15, 23, 42, 0.06);
 }
 
 // ---------- Cifras resumen: celdas de una sola grilla con rayas finas ----------

@@ -27,7 +27,7 @@ import { nombreConVariante } from '../../shared/variante';
     `
       .tarjeta h3 { cursor: pointer; }
       .chip-mensaje { align-self: flex-start; display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 12px; border: none;
-        border-radius: 999px; background: var(--oro); color: #111827; font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; }
+        border-radius: 999px; background: var(--oro); color: #0f172a; font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; }
       .chip-mensaje ion-icon { font-size: 15px; }
       .total { font-size: 17px; }
       .b-wa { color: var(--efectivo); border-color: color-mix(in srgb, var(--efectivo) 40%, var(--border)); }
@@ -117,7 +117,7 @@ import { nombreConVariante } from '../../shared/variante';
             }
             <p>{{ p.direccion }}<br />{{ p.barrio || 'Sin barrio' }}</p>
             @if (p.observaciones) {
-              <p style="color: var(--st-ruta-text)">{{ p.observaciones }}</p>
+              <p style="color: var(--st-pendiente-text)">{{ p.observaciones }}</p>
             }
             <ul class="items-mini">
               @for (i of p.pedido_items ?? []; track i.id) {

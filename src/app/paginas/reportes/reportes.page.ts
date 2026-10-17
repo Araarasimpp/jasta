@@ -73,7 +73,7 @@ const ESTADOS: { id: EstadoFiltro; label: string }[] = [
       .tabla td.texto { white-space: normal; min-width: 180px; max-width: 320px; line-height: 1.35; }
       .tabla td.texto small { display: block; color: var(--text-muted); font-size: 12px; }
       .tabla tfoot td { font-weight: 650; background: var(--surface); border-top: 1px solid var(--text); border-bottom: none; }
-      .tabla .tienda { color: var(--st-entregado); }
+      .tabla .tienda { color: var(--efectivo-texto); }
       .tabla .vende { color: var(--accent); }
       .tabla .neg { color: var(--danger); }
       .nota { margin: 0; padding: 12px 20px 24px; font-size: 12px; line-height: 1.5; color: var(--text-muted); }

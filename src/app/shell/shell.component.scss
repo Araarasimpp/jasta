@@ -1,5 +1,5 @@
 // Layout: menú lateral negro azulado (escritorio) y barra inferior (celular).
-// La sección activa se marca en azul; la acción principal va en azul lleno.
+// La sección activa se marca en dorado; la acción principal va en azul lleno.
 
 .shell {
   display: flex;
@@ -28,7 +28,7 @@
   --hover: var(--nav-hover);
   --border: var(--nav-borde);
   --border-strong: var(--nav-borde);
-  --oro-texto: #e3c45c;
+  --oro-texto: #e8bf45;
   color-scheme: dark;
 }
 
@@ -196,7 +196,7 @@
 }
 
 .menu-item.active {
-  background: rgba(37, 99, 235, 0.22);
+  background: rgba(212, 160, 23, 0.16);
   color: #ffffff;
   font-weight: 600;
 }
@@ -209,11 +209,11 @@
   bottom: 7px;
   width: 3px;
   border-radius: 0 2px 2px 0;
-  background: #60a5fa;
+  background: #d4a017;
 }
 
 .menu-item.active ion-icon {
-  color: #93c5fd;
+  color: #e3b83a;
 }
 
 .shell.collapsed .menu-item,

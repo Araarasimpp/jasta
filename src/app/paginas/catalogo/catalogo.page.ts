@@ -46,7 +46,7 @@ function normal(s: string): string {
       @media (prefers-reduced-motion: reduce) { .foto img.capa, .tono { transition: none; } }
       .foto .inicial { display: grid; place-items: center; width: 100%; height: 100%; background: var(--oro-wash); color: var(--oro-texto);
         font-size: 40px; font-weight: 650; cursor: default; }
-      .agotado { position: absolute; top: 8px; left: 8px; padding: 3px 7px; border-radius: 5px; background: rgba(17, 24, 39, 0.72); color: #fff;
+      .agotado { position: absolute; top: 8px; left: 8px; padding: 3px 7px; border-radius: 5px; background: rgba(15, 23, 42, 0.72); color: #fff;
         font-size: 11px; font-weight: 600; }
       .datos-prod { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px 12px; flex: 1; }
       .nombre { margin: 0; font-size: 13.5px; font-weight: 600; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }

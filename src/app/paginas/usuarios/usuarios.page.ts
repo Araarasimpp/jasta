@@ -19,7 +19,7 @@ type Filtro = 'activos' | 'sin_rol' | 'inactivos' | 'todos';
     `
       .roles { display: flex; gap: 4px; flex-wrap: wrap; }
       .cuenta { font-size: 12px; }
-      .cuenta.si { color: var(--st-entregado); }
+      .cuenta.si { color: var(--efectivo-texto); }
       .cuenta.no { color: var(--text-muted); }
       .opciones { display: flex; flex-direction: column; gap: 8px; }
       .check { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; cursor: pointer; }

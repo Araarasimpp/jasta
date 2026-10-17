@@ -28,7 +28,7 @@ const MAX = 5;
       .caja.encima { border-color: var(--accent); }
       .tit { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 13.5px; font-weight: 600; }
       .tit ion-icon { font-size: 18px; color: var(--accent); }
-      .tit .ok { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--st-entregado); }
+      .tit .ok { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--efectivo-texto); }
       .tit .req { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--accent); }
       .fotos { display: flex; gap: 8px; flex-wrap: wrap; }
       .foto { position: relative; width: 74px; height: 74px; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); background: var(--surface-2);

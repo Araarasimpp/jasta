@@ -11,60 +11,74 @@
   --ui-font: 'Geist Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --mono-font: 'Geist Mono Variable', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
-  // Paleta de Jasta:
-  //  Dorado #C9A227 — identidad y destacados (comisiones, premios, insignias). Con moderación.
-  //  Verde  #16A34A — dinero y acciones exitosas (recaudar, confirmar pago, entregar, saldos a favor).
-  //  Azul   #2563EB — navegación y procesos (botones principales, asignar, seguimiento, formularios).
-  //  Negro azulado #111827 — estructura (menú lateral, barras de navegación, encabezados, texto).
-  --tinta: #111827;
-  --oro: #c9a227; // rellenos y marcas (subrayado activo, punto, insignias)
-  --oro-texto: #8a6d0b; // dorado legible sobre blanco
-  --oro-wash: #fbf7e6;
-  --oro-soft: #efe3ad;
-  --efectivo: #16a34a; // verde: botones y rellenos de dinero
+  // Paleta de Jasta
+  //  Marca
+  //   Dorado #D4A017 — logo, menú seleccionado y botones de selección de módulos.
+  //   Negro azulado #0F172A — encabezados, textos destacados y zonas oscuras.
+  //   Verde #16A34A — recaudos, dinero, pagos y confirmaciones.
+  //   Azul #2563EB — pedidos, navegación, asignaciones y seguimiento.
+  //  Complementarios: fondo #F3F4F6, tarjetas #FFFFFF, bordes #E5E7EB,
+  //   azul claro #DBEAFE, verde claro #DCFCE7, amarillo claro #FEF3C7.
+  //  Estados de pedido: pendiente #F59E0B, en ruta #3B82F6, entregado #10B981,
+  //   cancelado/error #EF4444, información #8B5CF6, texto secundario #6B7280.
+  //   Cada estado tiene una versión "-text" más oscura para que se lea en letra pequeña.
+  --tinta: #0f172a;
+  --oro: #d4a017;
+  --oro-texto: #8a6508; // dorado legible sobre blanco
+  --oro-wash: #fef3c7; // amarillo claro
+  --oro-soft: #fde68a;
+  --efectivo: #16a34a; // verde principal: botones y rellenos de dinero
   --efectivo-texto: #15803d; // el mismo verde, legible en texto pequeño
-  --cobalto: #2563eb; // azul
+  --cobalto: #2563eb; // azul principal
 
   // Superficies
-  --bg: #f5f6f8;
+  --bg: #f3f4f6;
   --surface: #ffffff;
-  --surface-2: #f8f9fb;
-  --hover: #f1f3f6;
-  --selected: #e7eaf0;
+  --surface-2: #f9fafb;
+  --hover: #eef0f3;
+  --selected: #e5e7eb;
 
   // Texto
-  --text: #111827;
-  --text-2: #1f2937;
+  --text: #0f172a;
+  --text-2: #1e293b;
   --text-soft: #4b5563;
   --text-muted: #6b7280;
 
-  // Bordes y perforación
+  // Bordes y separadores
   --border: #e5e7eb;
   --border-soft: #eef0f3;
   --border-strong: #d1d5db;
 
-  // Acción principal (botones): el azul. Destacados: el dorado.
+  // Acción principal (botones): el azul
   --accent: #2563eb;
   --accent-hover: #1d4ed8;
   --on-accent: #ffffff;
+  --accent-soft: #dbeafe; // azul claro
+  --accent-wash: #eff6ff;
 
   // Menú lateral y barra de navegación: negro azulado
-  --nav-bg: #111827;
-  --nav-text: #f9fafb;
-  --nav-soft: #cbd2dc;
-  --nav-muted: #8f9aab;
+  --nav-bg: #0f172a;
+  --nav-text: #f8fafc;
+  --nav-soft: #cbd5e1;
+  --nav-muted: #94a3b8;
   --nav-hover: rgba(255, 255, 255, 0.07);
   --nav-borde: rgba(255, 255, 255, 0.12);
 
-  // Estados de pedido (cada uno conserva su color)
-  --st-pendiente: #6b7280;
-  --st-ruta: #c97a00;
-  --st-ruta-text: #9a5b00;
-  --st-cancelado: #9ca3af;
-  --danger: #b42318;
-  --danger-wash: #fdeeec;
-  --ok-wash: #e9f7ee;
-  --ruta-wash: #fdf1df;
+  // Estados de pedido
+  --st-pendiente: #f59e0b;
+  --st-pendiente-text: #b45309;
+  --st-ruta: #3b82f6;
+  --st-ruta-text: #1d4ed8;
+  --st-entregado: #10b981;
+  --st-entregado-text: #047857;
+  --st-cancelado: #ef4444;
+  --st-cancelado-text: #dc2626;
+  --info: #8b5cf6;
+  --info-text: #6d28d9;
+  --danger: #dc2626;
+  --danger-wash: #fee2e2;
+  --ok-wash: #dcfce7; // verde claro
+  --ruta-wash: #dbeafe;
 
   // Forma: esquinas cortas de papel cortado; sombra solo en lo que flota
   --radius-xs: 3px;
@@ -72,7 +86,7 @@
   --radius: 6px;
   --radius-lg: 8px;
   --radius-xl: 12px;
-  --shadow-pop: 0 10px 30px rgba(17, 24, 39, 0.14), 0 2px 6px rgba(17, 24, 39, 0.08);
+  --shadow-pop: 0 10px 30px rgba(15, 23, 42, 0.14), 0 2px 6px rgba(15, 23, 42, 0.08);
   --dur: 140ms;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
 
@@ -81,45 +95,53 @@
 
 body.dark {
   // Noche: el negro azulado de fondo y los mismos colores, más luminosos
-  --tinta: #f3f4f6;
-  --oro: #d6b23e;
-  --oro-texto: #e3c45c;
-  --oro-wash: #272210;
-  --oro-soft: #4a3f16;
+  --tinta: #f1f5f9;
+  --oro: #e0b53a;
+  --oro-texto: #ebc85a;
+  --oro-wash: #2b230c;
+  --oro-soft: #4d3d10;
   --efectivo: #22c55e;
   --efectivo-texto: #4ade80;
   --cobalto: #60a5fa;
 
   --bg: #0b1120;
-  --surface: #111827;
-  --surface-2: #151e2e;
-  --hover: #1f2937;
-  --selected: #273449;
+  --surface: #0f172a;
+  --surface-2: #131c31;
+  --hover: #1e293b;
+  --selected: #263248;
 
-  --text: #f3f4f6;
-  --text-2: #e5e7eb;
-  --text-soft: #a3acb9;
-  --text-muted: #8b95a5;
+  --text: #f1f5f9;
+  --text-2: #e2e8f0;
+  --text-soft: #a3b0c2;
+  --text-muted: #8a97ab;
 
-  --border: #1f2937;
-  --border-soft: #182234;
-  --border-strong: #374151;
+  --border: #1e293b;
+  --border-soft: #162036;
+  --border-strong: #334155;
 
   --accent: #3b82f6;
   --accent-hover: #60a5fa;
   --on-accent: #ffffff;
+  --accent-soft: #1e3a8a;
+  --accent-wash: #172554;
 
-  --nav-bg: #070b14;
+  --nav-bg: #070b16;
   --nav-borde: rgba(255, 255, 255, 0.08);
 
-  --st-pendiente: #a3acb9;
-  --st-ruta: #f0a531;
-  --st-ruta-text: #f0a531;
-  --st-cancelado: #6b7280;
-  --danger: #ff7a6e;
-  --danger-wash: #3a1915;
+  --st-pendiente: #fbbf24;
+  --st-pendiente-text: #fbbf24;
+  --st-ruta: #60a5fa;
+  --st-ruta-text: #93c5fd;
+  --st-entregado: #34d399;
+  --st-entregado-text: #34d399;
+  --st-cancelado: #f87171;
+  --st-cancelado-text: #f87171;
+  --info: #a78bfa;
+  --info-text: #c4b5fd;
+  --danger: #f87171;
+  --danger-wash: #3b1414;
   --ok-wash: #0f2a1b;
-  --ruta-wash: #33240c;
+  --ruta-wash: #172554;
 
   --shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.4);
 }
@@ -129,13 +151,10 @@ body.dark {
 body {
   --sidebar: var(--nav-bg);
   --perfora: 1px dashed var(--border-strong);
-  // Selección y foco de formularios: azul (procesos)
-  --accent-soft: color-mix(in srgb, var(--accent) 22%, var(--surface));
-  --accent-wash: color-mix(in srgb, var(--accent) 9%, var(--surface));
   --link: var(--accent);
   --foco: var(--accent);
-  --st-alistado: var(--cobalto);
-  --st-entregado: var(--efectivo-texto);
+  // Alistado: listo y esperando mensajero (color de información)
+  --st-alistado: var(--info);
 }
 
 // Ionic toma la misma paleta

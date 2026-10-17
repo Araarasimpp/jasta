@@ -63,7 +63,7 @@ interface Tarea {
       .chart.cargando { opacity: 0.5; transition: opacity 150ms; }
       .panel-foot { margin: 10px 0 0; font-size: 12px; color: var(--text-muted); }
       .variacion { margin-left: 6px; font-size: 12px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
-      .variacion.sube { color: var(--st-entregado); }
+      .variacion.sube { color: var(--efectivo-texto); }
       .variacion.baja { color: var(--danger); }
       .cols { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 16px; align-items: start; }
       .lado { display: flex; flex-direction: column; gap: 16px; min-width: 0; }

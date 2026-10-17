@@ -26,7 +26,7 @@ type Metodo = 'todos' | 'efectivo' | 'transferencia' | 'mixto';
       .seccion { padding: 16px 20px 0; }
       .prods { white-space: normal; min-width: 220px; max-width: 360px; font-size: 12px; color: var(--text-soft); line-height: 1.35; }
       .tabla td { white-space: nowrap; }
-      .clip { margin-left: 6px; vertical-align: -2px; color: var(--st-entregado); }
+      .clip { margin-left: 6px; vertical-align: -2px; color: var(--efectivo-texto); }
       .cancel { margin-left: 6px; font-size: 11.5px; font-weight: 600; color: var(--danger); }
       @media (max-width: 760px) { .seccion { padding: 12px 14px 0; } }
     `,

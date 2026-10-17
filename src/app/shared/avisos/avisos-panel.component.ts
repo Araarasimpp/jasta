@@ -107,7 +107,7 @@ import { NotificacionesService, Aviso } from '../../core/services/notificaciones
       .estado-avisos { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 10px 14px 0; }
       .estado-avisos .permiso-ok { margin: 0; flex: 1 1 auto; min-width: 0; line-height: 1.35; }
       .estado-avisos .link-off { flex: 0 0 auto; }
-      .permiso-ok { flex-shrink: 0; margin: 10px 14px 0; font-size: 12px; color: var(--st-entregado); }
+      .permiso-ok { flex-shrink: 0; margin: 10px 14px 0; font-size: 12px; color: var(--efectivo-texto); }
       .link-off { color: var(--text-soft) !important; white-space: nowrap; text-decoration: underline; }
       .link-off:disabled, .permiso button:disabled { opacity: .6; cursor: progress; }
       .link { border: none; background: none; padding: 4px 0; color: var(--accent); font-size: 12px; font-weight: 550; cursor: pointer; }

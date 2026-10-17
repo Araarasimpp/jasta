@@ -68,7 +68,7 @@
   height: 2px;
   margin-left: -14px;
   border-radius: 0 0 2px 2px;
-  background: #60a5fa;
+  background: #d4a017;
   transform: scaleX(0);
   transition: transform 220ms var(--ease);
 }
@@ -87,7 +87,7 @@
 
 .pill-nav a.active ion-icon,
 .pill-nav .tab.active ion-icon {
-  color: #93c5fd;
+  color: #e3b83a;
 }
 
 .pill-nav .tab-label {
@@ -167,7 +167,7 @@
 }
 
 .more-sheet a.active ion-icon {
-  color: var(--accent);
+  color: var(--oro);
 }
 
 .more-sheet ion-icon {

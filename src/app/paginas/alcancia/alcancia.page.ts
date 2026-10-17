@@ -68,7 +68,7 @@ type Atajo = 'hoy' | '7' | 'mes' | 'mes_pasado' | null;
       .periodo-txt::first-letter { text-transform: uppercase; }
       .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); transition: opacity 150ms; }
       .kpis.cargando { opacity: 0.55; }
-      .entra { color: var(--st-entregado); }
+      .entra { color: var(--efectivo-texto); }
       .sale { color: var(--danger); }
 
       .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 16px; align-items: start; }
@@ -87,7 +87,7 @@ type Atajo = 'hoy' | '7' | 'mes' | 'mes_pasado' | null;
       button.mov { cursor: pointer; }
       @media (hover: hover) { button.mov:hover { background: var(--hover); } }
       .mov .ico { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; font-size: 16px; }
-      .mov .ico.entrada { background: color-mix(in srgb, var(--st-entregado) 14%, transparent); color: var(--st-entregado); }
+      .mov .ico.entrada { background: color-mix(in srgb, var(--st-entregado) 14%, transparent); color: var(--efectivo-texto); }
       .mov .ico.salida { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
       .mov .txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
       .mov .t1 { font-size: 14px; font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -90,13 +90,13 @@ interface Resumen {
       .mov { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 11px 0; border-bottom: var(--perfora); }
       .mov:last-child { border-bottom: 0; }
       .ico { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; font-size: 17px; }
-      .ico.base { background: color-mix(in srgb, var(--st-entregado) 14%, transparent); color: var(--st-entregado); }
+      .ico.base { background: color-mix(in srgb, var(--st-entregado) 14%, transparent); color: var(--efectivo-texto); }
       .ico.compra { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
       .mov .t1 { display: block; font-size: 14px; font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .mov .t2 { display: block; font-size: 12px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .mov .der { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
       .mov .monto { font-family: var(--mono-font); font-size: 14px; font-weight: 650; white-space: nowrap; }
-      .mov .monto.base { color: var(--st-entregado); }
+      .mov .monto.base { color: var(--efectivo-texto); }
       .mov .monto.compra { color: var(--danger); }
       .mov .monto.tachado { color: var(--text-muted); text-decoration: line-through; font-weight: 500; }
       .estado { font-size: 11px; font-weight: 650; padding: 1px 7px; border-radius: 8px; }
