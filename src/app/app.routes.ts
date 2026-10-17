@@ -25,7 +25,7 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', canActivate: [redirigirInicio], children: [] },
       { path: 'espera', loadComponent: () => import('./paginas/espera/espera.page').then((m) => m.EsperaPage) },
       {
-        path: 'inicio', canActivate: [rolGuard], data: { roles: ['admin', 'cuadres'] },
+        path: 'inicio', canActivate: [rolGuard], data: { roles: ['admin'] },
         loadComponent: () => import('./paginas/inicio/inicio.page').then((m) => m.InicioPage),
       },
       {
@@ -55,7 +55,7 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/ventas-local/ventas-local.page').then((m) => m.VentasLocalPage),
       },
       {
-        path: 'recolector', canActivate: [rolGuard], data: { roles: ['admin', 'recolector'] },
+        path: 'recolector', canActivate: [rolGuard], data: { roles: ['admin', 'recolector', 'cuadres'] },
         loadComponent: () => import('./paginas/recolector/recolector.page').then((m) => m.RecolectorPage),
       },
       { path: 'alcancia', redirectTo: 'servicio-local', pathMatch: 'full' },
@@ -92,7 +92,7 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/cuadres/cuadres.page').then((m) => m.CuadresPage),
       },
       {
-        path: 'reportes', canActivate: [rolGuard], data: { roles: ['admin', 'cuadres', 'vendedora'] },
+        path: 'reportes', canActivate: [rolGuard], data: { roles: ['admin', 'vendedora'] },
         loadComponent: () => import('./paginas/reportes/reportes.page').then((m) => m.ReportesPage),
       },
       {

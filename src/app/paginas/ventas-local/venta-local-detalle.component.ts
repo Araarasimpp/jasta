@@ -164,7 +164,7 @@ export class VentaLocalDetalleComponent implements OnInit {
   ocupado = signal(false);
 
   esAdmin = computed(() => this.sb.tiene('admin'));
-  veGanancias = computed(() => this.sb.tiene('admin', 'venta_local', 'cuadres'));
+  veGanancias = computed(() => this.sb.tiene('admin', 'venta_local'));
   ganancia = computed(() => (this.venta()?.pedido_items ?? []).reduce((a, i) => a + (Number(i.precio_venta) - Number(i.precio_base)) * i.cantidad, 0));
   aporte = computed(() => Number(this.venta()?.aporte_alcancia ?? 0));
   /** Quien la registró (el autor de la primera nota) */

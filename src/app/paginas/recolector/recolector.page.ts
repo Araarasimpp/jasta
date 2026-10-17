@@ -123,12 +123,14 @@ interface Resumen {
     <div class="page">
       <div class="head">
         <div><p class="fecha">{{ etiqueta() }}</p><h1>Recolector</h1></div>
+        @if (!soloLectura()) {
         <div class="acciones">
-          <button class="b" (click)="abrirBase()"><ion-icon name="add-circle-outline"></ion-icon>{{ esAdmin() && !esRecolector() ? 'Enviar base' : 'Agregar base' }}</button>
+          <button class="b" (click)="abrirBase()"><ion-icon name="add-circle-outline"></ion-icon>{{ admin() && !esRecolector() ? 'Enviar base' : 'Agregar base' }}</button>
           @if (esRecolector()) {
             <button class="b b-pri" (click)="abrirCompra()"><ion-icon name="bag-handle-outline"></ion-icon>Registrar compra</button>
           }
         </div>
+        }
       </div>
 
       <div class="filtros">
@@ -150,7 +152,7 @@ interface Resumen {
                 <span>{{ p.nombre }}</span>
                 <small>Enviada por {{ p.de || 'admin' }} · {{ cuando(p.fecha) }}@if (esAdmin()) { · para {{ p.recolector }} }</small>
               </div>
-              @if (esRecolector() && !esAdmin()) {
+              @if (esRecolector() && !admin()) {
                 <div class="btns">
                   <button class="b" (click)="responder(p, false)" [disabled]="ocupado()"><ion-icon name="close-outline"></ion-icon>Rechazar</button>
                   <button class="b b-ok" (click)="responder(p, true)" [disabled]="ocupado()"><ion-icon name="checkmark-outline"></ion-icon>Aceptar</button>
@@ -212,10 +214,10 @@ interface Resumen {
     @if (formBase()) {
       <button class="velo" aria-label="Cerrar" (click)="formBase.set(false)"></button>
       <div class="hoja hoja-centro" role="dialog" aria-labelledby="t-base">
-        <div class="hoja-head"><h2 id="t-base">{{ esAdmin() && !esRecolector() ? 'Enviar base' : 'Agregar base' }}</h2>
+        <div class="hoja-head"><h2 id="t-base">{{ admin() && !esRecolector() ? 'Enviar base' : 'Agregar base' }}</h2>
           <button class="b b-icono" aria-label="Cerrar" (click)="formBase.set(false)"><ion-icon name="close-outline"></ion-icon></button></div>
         <div class="hoja-body">
-          @if (esAdmin() && !esRecolector()) {
+          @if (admin() && !esRecolector()) {
             <div class="campo"><label for="br">Recolector</label>
               <select id="br" class="inp" [(ngModel)]="baseRec">
                 @for (x of r()?.recolectores ?? []; track x.id) { <option [ngValue]="x.id">{{ x.nombre }}</option> }
@@ -226,12 +228,12 @@ interface Resumen {
           <div class="campo"><label for="bm">Valor</label><input id="bm" class="inp num" type="number" inputmode="numeric" min="0" step="1000" [(ngModel)]="baseMonto" /></div>
           <div class="campo"><label for="bn">Nombre de la base</label>
             <input id="bn" class="inp" maxlength="120" [(ngModel)]="baseNombre" placeholder="¿De dónde viene? Ej: caja del local, ventas de la mañana" /></div>
-          @if (esAdmin() && !esRecolector()) { <p class="ayuda" style="margin: 0">Le llega un aviso al recolector; se suma cuando la acepte.</p> }
+          @if (admin() && !esRecolector()) { <p class="ayuda" style="margin: 0">Le llega un aviso al recolector; se suma cuando la acepte.</p> }
           @if (errorForm()) { <p class="error" role="alert">{{ errorForm() }}</p> }
         </div>
         <div class="hoja-pie">
           <button class="b" (click)="formBase.set(false)">Cancelar</button>
-          <button class="b b-ok" (click)="guardarBase()" [disabled]="ocupado()">{{ ocupado() ? 'Guardando…' : esAdmin() && !esRecolector() ? 'Enviar base' : 'Agregar base' }}</button>
+          <button class="b b-ok" (click)="guardarBase()" [disabled]="ocupado()">{{ ocupado() ? 'Guardando…' : admin() && !esRecolector() ? 'Enviar base' : 'Agregar base' }}</button>
         </div>
       </div>
     }
@@ -283,7 +285,11 @@ export class RecolectorPage implements OnInit, OnDestroy {
   compraProducto = '';
   compraFacturas = signal<string[]>([]);
 
-  esAdmin = computed(() => this.sb.tiene('admin'));
+  /** Ve a todos los recolectores (cuadres también, pero solo para revisar) */
+  esAdmin = computed(() => this.sb.tiene('admin', 'cuadres'));
+  admin = computed(() => this.sb.tiene('admin'));
+  /** Cuadres revisa el cuadre del recolector sin enviar bases ni registrar compras */
+  soloLectura = computed(() => !this.sb.tiene('admin', 'recolector'));
   esRecolector = computed(() => this.sb.tiene('recolector'));
   cuadre = computed(() => Number(this.r()?.base ?? 0) - Number(this.r()?.compras ?? 0));
 
@@ -352,7 +358,7 @@ export class RecolectorPage implements OnInit, OnDestroy {
     const monto = Number(this.baseMonto) || 0;
     if (monto <= 0) return this.errorForm.set('Escribe el valor de la base.');
     if (!this.baseNombre.trim()) return this.errorForm.set('Ponle nombre a la base (de dónde viene).');
-    const enviar = this.esAdmin() && !this.esRecolector();
+    const enviar = this.admin() && !this.esRecolector();
     if (enviar && !this.baseRec) return this.errorForm.set('Elige el recolector.');
     this.ocupado.set(true);
     const { error } = await this.sb.client.rpc('recoleccion_agregar_base', {

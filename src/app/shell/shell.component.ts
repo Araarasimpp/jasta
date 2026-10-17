@@ -50,16 +50,16 @@ interface ItemMenu {
 }
 
 const MENU: ItemMenu[] = [
-  { label: 'Inicio', path: '/app/inicio', icon: 'bar-chart-outline', roles: ['admin', 'cuadres'] },
+  { label: 'Inicio', path: '/app/inicio', icon: 'bar-chart-outline', roles: ['admin'] },
   // Alistamiento: su propio Inicio, solo con información de los pedidos (sin la ganancia de la tienda)
-  { label: 'Inicio', path: '/app/tablero', icon: 'bar-chart-outline', roles: ['alistador'], sinRoles: ['admin', 'cuadres'] },
+  { label: 'Inicio', path: '/app/tablero', icon: 'bar-chart-outline', roles: ['alistador'], sinRoles: ['admin'] },
   { label: 'Mi panel', path: '/app/mi-panel', icon: 'grid-outline', roles: ['vendedora'] },
   { label: 'Pedidos', path: '/app/pedidos', icon: 'receipt-outline', roles: ['admin', 'alistador', 'cuadres'] },
   { label: 'Mis entregas', path: '/app/mis-entregas', icon: 'bicycle-outline', roles: ['mensajero'] },
   { label: 'Venta en local', path: '/app/venta-local', icon: 'storefront-outline', roles: ['admin', 'venta_local'] },
   { label: 'Ventas del local', path: '/app/ventas-local', icon: 'list-outline', roles: ['admin', 'venta_local'] },
   { label: 'Servicio local', path: '/app/servicio-local', icon: 'cash-outline', roles: ['admin', 'venta_local', 'cuadres'] },
-  { label: 'Recolector', path: '/app/recolector', icon: 'bag-handle-outline', roles: ['admin', 'recolector'] },
+  { label: 'Recolector', path: '/app/recolector', icon: 'bag-handle-outline', roles: ['admin', 'recolector', 'cuadres'] },
   { label: 'Cuadres', path: '/app/cuadres', icon: 'wallet-outline', roles: ['admin', 'cuadres', 'mensajero'] },
   { label: 'Catálogo', path: '/app/catalogo', icon: 'book-outline', roles: ['admin', 'vendedora'] },
   { label: 'Ranking', path: '/app/ranking', icon: 'trophy-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador'] },
@@ -67,7 +67,7 @@ const MENU: ItemMenu[] = [
   { label: 'Productos', path: '/app/productos', icon: 'cube-outline', roles: ['admin'] },
   { label: 'Barrios', path: '/app/barrios', icon: 'location-outline', roles: ['admin'] },
   { label: 'Usuarios', path: '/app/usuarios', icon: 'people-outline', roles: ['admin'] },
-  { label: 'Reportes', path: '/app/reportes', icon: 'stats-chart-outline', roles: ['admin', 'cuadres', 'vendedora'] },
+  { label: 'Reportes', path: '/app/reportes', icon: 'stats-chart-outline', roles: ['admin', 'vendedora'] },
   { label: 'Actividad', path: '/app/actividad', icon: 'time-outline', roles: ['admin'] },
   { label: 'Configuración', path: '/app/configuracion', icon: 'settings-outline', roles: ['admin'] },
   { label: 'Mi perfil', path: '/app/perfil', icon: 'person-circle-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador', 'venta_local', 'recolector'] },
@@ -217,7 +217,11 @@ export class ShellComponent implements OnInit, OnDestroy {
 
   menu = computed(() => {
     const roles = this.sb.roles();
-    return MENU.filter((m) => m.roles.some((r) => roles.includes(r)) && !m.sinRoles?.some((r) => roles.includes(r)));
+    const items = MENU.filter((m) => m.roles.some((r) => roles.includes(r)) && !m.sinRoles?.some((r) => roles.includes(r)));
+    // La pantalla principal de cada quien va de primera (en el celular es la primera pestaña)
+    const inicio = this.sb.inicioSegunRoles();
+    const i = items.findIndex((m) => m.path === inicio);
+    return i > 0 ? [items[i], ...items.slice(0, i), ...items.slice(i + 1)] : items;
   });
   /** En el celular caben 2 secciones en la barra (más Nuevo, Avisos y Más); el resto va en "Más" */
   tabs = computed(() => this.menu().slice(0, 2));

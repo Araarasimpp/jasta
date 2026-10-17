@@ -1,4 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import { refreshOutline, chevronDownOutline, chevronUpOutline } from 'ionicons/icons';
@@ -10,7 +11,7 @@ import { RangoFechas } from '../../shared/rango/rango.component';
 import { DiaComponent } from '../../shared/rango/dia.component';
 import { Cuadre, Pedido } from '../../shared/modelos';
 import { mensajeError, pesos } from '../../shared/formato';
-import { finDiaColombia, formatoFechaCO, formatoHoraCO, inicioDiaColombia } from '../../shared/fecha-colombia';
+import { finDiaColombia, formatoFechaCO, formatoHoraCO, hoyColombiaISO, inicioDiaColombia } from '../../shared/fecha-colombia';
 
 interface Pendiente {
   mensajero_id: number;
@@ -25,7 +26,7 @@ interface Pendiente {
 @Component({
   selector: 'app-cuadres',
   standalone: true,
-  imports: [IonIcon, PedidoDetalleComponent, DiaComponent],
+  imports: [IonIcon, RouterLink, PedidoDetalleComponent, DiaComponent],
   styles: [
     `
       .cifras { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
@@ -42,7 +43,13 @@ interface Pendiente {
       @media (hover: hover) { .mini tr:hover td { background: var(--hover); } }
       h2 { margin: 0; font-size: 14px; font-weight: 600; }
       .hist-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-      @media (max-width: 640px) { .cifras { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+      .cifras.tres { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .cifra.clave.neg { background: var(--danger-wash); }
+      .cifra.clave.neg small { color: var(--danger); }
+      @media (max-width: 640px) {
+        .cifras { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .cifras.tres .clave { grid-column: 1 / -1; }
+      }
     `,
   ],
   template: `
@@ -52,7 +59,28 @@ interface Pendiente {
         <button class="b b-icono" aria-label="Actualizar" (click)="cargar()"><ion-icon name="refresh-outline"></ion-icon></button>
       </div>
       <div class="vista-body">
-        <h2>Pendientes por cuadrar</h2>
+        @if (veRecolector() && recolectores().length) {
+          <div class="hist-head">
+            <h2>Recolector · hoy</h2>
+            <a class="b" routerLink="/app/recolector">Ver movimientos</a>
+          </div>
+          <div class="tarjetas">
+            @for (r of recolectores(); track r.id) {
+              <article class="tarjeta">
+                <div class="tarjeta-top"><h3>{{ r.nombre }}</h3>
+                  @if (r.pendientes) { <span class="suave" style="font-size: 12px">{{ r.pendientes }} {{ r.pendientes === 1 ? 'base por aceptar' : 'bases por aceptar' }}</span> }
+                </div>
+                <div class="cifras tres">
+                  <div class="cifra"><small>Bases recibidas</small><strong class="num">{{ pesos(r.base) }}</strong></div>
+                  <div class="cifra"><small>Compras ({{ r.n_compras }})</small><strong class="num">{{ pesos(r.compras) }}</strong></div>
+                  <div class="cifra clave" [class.neg]="r.base - r.compras < 0"><small>Debe tener en la mano</small><strong class="num">{{ pesos(r.base - r.compras) }}</strong></div>
+                </div>
+              </article>
+            }
+          </div>
+        }
+
+        <h2>Mensajeros pendientes por cuadrar</h2>
         <div class="tarjetas">
           @for (c of pendientes(); track c.mensajero_id) {
             <article class="tarjeta">
@@ -183,6 +211,9 @@ export class CuadresPage implements OnInit {
   );
 
   puedeCerrar = computed(() => this.sb.tiene('admin', 'cuadres'));
+  /** Cuadre del recolector de hoy (bases − compras), para quien hace los cuadres */
+  veRecolector = computed(() => this.sb.tiene('admin', 'cuadres'));
+  recolectores = signal<{ id: number; nombre: string; base: number; compras: number; n_compras: number; pendientes: number }[]>([]);
   pesos = pesos;
 
   constructor() {
@@ -202,10 +233,34 @@ export class CuadresPage implements OnInit {
       const [p, h] = await Promise.all([this.ps.cuadresPendientes(), this.historialPagina(this.pagina())]);
       this.pendientes.set(p);
       this.historial.set(h);
+      if (this.veRecolector()) void this.cargarRecolectores();
     } catch (e) {
       this.toast.error(mensajeError(e));
     } finally {
       this.cargando.set(false);
+    }
+  }
+
+  /** Lo de hoy de cada recolector: bases aceptadas, compras y lo que debe tener */
+  private async cargarRecolectores(): Promise<void> {
+    type R = { base: number; compras: number; n_compras: number; pendientes: { recolector: string }[]; recolectores: { id: number; nombre: string }[] };
+    const hoy = hoyColombiaISO();
+    const pedir = async (id: number | null) => {
+      const { data, error } = await this.sb.client.rpc('recoleccion_resumen', { p_desde: hoy, p_hasta: hoy, p_recolector: id });
+      if (error) throw error;
+      return data as R;
+    };
+    try {
+      const todos = await pedir(null);
+      const filas = await Promise.all(
+        todos.recolectores.map(async (u) => {
+          const r = await pedir(u.id);
+          return { id: u.id, nombre: u.nombre, base: Number(r.base), compras: Number(r.compras), n_compras: Number(r.n_compras), pendientes: r.pendientes.length };
+        })
+      );
+      this.recolectores.set(filas);
+    } catch {
+      /* sin el resumen del recolector se ven igual los cuadres de los mensajeros */
     }
   }
 

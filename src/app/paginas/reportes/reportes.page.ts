@@ -372,7 +372,7 @@ export class ReportesPage implements OnInit {
   private ps = inject(PedidosService);
 
   readonly porPagina = POR_PAGINA;
-  veTodo = computed(() => this.sb.tiene('admin', 'cuadres'));
+  veTodo = computed(() => this.sb.tiene('admin'));
   private pestanas: { id: Pestana; label: string; todo?: boolean }[] = [
     { id: 'detalle', label: 'Productos vendidos' },
     { id: 'pedidos', label: 'Pedidos' },
