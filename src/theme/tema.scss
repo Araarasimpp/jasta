@@ -14,7 +14,7 @@
   // Paleta de Jasta
   //  Marca
   //   Dorado #D4A017 — logo, menú seleccionado y botones de selección de módulos.
-  //   Negro azulado #0F172A — encabezados, textos destacados y zonas oscuras.
+  //   Negro azulado #0F172A — encabezados y textos destacados.
   //   Verde #16A34A — recaudos, dinero, pagos y confirmaciones.
   //   Azul #2563EB — pedidos, navegación, asignaciones y seguimiento.
   //  Complementarios: fondo #F3F4F6, tarjetas #FFFFFF, bordes #E5E7EB,
@@ -56,13 +56,6 @@
   --accent-soft: #dbeafe; // azul claro
   --accent-wash: #eff6ff;
 
-  // Menú lateral y barra de navegación: negro azulado
-  --nav-bg: #0f172a;
-  --nav-text: #f8fafc;
-  --nav-soft: #cbd5e1;
-  --nav-muted: #94a3b8;
-  --nav-hover: rgba(255, 255, 255, 0.07);
-  --nav-borde: rgba(255, 255, 255, 0.12);
 
   // Estados de pedido
   --st-pendiente: #f59e0b;
@@ -125,8 +118,6 @@ body.dark {
   --accent-soft: #1e3a8a;
   --accent-wash: #172554;
 
-  --nav-bg: #070b16;
-  --nav-borde: rgba(255, 255, 255, 0.08);
 
   --st-pendiente: #fbbf24;
   --st-pendiente-text: #fbbf24;
@@ -149,7 +140,7 @@ body.dark {
 // Alias que dependen de otros tokens: se declaran en body para que se
 // recalculen con los valores del tema oscuro (en :root quedarían fijos).
 body {
-  --sidebar: var(--nav-bg);
+  --sidebar: var(--surface);
   --perfora: 1px dashed var(--border-strong);
   --link: var(--accent);
   --foco: var(--accent);

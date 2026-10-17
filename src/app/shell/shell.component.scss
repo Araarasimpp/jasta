@@ -1,4 +1,5 @@
-// Layout: menú lateral negro azulado (escritorio) y barra inferior (celular).
+// Layout: menú lateral (escritorio) y barra inferior (celular), del color de
+// las tarjetas: blancos en modo claro y oscuros en modo oscuro.
 // La sección activa se marca en dorado; la acción principal va en azul lleno.
 
 .shell {
@@ -19,17 +20,8 @@
   padding: 14px 12px 12px;
   box-sizing: border-box;
   background: var(--sidebar);
-  border-right: 1px solid var(--nav-borde);
+  border-right: 1px solid var(--border);
   color: var(--text);
-  // Dentro del menú, los tonos de texto y rayas son los del fondo oscuro
-  --text: var(--nav-text);
-  --text-soft: var(--nav-soft);
-  --text-muted: var(--nav-muted);
-  --hover: var(--nav-hover);
-  --border: var(--nav-borde);
-  --border-strong: var(--nav-borde);
-  --oro-texto: #e8bf45;
-  color-scheme: dark;
 }
 
 .shell.collapsed .sidebar {
@@ -52,8 +44,8 @@
   object-fit: contain;
 }
 
-.brand-mark {
-  // La JT es negra con borde dorado: sobre el menú oscuro va en una placa clara
+:host-context(.dark) .brand-mark {
+  // La JT es negra con borde dorado: en modo oscuro va sobre una placa clara
   padding: 3px;
   box-sizing: border-box;
   border-radius: var(--radius);
@@ -196,8 +188,8 @@
 }
 
 .menu-item.active {
-  background: rgba(212, 160, 23, 0.16);
-  color: #ffffff;
+  background: var(--oro-wash);
+  color: var(--text);
   font-weight: 600;
 }
 
@@ -209,11 +201,11 @@
   bottom: 7px;
   width: 3px;
   border-radius: 0 2px 2px 0;
-  background: #d4a017;
+  background: var(--oro);
 }
 
 .menu-item.active ion-icon {
-  color: #e3b83a;
+  color: var(--oro);
 }
 
 .shell.collapsed .menu-item,

@@ -21,6 +21,7 @@
     "@ionic/angular": "^9.0.0",
     "@supabase/supabase-js": "^2.116.0",
     "chart.js": "4.5.1",
+    "fflate": "0.8.3",
     "ionicons": "^8.1.0",
     "jspdf": "3.0.1",
     "qrcode-generator": "1.4.4",

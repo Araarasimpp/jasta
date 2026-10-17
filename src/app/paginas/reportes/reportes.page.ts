@@ -9,7 +9,7 @@ import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detal
 import { RangoFechas, diaCorto, diaLargo } from '../../shared/rango/rango.component';
 import { PedidosService } from '../../core/services/pedidos.service';
 import { Usuario } from '../../shared/modelos';
-import { descargarCsv } from '../../shared/exportar';
+import { descargarExcel } from '../../shared/exportar';
 import { mensajeError, numero, pesos } from '../../shared/formato';
 import { finDiaColombia, formatoFechaCO, formatoHoraCO, hoyColombiaISO, inicioDiaColombia } from '../../shared/fecha-colombia';
 
@@ -564,7 +564,7 @@ export class ReportesPage implements OnInit {
       switch (this.pestana()) {
         case 'detalle': {
           const filas = await this.todas<LineaVenta>('ventas_detalle');
-          descargarCsv(`productos_vendidos_${sufijo}`, [
+          descargarExcel(`productos_vendidos_${sufijo}`, [
             { titulo: 'Fecha', valor: (f: LineaVenta) => this.fechaExcel(f.created_at) },
             { titulo: 'Pedido', valor: (f) => f.pedido_id },
             { titulo: 'Producto', valor: (f) => f.producto },
@@ -589,7 +589,7 @@ export class ReportesPage implements OnInit {
         }
         case 'pedidos': {
           const filas = await this.todas<PedidoVenta>('ventas_pedidos');
-          descargarCsv(`pedidos_${sufijo}`, [
+          descargarExcel(`pedidos_${sufijo}`, [
             { titulo: 'Fecha', valor: (f: PedidoVenta) => this.fechaExcel(f.created_at) },
             { titulo: 'Pedido', valor: (f) => f.id },
             { titulo: 'Cliente', valor: (f) => f.cliente_nombre },
@@ -613,7 +613,7 @@ export class ReportesPage implements OnInit {
           break;
         }
         case 'vendedoras':
-          descargarCsv(`vendedoras_${sufijo}`, [
+          descargarExcel(`vendedoras_${sufijo}`, [
             { titulo: 'Vendedora', valor: (f: FilaVendedora) => f.nombre },
             { titulo: 'Pedidos', valor: (f) => f.pedidos },
             { titulo: 'Unidades', valor: (f) => f.unidades },
@@ -624,7 +624,7 @@ export class ReportesPage implements OnInit {
           ], a?.vendedoras ?? []);
           break;
         case 'productos':
-          descargarCsv(`por_producto_${sufijo}`, [
+          descargarExcel(`por_producto_${sufijo}`, [
             { titulo: 'Producto', valor: (f: FilaProducto) => f.nombre },
             { titulo: 'Unidades', valor: (f) => f.unidades },
             { titulo: 'Ventas', valor: (f) => f.ventas },
@@ -636,7 +636,7 @@ export class ReportesPage implements OnInit {
           ], a?.productos ?? []);
           break;
         case 'mensajeros':
-          descargarCsv(`mensajeros_${sufijo}`, [
+          descargarExcel(`mensajeros_${sufijo}`, [
             { titulo: 'Mensajero', valor: (f: FilaMensajero) => f.nombre },
             { titulo: 'Entregas', valor: (f) => f.entregas },
             { titulo: 'Domicilios', valor: (f) => f.domicilios },
@@ -646,7 +646,7 @@ export class ReportesPage implements OnInit {
           ], a?.mensajeros ?? []);
           break;
         case 'barrios':
-          descargarCsv(`barrios_${sufijo}`, [
+          descargarExcel(`barrios_${sufijo}`, [
             { titulo: 'Barrio', valor: (f: FilaBarrio) => f.barrio },
             { titulo: 'Pedidos', valor: (f) => f.pedidos },
             { titulo: 'Ventas', valor: (f) => f.ventas },
@@ -656,7 +656,7 @@ export class ReportesPage implements OnInit {
           ], a?.barrios ?? []);
           break;
         case 'dias':
-          descargarCsv(`por_dia_${sufijo}`, [
+          descargarExcel(`por_dia_${sufijo}`, [
             { titulo: 'Día', valor: (f: FilaDia) => f.dia },
             { titulo: 'Pedidos', valor: (f) => f.pedidos },
             { titulo: 'Ventas', valor: (f) => f.ventas },
