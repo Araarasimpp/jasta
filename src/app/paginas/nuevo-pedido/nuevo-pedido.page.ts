@@ -9,12 +9,21 @@ import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { Producto, TipoRecaudo, Usuario } from '../../shared/modelos';
 import { mensajeError, pesos, urlImagen } from '../../shared/formato';
+import { VisorService } from '../../shared/visor/visor.service';
 
 interface Linea {
+  /** Para seguir la línea en la lista aunque se repita el producto */
+  key: number;
   producto: Producto;
   cantidad: number;
   precio: number;
+  color: string | null;
+  talla: string | null;
+  /** Ya respondió que todas las unidades son iguales (no se vuelve a preguntar) */
+  iguales: boolean;
 }
+
+let claves = 0;
 
 /** Quita tildes y pasa a minúsculas para buscar sin importar cómo se escriba */
 function normal(s: string): string {
@@ -45,7 +54,28 @@ function normal(s: string): string {
       .res .nom small { display: block; color: var(--text-muted); font-size: 12px; }
       .res .pre { font-weight: 500; white-space: nowrap; }
       .stock-bajo { color: var(--danger); }
-      .linea { display: grid; grid-template-columns: 1fr auto auto auto; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border-soft); font-size: 13px; }
+      .linea { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto auto; gap: 8px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-soft); font-size: 13px; }
+      .linea.falta { box-shadow: inset 3px 0 0 var(--oro); padding-left: 8px; }
+      .mini { width: 40px; height: 40px; border-radius: 6px; object-fit: cover; background: var(--surface-2); display: block; border: 1px solid var(--border-soft); padding: 0; cursor: zoom-in; overflow: hidden; }
+      .mini img { width: 100%; height: 100%; object-fit: cover; display: block; animation: aparece 200ms ease both; }
+      span.mini { cursor: default; }
+      @keyframes aparece { from { opacity: 0; } }
+      .vars { grid-column: 2 / -1; display: flex; flex-direction: column; gap: 8px; }
+      .var-fila { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+      .var-etq { font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-muted); min-width: 44px; }
+      .var-etq.pide { color: var(--oro-texto); }
+      .var { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: 15px;
+        background: var(--surface); color: var(--text); font: inherit; font-size: 13px; cursor: pointer; transition: border-color 120ms, background 120ms; }
+      .var.on { border-color: var(--text); background: var(--text); color: var(--bg); font-weight: 600; }
+      .var .tono { width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 0 1px var(--border-strong); flex: none; }
+      .var.on .tono { box-shadow: 0 0 0 1.5px var(--bg); }
+      .var.talla { min-width: 38px; justify-content: center; padding: 0 9px; font-family: var(--mono-font); }
+      .pregunta { grid-column: 2 / -1; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-radius: var(--radius); background: var(--oro-wash);
+        border: 1px solid color-mix(in srgb, var(--oro) 35%, transparent); animation: aparece 180ms ease both; }
+      .pregunta p { margin: 0; font-size: 13.5px; font-weight: 550; color: var(--text); }
+      .pregunta div { display: flex; gap: 8px; flex-wrap: wrap; }
+      .pregunta .b { height: 34px; }
+      .unidad { font-size: 11.5px; font-weight: 600; color: var(--oro-texto); margin-left: 6px; }
       .linea .nom { min-width: 0; }
       .linea .nom small { display: block; color: var(--text-muted); font-size: 12px; }
       .cant { display: flex; align-items: center; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); }
@@ -63,8 +93,12 @@ function normal(s: string): string {
       @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
       /* Celular: nombre arriba; cantidad, precio y quitar en la línea de abajo */
       @media (max-width: 900px) {
-        .linea { grid-template-columns: auto minmax(0, 1fr) auto; row-gap: 8px; padding: 10px 0; }
-        .linea .nom { grid-column: 1 / -1; font-size: 14px; }
+        .linea { grid-template-columns: auto auto minmax(0, 1fr) auto; row-gap: 8px; padding: 10px 0; }
+        .linea .mini { grid-row: 1; grid-column: 1; }
+        .linea .nom { grid-row: 1; grid-column: 2 / -1; font-size: 14px; }
+        .linea .cant { grid-column: 1 / span 2; }
+        .vars, .pregunta { grid-column: 1 / -1; }
+        .var { height: 34px; padding: 0 12px; font-size: 14px; }
         .linea .precio { width: 100%; height: 38px; }
         .cant button { width: 38px; height: 38px; font-size: 18px; }
         .cant span { min-width: 28px; }
@@ -181,9 +215,14 @@ function normal(s: string): string {
               </div>
             }
 
-            @for (l of lineas(); track l.producto.id; let i = $index) {
-              <div class="linea">
-                <span class="nom">{{ l.producto.nombre }}<small>Base {{ pesos(l.producto.precio_base) }}</small></span>
+            @for (l of lineas(); track l.key; let i = $index) {
+              <div class="linea" [class.falta]="falta(l)">
+                @if (fotoLinea(l); as u) {
+                  <button type="button" class="mini" (click)="verFoto(l)" [attr.aria-label]="'Ver foto de ' + l.producto.nombre"><img [src]="u" alt="" /></button>
+                } @else {
+                  <span class="mini" aria-hidden="true"></span>
+                }
+                <span class="nom">{{ l.producto.nombre }}@if (unidadDe(i); as u) {<span class="unidad">{{ u }}</span>}<small>Base {{ pesos(l.producto.precio_base) }}</small></span>
                 <span class="cant">
                   <button (click)="cambiarCantidad(i, -1)" aria-label="Menos"><ion-icon name="remove"></ion-icon></button>
                   <span class="num">{{ l.cantidad }}</span>
@@ -191,6 +230,36 @@ function normal(s: string): string {
                 </span>
                 <input class="inp precio num" type="number" inputmode="numeric" step="1000" [ngModel]="l.precio" (ngModelChange)="cambiarPrecio(i, $event)" aria-label="Precio unitario" />
                 <button class="b b-icono" (click)="quitar(i)" aria-label="Quitar"><ion-icon name="close-outline"></ion-icon></button>
+                @if (tieneVariantes(l.producto)) {
+                  @if (preguntar() === l.key) {
+                    <div class="pregunta" role="group" aria-label="Variantes">
+                      <p>¿Las {{ l.cantidad }} unidades son del mismo {{ queVaria(l.producto) }}?</p>
+                      <div>
+                        <button type="button" class="b b-pri" (click)="sonIguales(i)">Sí, iguales</button>
+                        <button type="button" class="b" (click)="sonDiferentes(i)">No, son diferentes</button>
+                      </div>
+                    </div>
+                  }
+                  <div class="vars">
+                    @if (l.producto.colores?.length) {
+                      <div class="var-fila" role="radiogroup" [attr.aria-label]="'Color de ' + l.producto.nombre">
+                        <span class="var-etq" [class.pide]="!l.color">Color</span>
+                        @for (c of l.producto.colores!; track c.id) {
+                          <button type="button" class="var" role="radio" [attr.aria-checked]="l.color === c.nombre" [class.on]="l.color === c.nombre" (click)="elegir(i, 'color', c.nombre)">
+                            <span class="tono" [style.background]="c.hex || '#ccc'"></span>{{ c.nombre }}</button>
+                        }
+                      </div>
+                    }
+                    @if (l.producto.tallas?.length) {
+                      <div class="var-fila" role="radiogroup" [attr.aria-label]="'Talla de ' + l.producto.nombre">
+                        <span class="var-etq" [class.pide]="!l.talla">Talla</span>
+                        @for (t of l.producto.tallas!; track t) {
+                          <button type="button" class="var talla" role="radio" [attr.aria-checked]="l.talla === t" [class.on]="l.talla === t" (click)="elegir(i, 'talla', t)">{{ t }}</button>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
               </div>
             } @empty {
               <div class="vacio">Busca y agrega los productos.</div>
@@ -222,6 +291,10 @@ export class NuevoPedidoPage implements OnInit {
   private toast = inject(ToastService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private visor = inject(VisorService);
+
+  /** Línea a la que se le pregunta si sus unidades son iguales o diferentes */
+  preguntar = signal<number | null>(null);
 
   /** 'local' = venta en el punto físico */
   local = signal(this.route.snapshot.data['modo'] === 'local');
@@ -309,6 +382,10 @@ export class NuevoPedidoPage implements OnInit {
             ({ id: i.producto_id ?? 0, nombre: i.nombre, precio_base: i.precio_base, precio_venta: i.precio_venta } as Producto),
           cantidad: i.cantidad,
           precio: Number(i.precio_venta),
+          key: ++claves,
+          color: i.color ?? null,
+          talla: i.talla ?? null,
+          iguales: true,
         }))
       );
     } finally {
@@ -349,19 +426,98 @@ export class NuevoPedidoPage implements OnInit {
 
   agregar(p: Producto): void {
     const ls = [...this.lineas()];
-    const i = ls.findIndex((l) => l.producto.id === p.id);
+    // Con colores o tallas, cada vez que se agrega es una línea nueva (puede ser otra variante)
+    const i = this.tieneVariantes(p) ? -1 : ls.findIndex((l) => l.producto.id === p.id);
     if (i >= 0) ls[i] = { ...ls[i], cantidad: ls[i].cantidad + 1 };
-    else ls.push({ producto: p, cantidad: 1, precio: Number(p.precio_venta) });
+    else ls.push(this.lineaNueva(p));
     this.lineas.set(ls);
     this.busqueda.set('');
   }
 
+  private lineaNueva(p: Producto, base?: Partial<Linea>): Linea {
+    // Si solo hay un color o una talla, ya queda elegida
+    const color = p.colores?.length === 1 ? p.colores[0].nombre : null;
+    const talla = p.tallas?.length === 1 ? p.tallas[0] : null;
+    return { key: ++claves, producto: p, cantidad: 1, precio: Number(p.precio_venta), color, talla, iguales: false, ...base };
+  }
+
   cambiarCantidad(i: number, d: number): void {
     const ls = [...this.lineas()];
-    const n = ls[i].cantidad + d;
-    if (n <= 0) ls.splice(i, 1);
-    else ls[i] = { ...ls[i], cantidad: n };
+    const l = ls[i];
+    const n = l.cantidad + d;
+    if (n <= 0) {
+      ls.splice(i, 1);
+      if (this.preguntar() === l.key) this.preguntar.set(null);
+    } else {
+      ls[i] = { ...l, cantidad: n };
+      // Al pasar de 1 unidad se pregunta si todas son del mismo color y talla
+      if (d > 0 && n >= 2 && !l.iguales && this.tieneVariantes(l.producto)) this.preguntar.set(l.key);
+      if (n < 2 && this.preguntar() === l.key) this.preguntar.set(null);
+    }
     this.lineas.set(ls);
+  }
+
+  // ---------- Colores y tallas ----------
+  tieneVariantes(p: Producto): boolean {
+    return !!(p.colores?.length || p.tallas?.length);
+  }
+
+  /** "color y talla", "color" o "talla" */
+  queVaria(p: Producto): string {
+    const c = !!p.colores?.length;
+    const t = !!p.tallas?.length;
+    return c && t ? 'color y talla' : c ? 'color' : 'talla';
+  }
+
+  elegir(i: number, campo: 'color' | 'talla', valor: string): void {
+    const ls = [...this.lineas()];
+    ls[i] = { ...ls[i], [campo]: ls[i][campo] === valor ? null : valor };
+    this.lineas.set(ls);
+    if (this.error().startsWith('Elige ')) this.error.set('');
+  }
+
+  sonIguales(i: number): void {
+    const ls = [...this.lineas()];
+    ls[i] = { ...ls[i], iguales: true };
+    this.lineas.set(ls);
+    this.preguntar.set(null);
+  }
+
+  /** Separa la línea en una por unidad, para elegir el color y la talla de cada una */
+  sonDiferentes(i: number): void {
+    const ls = [...this.lineas()];
+    const l = ls[i];
+    const unidades = Array.from({ length: l.cantidad }, (_, k) =>
+      k === 0 ? { ...l, cantidad: 1, iguales: true } : this.lineaNueva(l.producto, { precio: l.precio, iguales: true })
+    );
+    ls.splice(i, 1, ...unidades);
+    this.lineas.set(ls);
+    this.preguntar.set(null);
+  }
+
+  /** "Unidad 2 de 3" cuando un producto quedó separado en varias líneas */
+  unidadDe(i: number): string {
+    const ls = this.lineas();
+    const l = ls[i];
+    if (!this.tieneVariantes(l.producto)) return '';
+    const mismas = ls.filter((x) => x.producto.id === l.producto.id);
+    if (mismas.length < 2) return '';
+    return `${mismas.indexOf(l) + 1} de ${mismas.length}`;
+  }
+
+  /** Le falta elegir color o talla */
+  falta(l: Linea): boolean {
+    return (!!l.producto.colores?.length && !l.color) || (!!l.producto.tallas?.length && !l.talla);
+  }
+
+  fotoLinea(l: Linea): string | null {
+    const delColor = l.color ? l.producto.colores?.find((c) => c.nombre === l.color)?.imagen_url : null;
+    return urlImagen(delColor || l.producto.imagen_url);
+  }
+
+  verFoto(l: Linea): void {
+    const u = this.fotoLinea(l);
+    if (u) this.visor.abrir([{ url: u, titulo: [l.producto.nombre, l.color, l.talla && 'Talla ' + l.talla].filter(Boolean).join(' · ') }]);
   }
 
   cambiarPrecio(i: number, v: number): void {
@@ -372,6 +528,7 @@ export class NuevoPedidoPage implements OnInit {
 
   quitar(i: number): void {
     const ls = [...this.lineas()];
+    if (this.preguntar() === ls[i].key) this.preguntar.set(null);
     ls.splice(i, 1);
     this.lineas.set(ls);
   }
@@ -393,7 +550,21 @@ export class NuevoPedidoPage implements OnInit {
       if (this.tipo() === 'mixto' && Number(this.efectivo) + Number(this.transferencia) !== this.subtotal())
         return this.error.set(`Efectivo + transferencia debe dar ${pesos(this.subtotal())}.`);
     }
-    const items = this.lineas().map((l) => ({ producto_id: l.producto.id, cantidad: l.cantidad, precio_venta: l.precio }));
+    const sinElegir = this.lineas().find((l) => this.falta(l));
+    if (sinElegir) {
+      const que = [sinElegir.producto.colores?.length && !sinElegir.color ? 'el color' : '', sinElegir.producto.tallas?.length && !sinElegir.talla ? 'la talla' : '']
+        .filter(Boolean).join(' y ');
+      return this.error.set(`Elige ${que} de ${sinElegir.producto.nombre}.`);
+    }
+    // Las líneas iguales (mismo producto, color, talla y precio) se juntan en una
+    const juntas = new Map<string, { producto_id: number; cantidad: number; precio_venta: number; color: string | null; talla: string | null }>();
+    for (const l of this.lineas()) {
+      const k = [l.producto.id, l.color ?? '', l.talla ?? '', l.precio].join('|');
+      const ya = juntas.get(k);
+      if (ya) ya.cantidad += l.cantidad;
+      else juntas.set(k, { producto_id: l.producto.id, cantidad: l.cantidad, precio_venta: l.precio, color: l.color, talla: l.talla });
+    }
+    const items = [...juntas.values()];
     this.guardando.set(true);
     try {
       if (this.editId()) {

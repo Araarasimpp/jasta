@@ -15,6 +15,7 @@ import { mensajeError, pesos, urlImagen } from '../formato';
 import { formatoFechaCO, formatoHoraCO } from '../fecha-colombia';
 import { ChatPedidoComponent } from '../chat-pedido/chat-pedido.component';
 import { VisorService } from '../visor/visor.service';
+import { fotoDeItem, nombreConVariante, variante } from '../variante';
 
 /** Hoja lateral con todo el pedido y las acciones que le tocan a cada rol */
 @Component({
@@ -39,6 +40,8 @@ import { VisorService } from '../visor/visor.service';
       .lineas td:last-child { text-align: right; white-space: nowrap; }
       .lineas .cant { width: 36px; color: var(--text-soft); }
       .lider { display: flex; align-items: baseline; gap: 8px; padding-right: 8px; }
+      .item-nom { display: flex; flex-direction: column; gap: 1px; }
+      .variante { font-size: 12px; font-weight: 600; color: var(--oro-texto); }
       .lider::after { content: ''; flex: 1; min-width: 16px; border-bottom: 1px dotted var(--border-strong); transform: translateY(-4px); }
       .lineas tfoot tr:first-child td { border-top: var(--perfora); padding-top: 9px; }
       .lineas tfoot td { color: var(--text-soft); }
@@ -112,7 +115,7 @@ import { VisorService } from '../visor/visor.service';
             <table class="lineas">
               <tbody>
                 @for (i of p.pedido_items ?? []; track i.id) {
-                  <tr><td class="cant num">{{ i.cantidad }}×</td><td><span class="lider">@if (urlImagen(i.producto?.imagen_url); as u) {<button type="button" class="mini-foto" (click)="verProducto(i)" [attr.aria-label]="'Ver foto de ' + i.nombre"><img [src]="u" alt="" loading="lazy" /></button>}{{ i.nombre }}</span></td><td class="num">{{ pesos(i.total) }}</td></tr>
+                  <tr><td class="cant num">{{ i.cantidad }}×</td><td><span class="lider">@if (urlImagen(fotoDeItem(i)); as u) {<button type="button" class="mini-foto" (click)="verProducto(i)" [attr.aria-label]="'Ver foto de ' + i.nombre"><img [src]="u" alt="" loading="lazy" /></button>}<span class="item-nom">{{ i.nombre }}@if (variante(i); as v) {<small class="variante">{{ v }}</small>}</span></span></td><td class="num">{{ pesos(i.total) }}</td></tr>
                 }
               </tbody>
               <tfoot>
@@ -241,6 +244,8 @@ export class PedidoDetalleComponent implements OnChanges {
 
   pesos = pesos;
   urlImagen = urlImagen;
+  fotoDeItem = fotoDeItem;
+  variante = variante;
   estadoLabel = estadoLabel;
 
   pasos = [
@@ -380,9 +385,9 @@ export class PedidoDetalleComponent implements OnChanges {
   }
 
   verProducto(it: PedidoItem): void {
-    const conFoto = (this.pedido()?.pedido_items ?? []).filter((x) => urlImagen(x.producto?.imagen_url));
+    const conFoto = (this.pedido()?.pedido_items ?? []).filter((x) => urlImagen(fotoDeItem(x)));
     this.visor.abrir(
-      conFoto.map((x) => ({ url: urlImagen(x.producto?.imagen_url)!, titulo: x.nombre })),
+      conFoto.map((x) => ({ url: urlImagen(fotoDeItem(x))!, titulo: nombreConVariante(x) })),
       conFoto.findIndex((x) => x.id === it.id)
     );
   }

@@ -4,6 +4,7 @@ import { ToastService } from '../toast/toast.service';
 import { Pedido } from '../modelos';
 import { mensajeError } from '../formato';
 import { DatosNegocio, PedidoRotulo, cargarDatosNegocio, documentoRotulos, imprimirEnVentana, rotuloHtml } from './rotulo';
+import { nombreConVariante } from '../variante';
 
 /** Imprime rótulos de 100 × 100 mm y los marca como impresos */
 @Injectable({ providedIn: 'root' })
@@ -22,7 +23,7 @@ export class RotulosService {
       observaciones: p.observaciones,
       total: Number(p.total),
       created_at: p.created_at,
-      productos: (p.pedido_items ?? []).map((i) => `${i.nombre}${i.cantidad > 1 ? ' x' + i.cantidad : ''}`),
+      productos: (p.pedido_items ?? []).map((i) => `${nombreConVariante(i)}${i.cantidad > 1 ? ' x' + i.cantidad : ''}`),
     };
   }
 

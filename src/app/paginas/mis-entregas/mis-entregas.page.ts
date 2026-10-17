@@ -15,6 +15,7 @@ import { mensajeError, pesos } from '../../shared/formato';
 import { finDiaColombia, formatoFechaCO, formatoHoraCO, inicioDiaColombia } from '../../shared/fecha-colombia';
 import { RangoFechas } from '../../shared/rango/rango.component';
 import { DiaComponent } from '../../shared/rango/dia.component';
+import { nombreConVariante } from '../../shared/variante';
 
 /** Pantalla del mensajero: lo que tiene en ruta y lo que lleva por cuadrar */
 @Component({
@@ -120,7 +121,7 @@ import { DiaComponent } from '../../shared/rango/dia.component';
             }
             <ul class="items-mini">
               @for (i of p.pedido_items ?? []; track i.id) {
-                <li><span>{{ i.cantidad }} × {{ i.nombre }}</span></li>
+                <li><span>{{ i.cantidad }} × {{ nombreConVariante(i) }}</span></li>
               }
             </ul>
             <div class="acciones">
@@ -196,6 +197,7 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   abierto = signal<number | null>(null);
   abiertoEnChat = signal(false);
   pesos = pesos;
+  nombreConVariante = nombreConVariante;
 
   hechas = signal<Pedido[]>([]);
   private rango: RangoFechas | null = null;

@@ -141,7 +141,7 @@
                               <span class="prod-cant num" aria-hidden="true">×{{ it.cantidad }}</span>
                             }
                           </button>
-                          <span class="prod-nombre">{{ it.nombre }}</span>
+                          <span class="prod-nombre">{{ it.nombre }}@if (variante(it); as v) {<span class="prod-var">{{ v }}</span>}</span>
                         </li>
                       }
                       @if (p.pedido_items.length > maxProductosVisibles) {

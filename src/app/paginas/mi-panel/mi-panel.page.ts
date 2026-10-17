@@ -471,7 +471,7 @@ export class MiPanelPage implements OnInit, OnDestroy {
     if (error) return this.toast.error(mensajeError(error));
     const p = data as Panel;
     this.panel.set(p);
-    this.armarBarras(p.por_dia.map((x) => ({ dia: x.dia, ganancia: Number(x.ganancia) })));
+    this.armarBarras((p.por_dia ?? []).map((x) => ({ dia: x.dia, ganancia: Number(x.ganancia) })));
   }
 
   async cargarConvs(): Promise<void> {

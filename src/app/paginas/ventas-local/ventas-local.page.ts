@@ -12,6 +12,7 @@ import { DiaComponent } from '../../shared/rango/dia.component';
 import { Pedido } from '../../shared/modelos';
 import { mensajeError, numero, pesos } from '../../shared/formato';
 import { finDiaColombia, formatoFechaCO, formatoHoraCO, inicioDiaColombia } from '../../shared/fecha-colombia';
+import { nombreConVariante } from '../../shared/variante';
 
 type Metodo = 'todos' | 'efectivo' | 'transferencia' | 'mixto';
 
@@ -154,7 +155,7 @@ export class VentasLocalPage implements OnInit, OnDestroy {
   }
 
   productos(p: Pedido): string {
-    return (p.pedido_items ?? []).map((i) => (i.cantidad > 1 ? `${i.nombre} x${i.cantidad}` : i.nombre)).join(', ');
+    return (p.pedido_items ?? []).map((i) => (i.cantidad > 1 ? `${nombreConVariante(i)} x${i.cantidad}` : nombreConVariante(i))).join(', ');
   }
 
   pago(t: string | null): string {

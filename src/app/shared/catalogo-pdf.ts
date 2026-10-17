@@ -248,13 +248,13 @@ function tarjeta(doc: jsPDF, p: Producto, foto: string | null, x: number, y: num
 
   // Descripción (hasta 2 líneas)
   const desc = latin1(p.descripcion ?? '');
-  if (desc) {
+  // Con colores o tallas queda espacio para una sola línea; con los dos, para ninguna
+  const max = p.colores?.length && p.tallas?.length ? 0 : p.colores?.length || p.tallas?.length ? 1 : 2;
+  if (desc && max > 0) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7.2);
     doc.setTextColor(...GRIS);
     const d = doc.splitTextToSize(desc.replace(/\n+/g, ' '), lado) as string[];
-    // Con colores queda espacio para una sola línea de descripción
-    const max = p.colores?.length ? 1 : 2;
     const ld = d.slice(0, max);
     if (d.length > max) ld[max - 1] = ld[max - 1].replace(/\s*\S*$/, '') + '...';
     doc.text(ld, x + pad, ty + 0.4, { lineHeightFactor: 1.2 });
@@ -279,6 +279,17 @@ function tarjeta(doc: jsPDF, p: Producto, foto: string | null, x: number, y: num
     doc.setTextColor(...GRIS);
     const n = (p.colores ?? []).length;
     doc.text(`${n} ${n === 1 ? 'color' : 'colores'}`, cx + 0.6, cy + 0.9);
+  }
+
+  // Tallas: en su propia línea (arriba de los colores si los hay)
+  if (p.tallas?.length) {
+    const ty2 = y + h - (colores.length ? 16.4 : 12.6) + 0.9;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6.8);
+    doc.setTextColor(...GRIS);
+    let txt = latin1('Tallas: ' + p.tallas.join(' · '));
+    while (doc.getTextWidth(txt) > lado && txt.length > 10) txt = txt.slice(0, -4).replace(/[\s·]+$/, '') + '...';
+    doc.text(txt, x + pad, ty2);
   }
 
   // Precio abajo, en letra de tiquete, con raya de oro

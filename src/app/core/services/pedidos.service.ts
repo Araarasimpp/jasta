@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { Cuadre, EstadoPedido, Nota, Pedido, Producto, TipoRecaudo, Usuario } from '../../shared/modelos';
+import { PRODUCTO_DE_ITEM } from '../../shared/variante';
 
 export const SELECT_PEDIDO =
   '*, vendedora:usuarios!pedidos_vendedora_id_fkey(nombre), mensajero:usuarios!pedidos_mensajero_id_fkey(nombre)';
@@ -28,6 +29,8 @@ export interface ItemNuevo {
   producto_id: number;
   cantidad: number;
   precio_venta: number;
+  color?: string | null;
+  talla?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -47,7 +50,7 @@ export class PedidosService {
     const porPagina = f.porPagina ?? 50;
     const pagina = f.pagina ?? 0;
     const campos = f.conItems
-      ? SELECT_PEDIDO + ', pedido_items(id, nombre, cantidad, producto:productos(imagen_url))'
+      ? SELECT_PEDIDO + `, pedido_items(id, nombre, cantidad, color, talla, ${PRODUCTO_DE_ITEM})`
       : SELECT_PEDIDO;
     let q = this.db.from('pedidos').select(campos, { count: 'exact' });
     if (f.estados?.length) q = q.in('estado', f.estados);
@@ -135,7 +138,7 @@ export class PedidosService {
 
   async detalle(id: number): Promise<{ pedido: Pedido; notas: Nota[] }> {
     const [p, n] = await Promise.all([
-      this.db.from('pedidos').select(SELECT_PEDIDO + ', pedido_items(*, producto:productos(imagen_url))').eq('id', id).single(),
+      this.db.from('pedidos').select(SELECT_PEDIDO + `, pedido_items(*, ${PRODUCTO_DE_ITEM})`).eq('id', id).single(),
       this.db.from('pedido_notas').select('id, created_at, autor, nota').eq('pedido_id', id).order('created_at').order('id'),
     ]);
     return { pedido: this.check(p) as unknown as Pedido, notas: (this.check(n) ?? []) as Nota[] };
@@ -257,13 +260,13 @@ export class PedidosService {
   }
 
   async productosActivos(): Promise<Producto[]> {
-    return (this.check(
+    return ((this.check(
       await this.db
         .from('productos')
-        .select('id,nombre,sku,codigo_barras,precio_venta,precio_base,precio_compra,stock,controla_stock,imagen_url,activo')
+        .select('id,nombre,sku,codigo_barras,precio_venta,precio_base,precio_compra,stock,controla_stock,imagen_url,activo,tallas,colores:producto_colores(id,nombre,hex,imagen_url,orden)')
         .eq('activo', true)
         .order('nombre')
-    ) ?? []) as Producto[];
+    ) ?? []) as Producto[]).map((p) => ({ ...p, colores: [...(p.colores ?? [])].sort((a, b) => a.orden - b.orden || a.id - b.id) }));
   }
 
   async barrios(): Promise<{ barrio: string; domicilio: number; usos: number }[]> {

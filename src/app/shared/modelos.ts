@@ -29,6 +29,10 @@ export interface Producto {
   /** Texto para el catálogo (opcional) */
   descripcion?: string | null;
   colores?: ProductoColor[];
+  /** Fotos adicionales del producto (aparte de la principal y de los colores) */
+  imagenes?: string[] | null;
+  /** Tallas disponibles (vacío = el producto no maneja tallas) */
+  tallas?: string[] | null;
 }
 
 /** Variante de color de un producto, con su propia foto */
@@ -81,7 +85,9 @@ export interface PedidoItem {
   precio_base: number;
   precio_compra: number;
   total: number;
-  producto?: { imagen_url: string | null } | null;
+  color?: string | null;
+  talla?: string | null;
+  producto?: { imagen_url: string | null; colores?: { nombre: string; imagen_url: string | null }[] } | null;
 }
 
 export interface Nota {

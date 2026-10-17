@@ -12,6 +12,8 @@ import { STOCK_BAJO } from '../../shared/stock';
 import { VisorService } from '../../shared/visor/visor.service';
 import { ColoresProductoComponent } from '../../shared/colores-producto/colores-producto.component';
 import { ElegirFotoComponent } from '../../shared/elegir-foto/elegir-foto.component';
+import { FotosProductoComponent } from '../../shared/fotos-producto/fotos-producto.component';
+import { TallasProductoComponent } from '../../shared/tallas-producto/tallas-producto.component';
 
 type Filtro = 'activos' | 'agotados' | 'bajo' | 'inactivos' | 'todos';
 
@@ -21,18 +23,20 @@ function normal(s: string): string {
 
 const VACIO: Omit<Producto, 'id'> = {
   nombre: '', sku: '', codigo_barras: '', precio_venta: 0, precio_base: 0, precio_compra: 0,
-  stock: 0, controla_stock: true, imagen_url: null, activo: true, descripcion: '',
+  stock: 0, controla_stock: true, imagen_url: null, activo: true, descripcion: '', imagenes: [], tallas: [],
 };
 
 @Component({
   selector: 'app-productos',
   standalone: true,
-  imports: [FormsModule, IonIcon, ColoresProductoComponent, ElegirFotoComponent],
+  imports: [FormsModule, IonIcon, ColoresProductoComponent, ElegirFotoComponent, FotosProductoComponent, TallasProductoComponent],
   styles: [
     `
       .tonos { display: inline-flex; gap: 3px; margin-left: 8px; vertical-align: middle; }
       .tonos span { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 0 1px var(--border-strong); }
-      .colores-sec { padding-top: 6px; }
+      .colores-sec { padding-top: 6px; display: flex; flex-direction: column; gap: 4px; }
+      .colores-sec .ayuda { margin: -4px 0 6px; }
+      .extra { margin-left: 8px; font-size: 11.5px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
       .foto-btn { display: block; padding: 0; border: none; background: none; cursor: zoom-in; border-radius: 8px; }
       .foto { width: 34px; height: 34px; border-radius: 6px; object-fit: cover; background: var(--surface-2); display: block; }
       .neg { color: var(--danger); font-weight: 500; }
@@ -81,6 +85,8 @@ const VACIO: Omit<Producto, 'id'> = {
                       @for (c of p.colores!.slice(0, 6); track c.id) { <span [style.background]="c.hex || '#ccc'"></span> }
                     </span>
                   }
+                  @if (p.tallas?.length) { <span class="extra" [title]="'Tallas: ' + p.tallas!.join(', ')">{{ p.tallas!.length === 1 ? 'Talla ' + p.tallas![0] : p.tallas!.length + ' tallas' }}</span> }
+                  @if (p.imagenes?.length) { <span class="extra">+{{ p.imagenes!.length }} fotos</span> }
                 </td>
                 <td class="suave" data-etq="SKU">{{ p.sku || '—' }}</td>
                 <td class="der num" data-etq="Venta">{{ pesos(p.precio_venta) }}</td>
@@ -129,9 +135,19 @@ const VACIO: Omit<Producto, 'id'> = {
           <div class="campo"><label for="pd">Descripción <small class="suave">(sale en el catálogo)</small></label>
             <textarea id="pd" rows="3" [(ngModel)]="f.descripcion" placeholder="Ej: color sujeto a disponibilidad, medidas, material…"></textarea></div>
           <div class="campo">
-            <span class="etq">Foto</span>
+            <span class="etq">Foto principal</span>
             <app-elegir-foto [url]="f.imagen_url" [titulo]="f.nombre" (cambio)="f.imagen_url = $event"></app-elegir-foto>
           </div>
+          <section class="colores-sec">
+            <h3 class="seccion-titulo">Más fotos</h3>
+            <p class="ayuda">Otros ángulos, detalles o el producto puesto. Son aparte de las fotos de cada color.</p>
+            <app-fotos-producto [fotos]="f.imagenes ?? []" [titulo]="f.nombre" (cambio)="f.imagenes = $event"></app-fotos-producto>
+          </section>
+          <section class="colores-sec">
+            <h3 class="seccion-titulo">Tallas</h3>
+            <p class="ayuda">Si el producto tiene tallas, agrégalas: al crear un pedido se pide elegir la talla. Déjalo vacío si no maneja tallas.</p>
+            <app-tallas-producto [tallas]="f.tallas ?? []" (cambio)="f.tallas = $event"></app-tallas-producto>
+          </section>
           <section class="colores-sec">
             <h3 class="seccion-titulo">Colores y fotos</h3>
             @if (editId(); as pid) {
@@ -222,7 +238,7 @@ export class ProductosPage implements OnInit {
     this.error.set('');
     this.editId.set(p.id);
     const { id: _id, ...resto } = p;
-    this.form.set({ ...resto });
+    this.form.set({ ...resto, imagenes: [...(p.imagenes ?? [])], tallas: [...(p.tallas ?? [])] });
   }
 
   async guardar(f: Omit<Producto, 'id'>): Promise<void> {
@@ -241,6 +257,8 @@ export class ProductosPage implements OnInit {
       activo: !!f.activo,
       imagen_url: f.imagen_url?.trim() || null,
       descripcion: f.descripcion?.trim() || null,
+      imagenes: f.imagenes ?? [],
+      tallas: f.tallas ?? [],
       updated_at: new Date().toISOString(),
     };
     const id = this.editId();

@@ -19,6 +19,7 @@ import { EstadoPedido, Pedido, PedidoItem, Usuario } from '../../shared/modelos'
 import { mensajeError, numero, pesos, urlImagen } from '../../shared/formato';
 import { diaColombiaDe, formatoFechaCO, formatoHoraCO, hoyColombiaISO } from '../../shared/fecha-colombia';
 import { sumarDias } from '../../shared/rango/rango.component';
+import { fotoDeItem, nombreConVariante, variante } from '../../shared/variante';
 
 type Filtro = EstadoPedido | 'todos';
 
@@ -150,6 +151,7 @@ export class PedidosPage implements OnInit, OnDestroy {
   pesos = pesos;
   numero = numero;
   min = Math.min;
+  variante = variante;
 
   private timer?: ReturnType<typeof setTimeout>;
   private dejarDeEscuchar?: () => void;
@@ -477,7 +479,7 @@ export class PedidosPage implements OnInit, OnDestroy {
   }
 
   foto(it: PedidoItem): string | null {
-    return urlImagen(it.producto?.imagen_url);
+    return urlImagen(fotoDeItem(it));
   }
 
   /** Abre en el visor las fotos de los productos del pedido, empezando por la tocada */
@@ -485,7 +487,7 @@ export class PedidosPage implements OnInit, OnDestroy {
     evento.stopPropagation();
     const conFoto = (p.pedido_items ?? []).filter((x) => this.foto(x));
     this.visor.abrir(
-      conFoto.map((x) => ({ url: this.foto(x)!, titulo: x.nombre })),
+      conFoto.map((x) => ({ url: this.foto(x)!, titulo: nombreConVariante(x) })),
       conFoto.findIndex((x) => x.id === it.id)
     );
   }
@@ -504,7 +506,7 @@ export class PedidosPage implements OnInit, OnDestroy {
   }
 
   productosTexto(p: Pedido): string {
-    return (p.pedido_items ?? []).map((i) => (i.cantidad > 1 ? `${i.nombre} ×${i.cantidad}` : i.nombre)).join(', ');
+    return (p.pedido_items ?? []).map((i) => (i.cantidad > 1 ? `${nombreConVariante(i)} ×${i.cantidad}` : nombreConVariante(i))).join(', ');
   }
 
   /** "hoy, 8:32 p. m.", "ayer, …" o "12 oct, …" (y el año si no es este) */

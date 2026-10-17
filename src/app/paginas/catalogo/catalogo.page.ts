@@ -46,6 +46,9 @@ function normal(s: string): string {
         font-size: 11px; font-weight: 600; }
       .datos-prod { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px 12px; flex: 1; }
       .nombre { margin: 0; font-size: 13.5px; font-weight: 600; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+      .tallas { display: flex; flex-wrap: wrap; gap: 4px; }
+      .tallas span { min-width: 26px; height: 22px; padding: 0 6px; display: inline-grid; place-items: center; border: 1px solid var(--border-strong); border-radius: 5px; font-family: var(--mono-font); font-size: 11.5px; font-weight: 600; color: var(--text-soft); }
+      .mas-fotos { position: absolute; left: 8px; bottom: 8px; padding: 2px 8px; border-radius: 10px; background: rgba(20, 18, 14, 0.62); color: #fff; font-size: 11px; font-weight: 600; }
       .desc { margin: 0; font-size: 12.5px; line-height: 1.35; color: var(--text-soft); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
       .precios { margin-top: auto; padding-top: 8px; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
       .precio { font-size: 17px; font-weight: 650; white-space: nowrap; }
@@ -103,6 +106,7 @@ function normal(s: string): string {
                   <img [src]="f.url" alt="" loading="lazy" decoding="async" class="capa" [class.on]="f.color === colorActivo(p)" />
                 }
                 @if (agotado(p)) { <span class="agotado">Sin stock</span> }
+                @if (galeria(p).length > 1) { <span class="mas-fotos">{{ galeria(p).length }} fotos</span> }
               </button>
             } @else {
               <div class="foto"><span class="inicial" aria-hidden="true">{{ p.nombre.charAt(0) }}</span>
@@ -118,6 +122,9 @@ function normal(s: string): string {
                   }
                   <span class="tono-nombre">{{ nombreColor(p) }}</span>
                 </div>
+              }
+              @if (p.tallas?.length) {
+                <div class="tallas" [attr.aria-label]="'Tallas: ' + p.tallas!.join(', ')">@for (t of p.tallas!; track t) { <span>{{ t }}</span> }</div>
               }
               @if (p.descripcion) { <p class="desc">{{ p.descripcion }}</p> }
               @if (p.controla_stock && p.stock > 0) {
@@ -173,7 +180,7 @@ export class CatalogoPage implements OnInit {
   async ngOnInit(): Promise<void> {
     const { data, error } = await this.sb.client
       .from('productos')
-      .select('id, nombre, sku, codigo_barras, precio_venta, precio_base, stock, controla_stock, imagen_url, activo, descripcion, colores:producto_colores(id, nombre, hex, imagen_url, orden)')
+      .select('id, nombre, sku, codigo_barras, precio_venta, precio_base, stock, controla_stock, imagen_url, activo, descripcion, imagenes, tallas, colores:producto_colores(id, nombre, hex, imagen_url, orden)')
       .eq('activo', true)
       .order('nombre');
     this.cargando.set(false);
@@ -202,6 +209,16 @@ export class CatalogoPage implements OnInit {
     return lista;
   }
 
+  /** Todas las fotos del producto para el visor: principal, colores y las adicionales */
+  galeria(p: Producto): { url: string; titulo: string; color: number | null }[] {
+    const lista = this.fotos(p);
+    (p.imagenes ?? []).forEach((ruta, i) => {
+      const u = urlImagen(ruta);
+      if (u && !lista.some((x) => x.url === u)) lista.push({ url: u, titulo: `${p.nombre} · foto ${i + 2}`, color: -1 });
+    });
+    return lista;
+  }
+
   /** Color elegido en la tarjeta; si ese color no tiene foto se sigue viendo la principal */
   colorActivo(p: Producto): number | null {
     const id = this.colorElegido()[p.id] ?? null;
@@ -219,8 +236,8 @@ export class CatalogoPage implements OnInit {
   }
 
   verFoto(p: Producto): void {
-    // Con colores: la galería del producto, empezando por el color que se ve
-    const propias = this.fotos(p);
+    // Con colores o más fotos: la galería del producto, empezando por la que se ve
+    const propias = this.galeria(p);
     if (propias.length > 1) {
       this.visor.abrir(
         propias.map((f) => ({ url: f.url, titulo: `${f.titulo} · ${pesos(p.precio_venta)}` })),
