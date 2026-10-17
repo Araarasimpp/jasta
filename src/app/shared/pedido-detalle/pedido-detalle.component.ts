@@ -281,12 +281,11 @@ export class PedidoDetalleComponent implements OnChanges {
       out.push({ id: 'alistado', label: 'Marcar alistado', principal: true });
     if (p.estado === 'despachado' && (admin || p.mensajero_id === yo))
       out.push({ id: 'entregar', label: 'Entregar', principal: true });
-    if (p.estado !== 'cancelado' && (admin || (p.estado === 'por_alistar' && p.vendedora_id === yo)))
-      out.push({ id: 'cancelado', label: 'Cancelar pedido', peligro: true });
+    // Cancelar y editar: solo el admin (la vendedora solo ve el pedido y su conversación)
+    if (p.estado !== 'cancelado' && admin) out.push({ id: 'cancelado', label: 'Cancelar pedido', peligro: true });
     if (p.estado !== 'cancelado' && this.sb.tiene('admin', 'alistador'))
       out.push({ id: 'rotulo', label: p.rotulo_impreso_at ? 'Reimprimir rótulo' : 'Imprimir rótulo' });
-    if (p.estado !== 'cancelado' && (admin || (p.estado === 'por_alistar' && p.vendedora_id === yo)))
-      out.push({ id: 'editar', label: 'Editar' });
+    if (p.estado !== 'cancelado' && admin) out.push({ id: 'editar', label: 'Editar' });
     if (p.estado === 'cancelado' && admin) out.push({ id: 'por_alistar', label: 'Reactivar' });
     return out;
   });

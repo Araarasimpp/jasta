@@ -282,14 +282,13 @@ export class PedidosPage implements OnInit, OnDestroy {
     return this.gestiona() && p.estado === 'por_alistar' && p.canal !== 'local';
   }
 
+  /** Editar y cancelar: solo el admin */
   puedeEditar(p: Pedido): boolean {
-    return this.puedeVender() && p.estado !== 'cancelado';
+    return this.esAdmin() && p.estado !== 'cancelado';
   }
 
-  /** El admin cancela cualquiera; la vendedora, los suyos que siguen por alistar */
   puedeCancelar(p: Pedido): boolean {
-    if (!this.editable(p)) return false;
-    return this.esAdmin() || (p.estado === 'por_alistar' && p.vendedora_id === this.sb.usuario()?.id);
+    return this.esAdmin() && this.editable(p);
   }
 
   private puesto(p: Pedido): number {

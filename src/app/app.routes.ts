@@ -38,7 +38,7 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/mi-panel/mi-panel.page').then((m) => m.MiPanelPage),
       },
       {
-        path: 'pedidos/:id/editar', canActivate: [rolGuard], data: { roles: ['admin', 'vendedora'] },
+        path: 'pedidos/:id/editar', canActivate: [rolGuard], data: { roles: ['admin'] },
         loadComponent: () => import('./paginas/nuevo-pedido/nuevo-pedido.page').then((m) => m.NuevoPedidoPage),
       },
       {
