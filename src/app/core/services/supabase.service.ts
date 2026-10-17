@@ -93,7 +93,7 @@ export class SupabaseService {
   /** Primera pantalla según los roles */
   inicioSegunRoles(): string {
     if (this.tiene('admin', 'cuadres')) return '/app/inicio';
-    if (this.tiene('alistador')) return '/app/pedidos';
+    if (this.tiene('alistador')) return '/app/tablero';
     if (this.tiene('vendedora')) return '/app/mi-panel';
     if (this.tiene('mensajero')) return '/app/mis-entregas';
     if (this.tiene('venta_local')) return '/app/venta-local';

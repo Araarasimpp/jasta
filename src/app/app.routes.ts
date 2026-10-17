@@ -29,6 +29,11 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/inicio/inicio.page').then((m) => m.InicioPage),
       },
       {
+        // Inicio de alistamiento: pedidos, tiempos y lo que hay por alistar (sin plata)
+        path: 'tablero', canActivate: [rolGuard], data: { roles: ['admin', 'alistador'] },
+        loadComponent: () => import('./paginas/tablero/tablero.page').then((m) => m.TableroPage),
+      },
+      {
         // La vendedora no ve la lista de pedidos: sus avisos (?id=…&chat=1) la llevan a Mi panel
         path: 'pedidos', canActivate: [pedidosGuard, rolGuard], data: { roles: ['admin', 'alistador', 'cuadres'] },
         loadComponent: () => import('./paginas/pedidos/pedidos.page').then((m) => m.PedidosPage),

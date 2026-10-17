@@ -176,6 +176,9 @@ export class PedidosPage implements OnInit, OnDestroy {
     // Desde Inicio ("Necesita atención") llega ?estado=alistado, por ejemplo
     const est = this.route.snapshot.queryParamMap.get('estado') as Filtro | null;
     if (est && this.filtros.some((f) => f.id === est)) this.filtro.set(est);
+    // Desde el Inicio de alistamiento ("Sin rótulo") llega ?rotulo=pendiente
+    const rot = this.route.snapshot.queryParamMap.get('rotulo');
+    if (rot === 'pendiente' || rot === 'impreso') this.filtroRotulo = rot;
     this.irPagina(0);
     // Los cambios de otros (realtime) llegan seguidos: se agrupan en una sola recarga
     this.dejarDeEscuchar = this.ps.escuchar(() => {

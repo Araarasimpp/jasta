@@ -45,10 +45,14 @@ interface ItemMenu {
   path: string;
   icon: string;
   roles: Rol[];
+  /** No se muestra a quien tenga alguno de estos roles (ya tiene otra versión de la sección) */
+  sinRoles?: Rol[];
 }
 
 const MENU: ItemMenu[] = [
   { label: 'Inicio', path: '/app/inicio', icon: 'bar-chart-outline', roles: ['admin', 'cuadres'] },
+  // Alistamiento: su propio Inicio, solo con información de los pedidos (sin la ganancia de la tienda)
+  { label: 'Inicio', path: '/app/tablero', icon: 'bar-chart-outline', roles: ['alistador'], sinRoles: ['admin', 'cuadres'] },
   { label: 'Mi panel', path: '/app/mi-panel', icon: 'grid-outline', roles: ['vendedora'] },
   { label: 'Pedidos', path: '/app/pedidos', icon: 'receipt-outline', roles: ['admin', 'alistador', 'cuadres'] },
   { label: 'Mis entregas', path: '/app/mis-entregas', icon: 'bicycle-outline', roles: ['mensajero'] },
@@ -213,7 +217,7 @@ export class ShellComponent implements OnInit, OnDestroy {
 
   menu = computed(() => {
     const roles = this.sb.roles();
-    return MENU.filter((m) => m.roles.some((r) => roles.includes(r)));
+    return MENU.filter((m) => m.roles.some((r) => roles.includes(r)) && !m.sinRoles?.some((r) => roles.includes(r)));
   });
   /** En el celular caben 2 secciones en la barra (más Nuevo, Avisos y Más); el resto va en "Más" */
   tabs = computed(() => this.menu().slice(0, 2));
