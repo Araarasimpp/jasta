@@ -160,3 +160,11 @@ grant execute on function public.recoleccion_agregar_base(numeric, text, bigint)
 grant execute on function public.recoleccion_responder_base(bigint, boolean) to authenticated;
 grant execute on function public.recoleccion_registrar_compra(numeric, text, text, text[]) to authenticated;
 grant execute on function public.recoleccion_resumen(date, date, bigint) to authenticated;
+
+-- Cuando el recolector agrega su propia base, se les avisa a todos los admin
+-- (se aplicó reemplazando el final de recoleccion_agregar_base):
+--   else
+--     perform privado.avisar(array(select id from public.usuarios where activo and 'admin' = any(roles)), 'base_recolector',
+--       coalesce(public.mi_nombre(), 'El recolector') || ' agregó una base: $' || replace(to_char(p_monto, 'FM999G999G999'), ',', '.'),
+--       left(trim(p_nombre), 120), '/app/recolector', null);
+--   end if;
