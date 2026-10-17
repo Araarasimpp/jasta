@@ -1,0 +1,2 @@
+import {p as e}from'./main-HOSBZTXU.js';var n=new Intl.NumberFormat("es-CO",{style:"currency",currency:"COP",maximumFractionDigits:0}),t=new Intl.NumberFormat("es-CO",{maximumFractionDigits:0});function u(r){return n.format(Number(r??0)).replace(/\s/g," ")}function s(r){return t.format(Number(r??0))}function i(r){return r?/^https?:\/\//.test(r)?r:e.uploadsUrl+r.replace(/^\/+/,""):null}function c(r){return (r?.message??String(r)).replace(/^.*?ERROR:\s*/,"")}
+export{c,i,s,u};
