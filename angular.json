@@ -12,7 +12,13 @@
         "build": {
           "builder": "@angular/build:application",
           "options": {
-            "allowedCommonJsDependencies": ["core-js", "html2canvas", "raf", "rgbcolor", "qrcode-generator"],
+            "allowedCommonJsDependencies": [
+              "core-js",
+              "html2canvas",
+              "raf",
+              "rgbcolor",
+              "qrcode-generator"
+            ],
             "outputPath": {
               "base": "www",
               "browser": ""
@@ -27,7 +33,8 @@
                 "input": "src/assets",
                 "output": "assets"
               },
-              "src/manifest.json"
+              "src/manifest.json",
+              "src/.htaccess"
             ],
             "styles": [
               "src/global.scss"

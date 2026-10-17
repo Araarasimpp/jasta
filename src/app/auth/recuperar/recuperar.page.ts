@@ -1,12 +1,13 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, ViewChild, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { SupabaseService } from '../../core/services/supabase.service';
+import { CAPTCHA_ACTIVO, CaptchaComponent } from '../../shared/captcha/captcha.component';
 
 @Component({
   selector: 'app-recuperar',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, CaptchaComponent],
   styleUrls: ['../auth-shell.scss'],
   template: `
     <div class="auth-shell">
@@ -30,10 +31,11 @@ import { SupabaseService } from '../../core/services/supabase.service';
               <label for="email">Correo</label>
               <input id="email" name="email" type="email" autocomplete="email" inputmode="email" autocapitalize="off" [(ngModel)]="email" />
             </div>
+            <app-captcha (token)="captcha.set($event)" />
             @if (error()) {
               <p class="error-msg" role="alert">{{ error() }}</p>
             }
-            <button type="submit" class="submit-btn" [disabled]="cargando()">{{ cargando() ? 'Enviando…' : 'Enviar enlace' }}</button>
+            <button type="submit" class="submit-btn" [disabled]="cargando() || (captchaActivo && !captcha())">{{ cargando() ? 'Enviando…' : 'Enviar enlace' }}</button>
           </form>
         }
         <p class="switch-link"><a routerLink="/auth/login">Volver a iniciar sesión</a></p>
@@ -42,7 +44,10 @@ import { SupabaseService } from '../../core/services/supabase.service';
   `,
 })
 export class RecuperarPage {
+  @ViewChild(CaptchaComponent) private captchaCmp?: CaptchaComponent;
   private sb = inject(SupabaseService);
+  readonly captchaActivo = CAPTCHA_ACTIVO;
+  captcha = signal('');
   email = '';
   cargando = signal(false);
   enviado = signal(false);
@@ -50,10 +55,15 @@ export class RecuperarPage {
 
   async enviar(): Promise<void> {
     if (!this.email.trim()) return this.error.set('Escribe tu correo.');
+    if (this.captchaActivo && !this.captcha()) return this.error.set('Completa la verificación de seguridad.');
     this.cargando.set(true);
-    const { error } = await this.sb.recuperar(this.email);
+    this.error.set('');
+    const { error } = await this.sb.recuperar(this.email, this.captcha());
+    this.captchaCmp?.reiniciar();
     this.cargando.set(false);
-    if (error) this.error.set('No se pudo enviar el correo. Intenta de nuevo en un minuto.');
-    else this.enviado.set(true);
+    // Respuesta igual exista o no la cuenta, para no revelar qué correos están registrados
+    if (error && (error.status === 429 || /rate limit|captcha/i.test(error.message))) {
+      this.error.set(/captcha/i.test(error.message) ? 'No pasó la verificación de seguridad. Inténtalo otra vez.' : 'Ya pediste un enlace hace poco. Espera un minuto y revisa tu correo (también la carpeta de spam).');
+    } else this.enviado.set(true);
   }
 }

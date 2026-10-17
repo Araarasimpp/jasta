@@ -2,7 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { searchOutline, closeOutline } from 'ionicons/icons';
+import { searchOutline, closeOutline, personAddOutline } from 'ionicons/icons';
 import { PedidosService } from '../../core/services/pedidos.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
@@ -29,7 +29,10 @@ type Filtro = 'activos' | 'sin_rol' | 'inactivos' | 'todos';
   ],
   template: `
     <div class="vista">
-      <div class="vista-head"><h1>Usuarios <small class="num">{{ filtrados().length }}</small></h1></div>
+      <div class="vista-head">
+        <h1>Usuarios <small class="num">{{ filtrados().length }}</small></h1>
+        <button class="b b-pri" (click)="nuevo()"><ion-icon name="person-add-outline"></ion-icon> Autorizar persona</button>
+      </div>
       <div class="barra">
         <label class="buscar">
           <ion-icon name="search-outline"></ion-icon>
@@ -43,7 +46,8 @@ type Filtro = 'activos' | 'sin_rol' | 'inactivos' | 'todos';
       </div>
       <div class="vista-body" style="padding-bottom: 0">
         <p class="ayuda">
-          Cada persona entra creando su cuenta con el mismo correo que tiene aquí; así queda con estos roles.
+          Solo pueden crear cuenta los correos que están en esta lista. Para que alguien nuevo entre, usa
+          "Autorizar persona" con su correo y sus roles; luego esa persona se registra con ese mismo correo.
           "Sin cuenta" significa que todavía no se ha registrado en la app nueva.
         </p>
       </div>
@@ -82,10 +86,17 @@ type Filtro = 'activos' | 'sin_rol' | 'inactivos' | 'todos';
           <button class="b b-icono" aria-label="Cerrar" (click)="sel.set(null)"><ion-icon name="close-outline"></ion-icon></button>
         </div>
         <div class="hoja-body">
-          <dl class="datos">
-            <dt>Correo</dt><dd>{{ u.email || '—' }}</dd>
-            <dt>Cuenta</dt><dd>{{ u.auth_id ? 'Ya entra a la app' : 'Aún no se registra' }}</dd>
-          </dl>
+          @if (u.auth_id) {
+            <dl class="datos">
+              <dt>Correo</dt><dd>{{ u.email || '—' }}</dd>
+              <dt>Cuenta</dt><dd>Ya entra a la app</dd>
+            </dl>
+          } @else {
+            <div class="campo">
+              <label for="u-email">Correo autorizado <span class="suave">(con este se registra)</span></label>
+              <input id="u-email" type="email" autocapitalize="off" [(ngModel)]="emailSel" placeholder="nombre@correo.com" />
+            </div>
+          }
           <div class="opciones">
             <span class="seccion-titulo">Roles</span>
             @for (r of roles; track r.id) {
@@ -107,6 +118,39 @@ type Filtro = 'activos' | 'sin_rol' | 'inactivos' | 'todos';
         </div>
       </aside>
     }
+
+    @if (creando()) {
+      <button class="velo" aria-label="Cerrar" (click)="creando.set(false)"></button>
+      <aside class="hoja" role="dialog" aria-labelledby="t-nuevo">
+        <div class="hoja-head">
+          <h2 id="t-nuevo">Autorizar persona</h2>
+          <button class="b b-icono" aria-label="Cerrar" (click)="creando.set(false)"><ion-icon name="close-outline"></ion-icon></button>
+        </div>
+        <div class="hoja-body">
+          <div class="campo">
+            <label for="n-nombre">Nombre</label>
+            <input id="n-nombre" autocomplete="off" [(ngModel)]="nombreNuevo" />
+          </div>
+          <div class="campo">
+            <label for="n-email">Correo <span class="suave">(con este se va a registrar)</span></label>
+            <input id="n-email" type="email" autocapitalize="off" autocomplete="off" [(ngModel)]="emailSel" placeholder="nombre@correo.com" />
+          </div>
+          <div class="opciones">
+            <span class="seccion-titulo">Roles</span>
+            @for (r of roles; track r.id) {
+              <label class="check">
+                <input type="checkbox" [checked]="rolesSel().includes(r.id)" (change)="alternar(r.id)" />
+                <span>{{ r.label }}<small>{{ ayudaRol[r.id] }}</small></span>
+              </label>
+            }
+          </div>
+        </div>
+        <div class="hoja-pie">
+          <button class="b" (click)="creando.set(false)">Cancelar</button>
+          <button class="b b-pri" [disabled]="guardando()" (click)="autorizar()">{{ guardando() ? 'Guardando…' : 'Autorizar' }}</button>
+        </div>
+      </aside>
+    }
   `,
 })
 export class UsuariosPage implements OnInit {
@@ -121,6 +165,9 @@ export class UsuariosPage implements OnInit {
   sel = signal<Usuario | null>(null);
   rolesSel = signal<Rol[]>([]);
   activoSel = true;
+  emailSel = '';
+  nombreNuevo = '';
+  creando = signal(false);
   guardando = signal(false);
 
   roles = ROLES;
@@ -152,7 +199,7 @@ export class UsuariosPage implements OnInit {
   });
 
   constructor() {
-    addIcons({ searchOutline, closeOutline });
+    addIcons({ searchOutline, closeOutline, personAddOutline });
   }
 
   async ngOnInit(): Promise<void> {
@@ -176,7 +223,30 @@ export class UsuariosPage implements OnInit {
   abrir(u: Usuario): void {
     this.rolesSel.set([...u.roles]);
     this.activoSel = u.activo;
+    this.emailSel = u.email ?? '';
     this.sel.set(u);
+  }
+
+  nuevo(): void {
+    this.nombreNuevo = '';
+    this.emailSel = '';
+    this.rolesSel.set([]);
+    this.creando.set(true);
+  }
+
+  async autorizar(): Promise<void> {
+    this.guardando.set(true);
+    const { error } = await this.sb.client.rpc('guardar_autorizado', {
+      p_id: null,
+      p_nombre: this.nombreNuevo,
+      p_email: this.emailSel,
+      p_roles: this.rolesSel(),
+    });
+    this.guardando.set(false);
+    if (error) return this.toast.error(mensajeError(error));
+    this.toast.ok('Listo: ya puede crear su cuenta con ese correo');
+    this.creando.set(false);
+    await this.cargar();
   }
 
   alternar(r: Rol): void {
@@ -186,6 +256,13 @@ export class UsuariosPage implements OnInit {
 
   async guardar(u: Usuario): Promise<void> {
     this.guardando.set(true);
+    if (!u.auth_id && this.emailSel.trim().toLowerCase() !== (u.email ?? '').toLowerCase()) {
+      const r = await this.sb.client.rpc('guardar_autorizado', { p_id: u.id, p_nombre: u.nombre, p_email: this.emailSel, p_roles: null });
+      if (r.error) {
+        this.guardando.set(false);
+        return this.toast.error(mensajeError(r.error));
+      }
+    }
     const { error } = await this.sb.client.rpc('actualizar_usuario', {
       p_id: u.id,
       p_roles: this.rolesSel(),

@@ -53,21 +53,26 @@ export class SupabaseService {
     return roles.some((r) => mios.includes(r));
   }
 
-  async login(email: string, password: string) {
-    return this.client.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
-  }
-
-  async registro(nombre: string, email: string, password: string) {
-    return this.client.auth.signUp({
+  async login(email: string, password: string, captchaToken?: string) {
+    return this.client.auth.signInWithPassword({
       email: email.trim().toLowerCase(),
       password,
-      options: { data: { nombre: nombre.trim() }, emailRedirectTo: document.baseURI },
+      options: captchaToken ? { captchaToken } : undefined,
     });
   }
 
-  async recuperar(email: string) {
+  async registro(nombre: string, email: string, password: string, captchaToken?: string) {
+    return this.client.auth.signUp({
+      email: email.trim().toLowerCase(),
+      password,
+      options: { data: { nombre: nombre.trim() }, emailRedirectTo: document.baseURI, ...(captchaToken ? { captchaToken } : {}) },
+    });
+  }
+
+  async recuperar(email: string, captchaToken?: string) {
     return this.client.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
       redirectTo: new URL('auth/nueva-clave', document.baseURI).href,
+      ...(captchaToken ? { captchaToken } : {}),
     });
   }
 

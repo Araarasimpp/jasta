@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SupabaseService } from '../../core/services/supabase.service';
+import { REGLA_CLAVE, problemaClave } from '../../shared/clave';
 
 @Component({
   selector: 'app-nueva-clave',
@@ -21,7 +22,7 @@ import { SupabaseService } from '../../core/services/supabase.service';
         </div>
         <form class="auth-form" (ngSubmit)="guardar()">
           <div class="field">
-            <label for="password">Contraseña nueva <span>(mínimo 8 caracteres)</span></label>
+            <label for="password">Contraseña nueva <span>({{ regla }})</span></label>
             <input id="password" name="password" type="password" autocomplete="new-password" [(ngModel)]="password" />
           </div>
           @if (error()) {
@@ -36,12 +37,14 @@ import { SupabaseService } from '../../core/services/supabase.service';
 export class NuevaClavePage {
   private sb = inject(SupabaseService);
   private router = inject(Router);
+  readonly regla = REGLA_CLAVE;
   password = '';
   cargando = signal(false);
   error = signal('');
 
   async guardar(): Promise<void> {
-    if (this.password.length < 8) return this.error.set('La contraseña debe tener al menos 8 caracteres.');
+    const malo = problemaClave(this.password, this.sb.usuario()?.email ?? '');
+    if (malo) return this.error.set(malo);
     this.cargando.set(true);
     const { error } = await this.sb.cambiarClave(this.password);
     this.cargando.set(false);
