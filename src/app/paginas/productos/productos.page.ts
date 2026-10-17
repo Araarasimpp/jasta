@@ -14,6 +14,7 @@ import { ColoresProductoComponent } from '../../shared/colores-producto/colores-
 import { ElegirFotoComponent } from '../../shared/elegir-foto/elegir-foto.component';
 import { FotosProductoComponent } from '../../shared/fotos-producto/fotos-producto.component';
 import { TallasProductoComponent } from '../../shared/tallas-producto/tallas-producto.component';
+import { VideosProductoComponent } from '../../shared/videos-producto/videos-producto.component';
 
 type Filtro = 'activos' | 'agotados' | 'bajo' | 'inactivos' | 'todos';
 
@@ -23,13 +24,13 @@ function normal(s: string): string {
 
 const VACIO: Omit<Producto, 'id'> = {
   nombre: '', sku: '', codigo_barras: '', precio_venta: 0, precio_base: 0, precio_compra: 0,
-  stock: 0, controla_stock: true, imagen_url: null, activo: true, descripcion: '', imagenes: [], tallas: [],
+  stock: 0, controla_stock: true, imagen_url: null, activo: true, descripcion: '', imagenes: [], tallas: [], videos: [],
 };
 
 @Component({
   selector: 'app-productos',
   standalone: true,
-  imports: [FormsModule, IonIcon, ColoresProductoComponent, ElegirFotoComponent, FotosProductoComponent, TallasProductoComponent],
+  imports: [FormsModule, IonIcon, ColoresProductoComponent, ElegirFotoComponent, FotosProductoComponent, TallasProductoComponent, VideosProductoComponent],
   styles: [
     `
       .tonos { display: inline-flex; gap: 3px; margin-left: 8px; vertical-align: middle; }
@@ -87,6 +88,7 @@ const VACIO: Omit<Producto, 'id'> = {
                   }
                   @if (p.tallas?.length) { <span class="extra" [title]="'Tallas: ' + p.tallas!.join(', ')">{{ p.tallas!.length === 1 ? 'Talla ' + p.tallas![0] : p.tallas!.length + ' tallas' }}</span> }
                   @if (p.imagenes?.length) { <span class="extra">+{{ p.imagenes!.length }} fotos</span> }
+                  @if (p.videos?.length) { <span class="extra">▶ {{ p.videos!.length === 1 ? "1 video" : p.videos!.length + " videos" }}</span> }
                 </td>
                 <td class="suave" data-etq="SKU">{{ p.sku || '—' }}</td>
                 <td class="der num" data-etq="Venta">{{ pesos(p.precio_venta) }}</td>
@@ -106,11 +108,11 @@ const VACIO: Omit<Producto, 'id'> = {
     </div>
 
     @if (form(); as f) {
-      <button class="velo" aria-label="Cerrar" (click)="form.set(null)"></button>
+      <button class="velo" aria-label="Cerrar" (click)="cerrarForm()"></button>
       <aside class="hoja" role="dialog" aria-labelledby="t-prod">
         <div class="hoja-head">
           <h2 id="t-prod">{{ editId() ? 'Editar producto' : 'Nuevo producto' }}</h2>
-          <button class="b b-icono" aria-label="Cerrar" (click)="form.set(null)"><ion-icon name="close-outline"></ion-icon></button>
+          <button class="b b-icono" aria-label="Cerrar" (click)="cerrarForm()"><ion-icon name="close-outline"></ion-icon></button>
         </div>
         <div class="hoja-body">
           <div class="campo"><label for="pn">Nombre</label><input id="pn" [(ngModel)]="f.nombre" /></div>
@@ -144,6 +146,11 @@ const VACIO: Omit<Producto, 'id'> = {
             <app-fotos-producto [fotos]="f.imagenes ?? []" [titulo]="f.nombre" (cambio)="f.imagenes = $event"></app-fotos-producto>
           </section>
           <section class="colores-sec">
+            <h3 class="seccion-titulo">Videos</h3>
+            <p class="ayuda">El producto en uso o en 360°. En el catálogo, "Compartir" manda la foto y el video juntos.</p>
+            <app-videos-producto [videos]="f.videos ?? []" (cambio)="f.videos = $event"></app-videos-producto>
+          </section>
+          <section class="colores-sec">
             <h3 class="seccion-titulo">Tallas</h3>
             <p class="ayuda">Si el producto tiene tallas, agrégalas: al crear un pedido se pide elegir la talla. Déjalo vacío si no maneja tallas.</p>
             <app-tallas-producto [tallas]="f.tallas ?? []" (cambio)="f.tallas = $event"></app-tallas-producto>
@@ -161,7 +168,7 @@ const VACIO: Omit<Producto, 'id'> = {
           }
         </div>
         <div class="hoja-pie">
-          <button class="b" (click)="form.set(null)">Cancelar</button>
+          <button class="b" (click)="cerrarForm()">Cancelar</button>
           <button class="b b-pri" [disabled]="guardando()" (click)="guardar(f)">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button>
         </div>
       </aside>
@@ -238,7 +245,7 @@ export class ProductosPage implements OnInit {
     this.error.set('');
     this.editId.set(p.id);
     const { id: _id, ...resto } = p;
-    this.form.set({ ...resto, imagenes: [...(p.imagenes ?? [])], tallas: [...(p.tallas ?? [])] });
+    this.form.set({ ...resto, imagenes: [...(p.imagenes ?? [])], tallas: [...(p.tallas ?? [])], videos: [...(p.videos ?? [])] });
   }
 
   async guardar(f: Omit<Producto, 'id'>): Promise<void> {
@@ -259,6 +266,7 @@ export class ProductosPage implements OnInit {
       descripcion: f.descripcion?.trim() || null,
       imagenes: f.imagenes ?? [],
       tallas: f.tallas ?? [],
+      videos: f.videos ?? [],
       updated_at: new Date().toISOString(),
     };
     const id = this.editId();
@@ -268,8 +276,25 @@ export class ProductosPage implements OnInit {
     this.guardando.set(false);
     if (r.error) return this.error.set(mensajeError(r.error));
     this.toast.ok(id ? 'Producto actualizado' : 'Producto creado');
+    // Los videos que se quitaron se borran para liberar espacio
+    const antes = (id && this.productos().find((p) => p.id === id)?.videos) || [];
+    void this.borrarVideos(antes.filter((u) => !(f.videos ?? []).includes(u)));
     this.form.set(null);
     await this.cargar();
+  }
+
+  /** Cerrar sin guardar: los videos que se subieron en esta edición se borran (no quedan ocupando espacio) */
+  cerrarForm(): void {
+    const f = this.form();
+    const id = this.editId();
+    const antes = (id && this.productos().find((p) => p.id === id)?.videos) || [];
+    if (f) void this.borrarVideos((f.videos ?? []).filter((u) => !antes.includes(u)));
+    this.form.set(null);
+  }
+
+  private async borrarVideos(urls: string[]): Promise<void> {
+    const rutas = urls.map((u) => u.split('/storage/v1/object/public/videos/')[1]).filter((r): r is string => !!r);
+    if (rutas.length) await this.sb.client.storage.from('videos').remove(rutas.map(decodeURIComponent));
   }
 
   /** La foto en grande, sin abrir el formulario de edición */

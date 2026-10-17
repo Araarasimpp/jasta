@@ -11,8 +11,10 @@ import { pesos } from '../../shared/formato';
 export interface FotoCatalogo {
   url: string;
   titulo: string;
-  /** id del color de esa foto; null = principal; -1 = foto adicional */
+  /** id del color de esa foto; null = principal; -1 = foto adicional; -2 = video */
   color: number | null;
+  /** Es un video (se reproduce en el carrusel y se comparte junto con la foto) */
+  video?: boolean;
 }
 
 /**
@@ -54,6 +56,13 @@ export interface FotoCatalogo {
       .mini { flex: none; width: 56px; height: 56px; padding: 0; border: 1px solid var(--border); border-radius: 8px; background: #fff; overflow: hidden; cursor: pointer;
         opacity: 0.65; transition: opacity 160ms, box-shadow 160ms, transform 160ms; }
       .mini img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .mini { position: relative; }
+      .mini video { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+      .mini .play { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font-size: 16px; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7); background: rgba(0, 0, 0, 0.18); }
+      .video-slide { cursor: default; background: #111; }
+      .video-slide video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; background: #111; }
+      .b.listo { border-color: var(--oro); box-shadow: 0 0 0 3px var(--oro-wash); animation: llama 1s ease-in-out 2; }
+      @keyframes llama { 50% { box-shadow: 0 0 0 6px var(--oro-wash); } }
       .mini.on { opacity: 1; box-shadow: 0 0 0 2px var(--oro); transform: translateY(-1px); }
 
       /* Información */
@@ -106,9 +115,13 @@ export interface FotoCatalogo {
           <div class="galeria">
             <div class="carrusel" #carrusel (scroll)="alDeslizar()" aria-label="Fotos del producto" tabindex="0" (keydown.arrowRight)="ir(actual() + 1)" (keydown.arrowLeft)="ir(actual() - 1)">
               @for (f of fotos; track f.url; let i = $index) {
-                <button type="button" class="slide" (click)="ampliar(i)" [attr.aria-label]="'Ver en grande: ' + f.titulo">
-                  <img [src]="f.url" alt="" [attr.loading]="i < 2 ? 'eager' : 'lazy'" decoding="async" />
-                </button>
+                @if (f.video) {
+                  <div class="slide video-slide"><video [src]="f.url + '#t=0.1'" controls playsinline preload="metadata" [attr.aria-label]="f.titulo"></video></div>
+                } @else {
+                  <button type="button" class="slide" (click)="ampliar(i)" [attr.aria-label]="'Ver en grande: ' + f.titulo">
+                    <img [src]="f.url" alt="" [attr.loading]="i < 2 ? 'eager' : 'lazy'" decoding="async" />
+                  </button>
+                }
               }
             </div>
             @if (fotos.length > 1) {
@@ -116,13 +129,18 @@ export interface FotoCatalogo {
               <button type="button" class="flecha izq" (click)="ir(actual() - 1)" [disabled]="actual() === 0" aria-label="Foto anterior"><ion-icon name="chevron-back-outline"></ion-icon></button>
               <button type="button" class="flecha der" (click)="ir(actual() + 1)" [disabled]="actual() === fotos.length - 1" aria-label="Foto siguiente"><ion-icon name="chevron-forward-outline"></ion-icon></button>
             }
-            <button type="button" class="ampliar" (click)="ampliar(actual())" aria-label="Ver en grande"><ion-icon name="expand-outline"></ion-icon></button>
+            @if (!fotos[actual()]?.video) {
+              <button type="button" class="ampliar" (click)="ampliar(actual())" aria-label="Ver en grande"><ion-icon name="expand-outline"></ion-icon></button>
+            }
             @if (agotado()) { <span class="agotado">Sin stock</span> }
           </div>
           @if (fotos.length > 1) {
             <div class="miniaturas" #miniaturas>
               @for (f of fotos; track f.url; let i = $index) {
-                <button type="button" class="mini" [class.on]="actual() === i" (click)="ir(i)" [attr.aria-label]="'Foto ' + (i + 1)"><img [src]="f.url" alt="" loading="lazy" /></button>
+                <button type="button" class="mini" [class.on]="actual() === i" (click)="ir(i)" [attr.aria-label]="(f.video ? 'Video ' : 'Foto ') + (i + 1)">
+                  @if (f.video) { <video [src]="f.url + '#t=0.1'" muted playsinline preload="metadata"></video><span class="play" aria-hidden="true">▶</span> }
+                  @else { <img [src]="f.url" alt="" loading="lazy" /> }
+                </button>
               }
             </div>
           }
@@ -179,14 +197,15 @@ export interface FotoCatalogo {
                 @else if (producto.stock <= 0) { <span class="neg">Sin stock</span> }
                 @else { <span [class.bajo]="producto.stock < 5">{{ producto.stock === 1 ? 'Queda 1 unidad' : 'Quedan ' + producto.stock + ' unidades' }}</span> }
               </dd>
-              <dt>Fotos</dt><dd>{{ fotos.length || 'Sin fotos' }}</dd>
+              <dt>Fotos</dt><dd>{{ nFotos() || 'Sin fotos' }}</dd>
+              @if (videos().length) { <dt>Videos</dt><dd>{{ videos().length }}</dd> }
             </dl>
           </div>
         </div>
       </div>
       <div class="hoja-pie">
-        <button class="b" (click)="compartir()" [disabled]="compartiendo()">
-          <ion-icon [name]="puedeCompartir ? 'share-social-outline' : 'copy-outline'"></ion-icon>{{ compartiendo() ? 'Preparando…' : puedeCompartir ? 'Compartir' : 'Copiar info' }}
+        <button class="b" [class.listo]="!!listos()" (click)="compartir()" [disabled]="compartiendo()">
+          <ion-icon [name]="puedeCompartir ? 'share-social-outline' : 'copy-outline'"></ion-icon>{{ textoCompartir() }}
         </button>
         <button class="b b-pri" (click)="pedir()"><ion-icon name="add-outline"></ion-icon>Hacer pedido</button>
       </div>
@@ -211,6 +230,18 @@ export class ProductoDetalleComponent implements AfterViewInit, OnDestroy {
   /** Color tocado aunque no tenga foto propia */
   colorTocado = signal<number | null>(null);
   compartiendo = signal(false);
+  /** % de descarga del video para compartir (null = no se está descargando) */
+  progreso = signal<number | null>(null);
+  /** Archivos ya preparados (foto + video) para compartir con un solo toque */
+  listos = signal<File[] | null>(null);
+  videos = computed(() => this.fotos.filter((f) => f.video));
+  nFotos = computed(() => this.fotos.filter((f) => !f.video).length);
+  textoCompartir = computed(() => {
+    if (!this.puedeCompartir) return 'Copiar info';
+    const p = this.progreso();
+    if (this.compartiendo()) return p !== null ? `Preparando video… ${p}%` : 'Preparando…';
+    return this.listos() ? 'Compartir ahora' : 'Compartir';
+  });
   readonly puedeCompartir = typeof navigator !== 'undefined' && 'share' in navigator;
   pesos = pesos;
 
@@ -260,6 +291,8 @@ export class ProductoDetalleComponent implements AfterViewInit, OnDestroy {
   }
 
   private marcar(i: number): void {
+    // El video que queda fuera de la vista se pausa
+    if (i !== this.actual()) this.carrusel?.nativeElement.querySelectorAll('video').forEach((v) => v.pause());
     this.actual.set(i);
     this.colorTocado.set(null);
     // La miniatura activa queda a la vista
@@ -274,8 +307,10 @@ export class ProductoDetalleComponent implements AfterViewInit, OnDestroy {
     else this.colorTocado.set(id);
   }
 
+  /** El visor es solo de fotos */
   ampliar(i: number): void {
-    this.visor.abrir(this.fotos.map((f) => ({ url: f.url, titulo: `${f.titulo} · ${pesos(this.producto.precio_venta)}` })), i);
+    const fotos = this.fotos.filter((f) => !f.video);
+    this.visor.abrir(fotos.map((f) => ({ url: f.url, titulo: `${f.titulo} · ${pesos(this.producto.precio_venta)}` })), Math.max(0, fotos.indexOf(this.fotos[i])));
   }
 
   /** Texto para mandarle al cliente (sin precio base ni ganancia) */
@@ -290,7 +325,12 @@ export class ProductoDetalleComponent implements AfterViewInit, OnDestroy {
     ].filter(Boolean).join('\n');
   }
 
-  /** En el celular comparte la foto que se ve con la información (WhatsApp, etc.); si no, copia el texto */
+  /**
+   * En el celular comparte la foto que se ve y el video del producto, con la
+   * información (WhatsApp, etc.); en el computador copia el texto.
+   * El video puede tardar en bajar: si el teléfono ya no deja abrir "Compartir"
+   * después de esperar (iPhone), el botón queda en "Compartir ahora" con todo listo.
+   */
   async compartir(): Promise<void> {
     const texto = this.texto();
     if (!this.puedeCompartir) {
@@ -302,25 +342,85 @@ export class ProductoDetalleComponent implements AfterViewInit, OnDestroy {
       }
       return;
     }
+    const listos = this.listos();
+    if (listos) return this.enviar(texto, listos, false);
     this.compartiendo.set(true);
     try {
-      const foto = this.fotos[this.actual()];
-      let files: File[] | undefined;
-      if (foto) {
-        try {
-          const blob = await (await fetch(foto.url)).blob();
-          const f = new File([blob], `${this.producto.nombre.replace(/[^\w-]+/g, '_').slice(0, 40)}.jpg`, { type: blob.type || 'image/jpeg' });
-          if (navigator.canShare?.({ files: [f] })) files = [f];
-        } catch {
-          /* sin foto: se comparte solo el texto */
-        }
-      }
-      await navigator.share({ title: this.producto.nombre, text: texto, ...(files ? { files } : {}) });
-    } catch (e) {
-      if ((e as Error)?.name !== 'AbortError') this.toast.error('No se pudo compartir');
+      const files = await this.prepararArchivos();
+      await this.enviar(texto, files, true);
     } finally {
       this.compartiendo.set(false);
+      this.progreso.set(null);
     }
+  }
+
+  private async enviar(texto: string, files: File[], primeraVez: boolean): Promise<void> {
+    // Si no se pueden mandar foto y video juntos, se manda lo que se pueda
+    let archivos = files;
+    if (archivos.length && !navigator.canShare?.({ files: archivos })) {
+      archivos = archivos.filter((f) => navigator.canShare?.({ files: [f] }));
+      if (archivos.length > 1 && !navigator.canShare?.({ files: archivos })) archivos = archivos.slice(0, 1);
+    }
+    try {
+      await navigator.share({ title: this.producto.nombre, text: texto, ...(archivos.length ? { files: archivos } : {}) });
+      this.listos.set(null);
+    } catch (e) {
+      const nombre = (e as Error)?.name;
+      if (nombre === 'AbortError') return;
+      if (nombre === 'NotAllowedError' && primeraVez) {
+        // Pasó mucho tiempo bajando el video: un toque más y sale
+        this.listos.set(files);
+        this.toast.ok('Listo: toca "Compartir ahora"');
+        return;
+      }
+      this.toast.error('No se pudo compartir');
+    }
+  }
+
+  /** La foto que se está viendo (o la principal) y el primer video */
+  private async prepararArchivos(): Promise<File[]> {
+    const base = this.producto.nombre.replace(/[^\w-]+/g, '_').slice(0, 40) || 'producto';
+    const vista = this.fotos[this.actual()];
+    const foto = vista && !vista.video ? vista : this.fotos.find((f) => !f.video);
+    const video = vista?.video ? vista : this.fotos.find((f) => f.video);
+    const files: File[] = [];
+    if (foto) {
+      try {
+        const blob = await (await fetch(foto.url)).blob();
+        files.push(new File([blob], `${base}.jpg`, { type: blob.type || 'image/jpeg' }));
+      } catch {
+        /* sin foto */
+      }
+    }
+    if (video) {
+      try {
+        const blob = await this.bajar(video.url);
+        const ext = /quicktime/.test(blob.type) || /\.mov($|\?)/i.test(video.url) ? 'mov' : 'mp4';
+        files.push(new File([blob], `${base}.${ext}`, { type: blob.type || (ext === 'mov' ? 'video/quicktime' : 'video/mp4') }));
+      } catch {
+        this.toast.error('No se pudo bajar el video; se comparte solo la foto');
+      }
+    }
+    return files;
+  }
+
+  /** Descarga con porcentaje, para mostrar el avance del video */
+  private async bajar(url: string): Promise<Blob> {
+    const r = await fetch(url);
+    if (!r.ok || !r.body) throw new Error('No se pudo bajar');
+    const total = Number(r.headers.get('content-length')) || 0;
+    const lector = r.body.getReader();
+    const partes: Uint8Array[] = [];
+    let n = 0;
+    this.progreso.set(0);
+    for (;;) {
+      const { done, value } = await lector.read();
+      if (done) break;
+      partes.push(value);
+      n += value.length;
+      if (total) this.progreso.set(Math.min(99, Math.round((n / total) * 100)));
+    }
+    return new Blob(partes as BlobPart[], { type: r.headers.get('content-type') ?? 'video/mp4' });
   }
 
   /** Abre "Nuevo pedido" con este producto (y el color que se está viendo) */

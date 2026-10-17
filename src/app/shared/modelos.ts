@@ -33,6 +33,8 @@ export interface Producto {
   imagenes?: string[] | null;
   /** Tallas disponibles (vacío = el producto no maneja tallas) */
   tallas?: string[] | null;
+  /** Videos del producto (bucket público "videos") */
+  videos?: string[] | null;
 }
 
 /** Variante de color de un producto, con su propia foto */

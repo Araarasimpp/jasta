@@ -110,7 +110,7 @@ function normal(s: string): string {
                   <img [src]="f.url" alt="" loading="lazy" decoding="async" class="capa" [class.on]="f.color === colorActivo(p)" />
                 }
                 @if (agotado(p)) { <span class="agotado">Sin stock</span> }
-                @if (galeria(p).length > 1) { <span class="mas-fotos">{{ galeria(p).length }} fotos</span> }
+                @if (galeria(p).length > 1) { <span class="mas-fotos">{{ p.videos?.length ? '▶ ' : '' }}{{ galeria(p).length - (p.videos?.length ?? 0) }} {{ galeria(p).length - (p.videos?.length ?? 0) === 1 ? 'foto' : 'fotos' }}{{ p.videos?.length ? ' + video' : '' }}</span> }
               </button>
             } @else {
               <div class="foto"><span class="inicial" aria-hidden="true">{{ p.nombre.charAt(0) }}</span>
@@ -189,7 +189,7 @@ export class CatalogoPage implements OnInit {
   async ngOnInit(): Promise<void> {
     const { data, error } = await this.sb.client
       .from('productos')
-      .select('id, nombre, sku, codigo_barras, precio_venta, precio_base, stock, controla_stock, imagen_url, activo, descripcion, imagenes, tallas, colores:producto_colores(id, nombre, hex, imagen_url, orden)')
+      .select('id, nombre, sku, codigo_barras, precio_venta, precio_base, stock, controla_stock, imagen_url, activo, descripcion, imagenes, tallas, videos, colores:producto_colores(id, nombre, hex, imagen_url, orden)')
       .eq('activo', true)
       .order('nombre');
     this.cargando.set(false);
@@ -225,6 +225,9 @@ export class CatalogoPage implements OnInit {
       const u = urlImagen(ruta);
       if (u && !lista.some((x) => x.url === u)) lista.push({ url: u, titulo: `${p.nombre} · foto ${i + 2}`, color: -1 });
     });
+    // Los videos van justo después de la foto principal
+    const videos = (p.videos ?? []).map((u, i) => ({ url: u, titulo: `${p.nombre} · video${(p.videos?.length ?? 0) > 1 ? ' ' + (i + 1) : ''}`, color: -2, video: true }));
+    if (videos.length) lista.splice(Math.min(1, lista.length), 0, ...videos);
     return lista;
   }
 
