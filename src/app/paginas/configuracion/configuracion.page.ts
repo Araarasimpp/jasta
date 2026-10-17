@@ -11,7 +11,7 @@ import {
   ROTULO_CSS_VISTA_PREVIA,
   cargarDatosNegocio,
   documentoRotulos,
-  imprimirEnVentana,
+  imprimirHtml,
   rotuloHtml,
 } from '../../shared/rotulo/rotulo';
 import { mensajeError } from '../../shared/formato';
@@ -128,8 +128,6 @@ export class ConfiguracionPage implements OnInit {
   }
 
   prueba(): void {
-    const v = window.open('', '_blank', 'width=480,height=640');
-    if (!v) return this.toast.error('El navegador bloqueó la ventana de impresión.');
-    imprimirEnVentana(v, documentoRotulos([rotuloHtml(EJEMPLO, this.datos)], 'Rótulo de prueba'));
+    imprimirHtml(documentoRotulos([rotuloHtml(EJEMPLO, this.datos)], 'Rótulo de prueba'));
   }
 }

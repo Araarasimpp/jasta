@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { add, searchOutline, closeOutline } from 'ionicons/icons';
+import { add, searchOutline, closeOutline, cloudUploadOutline } from 'ionicons/icons';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { Producto, ProductoColor } from '../../shared/modelos';
@@ -15,6 +15,7 @@ import { ElegirFotoComponent } from '../../shared/elegir-foto/elegir-foto.compon
 import { FotosProductoComponent } from '../../shared/fotos-producto/fotos-producto.component';
 import { TallasProductoComponent } from '../../shared/tallas-producto/tallas-producto.component';
 import { VideosProductoComponent } from '../../shared/videos-producto/videos-producto.component';
+import { CargaMasivaComponent } from './carga-masiva.component';
 
 type Filtro = 'activos' | 'agotados' | 'bajo' | 'inactivos' | 'todos';
 
@@ -30,7 +31,7 @@ const VACIO: Omit<Producto, 'id'> = {
 @Component({
   selector: 'app-productos',
   standalone: true,
-  imports: [FormsModule, IonIcon, ColoresProductoComponent, ElegirFotoComponent, FotosProductoComponent, TallasProductoComponent, VideosProductoComponent],
+  imports: [FormsModule, IonIcon, ColoresProductoComponent, ElegirFotoComponent, FotosProductoComponent, TallasProductoComponent, VideosProductoComponent, CargaMasivaComponent],
   styles: [
     `
       .tonos { display: inline-flex; gap: 3px; margin-left: 8px; vertical-align: middle; }
@@ -44,13 +45,17 @@ const VACIO: Omit<Producto, 'id'> = {
       .check { display: flex; align-items: center; gap: 8px; font-size: 14px; }
       .check input { width: 18px; height: 18px; }
       .margen { font-size: 13px; color: var(--text-soft); }
+      .head-acc { display: flex; gap: 8px; flex-wrap: wrap; }
     `,
   ],
   template: `
     <div class="vista">
       <div class="vista-head">
         <h1>Productos <small class="num">{{ numero(filtrados().length) }}</small></h1>
-        <button class="b b-pri" (click)="nuevo()"><ion-icon name="add"></ion-icon>Nuevo producto</button>
+        <div class="head-acc">
+          <button class="b" (click)="carga.set(true)"><ion-icon name="cloud-upload-outline"></ion-icon>Cargar Excel</button>
+          <button class="b b-pri" (click)="nuevo()"><ion-icon name="add"></ion-icon>Nuevo producto</button>
+        </div>
       </div>
       <div class="barra">
         <label class="buscar">
@@ -106,6 +111,10 @@ const VACIO: Omit<Producto, 'id'> = {
         <div class="paginar"><span></span><button class="b" (click)="limite.set(limite() + 100)">Ver más</button></div>
       }
     </div>
+
+    @if (carga()) {
+      <app-carga-masiva [productos]="productos()" (cerrar)="carga.set(false)" (cargado)="cargar()"></app-carga-masiva>
+    }
 
     @if (form(); as f) {
       <button class="velo" aria-label="Cerrar" (click)="cerrarForm()"></button>
@@ -190,6 +199,8 @@ export class ProductosPage implements OnInit {
   editId = signal<number | null>(null);
   guardando = signal(false);
   error = signal('');
+  /** Hoja de carga masiva con Excel */
+  carga = signal(false);
 
   filtros: { id: Filtro; label: string }[] = [
     { id: 'activos', label: 'Activos' },
@@ -218,7 +229,7 @@ export class ProductosPage implements OnInit {
   urlImagen = urlImagen;
 
   constructor() {
-    addIcons({ add, searchOutline, closeOutline });
+    addIcons({ add, searchOutline, closeOutline, cloudUploadOutline });
   }
 
   async ngOnInit(): Promise<void> {

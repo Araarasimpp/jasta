@@ -3,7 +3,7 @@ import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../toast/toast.service';
 import { Pedido } from '../modelos';
 import { mensajeError } from '../formato';
-import { DatosNegocio, PedidoRotulo, cargarDatosNegocio, documentoRotulos, imprimirEnVentana, rotuloHtml } from './rotulo';
+import { DatosNegocio, PedidoRotulo, cargarDatosNegocio, documentoRotulos, imprimirHtml, rotuloHtml } from './rotulo';
 import { nombreConVariante } from '../variante';
 
 /** Imprime rótulos de 100 × 100 mm y los marca como impresos */
@@ -33,21 +33,14 @@ export class RotulosService {
   }
 
   /**
-   * Debe llamarse directo desde el clic (sin await antes): la ventana se abre
-   * de inmediato para que el navegador no la bloquee.
+   * Se imprime desde un marco oculto de la misma página (sin ventanas
+   * emergentes), así que también funciona en el celular.
    */
   async imprimir(fuente: Pedido[] | (() => Promise<Pedido[]>)): Promise<boolean> {
     if (Array.isArray(fuente) && !fuente.length) return false;
-    const ventana = window.open('', '_blank', 'width=480,height=640');
-    if (!ventana) {
-      this.toast.error('El navegador bloqueó la ventana de impresión. Permite las ventanas emergentes para esta página.');
-      return false;
-    }
     try {
-      // Los datos se traen después de abrir la ventana (si no, el navegador la bloquea)
       const pedidos = Array.isArray(fuente) ? fuente : await fuente();
       if (!pedidos.length) {
-        ventana.close();
         this.toast.ok('No hay rótulos por imprimir');
         return false;
       }
@@ -56,12 +49,11 @@ export class RotulosService {
         pedidos.map((p) => rotuloHtml(RotulosService.aRotulo(p), this.negocio!)),
         pedidos.length === 1 ? `Rótulo #${pedidos[0].id}` : `${pedidos.length} rótulos`
       );
-      imprimirEnVentana(ventana, html);
+      imprimirHtml(html);
       const { error } = await this.sb.client.rpc('marcar_rotulos', { p_ids: pedidos.map((p) => p.id) });
       if (error) throw error;
       return true;
     } catch (e) {
-      ventana.close();
       this.toast.error(mensajeError(e));
       return false;
     }

@@ -422,7 +422,7 @@ export class PedidosPage implements OnInit, OnDestroy {
   }
 
   // ---------- Rótulos ----------
-  /** Abre la ventana de impresión en el mismo clic y luego trae los datos */
+  /** Trae los pedidos alistados sin rótulo y los imprime */
   async imprimirAlistados(): Promise<void> {
     this.imprimiendo.set(true);
     try {

@@ -305,43 +305,36 @@ export const ROTULO_CSS_VISTA_PREVIA = `
 `;
 
 /**
- * Escribe el documento en una ventana ya abierta, abre el diálogo de
- * impresión y cierra la ventana sola cuando termina (al imprimir o cancelar).
- *
- * La ventana debe abrirse con window.open() en el mismo clic del usuario,
- * antes de cualquier await: si se abre después, el navegador la bloquea.
+ * Imprime el documento desde un marco oculto dentro de la misma página.
+ * No abre ventanas emergentes, así que funciona igual en el computador, en el
+ * celular y en la app instalada (donde las ventanas emergentes no imprimen).
+ * Espera a que carguen las imágenes (logo y QR) antes de abrir el diálogo.
  */
-export function imprimirEnVentana(ventana: Window, html: string): void {
-  ventana.document.open();
-  ventana.document.write(html);
-  ventana.document.close();
-  ventana.focus();
-
-  // Los eventos se registran DESPUÉS de document.write: document.open() borra
-  // los que hubiera en la ventana.
-  let cerrada = false;
-  const cerrar = () => {
-    if (cerrada) return;
-    cerrada = true;
-    // Pequeña espera para que el navegador termine de mandar el trabajo a la impresora
-    setTimeout(() => {
-      try {
-        ventana.close();
-      } catch {
-        /* si el navegador no deja cerrarla, se queda abierta sin problema */
-      }
-    }, 300);
+export function imprimirHtml(html: string): void {
+  document.querySelectorAll('iframe.marco-impresion').forEach((f) => f.remove());
+  const marco = document.createElement('iframe');
+  marco.className = 'marco-impresion';
+  marco.setAttribute('aria-hidden', 'true');
+  marco.tabIndex = -1;
+  // Fuera de la pantalla pero con tamaño real: algunos navegadores no imprimen marcos de 0 px
+  marco.style.cssText = 'position:fixed;left:-10000px;top:0;width:100mm;height:100mm;border:0;opacity:0;pointer-events:none;';
+  let impreso = false;
+  marco.onload = async () => {
+    if (impreso) return;
+    impreso = true;
+    const doc = marco.contentDocument;
+    const imgs = Array.from(doc?.images ?? []).filter((im) => !im.complete);
+    await Promise.race([
+      Promise.all(imgs.map((im) => new Promise((r) => { im.onload = im.onerror = r; }))),
+      new Promise((r) => setTimeout(r, 2500)),
+    ]);
+    const w = marco.contentWindow;
+    if (!w) return;
+    w.focus();
+    w.print();
+    // En el celular print() no espera: el marco se quita un rato después (o al imprimir otro)
+    setTimeout(() => marco.remove(), 120000);
   };
-  ventana.addEventListener('afterprint', cerrar);
-
-  // Imprime cuando cargue el logo; el temporizador es por si "load" ya pasó.
-  // La bandera evita abrir el diálogo dos veces.
-  let yaImpreso = false;
-  const imprimir = () => {
-    if (yaImpreso) return;
-    yaImpreso = true;
-    ventana.print();
-  };
-  ventana.addEventListener('load', imprimir);
-  setTimeout(imprimir, 800);
+  marco.srcdoc = html;
+  document.body.appendChild(marco);
 }

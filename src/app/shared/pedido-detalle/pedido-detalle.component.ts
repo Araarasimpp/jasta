@@ -373,7 +373,6 @@ export class PedidoDetalleComponent implements OnChanges {
       return;
     }
     if (id === 'rotulo') {
-      // Sin await antes: la ventana de impresión tiene que abrirse en el mismo clic
       if (await this.rotulos.imprimir([this.pedido()!])) {
         await this.cargar();
         this.cambiado.emit();
