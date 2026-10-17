@@ -32,8 +32,8 @@ interface Pendiente {
       .cifra { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--surface-2); }
       .cifra small { font-size: 12px; color: var(--text-soft); }
       .cifra strong { font-size: 15px; }
-      .cifra.clave { background: var(--accent-wash); }
-      .cifra.clave small { color: var(--oro-texto); }
+      .cifra.clave { background: var(--ok-wash); }
+      .cifra.clave small { color: var(--efectivo-texto); }
       .cifra.clave strong { color: var(--text); }
       .mini { width: 100%; border-collapse: collapse; font-size: 13px; }
       .mini td { padding: 6px 4px; border-bottom: 1px solid var(--border-soft); }
@@ -83,7 +83,7 @@ interface Pendiente {
                   {{ abiertoM() === c.mensajero_id ? 'Ocultar pedidos' : 'Ver pedidos' }}
                 </button>
                 @if (puedeCerrar()) {
-                  <button class="b b-pri" [disabled]="cerrando() === c.mensajero_id" (click)="cerrar(c)">Cerrar cuadre</button>
+                  <button class="b b-ok" [disabled]="cerrando() === c.mensajero_id" (click)="cerrar(c)">Cerrar cuadre</button>
                 }
               </div>
             </article>

@@ -55,20 +55,20 @@ const RAPIDOS_TIENDA = [
       .msg.mio { align-self: flex-end; align-items: flex-end; }
       .burbuja { padding: 8px 11px; border-radius: 10px 10px 10px 3px; background: var(--surface-2); border: 1px solid var(--border);
         font-size: 14px; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; }
-      .msg.mio .burbuja { border-radius: 10px 10px 3px 10px; background: var(--oro-wash); border-color: var(--oro-soft); }
+      .msg.mio .burbuja { border-radius: 10px 10px 3px 10px; background: var(--accent-wash); border-color: var(--accent-soft); }
       .meta { font-size: 11px; color: var(--text-muted); }
       .meta .hora { font-family: var(--mono-font); }
       .rapidos { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 8px 0; }
       .rapidos::-webkit-scrollbar { display: none; }
       .rapido { flex-shrink: 0; height: 30px; padding: 0 11px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface);
         color: var(--text-2); font: inherit; font-size: 12.5px; white-space: nowrap; cursor: pointer; }
-      @media (hover: hover) { .rapido:hover:not(:disabled) { border-color: var(--oro); color: var(--text); } }
+      @media (hover: hover) { .rapido:hover:not(:disabled) { border-color: var(--accent); color: var(--text); } }
       .rapido:disabled { opacity: .5; cursor: progress; }
       .escribir { display: flex; gap: 8px; align-items: flex-end; }
       .escribir textarea { flex: 1; min-height: 40px; max-height: 120px; padding: 9px 11px; resize: none; box-sizing: border-box;
         border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text);
         font: inherit; font-size: 14px; line-height: 1.4; }
-      .escribir textarea:focus { outline: none; border-color: var(--oro); box-shadow: 0 0 0 3px var(--oro-wash); }
+      .escribir textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-wash); }
       .enviar { width: 40px; height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border: none;
         border-radius: var(--radius-sm); background: var(--accent); color: var(--on-accent); font-size: 18px; cursor: pointer; }
       .enviar:disabled { opacity: .45; cursor: default; }

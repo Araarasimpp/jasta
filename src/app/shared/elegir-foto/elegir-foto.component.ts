@@ -23,8 +23,8 @@ import { subirFoto } from '../fotos';
       :host { display: block; }
       .zona { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 14px; align-items: center; padding: 12px; border: 1.5px dashed var(--border-strong);
         border-radius: var(--radius-lg); background: var(--surface); transition: border-color 160ms var(--ease), background 160ms var(--ease); outline: none; }
-      .zona:focus-visible { border-color: var(--oro); }
-      .zona.encima { border-color: var(--oro); background: var(--oro-wash); }
+      .zona:focus-visible { border-color: var(--accent); }
+      .zona.encima { border-color: var(--accent); background: var(--accent-wash); }
       .previa { position: relative; width: 132px; aspect-ratio: 1; border-radius: var(--radius); overflow: hidden; background: var(--surface-2);
         display: grid; place-items: center; padding: 0; border: 1px solid var(--border); cursor: zoom-in; }
       .previa img { width: 100%; height: 100%; object-fit: cover; display: block; animation: fundido 260ms ease both; }

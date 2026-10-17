@@ -43,14 +43,14 @@ export interface FotoCatalogo {
       .slide img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; padding: 14px; box-sizing: border-box; display: block; }
       .sin-foto { aspect-ratio: 16 / 9; display: grid; place-items: center; background: var(--oro-wash); color: var(--oro-texto); font-size: 56px; font-weight: 650; }
       .flecha { position: absolute; top: 50%; translate: 0 -50%; width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid var(--border);
-        border-radius: 50%; background: rgba(255, 255, 255, 0.92); color: #171511; font-size: 18px; cursor: pointer; box-shadow: var(--shadow-pop); transition: opacity 160ms; }
+        border-radius: 50%; background: rgba(255, 255, 255, 0.92); color: #111827; font-size: 18px; cursor: pointer; box-shadow: var(--shadow-pop); transition: opacity 160ms; }
       .flecha:disabled { opacity: 0; pointer-events: none; }
       .flecha.izq { left: 10px; } .flecha.der { right: 10px; }
       .contador { position: absolute; top: 10px; right: 10px; padding: 3px 9px; border-radius: 11px; background: rgba(20, 18, 14, 0.66); color: #fff;
         font-size: 11.5px; font-weight: 600; font-family: var(--mono-font); }
       .ampliar { position: absolute; bottom: 10px; right: 10px; width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 50%;
         background: rgba(20, 18, 14, 0.66); color: #fff; font-size: 16px; cursor: pointer; }
-      .agotado { position: absolute; top: 10px; left: 10px; padding: 3px 8px; border-radius: 5px; background: rgba(23, 21, 17, 0.72); color: #fff; font-size: 11.5px; font-weight: 600; }
+      .agotado { position: absolute; top: 10px; left: 10px; padding: 3px 8px; border-radius: 5px; background: rgba(17, 24, 39, 0.72); color: #fff; font-size: 11.5px; font-weight: 600; }
       .miniaturas { display: flex; gap: 8px; padding: 10px 20px; overflow-x: auto; scrollbar-width: none; border-bottom: var(--perfora); }
       .miniaturas::-webkit-scrollbar { display: none; }
       .mini { flex: none; width: 56px; height: 56px; padding: 0; border: 1px solid var(--border); border-radius: 8px; background: #fff; overflow: hidden; cursor: pointer;

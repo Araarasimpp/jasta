@@ -1,9 +1,9 @@
 // src/theme/tema.scss
 // Sistema visual de Jasta: "tiquete de caja".
-// Papel blanco, tinta casi negra, cifras tabulares y perforaciones punteadas,
-// como el recibo de un punto de venta. El oro de JT es el único acento: marca
-// lo activo, lo seleccionado y el foco. El color de estado solo se usa para
-// estados.
+// Papel blanco, cifras tabulares y perforaciones punteadas, como el recibo de
+// un punto de venta, con la paleta de la marca: negro azulado para la
+// estructura, azul para navegar y avanzar, verde para la plata y dorado para
+// lo que se destaca. El color de estado solo se usa para estados.
 
 :root {
   // Tipografía: Geist para la interfaz, Geist Mono para cifras, números de
@@ -11,46 +11,59 @@
   --ui-font: 'Geist Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --mono-font: 'Geist Mono Variable', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
-  // Marca
-  --tinta: #171511;
-  --oro: #c4920f; // rellenos y marcas (subrayado activo, punto, casillas)
-  --oro-texto: #8a6400; // oro legible sobre papel
-  --oro-wash: #fbf5e4;
-  --oro-soft: #efdfb2;
-  --efectivo: #17794f;
-  --cobalto: #2f55d4;
+  // Paleta de Jasta:
+  //  Dorado #C9A227 — identidad y destacados (comisiones, premios, insignias). Con moderación.
+  //  Verde  #16A34A — dinero y acciones exitosas (recaudar, confirmar pago, entregar, saldos a favor).
+  //  Azul   #2563EB — navegación y procesos (botones principales, asignar, seguimiento, formularios).
+  //  Negro azulado #111827 — estructura (menú lateral, barras de navegación, encabezados, texto).
+  --tinta: #111827;
+  --oro: #c9a227; // rellenos y marcas (subrayado activo, punto, insignias)
+  --oro-texto: #8a6d0b; // dorado legible sobre blanco
+  --oro-wash: #fbf7e6;
+  --oro-soft: #efe3ad;
+  --efectivo: #16a34a; // verde: botones y rellenos de dinero
+  --efectivo-texto: #15803d; // el mismo verde, legible en texto pequeño
+  --cobalto: #2563eb; // azul
 
-  // Superficies: rollo de papel sobre mostrador
-  --bg: #f4f4f2;
+  // Superficies
+  --bg: #f5f6f8;
   --surface: #ffffff;
-  --surface-2: #f8f8f6;
-  --hover: #f1f0ec;
-  --selected: #ebe9e3;
+  --surface-2: #f8f9fb;
+  --hover: #f1f3f6;
+  --selected: #e7eaf0;
 
   // Texto
-  --text: #171511;
-  --text-2: #36332c;
-  --text-soft: #5b574e;
-  --text-muted: #6f6b62;
+  --text: #111827;
+  --text-2: #1f2937;
+  --text-soft: #4b5563;
+  --text-muted: #6b7280;
 
   // Bordes y perforación
-  --border: #e3e1db;
-  --border-soft: #eeede8;
-  --border-strong: #cbc8bf;
+  --border: #e5e7eb;
+  --border-soft: #eef0f3;
+  --border-strong: #d1d5db;
 
-  // Acción principal (botones): la tinta. Foco y selección: el oro.
-  --accent: #171511;
-  --accent-hover: #34312a;
+  // Acción principal (botones): el azul. Destacados: el dorado.
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
   --on-accent: #ffffff;
 
+  // Menú lateral y barra de navegación: negro azulado
+  --nav-bg: #111827;
+  --nav-text: #f9fafb;
+  --nav-soft: #cbd2dc;
+  --nav-muted: #8f9aab;
+  --nav-hover: rgba(255, 255, 255, 0.07);
+  --nav-borde: rgba(255, 255, 255, 0.12);
+
   // Estados de pedido (cada uno conserva su color)
-  --st-pendiente: #6f6b62;
+  --st-pendiente: #6b7280;
   --st-ruta: #c97a00;
   --st-ruta-text: #9a5b00;
-  --st-cancelado: #9a968d;
+  --st-cancelado: #9ca3af;
   --danger: #b42318;
   --danger-wash: #fdeeec;
-  --ok-wash: #e8f4ee;
+  --ok-wash: #e9f7ee;
   --ruta-wash: #fdf1df;
 
   // Forma: esquinas cortas de papel cortado; sombra solo en lo que flota
@@ -59,7 +72,7 @@
   --radius: 6px;
   --radius-lg: 8px;
   --radius-xl: 12px;
-  --shadow-pop: 0 10px 30px rgba(23, 21, 17, 0.14), 0 2px 6px rgba(23, 21, 17, 0.08);
+  --shadow-pop: 0 10px 30px rgba(17, 24, 39, 0.14), 0 2px 6px rgba(17, 24, 39, 0.08);
   --dur: 140ms;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
 
@@ -67,41 +80,45 @@
 }
 
 body.dark {
-  // Papel térmico de noche: carbón, tinta clara y el mismo oro, más luminoso
-  --tinta: #f1efe9;
-  --oro: #e0b43e;
-  --oro-texto: #e6be55;
-  --oro-wash: #2a2312;
-  --oro-soft: #4a3c17;
-  --efectivo: #45c48a;
-  --cobalto: #8ea6ff;
+  // Noche: el negro azulado de fondo y los mismos colores, más luminosos
+  --tinta: #f3f4f6;
+  --oro: #d6b23e;
+  --oro-texto: #e3c45c;
+  --oro-wash: #272210;
+  --oro-soft: #4a3f16;
+  --efectivo: #22c55e;
+  --efectivo-texto: #4ade80;
+  --cobalto: #60a5fa;
 
-  --bg: #0e0e0c;
-  --surface: #161614;
-  --surface-2: #1b1b18;
-  --hover: #22221e;
-  --selected: #2a2925;
+  --bg: #0b1120;
+  --surface: #111827;
+  --surface-2: #151e2e;
+  --hover: #1f2937;
+  --selected: #273449;
 
-  --text: #f1efe9;
-  --text-2: #d6d3cb;
-  --text-soft: #aeaaa0;
-  --text-muted: #96928a;
+  --text: #f3f4f6;
+  --text-2: #e5e7eb;
+  --text-soft: #a3acb9;
+  --text-muted: #8b95a5;
 
-  --border: #2c2b27;
-  --border-soft: #22211e;
-  --border-strong: #3d3c36;
+  --border: #1f2937;
+  --border-soft: #182234;
+  --border-strong: #374151;
 
-  --accent: #f1efe9;
-  --accent-hover: #ffffff;
-  --on-accent: #121210;
+  --accent: #3b82f6;
+  --accent-hover: #60a5fa;
+  --on-accent: #ffffff;
 
-  --st-pendiente: #aeaaa0;
+  --nav-bg: #070b14;
+  --nav-borde: rgba(255, 255, 255, 0.08);
+
+  --st-pendiente: #a3acb9;
   --st-ruta: #f0a531;
   --st-ruta-text: #f0a531;
-  --st-cancelado: #7d7a72;
+  --st-cancelado: #6b7280;
   --danger: #ff7a6e;
   --danger-wash: #3a1915;
-  --ok-wash: #11291f;
+  --ok-wash: #0f2a1b;
   --ruta-wash: #33240c;
 
   --shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.4);
@@ -110,14 +127,15 @@ body.dark {
 // Alias que dependen de otros tokens: se declaran en body para que se
 // recalculen con los valores del tema oscuro (en :root quedarían fijos).
 body {
-  --sidebar: var(--surface);
+  --sidebar: var(--nav-bg);
   --perfora: 1px dashed var(--border-strong);
-  --accent-soft: var(--oro-soft);
-  --accent-wash: var(--oro-wash);
-  --link: var(--oro-texto);
-  --foco: var(--oro);
+  // Selección y foco de formularios: azul (procesos)
+  --accent-soft: color-mix(in srgb, var(--accent) 22%, var(--surface));
+  --accent-wash: color-mix(in srgb, var(--accent) 9%, var(--surface));
+  --link: var(--accent);
+  --foco: var(--accent);
   --st-alistado: var(--cobalto);
-  --st-entregado: var(--efectivo);
+  --st-entregado: var(--efectivo-texto);
 }
 
 // Ionic toma la misma paleta

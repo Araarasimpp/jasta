@@ -110,7 +110,7 @@ import { NotificacionesService, Aviso } from '../../core/services/notificaciones
       .permiso-ok { flex-shrink: 0; margin: 10px 14px 0; font-size: 12px; color: var(--st-entregado); }
       .link-off { color: var(--text-soft) !important; white-space: nowrap; text-decoration: underline; }
       .link-off:disabled, .permiso button:disabled { opacity: .6; cursor: progress; }
-      .link { border: none; background: none; padding: 4px 0; color: var(--oro-texto); font-size: 12px; font-weight: 550; cursor: pointer; }
+      .link { border: none; background: none; padding: 4px 0; color: var(--accent); font-size: 12px; font-weight: 550; cursor: pointer; }
       .permiso { flex-shrink: 0; margin: 10px 12px 0; padding: 10px 12px; border-radius: var(--radius); background: var(--oro-wash); font-size: 13px; line-height: 1.45; }
       .permiso p { margin: 0 0 8px; }
       .permiso button { height: 32px; padding: 0 12px; border: none; border-radius: var(--radius-sm); background: var(--accent); color: var(--on-accent); font-size: 13px; font-weight: 550; cursor: pointer; }
@@ -119,9 +119,9 @@ import { NotificacionesService, Aviso } from '../../core/services/notificaciones
       .aviso { width: 100%; display: flex; gap: 10px; padding: 9px 10px; touch-action: pan-y; -webkit-tap-highlight-color: transparent; border: none; border-radius: var(--radius); background: none; color: var(--text); text-align: left; cursor: pointer; }
       .aviso + .aviso { margin-top: 2px; }
       @media (hover: hover) { .aviso:hover { background: var(--hover); } }
-      .aviso.nuevo { background: var(--oro-wash); }
+      .aviso.nuevo { background: var(--accent-wash); }
       .punto { width: 8px; height: 8px; margin-top: 6px; flex-shrink: 0; border-radius: 50%; background: var(--border-strong); }
-      .aviso.nuevo .punto { background: var(--oro); }
+      .aviso.nuevo .punto { background: var(--accent); }
       .punto[data-tipo='pedido_cancelado'] { background: var(--danger) !important; }
       .punto[data-tipo='pedido_entregado'], .punto[data-tipo='cuadre_confirmado'] { background: var(--st-entregado) !important; }
       .punto[data-tipo='pedido_asignado'] { background: var(--st-ruta) !important; }

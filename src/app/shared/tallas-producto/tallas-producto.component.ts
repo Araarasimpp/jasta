@@ -35,7 +35,7 @@ const GRUPOS: { nombre: string; tallas: string[] }[] = [
       .grupos { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
       .grupos span { font-size: 12px; color: var(--text-muted); margin-right: 2px; }
       .grupo { height: 30px; padding: 0 11px; border: 1px dashed var(--border-strong); border-radius: 15px; background: none; color: var(--text-soft); font: inherit; font-size: 12.5px; cursor: pointer; }
-      @media (hover: hover) { .grupo:hover { border-color: var(--oro); color: var(--text); } }
+      @media (hover: hover) { .grupo:hover { border-color: var(--accent); color: var(--text); } }
     `,
   ],
   template: `

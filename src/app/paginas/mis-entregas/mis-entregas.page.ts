@@ -27,7 +27,7 @@ import { nombreConVariante } from '../../shared/variante';
     `
       .tarjeta h3 { cursor: pointer; }
       .chip-mensaje { align-self: flex-start; display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 12px; border: none;
-        border-radius: 999px; background: var(--oro); color: #171511; font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; }
+        border-radius: 999px; background: var(--oro); color: #111827; font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; }
       .chip-mensaje ion-icon { font-size: 15px; }
       .total { font-size: 17px; }
       .b-wa { color: var(--efectivo); border-color: color-mix(in srgb, var(--efectivo) 40%, var(--border)); }
@@ -35,8 +35,8 @@ import { nombreConVariante } from '../../shared/variante';
       .cuadre { display: flex; flex-direction: column; gap: 12px; }
       .cuadre .panel-head { margin-bottom: 0; }
       .en-ruta { font-size: 13px; color: var(--text-soft); }
-      .entregar-total { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border-radius: var(--radius); background: var(--oro-wash); }
-      .entregar-total span { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--oro-texto); }
+      .entregar-total { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border-radius: var(--radius); background: var(--ok-wash); }
+      .entregar-total span { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--efectivo-texto); }
       .entregar-total strong { font-family: var(--mono-font); font-size: 28px; font-weight: 600; color: var(--text); letter-spacing: -0.03em; }
       .desglose { display: grid; grid-template-columns: 1fr auto; gap: 6px 0; margin: 0; font-size: 13px; }
       .desglose dt { display: flex; align-items: baseline; gap: 8px; color: var(--text-soft); }

@@ -77,7 +77,7 @@ interface Resumen {
       /* Bases por aceptar */
       .pendientes { display: flex; flex-direction: column; gap: 10px; }
       .pend { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 14px; align-items: center; padding: 14px 16px; border-radius: var(--radius-lg);
-        border: 1px solid color-mix(in srgb, var(--oro) 45%, var(--border)); background: var(--oro-wash); animation: entra 240ms ease both; }
+        border: 1px solid color-mix(in srgb, var(--efectivo) 40%, var(--border)); background: var(--ok-wash); animation: entra 240ms ease both; }
       @keyframes entra { from { opacity: 0; transform: translateY(4px); } }
       .pend .txt strong { display: block; font-family: var(--mono-font); font-size: 20px; }
       .pend .txt span { display: block; font-size: 13.5px; font-weight: 550; }
@@ -153,7 +153,7 @@ interface Resumen {
               @if (esRecolector() && !esAdmin()) {
                 <div class="btns">
                   <button class="b" (click)="responder(p, false)" [disabled]="ocupado()"><ion-icon name="close-outline"></ion-icon>Rechazar</button>
-                  <button class="b b-pri" (click)="responder(p, true)" [disabled]="ocupado()"><ion-icon name="checkmark-outline"></ion-icon>Aceptar</button>
+                  <button class="b b-ok" (click)="responder(p, true)" [disabled]="ocupado()"><ion-icon name="checkmark-outline"></ion-icon>Aceptar</button>
                 </div>
               } @else {
                 <span class="estado pendiente">Esperando que la acepte</span>
@@ -231,7 +231,7 @@ interface Resumen {
         </div>
         <div class="hoja-pie">
           <button class="b" (click)="formBase.set(false)">Cancelar</button>
-          <button class="b b-pri" (click)="guardarBase()" [disabled]="ocupado()">{{ ocupado() ? 'Guardando…' : esAdmin() && !esRecolector() ? 'Enviar base' : 'Agregar base' }}</button>
+          <button class="b b-ok" (click)="guardarBase()" [disabled]="ocupado()">{{ ocupado() ? 'Guardando…' : esAdmin() && !esRecolector() ? 'Enviar base' : 'Agregar base' }}</button>
         </div>
       </div>
     }

@@ -1,6 +1,6 @@
 // Página de Pedidos: misma estructura que la de Home ALS, vestida con el
 // sistema "tiquete de caja" (DESIGN.md): renglones punteados, cifras en mono,
-// pestaña activa subrayada en oro y talón de oro en la fila seleccionada.
+// pestaña activa subrayada en azul y talón azul en la fila seleccionada.
 // Lo propio de Jasta va al final: fechas, paginación y botón del cliente.
 
 :host {
@@ -65,9 +65,9 @@
 }
 
 .search:focus-within {
-  border-color: var(--oro);
+  border-color: var(--accent);
   background: var(--surface);
-  box-shadow: 0 0 0 3px var(--oro-wash);
+  box-shadow: 0 0 0 3px var(--accent-wash);
 }
 
 .search ion-icon {
@@ -189,7 +189,7 @@
   transition: color var(--dur) var(--ease);
 }
 
-// La pestaña activa se subraya en oro, como en el resto de la app
+// La pestaña activa se subraya en azul, como en el resto de la app
 .tab::after {
   content: '';
   position: absolute;
@@ -198,7 +198,7 @@
   bottom: -1px;
   height: 2px;
   border-radius: 2px 2px 0 0;
-  background: var(--oro);
+  background: var(--accent);
   transform: scaleX(0);
   transition: transform 220ms var(--ease);
 }
@@ -227,7 +227,7 @@
 }
 
 .tab.active .count {
-  color: var(--oro-texto);
+  color: var(--accent);
   font-weight: 600;
 }
 
@@ -267,7 +267,7 @@
   width: 15px;
   height: 15px;
   margin: 0;
-  accent-color: var(--oro);
+  accent-color: var(--accent);
   cursor: pointer;
 }
 
@@ -357,8 +357,8 @@
 }
 
 .row.selected {
-  background: var(--oro-wash);
-  box-shadow: inset 3px 0 0 var(--oro);
+  background: var(--accent-wash);
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 .c-num {
@@ -447,7 +447,7 @@
   bottom: 3px;
   padding: 1px 5px;
   border-radius: 4px;
-  background: rgba(23, 21, 17, 0.8);
+  background: rgba(17, 24, 39, 0.8);
   color: #ffffff;
   font-family: var(--mono-font);
   font-size: 11px;
@@ -539,7 +539,7 @@
 }
 
 .dom-select.unassigned {
-  color: var(--oro-texto);
+  color: var(--accent);
   font-weight: 600;
 }
 
@@ -1075,8 +1075,8 @@
   margin-top: 4px;
   padding: 0 8px;
   border-radius: var(--radius-xs);
-  background: var(--oro-wash);
-  color: var(--oro-texto);
+  background: var(--accent-wash);
+  color: var(--accent);
 }
 
 .chip-alistado .num {
@@ -1229,7 +1229,7 @@ button.cliente {
   border: none;
   border-radius: 999px;
   background: var(--oro);
-  color: #171511;
+  color: #111827;
   font: inherit;
   font-size: 11.5px;
   font-weight: 650;

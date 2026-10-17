@@ -37,7 +37,7 @@
   padding: 18px;
   box-sizing: border-box;
   border-radius: var(--radius-xl);
-  background: #f1efe9;
+  background: #f9fafb;
 }
 
 .auth-marca p {
@@ -97,7 +97,7 @@
   padding: 6px;
   box-sizing: border-box;
   border-radius: var(--radius-lg);
-  background: #f1efe9;
+  background: #f9fafb;
 }
 
 .auth-head h1 {
@@ -163,8 +163,8 @@
 
 .field input:focus {
   outline: none;
-  border-color: var(--oro);
-  box-shadow: 0 0 0 3px var(--oro-wash);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-wash);
 }
 
 .field input[aria-invalid='true'] {

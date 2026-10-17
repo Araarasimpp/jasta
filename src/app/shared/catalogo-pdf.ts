@@ -19,12 +19,12 @@ export interface OpcionesCatalogo {
 }
 
 // Colores de la marca (mm y RGB para jsPDF)
-const TINTA: [number, number, number] = [23, 21, 17];
-const ORO: [number, number, number] = [196, 146, 15];
-const ORO_TEXTO: [number, number, number] = [138, 100, 0];
-const ORO_WASH: [number, number, number] = [251, 245, 228];
-const GRIS: [number, number, number] = [110, 106, 98];
-const LINEA: [number, number, number] = [226, 222, 212];
+const TINTA: [number, number, number] = [17, 24, 39]; // #111827
+const ORO: [number, number, number] = [201, 162, 39]; // #C9A227
+const ORO_TEXTO: [number, number, number] = [138, 109, 11];
+const ORO_WASH: [number, number, number] = [251, 247, 230];
+const GRIS: [number, number, number] = [107, 114, 128];
+const LINEA: [number, number, number] = [229, 231, 235];
 
 const A4 = { w: 210, h: 297 };
 const MARGEN = 14;

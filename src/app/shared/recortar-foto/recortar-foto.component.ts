@@ -22,7 +22,7 @@ const ZOOM_MAX = 4;
       .mascara { position: absolute; inset: 0; pointer-events: none; border-radius: 50%; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.55);
         outline: 2px solid rgba(255, 255, 255, 0.85); outline-offset: -2px; }
       .zoom { display: flex; align-items: center; gap: 10px; width: var(--lado); font-size: 18px; color: var(--text-soft); }
-      .zoom input { flex: 1; accent-color: var(--oro); }
+      .zoom input { flex: 1; accent-color: var(--accent); }
       .ayuda { margin: 0; text-align: center; font-size: 13px; color: var(--text-soft); }
       .cargando { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font-size: 13px; }
     `,

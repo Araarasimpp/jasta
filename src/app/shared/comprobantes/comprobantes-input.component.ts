@@ -24,12 +24,12 @@ const MAX = 5;
       :host { display: block; }
       .caja { display: flex; flex-direction: column; gap: 10px; padding: 12px; border: 1.5px dashed var(--border-strong); border-radius: var(--radius-lg);
         background: var(--surface); transition: border-color 160ms var(--ease), background 160ms var(--ease); outline: none; }
-      .caja.falta { border-color: var(--oro); background: var(--oro-wash); }
-      .caja.encima { border-color: var(--oro); }
+      .caja.falta { border-color: var(--accent); background: var(--accent-wash); }
+      .caja.encima { border-color: var(--accent); }
       .tit { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 13.5px; font-weight: 600; }
-      .tit ion-icon { font-size: 18px; color: var(--oro-texto); }
+      .tit ion-icon { font-size: 18px; color: var(--accent); }
       .tit .ok { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--st-entregado); }
-      .tit .req { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--oro-texto); }
+      .tit .req { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--accent); }
       .fotos { display: flex; gap: 8px; flex-wrap: wrap; }
       .foto { position: relative; width: 74px; height: 74px; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); background: var(--surface-2);
         animation: entra 200ms ease both; }

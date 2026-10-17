@@ -24,7 +24,7 @@ export const MAX_FOTOS = 12;
       :host { display: block; }
       .rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; padding: 10px; border: 1.5px dashed var(--border-strong);
         border-radius: var(--radius-lg); background: var(--surface); transition: border-color 160ms var(--ease), background 160ms var(--ease); outline: none; }
-      .rejilla.encima { border-color: var(--oro); background: var(--oro-wash); }
+      .rejilla.encima { border-color: var(--accent); background: var(--accent-wash); }
       .foto { position: relative; aspect-ratio: 1; border-radius: var(--radius); overflow: hidden; background: var(--surface-2); border: 1px solid var(--border);
         animation: entra 220ms ease both; }
       @keyframes entra { from { opacity: 0; transform: scale(0.94); } }

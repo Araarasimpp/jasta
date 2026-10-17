@@ -56,7 +56,7 @@ interface Borrador {
       .miniatura .tono { position: absolute; inset: 0; }
       .color:active .miniatura { transform: scale(0.96); }
       @media (hover: hover) { .color:hover .miniatura { transform: translateY(-2px); box-shadow: var(--shadow-pop); } }
-      .color.on .miniatura { border-color: var(--oro); box-shadow: 0 0 0 2px var(--oro); }
+      .color.on .miniatura { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
       .punto { position: absolute; right: 6px; bottom: 6px; width: 16px; height: 16px; border-radius: 50%;
         border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35); }
       .nombre { font-size: 12.5px; font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -82,7 +82,7 @@ interface Borrador {
       .muestras { display: flex; flex-wrap: wrap; gap: 7px; }
       .muestra { width: 26px; height: 26px; border-radius: 50%; padding: 0; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--border-strong);
         cursor: pointer; transition: transform 150ms var(--ease), box-shadow 150ms; }
-      .muestra.on { box-shadow: 0 0 0 2px var(--oro); transform: scale(1.12); }
+      .muestra.on { box-shadow: 0 0 0 2px var(--accent); transform: scale(1.12); }
       .muestra.propio { position: relative; overflow: hidden; background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red); }
       .muestra.propio input { position: absolute; inset: -6px; width: 40px; height: 40px; opacity: 0; cursor: pointer; }
       .acciones-editor { display: flex; gap: 8px; flex-wrap: wrap; }

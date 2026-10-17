@@ -1,5 +1,5 @@
-// Layout: menú lateral de papel (escritorio) y barra inferior (celular).
-// La sección activa lleva el ícono en oro; la acción principal va en tinta.
+// Layout: menú lateral negro azulado (escritorio) y barra inferior (celular).
+// La sección activa se marca en azul; la acción principal va en azul lleno.
 
 .shell {
   display: flex;
@@ -19,8 +19,17 @@
   padding: 14px 12px 12px;
   box-sizing: border-box;
   background: var(--sidebar);
-  border-right: 1px solid var(--border);
+  border-right: 1px solid var(--nav-borde);
   color: var(--text);
+  // Dentro del menú, los tonos de texto y rayas son los del fondo oscuro
+  --text: var(--nav-text);
+  --text-soft: var(--nav-soft);
+  --text-muted: var(--nav-muted);
+  --hover: var(--nav-hover);
+  --border: var(--nav-borde);
+  --border-strong: var(--nav-borde);
+  --oro-texto: #e3c45c;
+  color-scheme: dark;
 }
 
 .shell.collapsed .sidebar {
@@ -43,12 +52,12 @@
   object-fit: contain;
 }
 
-:host-context(.dark) .brand-mark {
-  // La JT es negra con borde dorado: en modo oscuro va sobre una placa clara
+.brand-mark {
+  // La JT es negra con borde dorado: sobre el menú oscuro va en una placa clara
   padding: 3px;
   box-sizing: border-box;
   border-radius: var(--radius);
-  background: #f1efe9;
+  background: #f9fafb;
 }
 
 .brand-name {
@@ -187,13 +196,24 @@
 }
 
 .menu-item.active {
-  background: var(--hover);
-  color: var(--text);
+  background: rgba(37, 99, 235, 0.22);
+  color: #ffffff;
   font-weight: 600;
 }
 
+.menu-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 7px;
+  bottom: 7px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: #60a5fa;
+}
+
 .menu-item.active ion-icon {
-  color: var(--oro);
+  color: #93c5fd;
 }
 
 .shell.collapsed .menu-item,

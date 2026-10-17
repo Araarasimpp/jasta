@@ -57,7 +57,7 @@ function normal(s: string): string {
       .res .pre { font-weight: 500; white-space: nowrap; }
       .stock-bajo { color: var(--danger); }
       .linea { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto auto; gap: 8px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-soft); font-size: 13px; }
-      .linea.falta { box-shadow: inset 3px 0 0 var(--oro); padding-left: 8px; }
+      .linea.falta { box-shadow: inset 3px 0 0 var(--accent); padding-left: 8px; }
       .mini { width: 40px; height: 40px; border-radius: 6px; object-fit: cover; background: var(--surface-2); display: block; border: 1px solid var(--border-soft); padding: 0; cursor: zoom-in; overflow: hidden; }
       .mini img { width: 100%; height: 100%; object-fit: cover; display: block; animation: aparece 200ms ease both; }
       span.mini { cursor: default; }
@@ -65,19 +65,19 @@ function normal(s: string): string {
       .vars { grid-column: 2 / -1; display: flex; flex-direction: column; gap: 8px; }
       .var-fila { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
       .var-etq { font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-muted); min-width: 44px; }
-      .var-etq.pide { color: var(--oro-texto); }
+      .var-etq.pide { color: var(--accent); }
       .var { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: 15px;
         background: var(--surface); color: var(--text); font: inherit; font-size: 13px; cursor: pointer; transition: border-color 120ms, background 120ms; }
       .var.on { border-color: var(--text); background: var(--text); color: var(--bg); font-weight: 600; }
       .var .tono { width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 0 1px var(--border-strong); flex: none; }
       .var.on .tono { box-shadow: 0 0 0 1.5px var(--bg); }
       .var.talla { min-width: 38px; justify-content: center; padding: 0 9px; font-family: var(--mono-font); }
-      .pregunta { grid-column: 2 / -1; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-radius: var(--radius); background: var(--oro-wash);
-        border: 1px solid color-mix(in srgb, var(--oro) 35%, transparent); animation: aparece 180ms ease both; }
+      .pregunta { grid-column: 2 / -1; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-radius: var(--radius); background: var(--accent-wash);
+        border: 1px solid var(--accent-soft); animation: aparece 180ms ease both; }
       .pregunta p { margin: 0; font-size: 13.5px; font-weight: 550; color: var(--text); }
       .pregunta div { display: flex; gap: 8px; flex-wrap: wrap; }
       .pregunta .b { height: 34px; }
-      .unidad { font-size: 11.5px; font-weight: 600; color: var(--oro-texto); margin-left: 6px; }
+      .unidad { font-size: 11.5px; font-weight: 600; color: var(--accent); margin-left: 6px; }
       .linea .nom { min-width: 0; }
       .linea .nom small { display: block; color: var(--text-muted); font-size: 12px; }
       .cant { display: flex; align-items: center; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); }
@@ -287,7 +287,7 @@ function normal(s: string): string {
             @if (error()) {
               <p class="error" role="alert">{{ error() }}</p>
             }
-            <button class="b b-pri b-grande" [disabled]="guardando()" (click)="guardar()">
+            <button class="b b-grande" [class.b-pri]="!local() || !!editId()" [class.b-ok]="local() && !editId()" [disabled]="guardando()" (click)="guardar()">
               {{ guardando() ? 'Guardando…' : editId() ? 'Guardar cambios' : local() ? 'Registrar venta' : 'Crear pedido' }}
             </button>
           </section>
