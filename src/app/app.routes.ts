@@ -99,6 +99,10 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/productos/productos.page').then((m) => m.ProductosPage),
       },
       {
+        path: 'barrios', canActivate: [rolGuard], data: { roles: ['admin'] },
+        loadComponent: () => import('./paginas/barrios/barrios.page').then((m) => m.BarriosPage),
+      },
+      {
         path: 'configuracion', canActivate: [rolGuard], data: { roles: ['admin'] },
         loadComponent: () => import('./paginas/configuracion/configuracion.page').then((m) => m.ConfiguracionPage),
       },

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, Input, OnDestroy, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostBinding, Input, OnDestroy, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
@@ -49,6 +49,12 @@ const RAPIDOS_TIENDA = [
   styles: [
     `
       :host { display: block; }
+      /* Ventana de chat aparte: los mensajes ocupan todo el alto y lo de escribir queda abajo */
+      :host(.completo) { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+      :host(.completo) .lista { flex: 1; max-height: none; padding: 16px 20px 8px; }
+      :host(.completo) .rapidos { padding: 8px 20px; border-top: 1px solid var(--border-soft); }
+      :host(.completo) .escribir { padding: 0 20px calc(12px + env(safe-area-inset-bottom)); }
+      :host(.completo) .vacio { margin: auto 0; text-align: center; border: 0; }
       .lista { display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto; padding: 2px 0 6px; overscroll-behavior: contain; }
       .vacio { margin: 0; padding: 10px 12px; border: var(--perfora); border-radius: var(--radius); font-size: 13px; color: var(--text-soft); }
       .msg { max-width: 82%; align-self: flex-start; display: flex; flex-direction: column; gap: 2px; }
@@ -107,6 +113,8 @@ export class ChatPedidoComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input({ required: true }) pedidoId!: number;
   /** Lleva la vista hasta la conversación (al abrir desde un aviso de mensaje) */
   @Input() enfocar = false;
+  /** Ocupa todo el alto disponible (ventana de chat aparte del pedido) */
+  @Input() @HostBinding('class.completo') completo = false;
   @ViewChild('lista') lista?: ElementRef<HTMLElement>;
 
   private sb = inject(SupabaseService);
@@ -147,7 +155,10 @@ export class ChatPedidoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    if (this.enfocar) setTimeout(() => this.host.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' }), 350);
+    // En el computador queda listo para escribir (en el celular no se abre el teclado solo)
+    if (this.completo) {
+      if (matchMedia('(hover: hover)').matches) setTimeout(() => this.host.nativeElement.querySelector('textarea')?.focus({ preventScroll: true }), 300);
+    } else if (this.enfocar) setTimeout(() => this.host.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' }), 350);
   }
 
   ngOnDestroy(): void {

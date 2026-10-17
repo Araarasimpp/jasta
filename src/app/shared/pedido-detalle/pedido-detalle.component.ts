@@ -1,11 +1,12 @@
-import { Component, EventEmitter, Input, OnChanges, Output, computed, inject, signal } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { closeOutline, callOutline, logoWhatsapp } from 'ionicons/icons';
+import { arrowBackOutline, chatbubbleEllipsesOutline, chevronForwardOutline, closeOutline, callOutline, logoWhatsapp } from 'ionicons/icons';
 import { PedidosService } from '../../core/services/pedidos.service';
 import { SupabaseService } from '../../core/services/supabase.service';
+import { NotificacionesService } from '../../core/services/notificaciones.service';
 import { ToastService } from '../toast/toast.service';
 import { EntregarComponent } from '../entregar/entregar.component';
 import { RotulosService } from '../rotulo/rotulos.service';
@@ -63,22 +64,78 @@ import { urlsComprobantes } from '../comprobantes';
       .despachar { display: flex; gap: 8px; }
       .despachar select { flex: 1; }
       .cargando { padding: 40px 20px; color: var(--text-soft); font-size: 14px; }
+      .abrir-chat { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 10px 14px; border: 1px solid var(--accent-soft);
+        border-radius: var(--radius-lg); background: var(--accent-wash); color: var(--text); font: inherit; text-align: left; cursor: pointer;
+        transition: background 120ms var(--ease); -webkit-tap-highlight-color: transparent; }
+      .abrir-chat > ion-icon:first-child { font-size: 22px; color: var(--accent); flex-shrink: 0; }
+      .abrir-chat > ion-icon:last-child { margin-left: auto; color: var(--text-muted); flex-shrink: 0; }
+      .abrir-chat span { display: flex; flex-direction: column; gap: 1px; font-size: 14.5px; font-weight: 600; }
+      .abrir-chat small { font-size: 12.5px; font-weight: 400; color: var(--text-soft); }
+      .abrir-chat .nuevo { margin-left: auto; padding: 2px 9px; border-radius: 999px; background: var(--danger); color: #fff; font-size: 11.5px; font-weight: 700; }
+      .abrir-chat .nuevo + ion-icon { margin-left: 0 !important; }
+      .abrir-chat:active { background: var(--accent-soft); }
+      @media (hover: hover) { .abrir-chat:hover { background: var(--accent-soft); } }
+      /* En el celular la ventana de chat usa casi toda la pantalla */
+      @media (max-width: 760px) { .hoja-chat { height: 92dvh; } }
+      .chat-cab { display: flex; flex-direction: column; gap: 4px; padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+      .chat-cli { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+      .chat-cli strong { font-size: 15.5px; font-weight: 650; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .chat-sub { margin: 0; font-size: 13px; color: var(--text-soft); }
+      .chat-sub .fuerte { color: var(--text); font-weight: 650; }
+      .chat-items { margin: 0; font-size: 12.5px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .ver-pedido { align-self: flex-start; display: inline-flex; align-items: center; gap: 2px; margin-top: 2px; padding: 0; border: 0; background: none;
+        color: var(--accent); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
     `,
   ],
   template: `
     <button class="velo" aria-label="Cerrar" (click)="cerrar.emit()"></button>
-    <aside class="hoja" role="dialog" aria-labelledby="t-pedido">
+    <aside class="hoja" [class.hoja-chat]="enChat()" role="dialog" aria-labelledby="t-pedido">
       <div class="hoja-head">
-        <h2 id="t-pedido">Pedido <span class="guia guia-grande">#{{ pedidoId }}</span></h2>
+        @if (enChat()) {
+          <button class="b b-icono" aria-label="Ver el pedido" (click)="vista.set('pedido')"><ion-icon name="arrow-back-outline"></ion-icon></button>
+          <h2 id="t-pedido">Chat <span class="guia guia-grande">#{{ pedidoId }}</span></h2>
+        } @else {
+          <h2 id="t-pedido">Pedido <span class="guia guia-grande">#{{ pedidoId }}</span></h2>
+        }
         <button class="b b-icono" aria-label="Cerrar" (click)="cerrar.emit()"><ion-icon name="close-outline"></ion-icon></button>
       </div>
 
       @if (pedido(); as p) {
+        @if (enChat()) {
+          <!-- Ventana de chat: solo lo justo del pedido arriba y la conversación ocupa el resto -->
+          <div class="chat-cab">
+            <div class="chat-cli">
+              <strong>{{ p.cliente_nombre }}</strong>
+              <span class="estado {{ p.estado }}">{{ estadoLabel(p.estado) }}</span>
+            </div>
+            <p class="chat-sub">
+              <span class="num fuerte">{{ pesos(p.total) }}</span>
+              @if (p.barrio) { · {{ p.barrio }} }
+              @if (p.mensajero?.nombre) { · {{ p.mensajero!.nombre }} }
+            </p>
+            @if (p.pedido_items?.length) {
+              <p class="chat-items">{{ resumenItems(p) }}</p>
+            }
+            <button type="button" class="ver-pedido" (click)="vista.set('pedido')">Ver pedido completo<ion-icon name="chevron-forward-outline" aria-hidden="true"></ion-icon></button>
+          </div>
+          @for (id of [pedidoId]; track id) {
+            <app-chat-pedido [pedidoId]="id" [completo]="true"></app-chat-pedido>
+          }
+        } @else {
         <div class="hoja-body">
           <div class="resumen">
             <span class="estado {{ p.estado }}">{{ estadoLabel(p.estado) }}</span>
             <span class="total num">{{ pesos(p.total) }}</span>
           </div>
+
+          @if (participa()) {
+            <button type="button" class="abrir-chat" (click)="vista.set('chat')">
+              <ion-icon name="chatbubble-ellipses-outline" aria-hidden="true"></ion-icon>
+              <span>Chat del pedido<small>Habla con {{ conQuien() }}</small></span>
+              @if (avisos.pedidosConMensajes().has(pedidoId)) { <span class="nuevo">Nuevo</span> }
+              <ion-icon name="chevron-forward-outline" aria-hidden="true"></ion-icon>
+            </button>
+          }
 
           @if (p.estado !== 'cancelado' && p.canal !== 'local') {
             <ol class="ruta" aria-label="Recorrido del pedido">
@@ -125,16 +182,6 @@ import { urlsComprobantes } from '../comprobantes';
               </tfoot>
             </table>
           </section>
-
-          @if (participa()) {
-            <section>
-              <h3 class="seccion-titulo">Mensajes del pedido</h3>
-              <!-- Una conversación nueva por pedido (si cambia el pedido abierto, se vuelve a crear) -->
-              @for (id of [pedidoId]; track id) {
-                <app-chat-pedido [pedidoId]="id" [enfocar]="chat"></app-chat-pedido>
-              }
-            </section>
-          }
 
           <section>
             <h3 class="seccion-titulo">Seguimiento</h3>
@@ -211,6 +258,7 @@ import { urlsComprobantes } from '../comprobantes';
             }
           </div>
         }
+        }
       } @else {
         <div class="cargando">{{ error() || 'Cargando pedido…' }}</div>
       }
@@ -244,6 +292,10 @@ export class PedidoDetalleComponent implements OnChanges {
   ocupado = signal(false);
   entregando = signal(false);
   mensajeroSel: number | null = null;
+  /** 'chat' = ventana de la conversación, aparte de la información del pedido */
+  vista = signal<'pedido' | 'chat'>('pedido');
+  enChat = computed(() => this.vista() === 'chat' && this.participa());
+  avisos = inject(NotificacionesService);
 
   pesos = pesos;
   urlImagen = urlImagen;
@@ -291,10 +343,11 @@ export class PedidoDetalleComponent implements OnChanges {
   });
 
   constructor() {
-    addIcons({ closeOutline, callOutline, logoWhatsapp });
+    addIcons({ arrowBackOutline, chatbubbleEllipsesOutline, chevronForwardOutline, closeOutline, callOutline, logoWhatsapp });
   }
 
-  ngOnChanges(): void {
+  ngOnChanges(cambios: SimpleChanges): void {
+    if (cambios['chat'] || cambios['pedidoId']) this.vista.set(this.chat ? 'chat' : 'pedido');
     void this.cargar();
     if (this.sb.tiene('admin', 'alistador') && !this.mensajeros().length) {
       this.ps.mensajeros().then((m) => this.mensajeros.set(m)).catch(() => undefined);
@@ -376,6 +429,19 @@ export class PedidoDetalleComponent implements OnChanges {
       ? `Hola ${nombre}, soy ${this.sb.usuario()?.nombre.split(' ')[0] ?? ''}, mensajero de Jasta. Voy en camino con ${que} por ${pesos(p?.total)}.`
       : `Hola ${nombre}, te escribimos de Jasta por ${que}.`;
     return enlaceWhatsapp(tel, texto);
+  }
+
+  /** Con quién se habla en el chat, según quién lo abre */
+  conQuien(): string {
+    const p = this.pedido();
+    const yo = this.sb.usuario()?.id;
+    if (p?.mensajero_id === yo && p?.vendedora_id !== yo) return 'la vendedora y la tienda';
+    if (p?.vendedora_id === yo && p?.mensajero_id !== yo) return p?.mensajero?.nombre ? `${p.mensajero.nombre.split(' ')[0]} y la tienda` : 'la tienda';
+    return 'la vendedora y el mensajero';
+  }
+
+  resumenItems(p: Pedido): string {
+    return (p.pedido_items ?? []).map((i) => `${i.cantidad}× ${nombreConVariante(i)}`).join(' · ');
   }
 
   fecha(iso: string): string {

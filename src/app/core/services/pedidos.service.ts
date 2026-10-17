@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { SupabaseService } from './supabase.service';
-import { Cuadre, EstadoPedido, Nota, Pedido, Producto, TipoRecaudo, Usuario } from '../../shared/modelos';
+import { Cuadre, EstadoPedido, Nota, Pedido, Producto, TarifaDomicilio, TipoRecaudo, Usuario } from '../../shared/modelos';
 import { PRODUCTO_DE_ITEM } from '../../shared/variante';
 
 export const SELECT_PEDIDO =
@@ -272,8 +272,22 @@ export class PedidosService {
     ) ?? []) as Producto[]).map((p) => ({ ...p, colores: [...(p.colores ?? [])].sort((a, b) => a.orden - b.orden || a.id - b.id) }));
   }
 
-  async barrios(): Promise<{ barrio: string; domicilio: number; usos: number }[]> {
-    return (this.check(await this.db.rpc('barrios')) ?? []) as { barrio: string; domicilio: number; usos: number }[];
+  /** Barrios con su valor de domicilio (los activos de "Barrios y domicilios") */
+  async barrios(): Promise<{ barrio: string; domicilio: number }[]> {
+    return (this.check(await this.db.from('tarifas_domicilio').select('barrio,domicilio').eq('activo', true).order('barrio')) ?? []) as {
+      barrio: string;
+      domicilio: number;
+    }[];
+  }
+
+  async tarifas(): Promise<TarifaDomicilio[]> {
+    return (this.check(await this.db.from('tarifas_domicilio').select('id,barrio,domicilio,activo,updated_at').order('barrio')) ?? []) as TarifaDomicilio[];
+  }
+
+  async guardarTarifa(t: { id?: number; barrio: string; domicilio: number; activo: boolean }): Promise<TarifaDomicilio> {
+    const fila = { barrio: t.barrio.trim(), domicilio: t.domicilio, activo: t.activo, updated_at: new Date().toISOString() };
+    const q = t.id ? this.db.from('tarifas_domicilio').update(fila).eq('id', t.id) : this.db.from('tarifas_domicilio').insert(fila);
+    return this.check(await q.select('id,barrio,domicilio,activo,updated_at').single()) as TarifaDomicilio;
   }
 
   async buscarCliente(tel: string) {

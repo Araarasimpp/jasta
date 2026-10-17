@@ -25,7 +25,9 @@ import { nombreConVariante } from '../../shared/variante';
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
-      .tarjeta h3 { cursor: pointer; }
+      .top-izq { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; cursor: pointer; }
+      .top-izq .total { display: flex; align-items: baseline; gap: 8px; font-size: 19px; line-height: 1.2; }
+      .top-izq .total small { font-size: 12px; font-weight: 500; color: var(--text-muted); text-transform: capitalize; font-family: var(--font); }
       .top-der { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
       /* Chat con la vendedora: burbuja con un "?" (o "!" si hay mensaje nuevo) */
       .chat-btn { position: relative; width: 42px; height: 42px; display: grid; place-items: center; padding: 0; border: 1px solid var(--accent-soft);
@@ -42,7 +44,6 @@ import { nombreConVariante } from '../../shared/variante';
       .chip-mensaje { align-self: flex-start; display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 12px; border: none;
         border-radius: 999px; background: var(--oro); color: #0f172a; font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; }
       .chip-mensaje ion-icon { font-size: 15px; }
-      .total { font-size: 17px; }
       .b-wa { color: var(--efectivo); border-color: color-mix(in srgb, var(--efectivo) 40%, var(--border)); }
       @media (hover: hover) { .b-wa:hover { border-color: var(--efectivo); background: var(--ok-wash); } }
       .cuadre { display: flex; flex-direction: column; gap: 12px; }
@@ -120,9 +121,11 @@ import { nombreConVariante } from '../../shared/variante';
         @for (p of enRuta(); track p.id) {
           <article class="tarjeta">
             <div class="tarjeta-top">
-              <h3 (click)="abrir(p.id)"><span class="guia">#{{ p.id }}</span> {{ p.cliente_nombre }}</h3>
+              <div class="top-izq" (click)="abrir(p.id)">
+                <h3><span class="guia">#{{ p.id }}</span> {{ p.cliente_nombre }}</h3>
+                <strong class="total num">{{ pesos(p.total) }}<small>{{ p.tipo_recaudo || '' }}</small></strong>
+              </div>
               <div class="top-der">
-                <strong class="total num">{{ pesos(p.total) }}</strong>
                 <button type="button" class="chat-btn" [class.nuevo]="avisos.pedidosConMensajes().has(p.id)" (click)="abrir(p.id, true)"
                   [attr.aria-label]="avisos.pedidosConMensajes().has(p.id) ? 'Mensaje nuevo de la vendedora: abrir chat' : 'Preguntarle a la vendedora (chat del pedido)'"
                   title="Chat con la vendedora">

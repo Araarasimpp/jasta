@@ -2,6 +2,14 @@ export type Rol = 'admin' | 'vendedora' | 'mensajero' | 'alistador' | 'cuadres' 
 export type EstadoPedido = 'por_alistar' | 'alistado' | 'despachado' | 'entregado' | 'cancelado';
 export type TipoRecaudo = 'efectivo' | 'transferencia' | 'mixto';
 
+export interface TarifaDomicilio {
+  id: number;
+  barrio: string;
+  domicilio: number;
+  activo: boolean;
+  updated_at: string;
+}
+
 export interface Usuario {
   id: number;
   auth_id: string | null;

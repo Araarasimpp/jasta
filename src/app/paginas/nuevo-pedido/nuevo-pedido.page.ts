@@ -90,6 +90,15 @@ function normal(s: string): string {
       .comision { margin: 0; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--oro-wash); font-size: 13px; color: var(--text-soft); }
       .comision strong { color: var(--oro-texto); }
       .cliente-previo { margin: 0; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--accent-wash); font-size: 13px; }
+      .barrio-campo { position: relative; }
+      .sugerencias { position: absolute; z-index: 20; top: 100%; left: 0; right: 0; margin-top: 4px; max-height: 280px; overflow-y: auto; display: flex; flex-direction: column;
+        border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); box-shadow: 0 10px 28px rgba(15, 23, 42, 0.14); animation: aparece 140ms ease both; }
+      .sug { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 42px; padding: 8px 12px; border: 0; border-bottom: 1px solid var(--border-soft);
+        background: none; color: var(--text); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+      .sug:last-child { border-bottom: 0; }
+      .sug strong { font-size: 13px; color: var(--efectivo-texto); white-space: nowrap; }
+      .sug.sel, .sug:active { background: var(--hover); }
+      @media (hover: hover) { .sug:hover { background: var(--hover); } }
       .tipos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
       .tipo { height: 40px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface);
         color: var(--text); font-size: 14px; font-weight: 500; cursor: pointer; }
@@ -142,14 +151,21 @@ function normal(s: string): string {
                 <input id="dir" autocomplete="off" [(ngModel)]="direccion" />
               </div>
               <div class="fila-campos">
-                <div class="campo">
+                <div class="campo barrio-campo">
                   <label for="barrio">Barrio</label>
-                  <input id="barrio" list="lista-barrios" autocomplete="off" [(ngModel)]="barrio" (change)="sugerirDomicilio()" />
-                  <datalist id="lista-barrios">
-                    @for (b of barrios(); track b.barrio) {
-                      <option [value]="b.barrio"></option>
-                    }
-                  </datalist>
+                  <input id="barrio" autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="lista-barrios" [attr.aria-expanded]="sugerencias().length > 0"
+                    [(ngModel)]="barrio" (ngModelChange)="barrioQ.set($event); barrioAbierto.set(true); barrioSel.set(0)"
+                    (focus)="barrioQ.set(barrio); barrioAbierto.set(true)" (blur)="cerrarBarrios()" (keydown)="teclaBarrio($event)" />
+                  @if (sugerencias().length) {
+                    <div class="sugerencias" id="lista-barrios" role="listbox">
+                      @for (b of sugerencias(); track b.barrio; let i = $index) {
+                        <button type="button" role="option" class="sug" [class.sel]="i === barrioSel()" [attr.aria-selected]="i === barrioSel()"
+                          (mousedown)="$event.preventDefault()" (click)="elegirBarrio(b)">
+                          <span>{{ b.barrio }}</span><strong class="num">{{ pesos(b.domicilio) }}</strong>
+                        </button>
+                      }
+                    </div>
+                  }
                 </div>
                 <div class="campo">
                   <label for="dom">Domicilio</label>
@@ -314,7 +330,10 @@ export class NuevoPedidoPage implements OnInit {
   titulo = computed(() => (this.editId() ? `Editar pedido #${this.editId()}` : this.local() ? 'Venta en el local' : 'Nuevo pedido'));
 
   productos = signal<Producto[]>([]);
-  barrios = signal<{ barrio: string; domicilio: number; usos: number }[]>([]);
+  barrios = signal<{ barrio: string; domicilio: number }[]>([]);
+  barrioQ = signal('');
+  barrioAbierto = signal(false);
+  barrioSel = signal(0);
   lineas = signal<Linea[]>([]);
   busqueda = signal('');
   clientePrevio = signal(0);
@@ -449,12 +468,45 @@ export class NuevoPedidoPage implements OnInit {
     }
   }
 
-  sugerirDomicilio(): void {
-    const b = this.barrios().find((x) => normal(x.barrio) === normal(this.barrio.trim()));
-    if (b && !this.domicilio) {
-      this.domicilio = Number(b.domicilio) || 0;
-      this.domicilioS.set(this.domicilio);
+  /** Barrios de la tabla de domicilios que coinciden con lo escrito (sin importar tildes) */
+  sugerencias = computed(() => {
+    const q = normal(this.barrioQ().trim());
+    if (!this.barrioAbierto() || !q) return [];
+    const partes = q.split(/\s+/);
+    const hay = this.barrios().filter((b) => partes.every((x) => normal(b.barrio).includes(x)));
+    // Primero los que empiezan por lo escrito
+    hay.sort((a, b) => Number(!normal(a.barrio).startsWith(q)) - Number(!normal(b.barrio).startsWith(q)));
+    if (hay.length === 1 && normal(hay[0].barrio) === q && Number(hay[0].domicilio) === Number(this.domicilioS())) return [];
+    return hay.slice(0, 8);
+  });
+
+  elegirBarrio(b: { barrio: string; domicilio: number }): void {
+    this.barrio = b.barrio;
+    this.barrioQ.set(b.barrio);
+    this.domicilio = Number(b.domicilio) || 0;
+    this.domicilioS.set(this.domicilio);
+    this.barrioAbierto.set(false);
+  }
+
+  teclaBarrio(ev: KeyboardEvent): void {
+    const n = this.sugerencias().length;
+    if (!n) return;
+    if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+      ev.preventDefault();
+      this.barrioSel.update((i) => (i + (ev.key === 'ArrowDown' ? 1 : n - 1)) % n);
+    } else if (ev.key === 'Enter') {
+      ev.preventDefault();
+      this.elegirBarrio(this.sugerencias()[this.barrioSel()]);
+    } else if (ev.key === 'Escape') {
+      this.barrioAbierto.set(false);
     }
+  }
+
+  /** Al salir del campo: si lo escrito es un barrio de la tabla y no hay valor, se pone el suyo */
+  cerrarBarrios(): void {
+    this.barrioAbierto.set(false);
+    const b = this.barrios().find((x) => normal(x.barrio) === normal(this.barrio.trim()));
+    if (b && !this.domicilio) this.elegirBarrio(b);
   }
 
   agregar(p: Producto): void {
