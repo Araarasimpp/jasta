@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses } from 'ionicons/icons';
+import { refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses, chatbubbleEllipsesOutline } from 'ionicons/icons';
 import { enlaceWhatsapp, productosDelPedido } from '../../shared/whatsapp';
 import { PedidosService } from '../../core/services/pedidos.service';
 import { SupabaseService } from '../../core/services/supabase.service';
@@ -26,6 +26,19 @@ import { nombreConVariante } from '../../shared/variante';
   styles: [
     `
       .tarjeta h3 { cursor: pointer; }
+      .top-der { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+      /* Chat con la vendedora: burbuja con un "?" (o "!" si hay mensaje nuevo) */
+      .chat-btn { position: relative; width: 42px; height: 42px; display: grid; place-items: center; padding: 0; border: 1px solid var(--accent-soft);
+        border-radius: 50%; background: var(--accent-wash); color: var(--accent); font-size: 21px; cursor: pointer;
+        transition: transform 120ms var(--ease), background 120ms var(--ease); -webkit-tap-highlight-color: transparent; }
+      .chat-btn:active { transform: scale(0.92); }
+      @media (hover: hover) { .chat-btn:hover { background: var(--accent-soft); } }
+      .chat-q { position: absolute; top: -5px; right: -5px; min-width: 19px; height: 19px; padding: 0 4px; display: grid; place-items: center;
+        border-radius: 10px; border: 2px solid var(--surface); background: var(--accent); color: #fff; font-size: 11.5px; font-weight: 800; line-height: 1; }
+      .chat-btn.nuevo { border-color: color-mix(in srgb, var(--danger) 40%, transparent); background: var(--danger-wash); color: var(--danger); }
+      .chat-btn.nuevo .chat-q { background: var(--danger); animation: latido 1.4s ease-in-out infinite; }
+      @keyframes latido { 50% { transform: scale(1.18); } }
+      @media (prefers-reduced-motion: reduce) { .chat-btn.nuevo .chat-q { animation: none; } }
       .chip-mensaje { align-self: flex-start; display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 12px; border: none;
         border-radius: 999px; background: var(--oro); color: #0f172a; font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; }
       .chip-mensaje ion-icon { font-size: 15px; }
@@ -108,7 +121,15 @@ import { nombreConVariante } from '../../shared/variante';
           <article class="tarjeta">
             <div class="tarjeta-top">
               <h3 (click)="abrir(p.id)"><span class="guia">#{{ p.id }}</span> {{ p.cliente_nombre }}</h3>
-              <strong class="total num">{{ pesos(p.total) }}</strong>
+              <div class="top-der">
+                <strong class="total num">{{ pesos(p.total) }}</strong>
+                <button type="button" class="chat-btn" [class.nuevo]="avisos.pedidosConMensajes().has(p.id)" (click)="abrir(p.id, true)"
+                  [attr.aria-label]="avisos.pedidosConMensajes().has(p.id) ? 'Mensaje nuevo de la vendedora: abrir chat' : 'Preguntarle a la vendedora (chat del pedido)'"
+                  title="Chat con la vendedora">
+                  <ion-icon name="chatbubble-ellipses-outline" aria-hidden="true"></ion-icon>
+                  <span class="chat-q" aria-hidden="true">{{ avisos.pedidosConMensajes().has(p.id) ? '!' : '?' }}</span>
+                </button>
+              </div>
             </div>
             @if (avisos.pedidosConMensajes().has(p.id)) {
               <button type="button" class="chip-mensaje" (click)="abrir(p.id, true)">
@@ -220,7 +241,7 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   private timer?: ReturnType<typeof setTimeout>;
 
   constructor() {
-    addIcons({ refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses });
+    addIcons({ refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses, chatbubbleEllipsesOutline });
   }
 
   ngOnInit(): void {
