@@ -137,10 +137,14 @@ const PAGO: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Tra
           <p class="sin">Cargando…</p>
         }
       </div>
-      @if (esAdmin() && venta()?.estado === 'entregado') {
+      <!-- Cancelar, editar y eliminar: solo el admin (también lo exige la base) -->
+      @if (esAdmin() && venta(); as v) {
         <div class="hoja-pie">
-          <button class="b" style="color: var(--danger)" (click)="cancelar()" [disabled]="ocupado()">Cancelar venta</button>
-          <button class="b" (click)="editar()">Editar</button>
+          @if (v.estado === 'entregado') {
+            <button class="b" style="color: var(--danger)" (click)="cancelar()" [disabled]="ocupado()">Cancelar venta</button>
+            <button class="b" (click)="editar()">Editar</button>
+          }
+          <button class="b b-peligro" (click)="eliminar()" [disabled]="ocupado()">Eliminar venta</button>
         </div>
       }
     </aside>
@@ -216,6 +220,23 @@ export class VentaLocalDetalleComponent implements OnInit {
     try {
       await this.ps.cambiarEstado(this.pedidoId, 'cancelado');
       this.toast.ok(`Venta #${this.pedidoId} cancelada`);
+      this.cambiado.emit();
+      this.cerrar.emit();
+    } catch (e) {
+      this.toast.error(mensajeError(e));
+    } finally {
+      this.ocupado.set(false);
+    }
+  }
+
+  /** Borra la venta del todo (solo el admin): devuelve el stock y deja de contar en caja y servicio local */
+  async eliminar(): Promise<void> {
+    if (!confirm(`¿Eliminar la venta #${this.pedidoId}? Se borra del todo (no queda en el historial) y se devuelve el stock. No se puede deshacer.`)) return;
+    this.ocupado.set(true);
+    try {
+      const { error } = await this.sb.client.rpc('eliminar_venta_local', { p_pedido: this.pedidoId });
+      if (error) throw error;
+      this.toast.ok(`Venta #${this.pedidoId} eliminada`);
       this.cambiado.emit();
       this.cerrar.emit();
     } catch (e) {
