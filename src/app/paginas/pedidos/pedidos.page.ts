@@ -93,6 +93,8 @@ export class PedidosPage implements OnInit, OnDestroy {
   error = signal('');
   conteos = signal<Record<string, number>>({});
   ordenAlistado = signal<Map<number, number>>(new Map());
+  /** Puesto de cada pedido en ruta dentro de los de su mensajero (orden de asignación) */
+  ordenRuta = signal<Map<number, number>>(new Map());
   abierto = signal<number | null>(null);
   /** El pedido se abrió desde un aviso de mensaje: va directo a la conversación */
   abiertoEnChat = signal(false);
@@ -119,6 +121,12 @@ export class PedidosPage implements OnInit, OnDestroy {
       let pedidos = filas.filter((p) => p.estado === estado);
       // Los alistados van en el orden en que se alistaron (el primero arriba)
       if (estado === 'alistado') pedidos = [...pedidos].sort((a, b) => this.puesto(a) - this.puesto(b));
+      // En ruta: por mensajero y en el orden en que se le fueron asignando
+      if (estado === 'despachado') {
+        const ruta = this.ordenRuta();
+        pedidos = [...pedidos].sort((a, b) =>
+          this.nombreMensajero(a).localeCompare(this.nombreMensajero(b), 'es') || (ruta.get(a.id) ?? 1e9) - (ruta.get(b.id) ?? 1e9));
+      }
       const total = Math.max(conteos[estado] ?? 0, pedidos.length);
       return {
         estado,
@@ -131,7 +139,13 @@ export class PedidosPage implements OnInit, OnDestroy {
     }).filter((g) => g.pedidos.length);
   });
   visibles = computed(() => this.grupos().flatMap((g) => g.pedidos));
-  selPedidos = computed(() => this.visibles().filter((p) => this.sel().has(p.id)));
+  /** Los seleccionados en el orden en que se fueron marcando (así se le asignan al mensajero) */
+  selPedidos = computed(() => {
+    const porId = new Map(this.visibles().map((p) => [p.id, p]));
+    return [...this.sel()].map((id) => porId.get(id)).filter((p): p is Pedido => !!p);
+  });
+  /** Número de cada pedido en la selección (1, 2, 3…), para saber en qué orden se va a asignar */
+  numSel = computed(() => new Map([...this.sel()].map((id, i) => [id, i + 1])));
   selPorAlistar = computed(() => this.selPedidos().filter((p) => this.puedeAlistar(p)));
   todosSel = computed(() => this.visibles().length > 0 && this.visibles().every((p) => this.sel().has(p.id)));
   /** Alistados a los que les falta el rótulo (en la pestaña Alistados la lista está completa) */
@@ -214,16 +228,18 @@ export class PedidosPage implements OnInit, OnDestroy {
       };
       const activos = f === 'todos' ? ACTIVOS : ACTIVOS.filter((e) => e === f);
       const cerrados = f === 'todos' ? CERRADOS : CERRADOS.filter((e) => e === f);
-      const [a, c, conteos, orden] = await Promise.all([
+      const [a, c, conteos, orden, ruta] = await Promise.all([
         activos.length ? this.ps.listar({ ...base, estados: activos, estado: activos.length === 1 ? activos[0] : null, pagina: 0, porPagina: 1000 }) : null,
         cerrados.length ? this.ps.listar({ ...base, estados: cerrados, pagina: this.pagina(), porPagina: this.porPagina }) : null,
         this.ps.conteoPorEstado(base),
         this.ps.ordenAlistados(),
+        this.ps.ordenEnRuta(),
       ]);
       this.filas.set([...(a?.filas ?? []), ...(c?.filas ?? [])]);
       this.totalCerrados.set(c?.total ?? 0);
       this.conteos.set({ ...conteos, todos: Object.values(conteos).reduce((s, n) => s + n, 0) });
       this.ordenAlistado.set(orden);
+      this.ordenRuta.set(ruta);
       // La selección solo conserva lo que sigue en pantalla
       const ids = new Set(this.filas().map((p) => p.id));
       this.sel.set(new Set([...this.sel()].filter((id) => ids.has(id))));
@@ -373,7 +389,10 @@ export class PedidosPage implements OnInit, OnDestroy {
     await this.cargar();
   }
 
-  /** Asigna el mismo mensajero a los seleccionados que todavía se puedan despachar */
+  /**
+   * Asigna el mismo mensajero a los seleccionados que todavía se puedan despachar,
+   * uno por uno en el orden en que se marcaron: ese es el orden en que le quedan
+   */
   asignarLote(evento: Event): void {
     const select = evento.target as HTMLSelectElement;
     const id = Number(select.value);

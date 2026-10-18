@@ -95,7 +95,10 @@
             @for (p of g.pedidos; track p.id) {
               <div class="row row-grid" [class.selected]="sel().has(p.id)" [class.closed]="!editable(p)">
                 @if (gestiona()) {
-                  <input type="checkbox" class="check" [checked]="sel().has(p.id)" (change)="alternar(p.id)" [attr.aria-label]="'Seleccionar pedido ' + p.id" />
+                  <span class="check-wrap">
+                    <input type="checkbox" class="check" [checked]="sel().has(p.id)" (change)="alternar(p.id)" [attr.aria-label]="'Seleccionar pedido ' + p.id" />
+                    @if (sel().size > 1 && numSel().get(p.id); as n) { <span class="sel-n num" [title]="'Se asigna de ' + n + '°'">{{ n }}</span> }
+                  </span>
                 }
                 <a class="c-num num" (click)="abrir(p.id)">#{{ p.id }}</a>
                 <span class="c-st"><app-estado-icon [estado]="p.estado"></app-estado-icon></span>
@@ -116,6 +119,11 @@
                       <ion-icon name="cube-outline" aria-hidden="true"></ion-icon>
                       Alistar
                     </button>
+                  }
+                  @if (p.estado === 'despachado' && ordenRuta().get(p.id); as n) {
+                    <span class="chip-alistado chip-ruta" [title]="'Es el pedido ' + n + '° que se le asignó a ' + nombreMensajero(p)">
+                      <span class="num">{{ n }}°</span> de {{ nombreMensajero(p).split(' ')[0] }}
+                    </span>
                   }
                   @if (p.estado === 'alistado' && ordinal(p)) {
                     <span class="chip-alistado" [title]="'Alistado en el puesto ' + ordinal(p)">

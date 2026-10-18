@@ -59,9 +59,12 @@ export class PedidosService {
     if (f.tipoRecaudo) q = q.eq('tipo_recaudo', f.tipoRecaudo);
     q = this.filtrosComunes(q, f);
     // Los alistados van en el orden en que se alistaron (1°, 2°, 3°…), como en Kaesuri
+    // En ruta, en el orden en que se le asignaron al mensajero
     q = f.estado === 'alistado'
       ? q.order('alistado_at', { ascending: true, nullsFirst: true }).order('id')
-      : q.order('created_at', { ascending: false });
+      : f.estado === 'despachado'
+        ? q.order('asignado_at', { ascending: true, nullsFirst: true }).order('id')
+        : q.order('created_at', { ascending: false });
     const r = await q.range(pagina * porPagina, pagina * porPagina + porPagina - 1);
     if (r.error) throw r.error;
     return { filas: (r.data ?? []) as unknown as Pedido[], total: r.count ?? 0 };
@@ -133,7 +136,11 @@ export class PedidosService {
   async cola(estados: EstadoPedido[], mensajeroId?: number): Promise<Pedido[]> {
     let q = this.db.from('pedidos').select(SELECT_PEDIDO + ', pedido_items(*)').in('estado', estados);
     if (mensajeroId) q = q.eq('mensajero_id', mensajeroId);
-    return this.check(await q.order('created_at', { ascending: true }).limit(300)) as unknown as Pedido[];
+    // En ruta: en el orden en que se le fueron asignando al mensajero (el primero arriba)
+    q = estados.length === 1 && estados[0] === 'despachado'
+      ? q.order('asignado_at', { ascending: true, nullsFirst: true }).order('id')
+      : q.order('created_at', { ascending: true });
+    return this.check(await q.limit(300)) as unknown as Pedido[];
   }
 
   async detalle(id: number): Promise<{ pedido: Pedido; notas: Nota[] }> {
@@ -227,6 +234,23 @@ export class PedidosService {
         .order('alistado_at', { ascending: true, nullsFirst: true }).order('id').limit(1000)
     );
     return new Map(((r ?? []) as { id: number }[]).map((p, i) => [p.id, i + 1]));
+  }
+
+  /**
+   * Puesto (1°, 2°…) de cada pedido en ruta dentro de los de su mensajero, en el orden
+   * en que se le fueron asignando (no por número de pedido)
+   */
+  async ordenEnRuta(): Promise<Map<number, number>> {
+    const r = this.check(
+      await this.db.from('pedidos').select('id, mensajero_id').eq('estado', 'despachado')
+        .order('asignado_at', { ascending: true, nullsFirst: true }).order('id').limit(1000)
+    );
+    const cuenta = new Map<number, number>();
+    return new Map(((r ?? []) as { id: number; mensajero_id: number | null }[]).map((p) => {
+      const n = (cuenta.get(p.mensajero_id ?? 0) ?? 0) + 1;
+      cuenta.set(p.mensajero_id ?? 0, n);
+      return [p.id, n];
+    }));
   }
 
   /** Borra un pedido que no se ha entregado (solo el admin; los productos se borran con él) */

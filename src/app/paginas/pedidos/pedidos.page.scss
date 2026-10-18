@@ -1240,3 +1240,35 @@ button.cliente {
 .chip-mensaje ion-icon {
   font-size: 13px;
 }
+
+// Orden de selección (así se le asignan al mensajero) y puesto en la ruta del mensajero
+.check-wrap {
+  grid-area: chk;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sel-n {
+  position: absolute;
+  top: -8px;
+  right: -9px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--oro);
+  color: #0f172a;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.chip-ruta {
+  background: color-mix(in srgb, var(--st-ruta) 12%, transparent);
+  color: var(--st-ruta);
+}
