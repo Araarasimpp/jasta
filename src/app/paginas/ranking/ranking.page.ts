@@ -154,7 +154,7 @@ function ultimosMeses(): { id: string; label: string }[] {
       </div>
 
       <p class="nota">
-        {{ tipo() === 'vendedora' ? 'Quién hizo más ventas (pedidos entregados).' : 'Quién hizo más entregas a domicilio.' }}
+        {{ tipo() === 'vendedora' ? 'Quién hizo más ventas a domicilio (pedidos entregados; no cuentan las ventas del local).' : 'Quién hizo más entregas a domicilio.' }}
         @if (miPuesto(); as p) { Vas <strong>#{{ p }}</strong> de {{ lista().length }}. }
       </p>
 

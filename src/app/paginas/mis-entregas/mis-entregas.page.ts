@@ -179,6 +179,10 @@ import { nombreConVariante } from '../../shared/variante';
               <span>Domicilios <strong class="num">{{ pesos(totHechas().domicilios) }}</strong></span>
               <span>Efectivo <strong class="num">{{ pesos(totHechas().efectivo) }}</strong></span>
               <span>Transferencias <strong class="num">{{ pesos(totHechas().transferencia) }}</strong></span>
+              <span>Cuadrado <strong class="num">{{ pesos(totHechas().cuadrado) }}</strong></span>
+              @if (totHechas().porCuadrar) {
+                <span>Por cuadrar <strong class="num">{{ pesos(totHechas().porCuadrar) }}</strong></span>
+              }
             </p>
             <table class="hist">
               @for (p of hechas(); track p.id) {
@@ -225,14 +229,20 @@ export class MisEntregasPage implements OnInit, OnDestroy {
 
   hechas = signal<Pedido[]>([]);
   private rango: RangoFechas | null = null;
+  /** Cuadrado / por cuadrar = efectivo − domicilios, igual que en Cuadres (lo que el mensajero entrega) */
   totHechas = computed(() =>
     this.hechas().reduce(
-      (a, p) => ({
-        domicilios: a.domicilios + Number(p.valor_domicilio || 0),
-        efectivo: a.efectivo + Number(p.valor_efectivo || 0),
-        transferencia: a.transferencia + Number(p.valor_transferencia || 0),
-      }),
-      { domicilios: 0, efectivo: 0, transferencia: 0 }
+      (a, p) => {
+        const neto = Number(p.valor_efectivo || 0) - Number(p.valor_domicilio || 0);
+        return {
+          domicilios: a.domicilios + Number(p.valor_domicilio || 0),
+          efectivo: a.efectivo + Number(p.valor_efectivo || 0),
+          transferencia: a.transferencia + Number(p.valor_transferencia || 0),
+          cuadrado: a.cuadrado + (p.cuadre_id ? neto : 0),
+          porCuadrar: a.porCuadrar + (p.cuadre_id ? 0 : neto),
+        };
+      },
+      { domicilios: 0, efectivo: 0, transferencia: 0, cuadrado: 0, porCuadrar: 0 }
     )
   );
 
