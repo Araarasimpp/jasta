@@ -55,7 +55,7 @@ function ultimosMeses(): { id: string; label: string }[] {
 
 /**
  * Ranking como en Home ALS: podio con medallas (2.º, 1.º, 3.º), la lista
- * completa con tu puesto resaltado y el avance hacia la meta del mes.
+ * completa con tu puesto resaltado y el avance hacia la meta de la semana o del mes.
  * Vendedoras por cantidad de ventas entregadas; mensajeros por entregas.
  */
 @Component({
@@ -108,9 +108,9 @@ function ultimosMeses(): { id: string; label: string }[] {
       .tu { margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: var(--accent); color: var(--on-accent); font-size: 11px; font-weight: 700; vertical-align: 2px; }
       .valor { flex-shrink: 0; font-size: 15px; font-weight: 700; }
       .sub { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 12.5px; color: var(--text-soft); }
-      .barra { height: 8px; border-radius: 4px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--border-soft); overflow: hidden; }
-      .barra span { display: block; height: 100%; border-radius: 4px; background: var(--accent); transition: width 600ms cubic-bezier(0.2, 0, 0, 1); }
-      .barra span.lograda { background: var(--efectivo); }
+      .progreso { height: 8px; border-radius: 4px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--border-soft); overflow: hidden; }
+      .progreso span { display: block; height: 100%; border-radius: 4px; background: var(--accent); transition: width 600ms cubic-bezier(0.2, 0, 0, 1); }
+      .progreso span.lograda { background: var(--efectivo); }
       .meta-btn { align-self: flex-start; display: inline-flex; align-items: center; gap: 5px; margin: -6px 0; padding: 8px 0; border: none; background: none;
         color: var(--accent); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
       .meta-form { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 4px; }
@@ -197,21 +197,21 @@ function ultimosMeses(): { id: string; label: string }[] {
                     </div>
                   }
                   @if (avance(f) !== null) {
-                    <div class="barra" [attr.aria-label]="'Avance de la meta: ' + avance(f) + '%'">
+                    <div class="progreso" [attr.aria-label]="'Avance de la meta: ' + avance(f) + '%'">
                       <span [style.width.%]="avance(f)" [class.lograda]="avance(f) === 100"></span>
                     </div>
                   }
 
-                  @if (esAdmin() && periodo() === 'mes' && esMesActual()) {
+                  @if (esAdmin() && conMeta()) {
                     @if (editandoId() !== f.usuario_id) {
                       <button type="button" class="meta-btn" (click)="editarMeta(f)">
-                        <ion-icon name="flag-outline" aria-hidden="true"></ion-icon>{{ f.meta ? 'Cambiar meta del mes' : 'Poner meta del mes' }}
+                        <ion-icon name="flag-outline" aria-hidden="true"></ion-icon>{{ (f.meta ? 'Cambiar meta ' : 'Poner meta ') + nombreMeta() }}
                       </button>
                     } @else {
                       <form class="meta-form" (ngSubmit)="guardarMeta(f)">
-                        <label [attr.for]="'meta-' + f.usuario_id">{{ f.tipo === 'vendedora' ? 'Meta de ventas del mes (cantidad)' : 'Meta de entregas del mes' }}</label>
+                        <label [attr.for]="'meta-' + f.usuario_id">{{ (f.tipo === 'vendedora' ? 'Meta de ventas ' : 'Meta de entregas ') + nombreMeta() + ' (cantidad)' }}</label>
                         <input class="inp num" [id]="'meta-' + f.usuario_id" name="meta" type="text" inputmode="numeric" [(ngModel)]="metaTexto"
-                          [placeholder]="f.tipo === 'vendedora' ? '40' : '120'" />
+                          [placeholder]="periodo() === 'semana' ? (f.tipo === 'vendedora' ? '10' : '30') : (f.tipo === 'vendedora' ? '40' : '120')" />
                         <button type="submit" class="b b-pri" [disabled]="guardandoMeta()">{{ guardandoMeta() ? 'Guardando…' : 'Guardar' }}</button>
                         <button type="button" class="b" (click)="editandoId.set(null)">Cancelar</button>
                       </form>
@@ -221,8 +221,9 @@ function ultimosMeses(): { id: string; label: string }[] {
               </li>
             }
           </ol>
-          @if (periodo() !== 'mes' || !esMesActual()) {
-            <p class="pie">Las metas son del mes en curso: cámbiate a <button type="button" class="link" (click)="cambiarPeriodo('mes')">Mes</button> para ver el avance.</p>
+          @if (!conMeta()) {
+            <p class="pie">Hay metas semanales y del mes: cámbiate a <button type="button" class="link" (click)="cambiarPeriodo('semana')">Semana</button>
+              o <button type="button" class="link" (click)="cambiarPeriodo('mes')">Mes</button> para ver el avance.</p>
           }
         }
       } @else {
@@ -247,6 +248,9 @@ export class RankingPage implements OnInit {
   metaTexto = '';
 
   esMesActual = computed(() => this.mes() === this.meses[0].id);
+  /** Las metas aplican a esta semana (de lunes a hoy) y al mes en curso */
+  conMeta = computed(() => this.periodo() === 'semana' || (this.periodo() === 'mes' && this.esMesActual()));
+  nombreMeta = computed(() => (this.periodo() === 'semana' ? 'de la semana' : 'del mes'));
   yo = computed(() => this.sb.usuario()?.id ?? null);
   esAdmin = computed(() => this.sb.tiene('admin'));
   subtitulo = computed(() => {
@@ -266,7 +270,7 @@ export class RankingPage implements OnInit {
   lista = computed(() => {
     const todos = this.datos().filter((f) => f.tipo === this.tipo()).sort((a, b) => a.puesto - b.puesto);
     // En meses pasados (o hoy/semana) solo los que tuvieron algo; en el mes en curso todos, para ver la meta
-    return this.periodo() === 'mes' && this.esMesActual() ? todos : todos.filter((f) => f.cantidad > 0);
+    return this.conMeta() ? todos : todos.filter((f) => f.cantidad > 0);
   });
   podio = computed(() => this.lista().slice(0, 3).filter((f) => f.cantidad > 0));
   /** Orden visual del podio: 2.º, 1.º, 3.º */
@@ -310,7 +314,7 @@ export class RankingPage implements OnInit {
   async cargar(): Promise<void> {
     this.cargando.set(true);
     const r = rango(this.periodo(), this.mes());
-    const { data, error } = await this.sb.client.rpc('ranking', { p_desde: r.desde, p_hasta: r.hasta });
+    const { data, error } = await this.sb.client.rpc('ranking', { p_desde: r.desde, p_hasta: r.hasta, p_periodo: this.periodo() });
     this.cargando.set(false);
     if (error) return this.toast.error(mensajeError(error));
     this.datos.set(((data ?? []) as Fila[]).map((f) => ({ ...f, cantidad: Number(f.cantidad) || 0, ventas: f.ventas == null ? null : Number(f.ventas) })));
@@ -325,19 +329,20 @@ export class RankingPage implements OnInit {
     return `${f.cantidad} ${f.cantidad === 1 ? 'venta' : 'ventas'}`;
   }
 
-  /** Los pesos vendidos (solo los ven admin y cuadres) */
+  /** Los pesos vendidos: solo el admin (a los demás la base no se los manda; solo ven cuántas ventas) */
   detalle(f: Fila): string {
     return f.tipo === 'vendedora' && f.ventas != null ? `${pesos(f.ventas)} vendidos` : '';
   }
 
-  /** Avance hacia la meta: solo en el mes en curso */
+  /** Avance hacia la meta de la semana o del mes en curso */
   avance(f: Fila): number | null {
-    if (this.periodo() !== 'mes' || !this.esMesActual() || !f.meta) return null;
+    if (!this.conMeta() || !f.meta) return null;
     return f.avance ?? Math.min(100, Math.round((f.cantidad / f.meta) * 100));
   }
 
   textoMeta(f: Fila): string {
-    return f.tipo === 'vendedora' ? `Meta ${f.meta} ventas` : `Meta ${f.meta} entregas`;
+    const de = this.periodo() === 'semana' ? ' semanal' : '';
+    return f.tipo === 'vendedora' ? `Meta${de} ${f.meta} ventas` : `Meta${de} ${f.meta} entregas`;
   }
 
   editarMeta(f: Fila): void {
@@ -349,7 +354,7 @@ export class RankingPage implements OnInit {
     if (this.guardandoMeta()) return;
     const texto = this.metaTexto.replace(/[^\d]/g, '');
     const n = texto ? Number(texto) : null;
-    const campo = f.tipo === 'vendedora' ? 'meta_ventas' : 'meta_entregas';
+    const campo = (f.tipo === 'vendedora' ? 'meta_ventas' : 'meta_entregas') + (this.periodo() === 'semana' ? '_semana' : '');
     this.guardandoMeta.set(true);
     const { error } = await this.sb.client.from('metas').upsert({ usuario_id: f.usuario_id, [campo]: n, updated_at: new Date().toISOString() });
     this.guardandoMeta.set(false);
