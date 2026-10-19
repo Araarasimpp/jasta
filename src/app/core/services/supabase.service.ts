@@ -95,9 +95,10 @@ export class SupabaseService {
     if (this.tiene('admin')) return '/app/inicio';
     if (this.tiene('cuadres')) return '/app/cuadres';
     if (this.tiene('alistador')) return '/app/tablero';
+    // La cuenta del local (aunque también tenga rol de vendedora) entra a registrar ventas
+    if (this.tiene('venta_local')) return '/app/venta-local';
     if (this.tiene('vendedora')) return '/app/mi-panel';
     if (this.tiene('mensajero')) return '/app/mis-entregas';
-    if (this.tiene('venta_local')) return '/app/venta-local';
     if (this.tiene('recolector')) return '/app/recolector';
     return '/app/espera';
   }

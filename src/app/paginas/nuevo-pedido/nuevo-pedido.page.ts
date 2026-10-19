@@ -480,6 +480,23 @@ export class NuevoPedidoPage implements OnInit {
     return hay.slice(0, 8);
   });
 
+  /** Deja el formulario de venta en el local en blanco para la siguiente venta */
+  private nuevaVenta(): void {
+    this.lineas.set([]);
+    this.busqueda.set('');
+    this.telefono = '';
+    this.nombre = '';
+    this.observaciones = '';
+    this.efectivo = 0;
+    this.transferencia = 0;
+    this.vendedora = null;
+    this.tipo.set(null);
+    this.evidencias.set([]);
+    this.clientePrevio.set(0);
+    this.error.set('');
+    document.querySelector('app-nuevo-pedido h1')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   elegirBarrio(b: { barrio: string; domicilio: number }): void {
     this.barrio = b.barrio;
     this.barrioQ.set(b.barrio);
@@ -679,7 +696,8 @@ export class NuevoPedidoPage implements OnInit {
         });
         const v = this.vendedoras().find((x) => x.id === this.vendedora);
         this.toast.ok(v ? `Venta #${id} registrada a nombre de ${v.nombre}` : `Venta #${id} registrada`);
-        this.router.navigate(['/app/ventas-local']);
+        // Se queda en Venta en local, lista para la siguiente venta
+        this.nuevaVenta();
       } else {
         const id = await this.ps.crear({
           cliente_nombre: this.nombre,
