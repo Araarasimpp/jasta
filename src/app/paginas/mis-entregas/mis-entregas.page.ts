@@ -416,11 +416,13 @@ export class MisEntregasPage implements OnInit, OnDestroy {
       return; // todavía no se re-dibujó el cambio anterior
     }
     this.indiceEsperado = null;
-    const destino = lista.findIndex((c) => {
-      if (c === el) return false;
-      const r = c.getBoundingClientRect();
-      return y > r.top + r.height * 0.25 && y < r.bottom - r.height * 0.25;
-    });
+    // Cambia de puesto cuando el centro de la tarjeta pasa la mitad de la vecina
+    const re = el.getBoundingClientRect();
+    const centro = re.top + re.height / 2;
+    const mitad = (c: HTMLElement | undefined) => { if (!c) return NaN; const r = c.getBoundingClientRect(); return r.top + r.height / 2; };
+    let destino = -1;
+    if (centro > mitad(lista[i + 1])) destino = i + 1;
+    else if (centro < mitad(lista[i - 1])) destino = i - 1;
     if (destino >= 0 && destino !== i) {
       const ids = this.rutaOrdenada().map((p) => p.id);
       const id = this.arrastrandoId()!;
