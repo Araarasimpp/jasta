@@ -35,6 +35,10 @@ interface Pendiente {
       .cifra strong { font-size: 15px; }
       .cifra.clave { background: var(--ok-wash); }
       td.recibido { font-weight: 650; color: var(--efectivo-texto); }
+      .estado-cuadre { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 11px; font-size: 11.5px; font-weight: 650;
+        background: var(--ok-wash); color: var(--efectivo-texto); white-space: nowrap; }
+      .estado-cuadre.pendiente { background: var(--oro-wash); color: var(--oro-texto); }
+      .tarjeta.por-confirmar { border-color: var(--oro); box-shadow: 0 0 0 3px var(--oro-wash); }
       .cifra.clave small { color: var(--efectivo-texto); }
       .cifra.clave strong { color: var(--text); }
       .mini { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -81,6 +85,47 @@ interface Pendiente {
           </div>
         }
 
+        @if (porConfirmar().length) {
+          <h2>{{ puedeCerrar() ? 'Cuadres por confirmar' : 'Tu cuadre entregado' }}</h2>
+          <p class="ayuda">{{ puedeCerrar() ? 'El mensajero ya entregó su cuadre. Confírmalo cuando recibas la plata.' : 'La oficina debe confirmar que recibió la plata.' }}</p>
+          <div class="tarjetas">
+            @for (c of porConfirmar(); track c.id) {
+              <article class="tarjeta por-confirmar">
+                <div class="tarjeta-top">
+                  <h3>{{ c.mensajero?.nombre || '—' }}</h3>
+                  <span class="estado-cuadre pendiente">Por confirmar</span>
+                </div>
+                <div class="cifras">
+                  <div class="cifra"><small>Pedidos</small><strong class="num">{{ c.cantidad_pedidos }}</strong></div>
+                  <div class="cifra clave"><small>{{ puedeCerrar() ? 'Efectivo a recibir' : 'Efectivo que entregas' }}</small><strong class="num">{{ pesos(c.total_efectivo - c.total_domicilios) }}</strong></div>
+                  <div class="cifra"><small>Transferencias</small><strong class="num">{{ pesos(c.total_transferencia) }}</strong></div>
+                  <div class="cifra"><small>Domicilios</small><strong class="num">{{ pesos(c.total_domicilios) }}</strong></div>
+                </div>
+                <p class="suave" style="font-size: 12.5px">Entregado {{ fecha(c.cerrado_at) }}</p>
+                @if (cuadreAbierto() === c.id) {
+                  <table class="mini">
+                    @for (p of pedidosCuadre(); track p.id) {
+                      <tr (click)="abierto.set(p.id)">
+                        <td class="num suave">#{{ p.id }}</td><td>{{ p.cliente_nombre }}</td><td class="suave">{{ p.tipo_recaudo || '—' }}</td><td class="num">{{ pesos(p.total) }}</td>
+                      </tr>
+                    }
+                  </table>
+                }
+                <div class="acciones">
+                  <button class="b" (click)="verCuadre(c)">
+                    <ion-icon [name]="cuadreAbierto() === c.id ? 'chevron-up-outline' : 'chevron-down-outline'"></ion-icon>
+                    {{ cuadreAbierto() === c.id ? 'Ocultar pedidos' : 'Ver pedidos' }}
+                  </button>
+                  @if (puedeCerrar()) {
+                    <button class="b b-ok" [disabled]="confirmando() === c.id" (click)="confirmar(c)">
+                      {{ confirmando() === c.id ? 'Confirmando…' : 'Recibí ' + pesos(c.total_efectivo - c.total_domicilios) }}</button>
+                  }
+                </div>
+              </article>
+            }
+          </div>
+        }
+
         <h2>Mensajeros pendientes por cuadrar</h2>
         <div class="tarjetas">
           @for (c of pendientes(); track c.mensajero_id) {
@@ -112,7 +157,7 @@ interface Pendiente {
                   {{ abiertoM() === c.mensajero_id ? 'Ocultar pedidos' : 'Ver pedidos' }}
                 </button>
                 @if (puedeCerrarDe(c)) {
-                  <button class="b b-ok" [disabled]="cerrando() === c.mensajero_id" (click)="cerrar(c)">{{ esMio(c) ? 'Cerrar mi cuadre' : 'Cerrar cuadre' }}</button>
+                  <button class="b b-ok" [disabled]="cerrando() === c.mensajero_id" (click)="cerrar(c)">{{ esMio(c) && !puedeCerrar() ? 'Entregar mi cuadre' : 'Cerrar cuadre' }}</button>
                 }
               </div>
             </article>
@@ -138,7 +183,7 @@ interface Pendiente {
         }
         <div class="tabla-wrap">
           <table class="tabla tarjetas-cel">
-            <thead><tr><th>Fecha</th><th>Mensajero</th><th class="der">Pedidos</th><th class="der">Efectivo</th><th class="der">Transferencia</th><th class="der">Domicilios</th><th class="der">Recibido</th><th>Cerró</th></tr></thead>
+            <thead><tr><th>Fecha</th><th>Mensajero</th><th class="der">Pedidos</th><th class="der">Efectivo</th><th class="der">Transferencia</th><th class="der">Domicilios</th><th class="der">Recibido</th><th>Estado</th><th>Cerró</th></tr></thead>
             <tbody>
               @for (c of historial(); track c.id) {
                 <tr class="click" (click)="verCuadre(c)">
@@ -149,10 +194,11 @@ interface Pendiente {
                   <td class="der num" data-etq="Transferencia">{{ pesos(c.total_transferencia) }}</td>
                   <td class="der num" data-etq="Domicilios">{{ pesos(c.total_domicilios) }}</td>
                   <td class="der num recibido" data-etq="Recibido">{{ pesos(c.total_efectivo - c.total_domicilios) }}</td>
+                  <td data-etq="Estado"><span class="estado-cuadre" [class.pendiente]="c.estado === 'pendiente'">{{ c.estado === 'pendiente' ? 'Por confirmar' : 'Confirmado' }}</span></td>
                   <td class="suave corta" data-etq="Cerró">{{ c.cerrado_por_nombre || '—' }}</td>
                 </tr>
                 @if (cuadreAbierto() === c.id) {
-                  <tr><td colspan="8">
+                  <tr><td colspan="9">
                     <table class="mini">
                       @for (p of pedidosCuadre(); track p.id) {
                         <tr (click)="abierto.set(p.id)">
@@ -163,7 +209,7 @@ interface Pendiente {
                   </td></tr>
                 }
               } @empty {
-                <tr><td colspan="8" class="suave">No se cerraron cuadres este día.</td></tr>
+                <tr><td colspan="9" class="suave">No se cerraron cuadres este día.</td></tr>
               }
             </tbody>
           </table>
@@ -193,6 +239,8 @@ export class CuadresPage implements OnInit {
   pagina = signal(0);
   cargando = signal(true);
   cerrando = signal<number | null>(null);
+  porConfirmar = signal<Cuadre[]>([]);
+  confirmando = signal<number | null>(null);
   abiertoM = signal<number | null>(null);
   pedidosM = signal<Pedido[]>([]);
   cuadreAbierto = signal<number | null>(null);
@@ -201,7 +249,7 @@ export class CuadresPage implements OnInit {
 
   private rango: RangoFechas = { desde: '', hasta: '', etiqueta: '' };
   resumenHist = computed(() =>
-    this.historial().reduce(
+    this.historial().filter((c) => c.estado !== 'pendiente').reduce(
       (a, c) => ({
         pedidos: a.pedidos + Number(c.cantidad_pedidos),
         efectivo: a.efectivo + Number(c.total_efectivo),
@@ -239,9 +287,10 @@ export class CuadresPage implements OnInit {
 
   async cargar(): Promise<void> {
     try {
-      const [p, h] = await Promise.all([this.ps.cuadresPendientes(), this.historialPagina(this.pagina())]);
+      const [p, h, pc] = await Promise.all([this.ps.cuadresPendientes(), this.historialPagina(this.pagina()), this.ps.cuadresPorConfirmar(this.soloMio())]);
       this.pendientes.set(p);
       this.historial.set(h);
+      this.porConfirmar.set(pc);
       if (this.veRecolector()) void this.cargarRecolectores();
     } catch (e) {
       this.toast.error(mensajeError(e));
@@ -307,16 +356,32 @@ export class CuadresPage implements OnInit {
     this.pedidosCuadre.set(await this.ps.pedidosDeCuadre(c.id));
   }
 
+  /** La oficina confirma que recibió la plata del cuadre que entregó el mensajero */
+  async confirmar(c: Cuadre): Promise<void> {
+    const monto = pesos(c.total_efectivo - c.total_domicilios);
+    if (!confirm(`¿Confirmas que recibiste ${monto} en efectivo de ${c.mensajero?.nombre ?? 'el mensajero'}?`)) return;
+    this.confirmando.set(c.id);
+    try {
+      await this.ps.confirmarCuadre(c.id);
+      this.toast.ok(`Cuadre de ${c.mensajero?.nombre ?? 'el mensajero'} confirmado`);
+      await this.cargar();
+    } catch (e) {
+      this.toast.error(mensajeError(e));
+    } finally {
+      this.confirmando.set(null);
+    }
+  }
+
   async cerrar(c: Pendiente): Promise<void> {
     const recibe = pesos(c.efectivo - c.domicilios);
     const pregunta = this.esMio(c) && !this.puedeCerrar()
-      ? `¿Cerrar tu cuadre? ${c.pedidos} pedidos · entregas ${recibe} en efectivo. Después no se le pueden agregar más pedidos.`
+      ? `¿Entregar tu cuadre? ${c.pedidos} pedidos · entregas ${recibe} en efectivo. La oficina debe confirmar que recibió la plata.`
       : `¿Cerrar el cuadre de ${c.nombre}? ${c.pedidos} pedidos · recibes ${recibe} en efectivo.`;
     if (!confirm(pregunta)) return;
     this.cerrando.set(c.mensajero_id);
     try {
       await this.ps.cerrarCuadre(c.mensajero_id);
-      this.toast.ok(this.esMio(c) ? 'Cerraste tu cuadre' : `Cuadre de ${c.nombre} cerrado`);
+      this.toast.ok(this.esMio(c) && !this.puedeCerrar() ? 'Cuadre entregado: falta que la oficina confirme' : `Cuadre de ${c.nombre} cerrado`);
       this.abiertoM.set(null);
       await this.cargar();
     } catch (e) {

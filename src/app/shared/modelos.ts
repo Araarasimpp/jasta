@@ -119,6 +119,10 @@ export interface Cuadre {
   total_efectivo: number;
   total_transferencia: number;
   total_domicilios: number;
+  /** pendiente = el mensajero lo entregó y falta que la oficina confirme que recibió la plata */
+  estado?: 'pendiente' | 'confirmado' | 'anulado';
+  confirmado_at?: string | null;
+  confirmado_por_nombre?: string | null;
   mensajero?: { nombre: string } | null;
 }
 

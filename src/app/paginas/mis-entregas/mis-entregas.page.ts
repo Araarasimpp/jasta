@@ -10,7 +10,7 @@ import { NotificacionesService } from '../../core/services/notificaciones.servic
 import { ToastService } from '../../shared/toast/toast.service';
 import { EntregarComponent } from '../../shared/entregar/entregar.component';
 import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detalle.component';
-import { Pedido } from '../../shared/modelos';
+import { Cuadre, Pedido } from '../../shared/modelos';
 import { mensajeError, pesos } from '../../shared/formato';
 import { finDiaColombia, formatoFechaCO, formatoHoraCO, inicioDiaColombia } from '../../shared/fecha-colombia';
 import { RangoFechas } from '../../shared/rango/rango.component';
@@ -48,6 +48,10 @@ import { nombreConVariante } from '../../shared/variante';
       @media (hover: hover) { .b-wa:hover { border-color: var(--efectivo); background: var(--ok-wash); } }
       .cuadre { display: flex; flex-direction: column; gap: 12px; }
       .cuadre .panel-head { margin-bottom: 0; }
+      .entregado-espera { display: flex; flex-direction: column; gap: 3px; padding: 12px 16px; border-radius: var(--radius); background: var(--oro-wash); }
+      .entregado-espera span { font-size: 11px; font-weight: 650; letter-spacing: 0.06em; text-transform: uppercase; color: var(--oro-texto); }
+      .entregado-espera strong { font-family: var(--mono-font); font-size: 22px; font-weight: 600; color: var(--text); }
+      .entregado-espera small { font-size: 12.5px; color: var(--text-soft); }
       .acciones-cuadre { display: flex; gap: 8px; flex-wrap: wrap; }
       .acciones-cuadre .b { flex: 1 1 200px; justify-content: center; }
       .en-ruta { font-size: 13px; color: var(--text-soft); }
@@ -99,6 +103,13 @@ import { nombreConVariante } from '../../shared/variante';
             </div>
             <span class="en-ruta">{{ enRuta().length }} en ruta</span>
           </div>
+          @for (pc of misPorConfirmar(); track pc.id) {
+            <div class="entregado-espera">
+              <span>Cuadre entregado · esperando confirmación</span>
+              <strong class="num">{{ pesos(pc.total_efectivo - pc.total_domicilios) }}</strong>
+              <small>{{ pc.cantidad_pedidos }} {{ pc.cantidad_pedidos === 1 ? 'pedido' : 'pedidos' }} · la oficina debe confirmar que recibió la plata</small>
+            </div>
+          }
           @if (pendiente(); as c) {
             <div class="entregar-total">
               <span>Efectivo que debes entregar</span>
@@ -112,7 +123,7 @@ import { nombreConVariante } from '../../shared/variante';
             <div class="acciones-cuadre">
               <button class="b" (click)="verDetalle()">{{ detalle().length ? 'Ocultar pedidos' : 'Ver pedidos por cuadrar' }}</button>
               <button class="b b-ok" [disabled]="cerrandoCuadre()" (click)="cerrarMiCuadre()">
-                {{ cerrandoCuadre() ? 'Cerrando…' : 'Cerrar mi cuadre (' + c.pedidos + (c.pedidos === 1 ? ' pedido)' : ' pedidos)') }}</button>
+                {{ cerrandoCuadre() ? 'Entregando…' : 'Entregar mi cuadre (' + c.pedidos + (c.pedidos === 1 ? ' pedido)' : ' pedidos)') }}</button>
             </div>
             @if (detalle().length) {
               <ul class="items-mini">
@@ -198,6 +209,9 @@ import { nombreConVariante } from '../../shared/variante';
               <span>Efectivo <strong class="num">{{ pesos(totHechas().efectivo) }}</strong></span>
               <span>Transferencias <strong class="num">{{ pesos(totHechas().transferencia) }}</strong></span>
               <span>Cuadrado <strong class="num">{{ pesos(totHechas().cuadrado) }}</strong></span>
+              @if (totHechas().porConfirmar) {
+                <span>Por confirmar <strong class="num">{{ pesos(totHechas().porConfirmar) }}</strong></span>
+              }
               @if (totHechas().porCuadrar) {
                 <span>Por cuadrar <strong class="num">{{ pesos(totHechas().porCuadrar) }}</strong></span>
               }
@@ -205,7 +219,7 @@ import { nombreConVariante } from '../../shared/variante';
             <table class="hist">
               @for (p of hechas(); track p.id) {
                 <tr (click)="abierto.set(p.id)">
-                  <td>#{{ p.id }} · {{ p.cliente_nombre }}<small>{{ p.barrio || '' }} · {{ hora(p.entregado_at) }} · {{ p.cuadre_id ? 'cuadrado' : 'por cuadrar' }}</small></td>
+                  <td>#{{ p.id }} · {{ p.cliente_nombre }}<small>{{ p.barrio || '' }} · {{ hora(p.entregado_at) }} · {{ !p.cuadre_id ? 'por cuadrar' : esperaConfirmacion(p) ? 'cuadre por confirmar' : 'cuadrado' }}</small></td>
                   <td class="num">{{ pesos(p.total) }}<small>{{ p.tipo_recaudo || '' }}</small></td>
                 </tr>
               }
@@ -235,6 +249,8 @@ export class MisEntregasPage implements OnInit, OnDestroy {
 
   enRuta = signal<Pedido[]>([]);
   cerrandoCuadre = signal(false);
+  /** Cuadres que entregó y la oficina todavía no confirma */
+  misPorConfirmar = signal<Cuadre[]>([]);
   /** Orden de la ruta que el mensajero armó (ids), guardado en este celular */
   orden = signal<number[]>([]);
   arrastrandoId = signal<number | null>(null);
@@ -259,21 +275,24 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   hechas = signal<Pedido[]>([]);
   private rango: RangoFechas | null = null;
   /** Cuadrado / por cuadrar = efectivo − domicilios, igual que en Cuadres (lo que el mensajero entrega) */
-  totHechas = computed(() =>
-    this.hechas().reduce(
+  totHechas = computed(() => {
+    const pendientesIds = new Set(this.misPorConfirmar().map((c) => c.id));
+    return this.hechas().reduce(
       (a, p) => {
         const neto = Number(p.valor_efectivo || 0) - Number(p.valor_domicilio || 0);
+        const esperando = !!p.cuadre_id && pendientesIds.has(p.cuadre_id);
         return {
           domicilios: a.domicilios + Number(p.valor_domicilio || 0),
           efectivo: a.efectivo + Number(p.valor_efectivo || 0),
           transferencia: a.transferencia + Number(p.valor_transferencia || 0),
-          cuadrado: a.cuadrado + (p.cuadre_id ? neto : 0),
+          cuadrado: a.cuadrado + (p.cuadre_id && !esperando ? neto : 0),
+          porConfirmar: a.porConfirmar + (esperando ? neto : 0),
           porCuadrar: a.porCuadrar + (p.cuadre_id ? 0 : neto),
         };
       },
-      { domicilios: 0, efectivo: 0, transferencia: 0, cuadrado: 0, porCuadrar: 0 }
-    )
-  );
+      { domicilios: 0, efectivo: 0, transferencia: 0, cuadrado: 0, porConfirmar: 0, porCuadrar: 0 }
+    );
+  });
 
   esMensajero = computed(() => this.sb.tiene('mensajero'));
   pendiente = computed(() => this.pendientes().find((x) => x.mensajero_id === this.sb.usuario()?.id) ?? null);
@@ -330,9 +349,14 @@ export class MisEntregasPage implements OnInit, OnDestroy {
     try {
       const yo = this.sb.usuario()?.id;
       const soloMios = this.sb.tiene('mensajero') ? yo : undefined;
-      const [r, c] = await Promise.all([this.ps.cola(['despachado'], soloMios), this.ps.cuadresPendientes()]);
+      const [r, c, pc] = await Promise.all([
+        this.ps.cola(['despachado'], soloMios),
+        this.ps.cuadresPendientes(),
+        this.sb.tiene('mensajero') && yo ? this.ps.cuadresPorConfirmar(yo) : Promise.resolve([]),
+      ]);
       this.enRuta.set(r);
       this.pendientes.set(c);
+      this.misPorConfirmar.set(pc);
       if (this.detalle().length && this.sb.usuario()) this.detalle.set(await this.ps.pendientesDe(this.sb.usuario()!.id));
     } catch (e) {
       this.toast.error(mensajeError(e));
@@ -501,17 +525,21 @@ export class MisEntregasPage implements OnInit, OnDestroy {
     }
   };
 
-  /** El mensajero cierra su propio cuadre (le llega aviso a admin y cuadres) */
+  esperaConfirmacion(p: Pedido): boolean {
+    return !!p.cuadre_id && this.misPorConfirmar().some((c) => c.id === p.cuadre_id);
+  }
+
+  /** El mensajero entrega su cuadre; queda por confirmar hasta que la oficina reciba la plata */
   async cerrarMiCuadre(): Promise<void> {
     const c = this.pendiente();
     const yo = this.sb.usuario()?.id;
     if (!c || !yo) return;
     const entrega = pesos(c.efectivo - c.domicilios);
-    if (!confirm(`¿Cerrar tu cuadre? ${c.pedidos} ${c.pedidos === 1 ? 'pedido' : 'pedidos'} · entregas ${entrega} en efectivo. Después no se le pueden agregar más pedidos.`)) return;
+    if (!confirm(`¿Entregar tu cuadre? ${c.pedidos} ${c.pedidos === 1 ? 'pedido' : 'pedidos'} · entregas ${entrega} en efectivo. La oficina debe confirmar que recibió la plata.`)) return;
     this.cerrandoCuadre.set(true);
     try {
       await this.ps.cerrarCuadre(yo);
-      this.toast.ok(`Cuadre cerrado: entregas ${entrega} en efectivo`);
+      this.toast.ok(`Cuadre entregado (${entrega}): falta que la oficina confirme`);
       this.detalle.set([]);
       await this.cargar();
       await this.cargarHechas();

@@ -341,8 +341,20 @@ export class PedidosService {
     return this.check(await this.db.rpc('cerrar_cuadre', { p_mensajero: mensajeroId })) as number;
   }
 
+  /** Cuadres que entregó el mensajero y la oficina todavía no confirma (de uno o de todos) */
+  async cuadresPorConfirmar(mensajeroId?: number | null): Promise<Cuadre[]> {
+    let q = this.db.from('cuadres').select('*, mensajero:usuarios!cuadres_mensajero_id_fkey(nombre)').eq('estado', 'pendiente');
+    if (mensajeroId) q = q.eq('mensajero_id', mensajeroId);
+    return (this.check(await q.order('cerrado_at')) ?? []) as unknown as Cuadre[];
+  }
+
+  /** La oficina confirma que recibió la plata del cuadre */
+  async confirmarCuadre(cuadreId: number): Promise<void> {
+    this.check(await this.db.rpc('confirmar_cuadre', { p_cuadre: cuadreId }));
+  }
+
   async historialCuadres(pagina: number, mensajeroId?: number | null, desde?: string | null, hasta?: string | null): Promise<Cuadre[]> {
-    let q = this.db.from('cuadres').select('*, mensajero:usuarios!cuadres_mensajero_id_fkey(nombre)');
+    let q = this.db.from('cuadres').select('*, mensajero:usuarios!cuadres_mensajero_id_fkey(nombre)').neq('estado', 'anulado');
     if (mensajeroId) q = q.eq('mensajero_id', mensajeroId);
     if (desde) q = q.gte('cerrado_at', desde);
     if (hasta) q = q.lte('cerrado_at', hasta);
