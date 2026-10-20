@@ -5,12 +5,13 @@ import { addIcons } from 'ionicons';
 import { refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses, chatbubbleEllipsesOutline } from 'ionicons/icons';
 import { enlaceWhatsapp, productosDelPedido } from '../../shared/whatsapp';
 import { PedidosService } from '../../core/services/pedidos.service';
-import { JybService, PedidoJyb, ResumenJyb } from '../../core/services/jyb.service';
+import { EntregadoJyb, JybService, PedidoJyb, ResumenJyb } from '../../core/services/jyb.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { NotificacionesService } from '../../core/services/notificaciones.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { EntregarComponent } from '../../shared/entregar/entregar.component';
 import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detalle.component';
+import { PedidoJybComponent } from '../../shared/pedido-jyb/pedido-jyb.component';
 import { Cuadre, Pedido, TipoRecaudo } from '../../shared/modelos';
 import { mensajeError, pesos } from '../../shared/formato';
 import { finDiaColombia, formatoFechaCO, formatoHoraCO, inicioDiaColombia } from '../../shared/fecha-colombia';
@@ -29,7 +30,7 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
 @Component({
   selector: 'app-mis-entregas',
   standalone: true,
-  imports: [IonIcon, EntregarComponent, PedidoDetalleComponent, DiaComponent],
+  imports: [IonIcon, EntregarComponent, PedidoDetalleComponent, PedidoJybComponent, DiaComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -89,7 +90,8 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
         letter-spacing: 0.04em; text-transform: uppercase; background: var(--accent-wash); color: var(--accent); align-self: flex-start; }
       .negocio.jyb { background: var(--oro-wash); color: var(--oro-texto); }
       .tarjeta.jyb { border-left: 4px solid var(--oro); }
-      .tarjeta.jyb .top-izq { cursor: default; }
+      .hist tr.sin-detalle { cursor: default; }
+      .hist .negocio { margin: 0 6px 0 0; padding: 1px 6px; font-size: 10px; vertical-align: 1px; }
       .parada { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 6px; margin-right: 6px; border-radius: 12px;
         background: var(--accent); color: #fff; font-size: 12.5px; font-weight: 750; font-family: var(--mono-font); vertical-align: 2px; }
     `,
@@ -244,7 +246,7 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
           } @else if (parada.jyb; as p) {
           <article class="tarjeta jyb" [class.arrastrando]="arrastrandoId() === parada.clave" (pointerdown)="presionar($event, parada.clave)" (touchstart)="tocar($event, parada.clave)" (contextmenu)="$event.preventDefault()">
             <div class="tarjeta-top">
-              <div class="top-izq">
+              <div class="top-izq" (click)="abiertoJyb.set(p)">
                 <span class="negocio jyb">Variedades JYB</span>
                 <h3>@if (rutaOrdenada().length > 1) {<span class="parada" [attr.aria-label]="'Parada ' + (i + 1)">{{ i + 1 }}</span>}<span class="guia">#{{ p.numero }}</span> {{ p.cliente_nombre }}</h3>
                 <strong class="total num">{{ pesos(p.total) }}</strong>
@@ -285,8 +287,10 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
             <h2>Mis entregas hechas</h2>
             <app-dia (cambio)="cambiarRango($event)"></app-dia>
           </div>
-          @if (hechas().length) {
+          @if (hechas().length || hechasJyb().length) {
+            @if (hechas().length) {
             <p class="hist-tot" style="margin: 12px 0 4px">
+              @if (conJyb()) {<span><strong>Jasta</strong></span>}
               <span><strong class="num">{{ hechas().length }}</strong> entregas</span>
               <span>Domicilios <strong class="num">{{ pesos(totHechas().domicilios) }}</strong></span>
               <span>Efectivo <strong class="num">{{ pesos(totHechas().efectivo) }}</strong></span>
@@ -299,12 +303,36 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
                 <span>Por cuadrar <strong class="num">{{ pesos(totHechas().porCuadrar) }}</strong></span>
               }
             </p>
+            }
+            @if (hechasJyb().length) {
+            <p class="hist-tot" style="margin: 12px 0 4px">
+              <span><strong>Variedades JYB</strong></span>
+              <span><strong class="num">{{ hechasJyb().length }}</strong> entregas</span>
+              <span>Domicilios <strong class="num">{{ pesos(totJyb().domicilios) }}</strong></span>
+              <span>Efectivo <strong class="num">{{ pesos(totJyb().efectivo) }}</strong></span>
+              <span>Transferencias <strong class="num">{{ pesos(totJyb().transferencia) }}</strong></span>
+              <span>Cuadrado <strong class="num">{{ pesos(totJyb().cuadrado) }}</strong></span>
+              @if (totJyb().porConfirmar) {
+                <span>Por confirmar <strong class="num">{{ pesos(totJyb().porConfirmar) }}</strong></span>
+              }
+              @if (totJyb().porCuadrar) {
+                <span>Por cuadrar <strong class="num">{{ pesos(totJyb().porCuadrar) }}</strong></span>
+              }
+            </p>
+            }
             <table class="hist">
-              @for (p of hechas(); track p.id) {
+              @for (h of historial(); track h.clave) {
+                @if (h.jasta; as p) {
                 <tr (click)="abierto.set(p.id)">
-                  <td>#{{ p.id }} · {{ p.cliente_nombre }}<small>{{ p.barrio || '' }} · {{ hora(p.entregado_at) }} · {{ !p.cuadre_id ? 'por cuadrar' : esperaConfirmacion(p) ? 'cuadre por confirmar' : 'cuadrado' }}</small></td>
+                  <td>@if (conJyb()) {<span class="negocio">Jasta</span>}#{{ p.id }} · {{ p.cliente_nombre }}<small>{{ p.barrio || '' }} · {{ hora(p.entregado_at) }} · {{ !p.cuadre_id ? 'por cuadrar' : esperaConfirmacion(p) ? 'cuadre por confirmar' : 'cuadrado' }}</small></td>
                   <td class="num">{{ pesos(p.total) }}<small>{{ p.tipo_recaudo || '' }}</small></td>
                 </tr>
+                } @else if (h.jyb; as p) {
+                <tr class="sin-detalle">
+                  <td><span class="negocio jyb">JYB</span>#{{ p.numero }} · {{ p.cliente_nombre }}<small>{{ p.barrio || '' }} · {{ hora(p.entregado_at) }} · {{ p.cuadre === 'por_cuadrar' ? 'por cuadrar' : p.cuadre === 'por_confirmar' ? 'cuadre por confirmar' : 'cuadrado' }}</small></td>
+                  <td class="num">{{ pesos(p.total) }}<small>{{ p.metodo_pago || '' }}</small></td>
+                </tr>
+                }
               }
             </table>
           } @else {
@@ -319,6 +347,9 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
     }
     @if (entregandoJyb(); as e) {
       <app-entregar [pedido]="e.resumen" [alConfirmar]="e.guardar" (cerrar)="entregandoJyb.set(null)" (entregado)="alEntregarJyb(e.resumen.id)"></app-entregar>
+    }
+    @if (abiertoJyb(); as p) {
+      <app-pedido-jyb [pedido]="p" (cerrar)="abiertoJyb.set(null)"></app-pedido-jyb>
     }
     @if (abierto(); as id) {
       <app-pedido-detalle [pedidoId]="id" [chat]="abiertoEnChat()" (cerrar)="cerrarDetalle()" (cambiado)="cargar()"></app-pedido-detalle>
@@ -346,6 +377,32 @@ export class MisEntregasPage implements OnInit, OnDestroy {
     return c && c.pedidos > 0 ? c : null;
   });
   cerrandoJyb = signal(false);
+  abiertoJyb = signal<PedidoJyb | null>(null);
+  hechasJyb = signal<EntregadoJyb[]>([]);
+  /** Lo que entrega a Variedades JYB = efectivo − domicilios, igual que en su cuadre */
+  totJyb = computed(() =>
+    this.hechasJyb().reduce(
+      (a, p) => {
+        const neto = Number(p.efectivo || 0) - Number(p.valor_domicilio || 0);
+        return {
+          domicilios: a.domicilios + Number(p.valor_domicilio || 0),
+          efectivo: a.efectivo + Number(p.efectivo || 0),
+          transferencia: a.transferencia + Number(p.transferencia || 0),
+          cuadrado: a.cuadrado + (p.cuadre === 'cuadrado' ? neto : 0),
+          porConfirmar: a.porConfirmar + (p.cuadre === 'por_confirmar' ? neto : 0),
+          porCuadrar: a.porCuadrar + (p.cuadre === 'por_cuadrar' ? neto : 0),
+        };
+      },
+      { domicilios: 0, efectivo: 0, transferencia: 0, cuadrado: 0, porConfirmar: 0, porCuadrar: 0 }
+    )
+  );
+  /** Entregas hechas de los dos negocios, la más reciente primero */
+  historial = computed(() =>
+    [
+      ...this.hechas().map((p) => ({ clave: 'j:' + p.id, cuando: p.entregado_at ?? '', jasta: p, jyb: undefined })),
+      ...this.hechasJyb().map((p) => ({ clave: 'k:' + p.id, cuando: p.entregado_at, jyb: p, jasta: undefined })),
+    ].sort((a, b) => b.cuando.localeCompare(a.cuando))
+  );
   entregandoJyb = signal<{
     resumen: { id: number; cliente_nombre: string; total: number };
     guardar: (tipo: TipoRecaudo, efectivo: number, transferencia: number, evidencias: string[]) => Promise<void>;
@@ -403,8 +460,11 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   private dejar?: () => void;
   private subParams?: { unsubscribe(): void };
   private timer?: ReturnType<typeof setTimeout>;
-  /** Variedades JYB no avisa los cambios en vivo: se consulta cada minuto */
+  /** Además de los avisos en vivo, se consulta Variedades JYB cada minuto por si se pierde la conexión */
   private relojJyb?: ReturnType<typeof setInterval>;
+  private canalJyb: string | null = null;
+  private dejarJyb?: () => void;
+  private timerJyb?: ReturnType<typeof setTimeout>;
 
   constructor() {
     addIcons({ refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses, chatbubbleEllipsesOutline });
@@ -441,6 +501,8 @@ export class MisEntregasPage implements OnInit, OnDestroy {
     this.dejar?.();
     clearTimeout(this.timer);
     clearInterval(this.relojJyb);
+    clearTimeout(this.timerJyb);
+    this.dejarJyb?.();
   }
 
   abrir(id: number, chat = false): void {
@@ -478,9 +540,41 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   /** Si falla (sin señal, por ejemplo) se dejan los pedidos de Variedades JYB que ya se veían */
   async cargarJyb(): Promise<void> {
     try {
-      this.jyb.set(await this.jybs.resumen());
+      const r = await this.jybs.resumen();
+      const primeraVez = r.vinculado && !this.jyb()?.vinculado;
+      this.jyb.set(r);
+      this.escucharJyb(r.vinculado ? r.canal ?? null : null);
+      if (primeraVez) void this.cargarHechasJyb();
     } catch {
       /* se reintenta en el próximo minuto o al actualizar */
+    }
+  }
+
+  /** Cuando Variedades JYB avisa un cambio, se vuelve a pedir lo de allá */
+  private escucharJyb(canal: string | null): void {
+    if (canal === this.canalJyb) return;
+    this.dejarJyb?.();
+    this.dejarJyb = undefined;
+    this.canalJyb = canal;
+    if (!canal) return;
+    this.dejarJyb = this.jybs.escuchar(canal, () => {
+      clearTimeout(this.timerJyb);
+      this.timerJyb = setTimeout(() => {
+        void this.cargarJyb();
+        void this.cargarHechasJyb();
+      }, 600);
+    });
+  }
+
+  async cargarHechasJyb(): Promise<void> {
+    const r = this.rango;
+    if (!r || !this.jyb()?.vinculado) return;
+    try {
+      this.hechasJyb.set(
+        await this.jybs.entregadas(r.desde ? inicioDiaColombia(r.desde).toISOString() : null, r.hasta ? finDiaColombia(r.hasta).toISOString() : null)
+      );
+    } catch {
+      /* se deja lo que ya se veía */
     }
   }
 
@@ -494,7 +588,7 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   async alEntregarJyb(numero: number): Promise<void> {
     this.entregandoJyb.set(null);
     this.toast.ok(`#${numero} de Variedades JYB entregado`);
-    await this.cargarJyb();
+    await Promise.all([this.cargarJyb(), this.cargarHechasJyb()]);
   }
 
   async cerrarCuadreJyb(): Promise<void> {
@@ -506,7 +600,7 @@ export class MisEntregasPage implements OnInit, OnDestroy {
     try {
       await this.jybs.cerrarCuadre();
       this.toast.ok(`Cuadre de Variedades JYB entregado (${entrega}): falta que confirmen`);
-      await this.cargarJyb();
+      await Promise.all([this.cargarJyb(), this.cargarHechasJyb()]);
     } catch (e) {
       this.toast.error(mensajeError(e));
     } finally {
@@ -702,6 +796,7 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   cambiarRango(r: RangoFechas): void {
     this.rango = r;
     void this.cargarHechas();
+    void this.cargarHechasJyb();
   }
 
   async cargarHechas(): Promise<void> {
