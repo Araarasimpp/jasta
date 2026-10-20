@@ -66,9 +66,9 @@ import { nombreConVariante } from '../../shared/variante';
       .hist-tot strong { color: var(--text); }
       /* Ordenar la ruta: mantener presionada una tarjeta y moverla */
       .ayuda-ruta { margin: 0 0 -2px; font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
-      .tarjetas .tarjeta { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+      .tarjetas .tarjeta { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
         transition: box-shadow 160ms var(--ease), scale 160ms var(--ease); }
-      .tarjetas .tarjeta.arrastrando { position: relative; z-index: 20; scale: 1.02; box-shadow: 0 18px 44px rgba(15, 23, 42, 0.28);
+      .tarjetas .tarjeta.arrastrando { touch-action: none; position: relative; z-index: 20; scale: 1.02; box-shadow: 0 18px 44px rgba(15, 23, 42, 0.28);
         outline: 2px solid var(--accent); outline-offset: -1px; }
       .tarjetas.ordenando .tarjeta:not(.arrastrando) { transition: box-shadow 160ms var(--ease), transform 180ms var(--ease); }
       .parada { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 6px; margin-right: 6px; border-radius: 12px;
@@ -131,7 +131,7 @@ import { nombreConVariante } from '../../shared/variante';
       }
       <div class="tarjetas" [class.ordenando]="arrastrandoId() !== null">
         @for (p of rutaOrdenada(); track p.id; let i = $index) {
-          <article class="tarjeta" [class.arrastrando]="arrastrandoId() === p.id" (pointerdown)="presionar($event, p.id)" (contextmenu)="$event.preventDefault()">
+          <article class="tarjeta" [class.arrastrando]="arrastrandoId() === p.id" (pointerdown)="presionar($event, p.id)" (touchstart)="tocar($event, p.id)" (contextmenu)="$event.preventDefault()">
             <div class="tarjeta-top">
               <div class="top-izq" (click)="abrir(p.id)">
                 <h3>@if (rutaOrdenada().length > 1) {<span class="parada" [attr.aria-label]="'Parada ' + (i + 1)">{{ i + 1 }}</span>}<span class="guia">#{{ p.id }}</span> {{ p.cliente_nombre }}</h3>
@@ -357,7 +357,8 @@ export class MisEntregasPage implements OnInit, OnDestroy {
 
   /** Mantener presionado ~0,4 s (sin mover el dedo) para empezar a mover la tarjeta */
   presionar(e: PointerEvent, id: number): void {
-    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (e.pointerType !== 'mouse') return; // en el celular se usa tocar() con eventos táctiles (iPhone cancela los de puntero)
+    if (e.button !== 0) return;
     if ((e.target as Element | null)?.closest('button, a, input, textarea')) return;
     if (this.rutaOrdenada().length < 2) return;
     const el = e.currentTarget as HTMLElement;
@@ -376,7 +377,43 @@ export class MisEntregasPage implements OnInit, OnDestroy {
     this.espera = setTimeout(() => { cancelar(); this.empezar(el, id, x0, y0); }, 420);
   }
 
-  private empezar(el: HTMLElement, id: number, x: number, y: number): void {
+  /**
+   * Celular (iPhone y Android): mantener el dedo quieto ~0,4 s y luego moverlo.
+   * Se usan eventos táctiles porque Safari cancela los de puntero al mantener presionado.
+   */
+  tocar(e: TouchEvent, id: number): void {
+    if (e.touches.length !== 1) return;
+    if ((e.target as Element | null)?.closest('button, a, input, textarea')) return;
+    if (this.rutaOrdenada().length < 2) return;
+    const el = e.currentTarget as HTMLElement;
+    const t0 = e.touches[0];
+    const x0 = t0.clientX, y0 = t0.clientY;
+    let activo = false;
+    const mover = (ev: TouchEvent) => {
+      const t = ev.touches[0];
+      if (!t) return;
+      if (activo) {
+        if (ev.cancelable) ev.preventDefault();
+        this.xy = { x: t.clientX, y: t.clientY };
+      } else if (Math.hypot(t.clientX - x0, t.clientY - y0) > 10) {
+        terminar(); // el dedo se movió antes de tiempo: es scroll normal
+      }
+    };
+    const fin = () => { const estaba = activo; terminar(); if (estaba) this.soltar(); };
+    const terminar = () => {
+      clearTimeout(this.espera);
+      document.removeEventListener('touchmove', mover);
+      document.removeEventListener('touchend', fin);
+      document.removeEventListener('touchcancel', fin);
+    };
+    clearTimeout(this.espera);
+    document.addEventListener('touchmove', mover, { passive: false });
+    document.addEventListener('touchend', fin);
+    document.addEventListener('touchcancel', fin);
+    this.espera = setTimeout(() => { activo = true; this.empezar(el, id, x0, y0, true); }, 400);
+  }
+
+  private empezar(el: HTMLElement, id: number, x: number, y: number, tactil = false): void {
     this.el = el;
     this.xy = { x, y };
     this.dy = 0;
@@ -387,9 +424,11 @@ export class MisEntregasPage implements OnInit, OnDestroy {
     let p: HTMLElement | null = el.parentElement;
     while (p && !/(auto|scroll)/.test(getComputedStyle(p).overflowY)) p = p.parentElement;
     this.scroller = p ?? (document.scrollingElement as HTMLElement);
-    window.addEventListener('pointermove', this.alMover);
-    window.addEventListener('pointerup', this.soltar);
-    window.addEventListener('pointercancel', this.soltar);
+    if (!tactil) {
+      window.addEventListener('pointermove', this.alMover);
+      window.addEventListener('pointerup', this.soltar);
+      window.addEventListener('pointercancel', this.soltar);
+    }
     this.raf = requestAnimationFrame(this.cuadro);
   }
 
