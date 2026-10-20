@@ -119,8 +119,8 @@ export class PedidosPage implements OnInit, OnDestroy {
     const conteos = this.conteos();
     return ORDEN_GRUPOS.map((estado) => {
       let pedidos = filas.filter((p) => p.estado === estado);
-      // Los alistados van en el orden en que se alistaron (el primero arriba)
-      if (estado === 'alistado') pedidos = [...pedidos].sort((a, b) => this.puesto(a) - this.puesto(b));
+      // Alistados: el último que se alistó arriba (…3°, 2°, 1°)
+      if (estado === 'alistado') pedidos = [...pedidos].sort((a, b) => this.puesto(b) - this.puesto(a));
       // En ruta: por mensajero y en el orden en que se le fueron asignando
       if (estado === 'despachado') {
         const ruta = this.ordenRuta();

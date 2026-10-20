@@ -71,6 +71,11 @@ function moneda(valor: number): string {
 }
 
 /** "318 8156960 - 310 7425663" → una línea por número. */
+/** Dirección, celular y observación van siempre en mayúsculas en el rótulo */
+function mayus(v: string | null | undefined): string {
+  return (v ?? '').toLocaleUpperCase('es-CO');
+}
+
 function lineasTelefono(telefonos: string | null): string[] {
   return (telefonos ?? '')
     .split(/\s*[-,/|]\s*(?=\d)|\n/)
@@ -137,11 +142,11 @@ export function rotuloHtml(p: PedidoRotulo, n: DatosNegocio): string {
     <table class="datos">
       ${fila('Pedido', '#' + esc(p.numero), 'pedido')}
       ${fila('Nombre', esc(p.cliente_nombre), 'destacado')}
-      ${fila('Dirección', esc(p.direccion), 'destacado')}
+      ${fila('Dirección', esc(mayus(p.direccion)), 'destacado')}
       ${fila('Barrio', esc(p.barrio))}
-      ${fila('Celular', esc(p.cliente_telefono))}
+      ${fila('Celular', esc(mayus(p.cliente_telefono)), 'fuerte')}
       ${fila('Producto', productos, 'productos')}
-      ${fila('Observación', esc(p.observaciones))}
+      ${fila('Observación', esc(mayus(p.observaciones)), 'fuerte')}
     </table>
     </div>
 
@@ -254,6 +259,7 @@ export const ROTULO_CSS = `
   .datos th { width: 21mm; font-weight: bold; }
   .datos td { overflow-wrap: anywhere; }
   .datos tr.destacado td { font-size: 10pt; font-weight: bold; }
+  .datos tr.fuerte td { font-weight: bold; }
   /* Textos largos: máximo 2 líneas (productos: 3) para no salirse de la etiqueta */
   .datos .v { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
   .datos tr.productos .v { -webkit-line-clamp: 3; }

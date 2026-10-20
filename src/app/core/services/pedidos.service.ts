@@ -58,10 +58,10 @@ export class PedidosService {
     if (f.vendedoraId) q = q.eq('vendedora_id', f.vendedoraId);
     if (f.tipoRecaudo) q = q.eq('tipo_recaudo', f.tipoRecaudo);
     q = this.filtrosComunes(q, f);
-    // Los alistados van en el orden en que se alistaron (1°, 2°, 3°…), como en Kaesuri
+    // Los alistados: el último que se alistó va primero (…3°, 2°, 1°)
     // En ruta, en el orden en que se le asignaron al mensajero
     q = f.estado === 'alistado'
-      ? q.order('alistado_at', { ascending: true, nullsFirst: true }).order('id')
+      ? q.order('alistado_at', { ascending: false, nullsFirst: false }).order('id', { ascending: false })
       : f.estado === 'despachado'
         ? q.order('asignado_at', { ascending: true, nullsFirst: true }).order('id')
         : q.order('created_at', { ascending: false });

@@ -64,6 +64,15 @@ import { nombreConVariante } from '../../shared/variante';
       .hist small { display: block; color: var(--text-muted); font-size: 12px; }
       .hist-tot { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--text-soft); }
       .hist-tot strong { color: var(--text); }
+      /* Ordenar la ruta: mantener presionada una tarjeta y moverla */
+      .ayuda-ruta { margin: 0 0 -2px; font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+      .tarjetas .tarjeta { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+        transition: box-shadow 160ms var(--ease), scale 160ms var(--ease); }
+      .tarjetas .tarjeta.arrastrando { position: relative; z-index: 20; scale: 1.02; box-shadow: 0 18px 44px rgba(15, 23, 42, 0.28);
+        outline: 2px solid var(--accent); outline-offset: -1px; }
+      .tarjetas.ordenando .tarjeta:not(.arrastrando) { transition: box-shadow 160ms var(--ease), transform 180ms var(--ease); }
+      .parada { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 6px; margin-right: 6px; border-radius: 12px;
+        background: var(--accent); color: #fff; font-size: 12.5px; font-weight: 750; font-family: var(--mono-font); vertical-align: 2px; }
     `,
   ],
   template: `
@@ -117,12 +126,15 @@ import { nombreConVariante } from '../../shared/variante';
         </div>
       }
 
-      <div class="tarjetas">
-        @for (p of enRuta(); track p.id) {
-          <article class="tarjeta">
+      @if (rutaOrdenada().length > 1) {
+        <p class="ayuda-ruta">Mantén presionada una tarjeta y muévela para ordenar tu ruta.</p>
+      }
+      <div class="tarjetas" [class.ordenando]="arrastrandoId() !== null">
+        @for (p of rutaOrdenada(); track p.id; let i = $index) {
+          <article class="tarjeta" [class.arrastrando]="arrastrandoId() === p.id" (pointerdown)="presionar($event, p.id)" (contextmenu)="$event.preventDefault()">
             <div class="tarjeta-top">
               <div class="top-izq" (click)="abrir(p.id)">
-                <h3><span class="guia">#{{ p.id }}</span> {{ p.cliente_nombre }}</h3>
+                <h3>@if (rutaOrdenada().length > 1) {<span class="parada" [attr.aria-label]="'Parada ' + (i + 1)">{{ i + 1 }}</span>}<span class="guia">#{{ p.id }}</span> {{ p.cliente_nombre }}</h3>
                 <strong class="total num">{{ pesos(p.total) }}<small>{{ p.tipo_recaudo || '' }}</small></strong>
               </div>
               <div class="top-der">
@@ -216,6 +228,16 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   avisos = inject(NotificacionesService);
 
   enRuta = signal<Pedido[]>([]);
+  /** Orden de la ruta que el mensajero armó (ids), guardado en este celular */
+  orden = signal<number[]>([]);
+  arrastrandoId = signal<number | null>(null);
+  rutaOrdenada = computed(() => {
+    const pos = new Map(this.orden().map((id, i) => [id, i]));
+    return this.enRuta()
+      .map((p, i) => ({ p, k: pos.has(p.id) ? pos.get(p.id)! : 1e6 + i }))
+      .sort((a, b) => a.k - b.k)
+      .map((x) => x.p);
+  });
   pendientes = signal<
     { mensajero_id: number; pedidos: number; efectivo: number; transferencia: number; domicilios: number; desde: string }[]
   >([]);
@@ -258,6 +280,11 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    try {
+      const guardado = JSON.parse(localStorage.getItem(this.claveOrden()) || '[]');
+      if (Array.isArray(guardado)) this.orden.set(guardado.filter((x) => typeof x === 'number'));
+    } catch { /* sin almacenamiento: orden por defecto */ }
+    document.addEventListener('touchmove', this.bloquearScroll, { passive: false });
     void this.cargar();
     // Al tocar un aviso (mensaje o pedido asignado) se abre ese pedido
     this.subParams = this.route.queryParamMap.subscribe((q) => {
@@ -274,6 +301,8 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    document.removeEventListener('touchmove', this.bloquearScroll);
+    this.soltar();
     this.subParams?.unsubscribe();
     this.dejar?.();
     clearTimeout(this.timer);
@@ -304,6 +333,125 @@ export class MisEntregasPage implements OnInit, OnDestroy {
       this.cargando.set(false);
     }
   }
+
+  // ------------------------------------------------- Ordenar la ruta (arrastrar)
+  private claveOrden(): string {
+    return `jasta-ruta-${this.sb.usuario()?.id ?? 0}`;
+  }
+  private guardarOrden(): void {
+    try { localStorage.setItem(this.claveOrden(), JSON.stringify(this.orden().slice(-300))); } catch { /* sin almacenamiento */ }
+  }
+  private espera?: ReturnType<typeof setTimeout>;
+  private el: HTMLElement | null = null;
+  private xy = { x: 0, y: 0 };
+  private agarre = 0;
+  private dy = 0;
+  private raf = 0;
+  private scroller: HTMLElement | null = null;
+  private indiceEsperado: number | null = null;
+
+  /** Mientras se arrastra, el dedo mueve la tarjeta y no la página */
+  private bloquearScroll = (e: TouchEvent): void => {
+    if (this.arrastrandoId() !== null) e.preventDefault();
+  };
+
+  /** Mantener presionado ~0,4 s (sin mover el dedo) para empezar a mover la tarjeta */
+  presionar(e: PointerEvent, id: number): void {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if ((e.target as Element | null)?.closest('button, a, input, textarea')) return;
+    if (this.rutaOrdenada().length < 2) return;
+    const el = e.currentTarget as HTMLElement;
+    const x0 = e.clientX, y0 = e.clientY;
+    const mover0 = (ev: PointerEvent) => { if (Math.hypot(ev.clientX - x0, ev.clientY - y0) > 10) cancelar(); };
+    const cancelar = () => {
+      clearTimeout(this.espera);
+      window.removeEventListener('pointermove', mover0);
+      window.removeEventListener('pointerup', cancelar);
+      window.removeEventListener('pointercancel', cancelar);
+    };
+    cancelar();
+    window.addEventListener('pointermove', mover0);
+    window.addEventListener('pointerup', cancelar);
+    window.addEventListener('pointercancel', cancelar);
+    this.espera = setTimeout(() => { cancelar(); this.empezar(el, id, x0, y0); }, 420);
+  }
+
+  private empezar(el: HTMLElement, id: number, x: number, y: number): void {
+    this.el = el;
+    this.xy = { x, y };
+    this.dy = 0;
+    this.agarre = y - el.getBoundingClientRect().top;
+    this.indiceEsperado = null;
+    this.arrastrandoId.set(id);
+    navigator.vibrate?.(25);
+    let p: HTMLElement | null = el.parentElement;
+    while (p && !/(auto|scroll)/.test(getComputedStyle(p).overflowY)) p = p.parentElement;
+    this.scroller = p ?? (document.scrollingElement as HTMLElement);
+    window.addEventListener('pointermove', this.alMover);
+    window.addEventListener('pointerup', this.soltar);
+    window.addEventListener('pointercancel', this.soltar);
+    this.raf = requestAnimationFrame(this.cuadro);
+  }
+
+  private alMover = (ev: PointerEvent): void => {
+    this.xy = { x: ev.clientX, y: ev.clientY };
+  };
+
+  /** Cada cuadro: desplaza la página si el dedo está en un borde y acomoda la tarjeta */
+  private cuadro = (): void => {
+    const el = this.el;
+    if (!el) return;
+    const y = this.xy.y;
+    if (this.scroller) {
+      if (y < 110) this.scroller.scrollTop -= Math.ceil((110 - y) / 8);
+      else if (y > window.innerHeight - 150) this.scroller.scrollTop += Math.ceil((y - (window.innerHeight - 150)) / 8);
+    }
+    const natural = el.getBoundingClientRect().top - this.dy;
+    this.dy = y - this.agarre - natural;
+    el.style.transform = `translateY(${this.dy}px)`;
+    const lista = [...(el.parentElement?.querySelectorAll<HTMLElement>(':scope > article.tarjeta') ?? [])];
+    const i = lista.indexOf(el);
+    if (this.indiceEsperado !== null && i !== this.indiceEsperado) {
+      this.raf = requestAnimationFrame(this.cuadro);
+      return; // todavía no se re-dibujó el cambio anterior
+    }
+    this.indiceEsperado = null;
+    const destino = lista.findIndex((c) => {
+      if (c === el) return false;
+      const r = c.getBoundingClientRect();
+      return y > r.top + r.height * 0.25 && y < r.bottom - r.height * 0.25;
+    });
+    if (destino >= 0 && destino !== i) {
+      const ids = this.rutaOrdenada().map((p) => p.id);
+      const id = this.arrastrandoId()!;
+      ids.splice(ids.indexOf(id), 1);
+      ids.splice(destino, 0, id);
+      this.orden.set(ids);
+      this.indiceEsperado = destino;
+      navigator.vibrate?.(8);
+    }
+    this.raf = requestAnimationFrame(this.cuadro);
+  };
+
+  private soltar = (): void => {
+    window.removeEventListener('pointermove', this.alMover);
+    window.removeEventListener('pointerup', this.soltar);
+    window.removeEventListener('pointercancel', this.soltar);
+    cancelAnimationFrame(this.raf);
+    if (this.el) {
+      this.el.style.transform = '';
+      // El toque que suelta la tarjeta no debe abrir el pedido
+      const tragar = (ev: Event) => { ev.stopPropagation(); ev.preventDefault(); };
+      window.addEventListener('click', tragar, { capture: true, once: true });
+      setTimeout(() => window.removeEventListener('click', tragar, { capture: true }), 350);
+    }
+    this.el = null;
+    if (this.arrastrandoId() !== null) {
+      this.arrastrandoId.set(null);
+      this.orden.set(this.rutaOrdenada().map((p) => p.id));
+      this.guardarOrden();
+    }
+  };
 
   cambiarRango(r: RangoFechas): void {
     this.rango = r;
