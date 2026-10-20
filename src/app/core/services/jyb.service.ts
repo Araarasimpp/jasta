@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { environment } from '../../../environments/environment';
 import { SupabaseService } from './supabase.service';
 import { TipoRecaudo } from '../../shared/modelos';
@@ -14,11 +15,30 @@ export interface PedidoJyb {
   valor_domicilio: number;
   total: number;
   observaciones: string | null;
-  items: { nombre: string; cantidad: number }[];
+  created_at?: string;
+  vendedor?: string | null;
+  items: { nombre: string; cantidad: number; precio?: number | null }[];
+}
+
+/** Pedido de Variedades JYB que ya entregó (para el historial) */
+export interface EntregadoJyb {
+  id: string;
+  numero: number;
+  cliente_nombre: string;
+  barrio: string | null;
+  total: number;
+  valor_domicilio: number;
+  metodo_pago: TipoRecaudo | null;
+  efectivo: number;
+  transferencia: number;
+  entregado_at: string;
+  cuadre: 'por_cuadrar' | 'por_confirmar' | 'cuadrado';
 }
 
 export interface ResumenJyb {
   vinculado: boolean;
+  /** Canal de avisos en vivo de Variedades JYB para este mensajero */
+  canal?: string;
   en_ruta?: PedidoJyb[];
   por_cuadrar?: { pedidos: number; efectivo: number; transferencia: number; domicilios: number; desde: string | null };
   por_confirmar?: { id: string; fecha: string; cantidad_pedidos: number; total_a_entregar: number }[];
@@ -31,6 +51,8 @@ export interface ResumenJyb {
 @Injectable({ providedIn: 'root' })
 export class JybService {
   private sb = inject(SupabaseService);
+  /** Conexión a Variedades JYB solo para recibir avisos en vivo (sin sesión: los datos llegan por la función) */
+  private avisos?: SupabaseClient;
 
   private async llamar<T>(cuerpo: Record<string, unknown>): Promise<T> {
     const { data } = await this.sb.client.auth.getSession();
@@ -50,9 +72,22 @@ export class JybService {
     return this.llamar<ResumenJyb>({ accion: 'resumen' });
   }
 
-  /** En mixto, Variedades JYB guarda el efectivo y calcula la transferencia; solo usa el primer comprobante */
+  /** En mixto, Variedades JYB guarda el efectivo y calcula la transferencia */
   async entregar(pedidoId: string, tipo: TipoRecaudo, efectivo: number, evidencias: string[]): Promise<void> {
-    await this.llamar({ accion: 'entregar', pedido_id: pedidoId, metodo: tipo, efectivo, comprobante: evidencias[0] ?? null });
+    await this.llamar({ accion: 'entregar', pedido_id: pedidoId, metodo: tipo, efectivo, comprobantes: evidencias });
+  }
+
+  entregadas(desde: string | null, hasta: string | null): Promise<EntregadoJyb[]> {
+    return this.llamar<EntregadoJyb[]>({ accion: 'entregadas', desde, hasta });
+  }
+
+  /** Avisa cada vez que cambia un pedido o un cuadre de este mensajero en Variedades JYB */
+  escuchar(canal: string, cb: () => void): () => void {
+    this.avisos ??= createClient(environment.jybUrl, environment.jybKey, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'jyb-avisos' },
+    });
+    const c = this.avisos.channel(canal).on('broadcast', { event: 'cambio' }, () => cb()).subscribe();
+    return () => void this.avisos?.removeChannel(c);
   }
 
   async cerrarCuadre(): Promise<void> {
