@@ -50,7 +50,7 @@ export class PedidosService {
     const porPagina = f.porPagina ?? 50;
     const pagina = f.pagina ?? 0;
     const campos = f.conItems
-      ? SELECT_PEDIDO + `, pedido_items(id, nombre, cantidad, color, talla, ${PRODUCTO_DE_ITEM})`
+      ? SELECT_PEDIDO + `, pedido_items(id, producto_id, nombre, cantidad, color, talla, ${PRODUCTO_DE_ITEM})`
       : SELECT_PEDIDO;
     let q = this.db.from('pedidos').select(campos, { count: 'exact' });
     if (f.estados?.length) q = q.in('estado', f.estados);
