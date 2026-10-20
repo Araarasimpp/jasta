@@ -157,7 +157,7 @@ interface Pendiente {
                   {{ abiertoM() === c.mensajero_id ? 'Ocultar pedidos' : 'Ver pedidos' }}
                 </button>
                 @if (puedeCerrarDe(c)) {
-                  <button class="b b-ok" [disabled]="cerrando() === c.mensajero_id" (click)="cerrar(c)">{{ esMio(c) && !puedeCerrar() ? 'Entregar mi cuadre' : 'Cerrar cuadre' }}</button>
+                  <button class="b b-ok" [disabled]="cerrando() === c.mensajero_id" (click)="cerrar(c)">{{ esMio(c) ? 'Entregar mi cuadre' : 'Cerrar cuadre' }}</button>
                 }
               </div>
             </article>
@@ -374,14 +374,14 @@ export class CuadresPage implements OnInit {
 
   async cerrar(c: Pendiente): Promise<void> {
     const recibe = pesos(c.efectivo - c.domicilios);
-    const pregunta = this.esMio(c) && !this.puedeCerrar()
+    const pregunta = this.esMio(c)
       ? `¿Entregar tu cuadre? ${c.pedidos} pedidos · entregas ${recibe} en efectivo. La oficina debe confirmar que recibió la plata.`
       : `¿Cerrar el cuadre de ${c.nombre}? ${c.pedidos} pedidos · recibes ${recibe} en efectivo.`;
     if (!confirm(pregunta)) return;
     this.cerrando.set(c.mensajero_id);
     try {
       await this.ps.cerrarCuadre(c.mensajero_id);
-      this.toast.ok(this.esMio(c) && !this.puedeCerrar() ? 'Cuadre entregado: falta que la oficina confirme' : `Cuadre de ${c.nombre} cerrado`);
+      this.toast.ok(this.esMio(c) ? 'Cuadre entregado: falta que la oficina confirme' : `Cuadre de ${c.nombre} cerrado`);
       this.abiertoM.set(null);
       await this.cargar();
     } catch (e) {
