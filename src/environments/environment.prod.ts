@@ -7,4 +7,6 @@ export const environment = {
   // Llave pública (site key) de Cloudflare Turnstile. Vacía = sin verificación anti-robots.
   turnstileSiteKey: '0x4AAAAAAFZVvIoDg68UGInx',
   uploadsUrl: 'https://ktksdoedeazkvohewqzx.supabase.co/storage/v1/object/public/wp/',
+  // Pedidos de Variedades JYB (Kaesuri) en Mis entregas: función que valida la sesión de Jasta
+  jybPuenteUrl: 'https://mswqdzpsynvdanxdfidf.supabase.co/functions/v1/jasta-puente',
 };

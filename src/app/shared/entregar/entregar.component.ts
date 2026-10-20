@@ -67,7 +67,9 @@ import { ComprobantesInputComponent } from '../comprobantes/comprobantes-input.c
   `,
 })
 export class EntregarComponent {
-  @Input({ required: true }) pedido!: Pedido;
+  @Input({ required: true }) pedido!: Pick<Pedido, 'id' | 'cliente_nombre' | 'total'>;
+  /** Para pedidos de otro negocio (Variedades JYB): guarda la entrega allá en vez de en Jasta */
+  @Input() alConfirmar?: (tipo: TipoRecaudo, efectivo: number, transferencia: number, evidencias: string[]) => Promise<void>;
   @Output() cerrar = new EventEmitter<void>();
   @Output() entregado = new EventEmitter<void>();
 
@@ -100,8 +102,9 @@ export class EntregarComponent {
     this.guardando.set(true);
     this.error.set('');
     try {
-      await this.ps.entregar(this.pedido.id, tipo, Number(this.efectivo) || 0, Number(this.transferencia) || 0,
-        pideComprobante(tipo) ? this.evidencias() : []);
+      const evidencias = pideComprobante(tipo) ? this.evidencias() : [];
+      if (this.alConfirmar) await this.alConfirmar(tipo, Number(this.efectivo) || 0, Number(this.transferencia) || 0, evidencias);
+      else await this.ps.entregar(this.pedido.id, tipo, Number(this.efectivo) || 0, Number(this.transferencia) || 0, evidencias);
       this.entregado.emit();
     } catch (e) {
       this.error.set(mensajeError(e));

@@ -5,19 +5,27 @@ import { addIcons } from 'ionicons';
 import { refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses, chatbubbleEllipsesOutline } from 'ionicons/icons';
 import { enlaceWhatsapp, productosDelPedido } from '../../shared/whatsapp';
 import { PedidosService } from '../../core/services/pedidos.service';
+import { JybService, PedidoJyb, ResumenJyb } from '../../core/services/jyb.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { NotificacionesService } from '../../core/services/notificaciones.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { EntregarComponent } from '../../shared/entregar/entregar.component';
 import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detalle.component';
-import { Cuadre, Pedido } from '../../shared/modelos';
+import { Cuadre, Pedido, TipoRecaudo } from '../../shared/modelos';
 import { mensajeError, pesos } from '../../shared/formato';
 import { finDiaColombia, formatoFechaCO, formatoHoraCO, inicioDiaColombia } from '../../shared/fecha-colombia';
 import { RangoFechas } from '../../shared/rango/rango.component';
 import { DiaComponent } from '../../shared/rango/dia.component';
 import { nombreConVariante } from '../../shared/variante';
 
-/** Pantalla del mensajero: lo que tiene en ruta y lo que lleva por cuadrar */
+/** Una parada de la ruta: un pedido de Jasta o uno de Variedades JYB */
+type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: string; jyb: PedidoJyb; jasta?: undefined };
+
+/**
+ * Pantalla del mensajero: lo que tiene en ruta y lo que lleva por cuadrar.
+ * Si también reparte para Variedades JYB (mismo correo), sus pedidos de allá entran en la misma ruta
+ * y su cuadre de allá se ve aparte.
+ */
 @Component({
   selector: 'app-mis-entregas',
   standalone: true,
@@ -77,6 +85,11 @@ import { nombreConVariante } from '../../shared/variante';
       .tarjetas .tarjeta.arrastrando { touch-action: none; position: relative; z-index: 20; scale: 1.02; box-shadow: 0 18px 44px rgba(15, 23, 42, 0.28);
         outline: 2px solid var(--accent); outline-offset: -1px; }
       .tarjetas.ordenando .tarjeta:not(.arrastrando) { transition: box-shadow 160ms var(--ease), transform 180ms var(--ease); }
+      .negocio { display: inline-block; margin-bottom: 4px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700;
+        letter-spacing: 0.04em; text-transform: uppercase; background: var(--accent-wash); color: var(--accent); align-self: flex-start; }
+      .negocio.jyb { background: var(--oro-wash); color: var(--oro-texto); }
+      .tarjeta.jyb { border-left: 4px solid var(--oro); }
+      .tarjeta.jyb .top-izq { cursor: default; }
       .parada { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 6px; margin-right: 6px; border-radius: 12px;
         background: var(--accent); color: #fff; font-size: 12.5px; font-weight: 750; font-family: var(--mono-font); vertical-align: 2px; }
     `,
@@ -92,7 +105,7 @@ import { nombreConVariante } from '../../shared/variante';
         <section class="panel cuadre">
           <div class="panel-head">
             <div>
-              <h2>Por cuadrar</h2>
+              <h2>{{ conJyb() ? 'Por cuadrar Jasta' : 'Por cuadrar' }}</h2>
               <p class="panel-sub">
                 @if (pendiente(); as c) {
                   {{ c.pedidos }} {{ c.pedidos === 1 ? 'pedido entregado' : 'pedidos entregados' }} desde {{ fecha(c.desde) }}
@@ -143,14 +156,56 @@ import { nombreConVariante } from '../../shared/variante';
         </div>
       }
 
+      @if (jyb()?.vinculado) {
+        <section class="panel cuadre">
+          <div class="panel-head">
+            <div>
+              <h2>Por cuadrar Variedades JYB</h2>
+              <p class="panel-sub">
+                @if (pendienteJyb(); as c) {
+                  {{ c.pedidos }} {{ c.pedidos === 1 ? 'pedido entregado' : 'pedidos entregados' }} desde {{ fecha(c.desde!) }}
+                } @else {
+                  No tienes entregas pendientes por cuadrar
+                }
+              </p>
+            </div>
+            <span class="en-ruta">{{ jyb()?.en_ruta?.length ?? 0 }} en ruta</span>
+          </div>
+          @for (pc of jyb()?.por_confirmar ?? []; track pc.id) {
+            <div class="entregado-espera">
+              <span>Cuadre entregado · esperando confirmación</span>
+              <strong class="num">{{ pesos(pc.total_a_entregar) }}</strong>
+              <small>{{ pc.cantidad_pedidos }} {{ pc.cantidad_pedidos === 1 ? 'pedido' : 'pedidos' }} · Variedades JYB debe confirmar que recibió la plata</small>
+            </div>
+          }
+          @if (pendienteJyb(); as c) {
+            <div class="entregar-total">
+              <span>Efectivo que debes entregar a Variedades JYB</span>
+              <strong class="num">{{ pesos(c.efectivo - c.domicilios) }}</strong>
+            </div>
+            <dl class="desglose">
+              <dt>Efectivo cobrado</dt><dd class="num">{{ pesos(c.efectivo) }}</dd>
+              <dt>Tus domicilios (se descuentan)</dt><dd class="num">− {{ pesos(c.domicilios) }}</dd>
+              <dt>Transferencias (ya le llegaron a la tienda)</dt><dd class="num">{{ pesos(c.transferencia) }}</dd>
+            </dl>
+            <div class="acciones-cuadre">
+              <button class="b b-ok" [disabled]="cerrandoJyb()" (click)="cerrarCuadreJyb()">
+                {{ cerrandoJyb() ? 'Entregando…' : 'Entregar mi cuadre de Variedades JYB (' + c.pedidos + (c.pedidos === 1 ? ' pedido)' : ' pedidos)') }}</button>
+            </div>
+          }
+        </section>
+      }
+
       @if (rutaOrdenada().length > 1) {
         <p class="ayuda-ruta">Mantén presionada una tarjeta y muévela para ordenar tu ruta.</p>
       }
       <div class="tarjetas" [class.ordenando]="arrastrandoId() !== null">
-        @for (p of rutaOrdenada(); track p.id; let i = $index) {
-          <article class="tarjeta" [class.arrastrando]="arrastrandoId() === p.id" (pointerdown)="presionar($event, p.id)" (touchstart)="tocar($event, p.id)" (contextmenu)="$event.preventDefault()">
+        @for (parada of rutaOrdenada(); track parada.clave; let i = $index) {
+          @if (parada.jasta; as p) {
+          <article class="tarjeta" [class.arrastrando]="arrastrandoId() === parada.clave" (pointerdown)="presionar($event, parada.clave)" (touchstart)="tocar($event, parada.clave)" (contextmenu)="$event.preventDefault()">
             <div class="tarjeta-top">
               <div class="top-izq" (click)="abrir(p.id)">
+                @if (conJyb()) {<span class="negocio">Jasta</span>}
                 <h3>@if (rutaOrdenada().length > 1) {<span class="parada" [attr.aria-label]="'Parada ' + (i + 1)">{{ i + 1 }}</span>}<span class="guia">#{{ p.id }}</span> {{ p.cliente_nombre }}</h3>
                 <strong class="total num">{{ pesos(p.total) }}<small>{{ p.tipo_recaudo || '' }}</small></strong>
               </div>
@@ -186,6 +241,34 @@ import { nombreConVariante } from '../../shared/variante';
               <button class="b b-ok" style="flex: 1" (click)="entregando.set(p)">Entregar</button>
             </div>
           </article>
+          } @else if (parada.jyb; as p) {
+          <article class="tarjeta jyb" [class.arrastrando]="arrastrandoId() === parada.clave" (pointerdown)="presionar($event, parada.clave)" (touchstart)="tocar($event, parada.clave)" (contextmenu)="$event.preventDefault()">
+            <div class="tarjeta-top">
+              <div class="top-izq">
+                <span class="negocio jyb">Variedades JYB</span>
+                <h3>@if (rutaOrdenada().length > 1) {<span class="parada" [attr.aria-label]="'Parada ' + (i + 1)">{{ i + 1 }}</span>}<span class="guia">#{{ p.numero }}</span> {{ p.cliente_nombre }}</h3>
+                <strong class="total num">{{ pesos(p.total) }}</strong>
+              </div>
+            </div>
+            <p>{{ p.direccion }}<br />{{ p.barrio || 'Sin barrio' }}</p>
+            @if (p.observaciones) {
+              <p style="color: var(--st-pendiente-text)">{{ p.observaciones }}</p>
+            }
+            <ul class="items-mini">
+              @for (it of p.items; track $index) {
+                <li><span>{{ it.cantidad }} × {{ it.nombre }}</span></li>
+              }
+            </ul>
+            <div class="acciones">
+              @if (p.cliente_telefono) {
+                <a class="b" [href]="'tel:' + p.cliente_telefono"><ion-icon name="call-outline"></ion-icon>Llamar</a>
+                <a class="b b-wa" [href]="whatsappJyb(p)" target="_blank" rel="noopener"><ion-icon name="logo-whatsapp"></ion-icon>WhatsApp</a>
+              }
+              <a class="b" [href]="mapa(p)" target="_blank" rel="noopener"><ion-icon name="navigate-outline"></ion-icon>Mapa</a>
+              <button class="b b-ok" style="flex: 1" (click)="abrirEntregaJyb(p)">Entregar</button>
+            </div>
+          </article>
+          }
         } @empty {
           <div class="vacio">
             <span class="vacio-titulo">{{ cargando() ? 'Cargando…' : 'No tienes pedidos en ruta' }}</span>
@@ -234,6 +317,9 @@ import { nombreConVariante } from '../../shared/variante';
     @if (entregando(); as p) {
       <app-entregar [pedido]="p" (cerrar)="entregando.set(null)" (entregado)="alEntregar(p)"></app-entregar>
     }
+    @if (entregandoJyb(); as e) {
+      <app-entregar [pedido]="e.resumen" [alConfirmar]="e.guardar" (cerrar)="entregandoJyb.set(null)" (entregado)="alEntregarJyb(e.resumen.id)"></app-entregar>
+    }
     @if (abierto(); as id) {
       <app-pedido-detalle [pedidoId]="id" [chat]="abiertoEnChat()" (cerrar)="cerrarDetalle()" (cambiado)="cargar()"></app-pedido-detalle>
     }
@@ -241,6 +327,7 @@ import { nombreConVariante } from '../../shared/variante';
 })
 export class MisEntregasPage implements OnInit, OnDestroy {
   private ps = inject(PedidosService);
+  private jybs = inject(JybService);
   private sb = inject(SupabaseService);
   private toast = inject(ToastService);
   private route = inject(ActivatedRoute);
@@ -251,13 +338,29 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   cerrandoCuadre = signal(false);
   /** Cuadres que entregó y la oficina todavía no confirma */
   misPorConfirmar = signal<Cuadre[]>([]);
-  /** Orden de la ruta que el mensajero armó (ids), guardado en este celular */
-  orden = signal<number[]>([]);
-  arrastrandoId = signal<number | null>(null);
-  rutaOrdenada = computed(() => {
-    const pos = new Map(this.orden().map((id, i) => [id, i]));
-    return this.enRuta()
-      .map((p, i) => ({ p, k: pos.has(p.id) ? pos.get(p.id)! : 1e6 + i }))
+  /** Pedidos y cuadre de Variedades JYB (null = todavía no se sabe o no reparte allá) */
+  jyb = signal<ResumenJyb | null>(null);
+  conJyb = computed(() => !!this.jyb()?.vinculado);
+  pendienteJyb = computed(() => {
+    const c = this.jyb()?.por_cuadrar;
+    return c && c.pedidos > 0 ? c : null;
+  });
+  cerrandoJyb = signal(false);
+  entregandoJyb = signal<{
+    resumen: { id: number; cliente_nombre: string; total: number };
+    guardar: (tipo: TipoRecaudo, efectivo: number, transferencia: number, evidencias: string[]) => Promise<void>;
+  } | null>(null);
+  /** Orden de la ruta que el mensajero armó ('j:<id>' Jasta, 'k:<uuid>' Variedades JYB), guardado en este celular */
+  orden = signal<string[]>([]);
+  arrastrandoId = signal<string | null>(null);
+  rutaOrdenada = computed<Parada[]>(() => {
+    const pos = new Map(this.orden().map((clave, i) => [clave, i]));
+    const todas: Parada[] = [
+      ...this.enRuta().map((p) => ({ clave: 'j:' + p.id, jasta: p })),
+      ...(this.jyb()?.en_ruta ?? []).map((p) => ({ clave: 'k:' + p.id, jyb: p })),
+    ];
+    return todas
+      .map((p, i) => ({ p, k: pos.has(p.clave) ? pos.get(p.clave)! : 1e6 + i }))
       .sort((a, b) => a.k - b.k)
       .map((x) => x.p);
   });
@@ -300,6 +403,8 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   private dejar?: () => void;
   private subParams?: { unsubscribe(): void };
   private timer?: ReturnType<typeof setTimeout>;
+  /** Variedades JYB no avisa los cambios en vivo: se consulta cada minuto */
+  private relojJyb?: ReturnType<typeof setInterval>;
 
   constructor() {
     addIcons({ refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses, chatbubbleEllipsesOutline });
@@ -308,10 +413,13 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   ngOnInit(): void {
     try {
       const guardado = JSON.parse(localStorage.getItem(this.claveOrden()) || '[]');
-      if (Array.isArray(guardado)) this.orden.set(guardado.filter((x) => typeof x === 'number'));
+      // Antes se guardaban solo ids de Jasta (números)
+      if (Array.isArray(guardado))
+        this.orden.set(guardado.map((x) => (typeof x === 'number' ? 'j:' + x : x)).filter((x): x is string => typeof x === 'string'));
     } catch { /* sin almacenamiento: orden por defecto */ }
     document.addEventListener('touchmove', this.bloquearScroll, { passive: false });
     void this.cargar();
+    this.relojJyb = setInterval(() => void this.cargarJyb(), 60_000);
     // Al tocar un aviso (mensaje o pedido asignado) se abre ese pedido
     this.subParams = this.route.queryParamMap.subscribe((q) => {
       const id = Number(q.get('id'));
@@ -332,6 +440,7 @@ export class MisEntregasPage implements OnInit, OnDestroy {
     this.subParams?.unsubscribe();
     this.dejar?.();
     clearTimeout(this.timer);
+    clearInterval(this.relojJyb);
   }
 
   abrir(id: number, chat = false): void {
@@ -346,6 +455,7 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   }
 
   async cargar(): Promise<void> {
+    void this.cargarJyb();
     try {
       const yo = this.sb.usuario()?.id;
       const soloMios = this.sb.tiene('mensajero') ? yo : undefined;
@@ -362,6 +472,45 @@ export class MisEntregasPage implements OnInit, OnDestroy {
       this.toast.error(mensajeError(e));
     } finally {
       this.cargando.set(false);
+    }
+  }
+
+  /** Si falla (sin señal, por ejemplo) se dejan los pedidos de Variedades JYB que ya se veían */
+  async cargarJyb(): Promise<void> {
+    try {
+      this.jyb.set(await this.jybs.resumen());
+    } catch {
+      /* se reintenta en el próximo minuto o al actualizar */
+    }
+  }
+
+  abrirEntregaJyb(p: PedidoJyb): void {
+    this.entregandoJyb.set({
+      resumen: { id: p.numero, cliente_nombre: p.cliente_nombre, total: Number(p.total) },
+      guardar: (tipo, efectivo, _transferencia, evidencias) => this.jybs.entregar(p.id, tipo, efectivo, evidencias),
+    });
+  }
+
+  async alEntregarJyb(numero: number): Promise<void> {
+    this.entregandoJyb.set(null);
+    this.toast.ok(`#${numero} de Variedades JYB entregado`);
+    await this.cargarJyb();
+  }
+
+  async cerrarCuadreJyb(): Promise<void> {
+    const c = this.pendienteJyb();
+    if (!c) return;
+    const entrega = pesos(c.efectivo - c.domicilios);
+    if (!confirm(`¿Entregar tu cuadre de Variedades JYB? ${c.pedidos} ${c.pedidos === 1 ? 'pedido' : 'pedidos'} · entregas ${entrega} en efectivo. Variedades JYB debe confirmar que recibió la plata.`)) return;
+    this.cerrandoJyb.set(true);
+    try {
+      await this.jybs.cerrarCuadre();
+      this.toast.ok(`Cuadre de Variedades JYB entregado (${entrega}): falta que confirmen`);
+      await this.cargarJyb();
+    } catch (e) {
+      this.toast.error(mensajeError(e));
+    } finally {
+      this.cerrandoJyb.set(false);
     }
   }
 
@@ -387,7 +536,7 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   };
 
   /** Mantener presionado ~0,4 s (sin mover el dedo) para empezar a mover la tarjeta */
-  presionar(e: PointerEvent, id: number): void {
+  presionar(e: PointerEvent, id: string): void {
     if (e.pointerType !== 'mouse') return; // en el celular se usa tocar() con eventos táctiles (iPhone cancela los de puntero)
     if (e.button !== 0) return;
     if ((e.target as Element | null)?.closest('button, a, input, textarea')) return;
@@ -412,7 +561,7 @@ export class MisEntregasPage implements OnInit, OnDestroy {
    * Celular (iPhone y Android): mantener el dedo quieto ~0,4 s y luego moverlo.
    * Se usan eventos táctiles porque Safari cancela los de puntero al mantener presionado.
    */
-  tocar(e: TouchEvent, id: number): void {
+  tocar(e: TouchEvent, id: string): void {
     if (e.touches.length !== 1) return;
     if ((e.target as Element | null)?.closest('button, a, input, textarea')) return;
     if (this.rutaOrdenada().length < 2) return;
@@ -444,7 +593,7 @@ export class MisEntregasPage implements OnInit, OnDestroy {
     this.espera = setTimeout(() => { activo = true; this.empezar(el, id, x0, y0, true); }, 400);
   }
 
-  private empezar(el: HTMLElement, id: number, x: number, y: number, tactil = false): void {
+  private empezar(el: HTMLElement, id: string, x: number, y: number, tactil = false): void {
     this.el = el;
     this.xy = { x, y };
     this.dy = 0;
@@ -494,7 +643,7 @@ export class MisEntregasPage implements OnInit, OnDestroy {
     if (centro > mitad(lista[i + 1])) destino = i + 1;
     else if (centro < mitad(lista[i - 1])) destino = i - 1;
     if (destino >= 0 && destino !== i) {
-      const ids = this.rutaOrdenada().map((p) => p.id);
+      const ids = this.rutaOrdenada().map((p) => p.clave);
       const id = this.arrastrandoId()!;
       ids.splice(ids.indexOf(id), 1);
       ids.splice(destino, 0, id);
@@ -520,7 +669,7 @@ export class MisEntregasPage implements OnInit, OnDestroy {
     this.el = null;
     if (this.arrastrandoId() !== null) {
       this.arrastrandoId.set(null);
-      this.orden.set(this.rutaOrdenada().map((p) => p.id));
+      this.orden.set(this.rutaOrdenada().map((p) => p.clave));
       this.guardarOrden();
     }
   };
@@ -600,7 +749,19 @@ export class MisEntregasPage implements OnInit, OnDestroy {
     );
   }
 
-  mapa(p: Pedido): string {
+  whatsappJyb(p: PedidoJyb): string {
+    const cliente = p.cliente_nombre.split(' ')[0];
+    const yo = this.sb.usuario()?.nombre.split(' ')[0] ?? '';
+    const productos = p.items.map((i) => `${i.cantidad} ${i.nombre}`).join(', ');
+    return enlaceWhatsapp(
+      p.cliente_telefono,
+      productos
+        ? `Hola ${cliente}, soy ${yo}, mensajero de Variedades JYB. Voy en camino con tu pedido de ${productos} por ${pesos(p.total)}.`
+        : `Hola ${cliente}, soy ${yo}, mensajero de Variedades JYB. Voy en camino con tu pedido por ${pesos(p.total)}.`
+    );
+  }
+
+  mapa(p: { direccion: string | null; barrio: string | null }): string {
     return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(`${p.direccion ?? ''}, ${p.barrio ?? ''}, Cali`);
   }
 }
