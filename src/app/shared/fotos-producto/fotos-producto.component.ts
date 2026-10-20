@@ -5,7 +5,7 @@ import { cameraOutline, chevronBackOutline, chevronForwardOutline, closeOutline,
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../toast/toast.service';
 import { VisorService } from '../visor/visor.service';
-import { mensajeError, urlImagen } from '../formato';
+import { mensajeError, urlImagen, urlMini } from '../formato';
 import { subirFoto } from '../fotos';
 
 export const MAX_FOTOS = 12;
@@ -51,7 +51,7 @@ export const MAX_FOTOS = 12;
       (dragover)="$event.preventDefault(); encima.set(true)" (dragleave)="encima.set(false)" (drop)="soltar($event)" (paste)="pegar($event)">
       @for (u of fotos; track u; let i = $index) {
         <div class="foto">
-          <button type="button" class="ver" (click)="ver(i)" [attr.aria-label]="'Ver foto ' + (i + 1)"><img [src]="urlImagen(u)" alt="" loading="lazy" /></button>
+          <button type="button" class="ver" (click)="ver(i)" [attr.aria-label]="'Ver foto ' + (i + 1)"><img [src]="urlMini(u)" alt="" loading="lazy" /></button>
           <span class="num">{{ i + 1 }}</span>
           <button type="button" class="quitar" (click)="quitar(i)" [attr.aria-label]="'Quitar foto ' + (i + 1)"><ion-icon name="close-outline"></ion-icon></button>
           @if (fotos.length > 1) {
@@ -92,6 +92,7 @@ export class FotosProductoComponent {
   subiendo = signal(0);
   encima = signal(false);
   urlImagen = urlImagen;
+  urlMini = urlMini;
 
   constructor() {
     addIcons({ cameraOutline, chevronBackOutline, chevronForwardOutline, closeOutline, imagesOutline });

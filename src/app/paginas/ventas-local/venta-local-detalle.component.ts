@@ -8,7 +8,7 @@ import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { VisorService } from '../../shared/visor/visor.service';
 import { Nota, Pedido, PedidoItem } from '../../shared/modelos';
-import { mensajeError, pesos, urlImagen } from '../../shared/formato';
+import { mensajeError, pesos, urlImagen, urlMini } from '../../shared/formato';
 import { formatoFechaCO, formatoHoraCO } from '../../shared/fecha-colombia';
 import { fotoDeItem, nombreConVariante, variante } from '../../shared/variante';
 import { pideComprobante, urlsComprobantes } from '../../shared/comprobantes';
@@ -80,7 +80,7 @@ const PAGO: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Tra
               @for (i of v.pedido_items ?? []; track i.id) {
                 <li class="prod">
                   @if (foto(i); as u) {
-                    <button type="button" class="foto" (click)="verProducto(i)" [attr.aria-label]="'Ver foto de ' + i.nombre"><img [src]="u" alt="" loading="lazy" /></button>
+                    <button type="button" class="foto" (click)="verProducto(i)" [attr.aria-label]="'Ver foto de ' + i.nombre"><img [src]="urlMini(u)" alt="" loading="lazy" /></button>
                   } @else { <span class="foto" aria-hidden="true"></span> }
                   <span class="nom">{{ i.nombre }}@if (variante(i); as x) {<small>{{ x }}</small>}
                     <span class="cant">{{ i.cantidad }} × {{ pesos(i.precio_venta) }}</span></span>
@@ -175,6 +175,7 @@ export class VentaLocalDetalleComponent implements OnInit {
   registro = computed(() => this.notas()[0]?.autor ?? '');
 
   pesos = pesos;
+  urlMini = urlMini;
   variante = variante;
   pideComprobante = pideComprobante;
 

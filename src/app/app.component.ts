@@ -24,12 +24,20 @@ export class AppComponent implements OnInit, OnDestroy {
     }, 120);
   };
 
+  // Si una miniatura no existe (fotos viejas o recién subidas), se muestra la foto original
+  private sinMini = (e: Event): void => {
+    const img = e.target;
+    if (img instanceof HTMLImageElement && img.src.includes('/object/public/wp/mini/')) img.src = img.src.replace('/object/public/wp/mini/', '/object/public/wp/');
+  };
+
   ngOnInit(): void {
+    document.addEventListener('error', this.sinMini, true);
     document.addEventListener('focusout', this.alSalirDeCampo);
     this.quitarArrastre = activarArrastreDeHojas();
   }
 
   ngOnDestroy(): void {
+    document.removeEventListener('error', this.sinMini, true);
     document.removeEventListener('focusout', this.alSalirDeCampo);
     this.quitarArrastre?.();
   }

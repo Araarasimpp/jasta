@@ -141,7 +141,7 @@
                           <button type="button" class="prod-foto" [disabled]="!foto(it)" (click)="verFotos(p, it, $event)"
                             [attr.aria-label]="foto(it) ? 'Ver foto de ' + it.nombre : it.nombre + ', sin foto'">
                             @if (foto(it); as url) {
-                              <img [src]="url" alt="" loading="lazy" decoding="async" />
+                              <img [src]="urlMini(url)" alt="" loading="lazy" decoding="async" />
                             } @else {
                               <span class="prod-inicial" aria-hidden="true">{{ inicial(it.nombre) }}</span>
                             }

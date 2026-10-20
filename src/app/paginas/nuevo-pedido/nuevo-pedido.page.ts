@@ -8,7 +8,7 @@ import { PedidosService } from '../../core/services/pedidos.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { Producto, TipoRecaudo, Usuario } from '../../shared/modelos';
-import { mensajeError, pesos, urlImagen } from '../../shared/formato';
+import { mensajeError, pesos, urlImagen, urlMini } from '../../shared/formato';
 import { VisorService } from '../../shared/visor/visor.service';
 import { pideComprobante } from '../../shared/comprobantes';
 import { ComprobantesInputComponent } from '../../shared/comprobantes/comprobantes-input.component';
@@ -228,7 +228,7 @@ function normal(s: string): string {
                 @for (p of resultados(); track p.id) {
                   <button class="res" (click)="agregar(p)">
                     @if (p.imagen_url) {
-                      <img [src]="urlImagen(p.imagen_url)" alt="" loading="lazy" />
+                      <img [src]="urlMini(p.imagen_url)" alt="" loading="lazy" />
                     } @else {
                       <span class="ph"></span>
                     }
@@ -246,7 +246,7 @@ function normal(s: string): string {
             @for (l of lineas(); track l.key; let i = $index) {
               <div class="linea" [class.falta]="falta(l)">
                 @if (fotoLinea(l); as u) {
-                  <button type="button" class="mini" (click)="verFoto(l)" [attr.aria-label]="'Ver foto de ' + l.producto.nombre"><img [src]="u" alt="" /></button>
+                  <button type="button" class="mini" (click)="verFoto(l)" [attr.aria-label]="'Ver foto de ' + l.producto.nombre"><img [src]="urlMini(u)" alt="" /></button>
                 } @else {
                   <span class="mini" aria-hidden="true"></span>
                 }
@@ -367,6 +367,7 @@ export class NuevoPedidoPage implements OnInit {
 
   pesos = pesos;
   urlImagen = urlImagen;
+  urlMini = urlMini;
 
   resultados = computed(() => {
     const q = normal(this.busqueda().trim());

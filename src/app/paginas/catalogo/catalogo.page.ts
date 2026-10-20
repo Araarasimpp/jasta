@@ -6,7 +6,7 @@ import { downloadOutline, searchOutline, shareOutline } from 'ionicons/icons';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { Producto } from '../../shared/modelos';
-import { mensajeError, numero, pesos, urlImagen } from '../../shared/formato';
+import { mensajeError, numero, pesos, urlImagen, urlMini } from '../../shared/formato';
 import { FotoCatalogo, ProductoDetalleComponent } from './producto-detalle.component';
 
 type Filtro = 'todos' | 'disponibles';
@@ -107,7 +107,7 @@ function normal(s: string): string {
               <button type="button" class="foto" tabindex="-1" aria-hidden="true">
                 <!-- Todas las fotos apiladas: al cambiar de color se funden una en otra -->
                 @for (f of fotos(p); track f.url) {
-                  <img [src]="f.url" alt="" loading="lazy" decoding="async" class="capa" [class.on]="f.color === colorActivo(p)" />
+                  <img [src]="urlMini(f.url)" alt="" loading="lazy" decoding="async" class="capa" [class.on]="f.color === colorActivo(p)" />
                 }
                 @if (agotado(p)) { <span class="agotado">Sin stock</span> }
                 @if (galeria(p).length > 1) { <span class="mas-fotos">{{ p.videos?.length ? '▶ ' : '' }}{{ galeria(p).length - (p.videos?.length ?? 0) }} {{ galeria(p).length - (p.videos?.length ?? 0) === 1 ? 'foto' : 'fotos' }}{{ p.videos?.length ? ' + video' : '' }}</span> }
@@ -181,6 +181,7 @@ export class CatalogoPage implements OnInit {
   pesos = pesos;
   numero = numero;
   urlImagen = urlImagen;
+  urlMini = urlMini;
 
   constructor() {
     addIcons({ downloadOutline, searchOutline, shareOutline });

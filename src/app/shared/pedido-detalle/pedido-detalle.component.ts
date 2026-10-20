@@ -12,7 +12,7 @@ import { EntregarComponent } from '../entregar/entregar.component';
 import { RotulosService } from '../rotulo/rotulos.service';
 import { enlaceWhatsapp, productosDelPedido } from '../whatsapp';
 import { EstadoPedido, Nota, Pedido, PedidoItem, Usuario, estadoLabel } from '../modelos';
-import { mensajeError, pesos, urlImagen } from '../formato';
+import { mensajeError, pesos, urlImagen, urlMini } from '../formato';
 import { formatoFechaCO, formatoHoraCO } from '../fecha-colombia';
 import { ChatPedidoComponent } from '../chat-pedido/chat-pedido.component';
 import { VisorService } from '../visor/visor.service';
@@ -173,7 +173,7 @@ import { urlsComprobantes } from '../comprobantes';
             <table class="lineas">
               <tbody>
                 @for (i of p.pedido_items ?? []; track i.id) {
-                  <tr><td class="cant num">{{ i.cantidad }}×</td><td><span class="lider">@if (urlImagen(fotoDeItem(i)); as u) {<button type="button" class="mini-foto" (click)="verProducto(i)" [attr.aria-label]="'Ver foto de ' + i.nombre"><img [src]="u" alt="" loading="lazy" /></button>}<span class="item-nom">{{ i.nombre }}@if (variante(i); as v) {<small class="variante">{{ v }}</small>}</span></span></td><td class="num">{{ pesos(i.total) }}</td></tr>
+                  <tr><td class="cant num">{{ i.cantidad }}×</td><td><span class="lider">@if (urlImagen(fotoDeItem(i)); as u) {<button type="button" class="mini-foto" (click)="verProducto(i)" [attr.aria-label]="'Ver foto de ' + i.nombre"><img [src]="urlMini(u)" alt="" loading="lazy" /></button>}<span class="item-nom">{{ i.nombre }}@if (variante(i); as v) {<small class="variante">{{ v }}</small>}</span></span></td><td class="num">{{ pesos(i.total) }}</td></tr>
                 }
               </tbody>
               <tfoot>
@@ -299,6 +299,7 @@ export class PedidoDetalleComponent implements OnChanges {
 
   pesos = pesos;
   urlImagen = urlImagen;
+  urlMini = urlMini;
   fotoDeItem = fotoDeItem;
   variante = variante;
   estadoLabel = estadoLabel;

@@ -7,7 +7,7 @@ import { add, searchOutline, closeOutline, cloudUploadOutline } from 'ionicons/i
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { Producto, ProductoColor } from '../../shared/modelos';
-import { mensajeError, numero, pesos, urlImagen } from '../../shared/formato';
+import { mensajeError, numero, pesos, urlImagen, urlMini } from '../../shared/formato';
 import { STOCK_BAJO } from '../../shared/stock';
 import { VisorService } from '../../shared/visor/visor.service';
 import { ColoresProductoComponent } from '../../shared/colores-producto/colores-producto.component';
@@ -79,7 +79,7 @@ const VACIO: Omit<Producto, 'id'> = {
                 <td class="media" style="width: 34px">
                   @if (p.imagen_url) {
                     <button type="button" class="foto-btn" (click)="verFoto(p.imagen_url, p.nombre, $event)" [attr.aria-label]="'Ver foto de ' + p.nombre">
-                      <img class="foto" [src]="urlImagen(p.imagen_url)" alt="" loading="lazy" />
+                      <img class="foto" [src]="urlMini(p.imagen_url)" alt="" loading="lazy" />
                     </button>
                   } @else {
                     <span class="foto"></span>
@@ -227,6 +227,7 @@ export class ProductosPage implements OnInit {
   pesos = pesos;
   numero = numero;
   urlImagen = urlImagen;
+  urlMini = urlMini;
 
   constructor() {
     addIcons({ add, searchOutline, closeOutline, cloudUploadOutline });

@@ -6,7 +6,7 @@ import { addOutline, cameraOutline, checkmark, closeOutline, trashOutline } from
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../toast/toast.service';
 import { ProductoColor } from '../modelos';
-import { mensajeError, urlImagen } from '../formato';
+import { mensajeError, urlImagen, urlMini } from '../formato';
 import { subirFoto } from '../fotos';
 
 /** Colores de uso común para elegir de una vez (nombre + tono) */
@@ -103,7 +103,7 @@ interface Borrador {
       @for (c of colores(); track c.id; let i = $index) {
         <button type="button" class="color" [class.on]="borrador()?.id === c.id" (click)="editar(c)" [style.animation-delay.ms]="i * 30">
           <span class="miniatura">
-            @if (urlImagen(c.imagen_url); as u) { <img [src]="u" alt="" loading="lazy" /> } @else { <span class="tono" [style.background]="c.hex || '#ddd'"></span> }
+            @if (urlMini(c.imagen_url); as u) { <img [src]="u" alt="" loading="lazy" /> } @else { <span class="tono" [style.background]="c.hex || '#ddd'"></span> }
             @if (c.hex) { <span class="punto" [style.background]="c.hex"></span> }
           </span>
           <span class="nombre">{{ c.nombre }}</span>
@@ -173,6 +173,7 @@ export class ColoresProductoComponent implements OnInit {
   subiendo = signal(false);
   guardando = signal(false);
   urlImagen = urlImagen;
+  urlMini = urlMini;
 
   constructor() {
     addIcons({ addOutline, cameraOutline, checkmark, closeOutline, trashOutline });

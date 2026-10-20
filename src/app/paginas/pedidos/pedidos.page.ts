@@ -16,7 +16,7 @@ import { AvatarComponent } from '../../shared/avatar/avatar.component';
 import { EstadoIconComponent } from '../../shared/estado-icon/estado-icon.component';
 import { VisorService } from '../../shared/visor/visor.service';
 import { EstadoPedido, Pedido, PedidoItem, Usuario } from '../../shared/modelos';
-import { mensajeError, numero, pesos, urlImagen } from '../../shared/formato';
+import { mensajeError, numero, pesos, urlImagen, urlMini } from '../../shared/formato';
 import { diaColombiaDe, formatoFechaCO, formatoHoraCO, hoyColombiaISO } from '../../shared/fecha-colombia';
 import { sumarDias } from '../../shared/rango/rango.component';
 import { fotoDeItem, nombreConVariante, variante } from '../../shared/variante';
@@ -163,6 +163,7 @@ export class PedidosPage implements OnInit, OnDestroy {
   });
 
   pesos = pesos;
+  urlMini = urlMini;
   numero = numero;
   min = Math.min;
   variante = variante;
