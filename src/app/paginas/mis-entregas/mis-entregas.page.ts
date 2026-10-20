@@ -48,6 +48,8 @@ import { nombreConVariante } from '../../shared/variante';
       @media (hover: hover) { .b-wa:hover { border-color: var(--efectivo); background: var(--ok-wash); } }
       .cuadre { display: flex; flex-direction: column; gap: 12px; }
       .cuadre .panel-head { margin-bottom: 0; }
+      .acciones-cuadre { display: flex; gap: 8px; flex-wrap: wrap; }
+      .acciones-cuadre .b { flex: 1 1 200px; justify-content: center; }
       .en-ruta { font-size: 13px; color: var(--text-soft); }
       .entregar-total { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border-radius: var(--radius); background: var(--ok-wash); }
       .entregar-total span { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--efectivo-texto); }
@@ -107,7 +109,11 @@ import { nombreConVariante } from '../../shared/variante';
               <dt>Tus domicilios (se descuentan)</dt><dd class="num">− {{ pesos(c.domicilios) }}</dd>
               <dt>Transferencias (ya le llegaron a la tienda)</dt><dd class="num">{{ pesos(c.transferencia) }}</dd>
             </dl>
-            <button class="b" (click)="verDetalle()">{{ detalle().length ? 'Ocultar pedidos' : 'Ver pedidos por cuadrar' }}</button>
+            <div class="acciones-cuadre">
+              <button class="b" (click)="verDetalle()">{{ detalle().length ? 'Ocultar pedidos' : 'Ver pedidos por cuadrar' }}</button>
+              <button class="b b-ok" [disabled]="cerrandoCuadre()" (click)="cerrarMiCuadre()">
+                {{ cerrandoCuadre() ? 'Cerrando…' : 'Cerrar mi cuadre (' + c.pedidos + (c.pedidos === 1 ? ' pedido)' : ' pedidos)') }}</button>
+            </div>
             @if (detalle().length) {
               <ul class="items-mini">
                 @for (p of detalle(); track p.id) {
@@ -228,6 +234,7 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   avisos = inject(NotificacionesService);
 
   enRuta = signal<Pedido[]>([]);
+  cerrandoCuadre = signal(false);
   /** Orden de la ruta que el mensajero armó (ids), guardado en este celular */
   orden = signal<number[]>([]);
   arrastrandoId = signal<number | null>(null);
@@ -493,6 +500,27 @@ export class MisEntregasPage implements OnInit, OnDestroy {
       this.guardarOrden();
     }
   };
+
+  /** El mensajero cierra su propio cuadre (le llega aviso a admin y cuadres) */
+  async cerrarMiCuadre(): Promise<void> {
+    const c = this.pendiente();
+    const yo = this.sb.usuario()?.id;
+    if (!c || !yo) return;
+    const entrega = pesos(c.efectivo - c.domicilios);
+    if (!confirm(`¿Cerrar tu cuadre? ${c.pedidos} ${c.pedidos === 1 ? 'pedido' : 'pedidos'} · entregas ${entrega} en efectivo. Después no se le pueden agregar más pedidos.`)) return;
+    this.cerrandoCuadre.set(true);
+    try {
+      await this.ps.cerrarCuadre(yo);
+      this.toast.ok(`Cuadre cerrado: entregas ${entrega} en efectivo`);
+      this.detalle.set([]);
+      await this.cargar();
+      await this.cargarHechas();
+    } catch (e) {
+      this.toast.error(mensajeError(e));
+    } finally {
+      this.cerrandoCuadre.set(false);
+    }
+  }
 
   cambiarRango(r: RangoFechas): void {
     this.rango = r;

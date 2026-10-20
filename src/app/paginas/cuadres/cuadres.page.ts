@@ -111,8 +111,8 @@ interface Pendiente {
                   <ion-icon [name]="abiertoM() === c.mensajero_id ? 'chevron-up-outline' : 'chevron-down-outline'"></ion-icon>
                   {{ abiertoM() === c.mensajero_id ? 'Ocultar pedidos' : 'Ver pedidos' }}
                 </button>
-                @if (puedeCerrar()) {
-                  <button class="b b-ok" [disabled]="cerrando() === c.mensajero_id" (click)="cerrar(c)">Cerrar cuadre</button>
+                @if (puedeCerrarDe(c)) {
+                  <button class="b b-ok" [disabled]="cerrando() === c.mensajero_id" (click)="cerrar(c)">{{ esMio(c) ? 'Cerrar mi cuadre' : 'Cerrar cuadre' }}</button>
                 }
               </div>
             </article>
@@ -213,6 +213,13 @@ export class CuadresPage implements OnInit {
   );
 
   puedeCerrar = computed(() => this.sb.tiene('admin', 'cuadres'));
+  /** Admin y cuadres cierran el de cualquiera; el mensajero, el suyo (como en Home ALS) */
+  puedeCerrarDe(c: Pendiente): boolean {
+    return this.puedeCerrar() || (this.sb.tiene('mensajero') && this.esMio(c));
+  }
+  esMio(c: Pendiente): boolean {
+    return c.mensajero_id === this.sb.usuario()?.id;
+  }
   /** Cuadre del recolector de hoy (bases − compras), para quien hace los cuadres */
   veRecolector = computed(() => this.sb.tiene('admin', 'cuadres'));
   recolectores = signal<{ id: number; nombre: string; base: number; compras: number; n_compras: number; pendientes: number }[]>([]);
@@ -302,11 +309,14 @@ export class CuadresPage implements OnInit {
 
   async cerrar(c: Pendiente): Promise<void> {
     const recibe = pesos(c.efectivo - c.domicilios);
-    if (!confirm(`¿Cerrar el cuadre de ${c.nombre}? ${c.pedidos} pedidos · recibes ${recibe} en efectivo.`)) return;
+    const pregunta = this.esMio(c) && !this.puedeCerrar()
+      ? `¿Cerrar tu cuadre? ${c.pedidos} pedidos · entregas ${recibe} en efectivo. Después no se le pueden agregar más pedidos.`
+      : `¿Cerrar el cuadre de ${c.nombre}? ${c.pedidos} pedidos · recibes ${recibe} en efectivo.`;
+    if (!confirm(pregunta)) return;
     this.cerrando.set(c.mensajero_id);
     try {
       await this.ps.cerrarCuadre(c.mensajero_id);
-      this.toast.ok(`Cuadre de ${c.nombre} cerrado`);
+      this.toast.ok(this.esMio(c) ? 'Cerraste tu cuadre' : `Cuadre de ${c.nombre} cerrado`);
       this.abiertoM.set(null);
       await this.cargar();
     } catch (e) {
