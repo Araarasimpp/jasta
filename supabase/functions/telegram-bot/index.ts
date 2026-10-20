@@ -16,7 +16,7 @@
 // que se configuró en setWebhook (telegram-config); sin él no se atiende nada.
 import postgres from 'npm:postgres@3.4.5';
 import jpeg from 'npm:jpeg-js@0.4.4';
-import jsQR from 'npm:jsqr@1.4.0';
+import { leerQrImagen } from './lector.ts';
 
 const sql = postgres(Deno.env.get('SUPABASE_DB_URL')!, { prepare: false, max: 2 });
 
@@ -63,7 +63,7 @@ function pedidoDeTexto(texto: string): number | null {
   return m ? Number(m[1]) : null;
 }
 
-/** Baja la foto de Telegram y busca el QR (prueba primero la más grande) */
+/** Baja la foto de Telegram y busca el QR con el lector robusto (prueba primero la más grande) */
 async function leerQr(token: string, ids: string[]): Promise<number | null> {
   for (const id of ids) {
     try {
@@ -72,8 +72,8 @@ async function leerQr(token: string, ids: string[]): Promise<number | null> {
       const r = await fetch(`https://api.telegram.org/file/bot${token}/${f.result.file_path}`);
       const bytes = new Uint8Array(await r.arrayBuffer());
       const img = jpeg.decode(bytes, { useTArray: true, formatAsRGBA: true, maxMemoryUsageInMB: 256 });
-      const qr = jsQR(new Uint8ClampedArray(img.data.buffer, img.data.byteOffset, img.data.byteLength), img.width, img.height, { inversionAttempts: 'attemptBoth' });
-      const n = qr ? pedidoDeQr(qr.data) : null;
+      const texto = await leerQrImagen(new Uint8ClampedArray(img.data.buffer, img.data.byteOffset, img.data.byteLength), img.width, img.height);
+      const n = texto ? pedidoDeQr(texto) : null;
       if (n) return n;
     } catch (e) {
       console.error('leerQr', e);

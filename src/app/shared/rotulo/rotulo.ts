@@ -89,10 +89,13 @@ function lineasTelefono(telefonos: string | null): string[] {
  * = QR pequeño y con cuadros grandes, fácil de leer aunque la foto salga regular.
  */
 export function qrPedido(numero: number): string {
-  const q = qrcode(0, 'M');
-  q.addData(`JASTA-${numero}`);
+  // Alfanumérico (mayúsculas, números y "-") cabe en la versión más pequeña (21 × 21 cuadros):
+  // cuadros más grandes en el papel. Corrección Q: se lee aunque ~25 % salga borroso o con reflejo.
+  const q = qrcode(0, 'Q');
+  q.addData(`JASTA-${numero}`, 'Alphanumeric');
   q.make();
-  return q.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+  // Margen blanco de 2 cuadros alrededor (el lector necesita ver dónde empieza el código)
+  return q.createSvgTag({ cellSize: 4, margin: 8, scalable: true }).replace('<svg ', '<svg shape-rendering="crispEdges" ');
 }
 
 /** Un rótulo. Todo el texto que viene de la base de datos se escapa. */
@@ -197,7 +200,7 @@ export const ROTULO_CSS = `
   }
   /* QR del pedido, en el centro de la cabecera (lo lee el bot de Telegram) */
   .qr { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 0.6mm; margin: 0 auto; }
-  .qr svg { display: block; width: 19mm; height: 19mm; }
+  .qr svg { display: block; width: 24mm; height: 24mm; margin: -2mm; }
   .qr span { font-size: 7pt; font-weight: bold; letter-spacing: 0.04em; }
   .marca { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-start; gap: 1mm; max-width: 44mm; }
   .logo { width: 22mm; height: 22mm; object-fit: contain; }
