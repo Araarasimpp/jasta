@@ -68,7 +68,7 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/ranking/ranking.page').then((m) => m.RankingPage),
       },
       {
-        path: 'clientes', canActivate: [rolGuard], data: { roles: ['admin'] },
+        path: 'clientes', canActivate: [rolGuard], data: { roles: ['admin', 'venta_local'] },
         loadComponent: () => import('./paginas/clientes/clientes.page').then((m) => m.ClientesPage),
       },
       {

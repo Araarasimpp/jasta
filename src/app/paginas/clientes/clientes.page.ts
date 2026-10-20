@@ -1,16 +1,17 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import { searchOutline, closeOutline, logoWhatsapp } from 'ionicons/icons';
 import { SupabaseService } from '../../core/services/supabase.service';
-import { PedidosService } from '../../core/services/pedidos.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detalle.component';
-import { Pedido, estadoLabel } from '../../shared/modelos';
 import { mensajeError, numero, pesos } from '../../shared/formato';
 import { formatoFechaCO } from '../../shared/fecha-colombia';
 import { enlaceWhatsapp, mensajeSeguimiento } from '../../shared/whatsapp';
+
+/** Una compra entregada del cliente (de la función compras_cliente) */
+interface Compra { id: number; created_at: string; canal: string; total: number; vendedora: string | null; productos: string[] }
 
 interface Cliente {
   telefono: string; nombre: string; barrio: string | null; direccion: string | null;
@@ -27,7 +28,8 @@ interface Cliente {
       .tabla td { white-space: nowrap; }
       .lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
       .lista li { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border-soft); font-size: 13px; cursor: pointer; }
-      @media (hover: hover) { .lista li:hover { color: var(--accent); } }
+      @media (hover: hover) { .lista li:not(.fija):hover { color: var(--accent); } }
+      .lista li.fija { cursor: default; }
       .lista small { display: block; color: var(--text-muted); font-size: 12px; }
     `,
   ],
@@ -90,12 +92,14 @@ interface Cliente {
             <h3 class="seccion-titulo">Lo que ha comprado</h3>
             <ul class="lista">
               @for (p of pedidosCli(); track p.id) {
-                <li (click)="abierto.set(p.id)">
-                  <span>#{{ p.id }} · {{ fecha(p.created_at) }}<small>{{ estadoLabel(p.estado) }} · {{ p.vendedora?.nombre || '—' }}</small></span>
+                <!-- El admin abre el pedido completo; el local ve el resumen de la compra -->
+                <li [class.fija]="!esAdmin()" (click)="esAdmin() && abierto.set(p.id)">
+                  <span>#{{ p.id }} · {{ fecha(p.created_at) }}<small>{{ p.canal === 'local' ? 'En el local' : 'Domicilio' }} · {{ p.vendedora || 'Sin vendedora' }}</small>
+                    @if (p.productos.length) { <small>{{ p.productos.join(', ') }}</small> }</span>
                   <span class="num">{{ pesos(p.total) }}</span>
                 </li>
               } @empty {
-                <li class="suave">Cargando…</li>
+                <li class="suave fija">{{ cargandoCli() ? 'Cargando…' : 'Sin compras entregadas.' }}</li>
               }
             </ul>
           </section>
@@ -109,7 +113,6 @@ interface Cliente {
 })
 export class ClientesPage implements OnInit {
   private sb = inject(SupabaseService);
-  private ps = inject(PedidosService);
   private toast = inject(ToastService);
 
   clientes = signal<Cliente[]>([]);
@@ -117,14 +120,15 @@ export class ClientesPage implements OnInit {
   pagina = signal(0);
   cargando = signal(true);
   sel = signal<Cliente | null>(null);
-  pedidosCli = signal<Pedido[]>([]);
+  pedidosCli = signal<Compra[]>([]);
+  cargandoCli = signal(false);
+  esAdmin = computed(() => this.sb.tiene('admin'));
   abierto = signal<number | null>(null);
   q = '';
   private timer?: ReturnType<typeof setTimeout>;
 
   pesos = pesos;
   numero = numero;
-  estadoLabel = estadoLabel;
   min = Math.min;
 
   constructor() {
@@ -154,20 +158,18 @@ export class ClientesPage implements OnInit {
   async abrir(c: Cliente): Promise<void> {
     this.sel.set(c);
     this.pedidosCli.set([]);
-    try {
-      // Solo lo que de verdad recibió (sin cancelados ni pendientes)
-      const r = await this.ps.listar({ texto: c.telefono, estado: 'entregado', porPagina: 100, conItems: true });
-      this.pedidosCli.set(r.filas);
-    } catch (e) {
-      this.toast.error(mensajeError(e));
-    }
+    this.cargandoCli.set(true);
+    // Solo lo que de verdad recibió (sin cancelados ni pendientes), a domicilio y en el local
+    const { data, error } = await this.sb.client.rpc('compras_cliente', { p_telefono: c.telefono });
+    this.cargandoCli.set(false);
+    if (error) return this.toast.error(mensajeError(error));
+    this.pedidosCli.set((data ?? []) as Compra[]);
   }
 
   /** Mensaje de seguimiento con lo que compró en su último pedido entregado */
   whatsapp(c: Cliente): string {
     const pedidos = this.pedidosCli();
-    const ultimo = pedidos.find((p) => p.estado === 'entregado');
-    const productos = (ultimo?.pedido_items ?? []).map((i) => i.nombre);
+    const productos = pedidos[0]?.productos ?? [];
     return enlaceWhatsapp(c.telefono, mensajeSeguimiento(c.nombre, productos));
   }
 

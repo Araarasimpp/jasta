@@ -63,7 +63,7 @@ const MENU: ItemMenu[] = [
   { label: 'Cuadres', path: '/app/cuadres', icon: 'wallet-outline', roles: ['admin', 'cuadres', 'mensajero'] },
   { label: 'Catálogo', path: '/app/catalogo', icon: 'book-outline', roles: ['admin', 'vendedora'] },
   { label: 'Ranking', path: '/app/ranking', icon: 'trophy-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador'] },
-  { label: 'Clientes', path: '/app/clientes', icon: 'people-circle-outline', roles: ['admin'] },
+  { label: 'Clientes', path: '/app/clientes', icon: 'people-circle-outline', roles: ['admin', 'venta_local'] },
   { label: 'Productos', path: '/app/productos', icon: 'cube-outline', roles: ['admin'] },
   { label: 'Barrios', path: '/app/barrios', icon: 'location-outline', roles: ['admin'] },
   { label: 'Usuarios', path: '/app/usuarios', icon: 'people-outline', roles: ['admin'] },
