@@ -238,6 +238,10 @@ export class ProductosPage implements OnInit {
     const f = this.route.snapshot.queryParamMap.get('filtro') as Filtro | null;
     if (f && this.filtros.some((x) => x.id === f)) this.filtro.set(f);
     await this.cargar();
+    // Desde la ficha de un producto en un pedido llega ?editar=<id>
+    const editar = Number(this.route.snapshot.queryParamMap.get('editar'));
+    const p = editar ? this.productos().find((x) => x.id === editar) : undefined;
+    if (p) this.editar(p);
   }
 
   async cargar(): Promise<void> {

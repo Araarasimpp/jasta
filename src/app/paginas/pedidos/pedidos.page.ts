@@ -15,11 +15,12 @@ import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detal
 import { AvatarComponent } from '../../shared/avatar/avatar.component';
 import { EstadoIconComponent } from '../../shared/estado-icon/estado-icon.component';
 import { VisorService } from '../../shared/visor/visor.service';
-import { EstadoPedido, Pedido, PedidoItem, Usuario } from '../../shared/modelos';
+import { EstadoPedido, Pedido, PedidoItem, Producto, Usuario } from '../../shared/modelos';
 import { mensajeError, numero, pesos, urlImagen, urlMini } from '../../shared/formato';
 import { diaColombiaDe, formatoFechaCO, formatoHoraCO, hoyColombiaISO } from '../../shared/fecha-colombia';
 import { sumarDias } from '../../shared/rango/rango.component';
 import { fotoDeItem, nombreConVariante, variante } from '../../shared/variante';
+import { FotoCatalogo, ProductoDetalleComponent, galeriaProducto } from '../catalogo/producto-detalle.component';
 
 type Filtro = EstadoPedido | 'todos';
 
@@ -56,7 +57,7 @@ const ETIQUETA_GRUPO: Record<EstadoPedido, string> = {
 @Component({
   selector: 'app-pedidos',
   standalone: true,
-  imports: [FormsModule, RouterLink, IonIcon, PedidoDetalleComponent, AvatarComponent, EstadoIconComponent],
+  imports: [FormsModule, RouterLink, IonIcon, PedidoDetalleComponent, AvatarComponent, EstadoIconComponent, ProductoDetalleComponent],
   templateUrl: './pedidos.page.html',
   styleUrls: ['./pedidos.page.scss'],
 })
@@ -502,6 +503,25 @@ export class PedidosPage implements OnInit, OnDestroy {
 
   foto(it: PedidoItem): string | null {
     return urlImagen(fotoDeItem(it));
+  }
+
+  /** Ficha del producto tocado en un pedido (como en el catálogo) */
+  fichaProducto = signal<{ producto: Producto; fotos: FotoCatalogo[]; color: number | null } | null>(null);
+
+  async abrirProducto(p: Pedido, it: PedidoItem, evento: Event): Promise<void> {
+    evento.stopPropagation();
+    if (!it.producto_id) return this.foto(it) ? this.verFotos(p, it, evento) : undefined;
+    const { data, error } = await this.sb.client
+      .from('productos')
+      .select('*, colores:producto_colores(id, nombre, hex, imagen_url, orden)')
+      .eq('id', it.producto_id)
+      .maybeSingle();
+    if (error) return this.toast.error(mensajeError(error));
+    // Producto borrado: al menos se ven sus fotos
+    if (!data) return this.foto(it) ? this.verFotos(p, it, evento) : this.toast.error('Ese producto ya no existe');
+    const producto = { ...(data as Producto), colores: [...((data as Producto).colores ?? [])].sort((a, b) => a.orden - b.orden || a.id - b.id) };
+    const color = producto.colores.find((c) => c.nombre === it.color)?.id ?? null;
+    this.fichaProducto.set({ producto, fotos: galeriaProducto(producto), color });
   }
 
   /** Abre en el visor las fotos de los productos del pedido, empezando por la tocada */

@@ -7,7 +7,7 @@ import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { Producto } from '../../shared/modelos';
 import { mensajeError, numero, pesos, urlImagen, urlMini } from '../../shared/formato';
-import { FotoCatalogo, ProductoDetalleComponent } from './producto-detalle.component';
+import { FotoCatalogo, ProductoDetalleComponent, galeriaProducto } from './producto-detalle.component';
 
 type Filtro = 'todos' | 'disponibles';
 
@@ -219,17 +219,9 @@ export class CatalogoPage implements OnInit {
     return lista;
   }
 
-  /** Todas las fotos del producto para la ficha: principal, colores y las adicionales */
+  /** Todas las fotos del producto para la ficha: principal, colores, adicionales y videos */
   galeria(p: Producto): FotoCatalogo[] {
-    const lista = this.fotos(p);
-    (p.imagenes ?? []).forEach((ruta, i) => {
-      const u = urlImagen(ruta);
-      if (u && !lista.some((x) => x.url === u)) lista.push({ url: u, titulo: `${p.nombre} · foto ${i + 2}`, color: -1 });
-    });
-    // Los videos van justo después de la foto principal
-    const videos = (p.videos ?? []).map((u, i) => ({ url: u, titulo: `${p.nombre} · video${(p.videos?.length ?? 0) > 1 ? ' ' + (i + 1) : ''}`, color: -2, video: true }));
-    if (videos.length) lista.splice(Math.min(1, lista.length), 0, ...videos);
-    return lista;
+    return galeriaProducto(p);
   }
 
   /** Color elegido en la tarjeta; si ese color no tiene foto se sigue viendo la principal */

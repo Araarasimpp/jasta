@@ -138,8 +138,8 @@
                     <ul class="prods" [attr.aria-label]="'Productos: ' + productosTexto(p)">
                       @for (it of p.pedido_items.slice(0, maxProductosVisibles); track it.id) {
                         <li class="prod">
-                          <button type="button" class="prod-foto" [disabled]="!foto(it)" (click)="verFotos(p, it, $event)"
-                            [attr.aria-label]="foto(it) ? 'Ver foto de ' + it.nombre : it.nombre + ', sin foto'">
+                          <button type="button" class="prod-foto" (click)="abrirProducto(p, it, $event)"
+                            [attr.aria-label]="'Ver producto ' + it.nombre">
                             @if (foto(it); as url) {
                               <img [src]="urlMini(url)" alt="" loading="lazy" decoding="async" />
                             } @else {
@@ -149,7 +149,7 @@
                               <span class="prod-cant num" aria-hidden="true">×{{ it.cantidad }}</span>
                             }
                           </button>
-                          <span class="prod-nombre">{{ it.nombre }}@if (variante(it); as v) {<span class="prod-var">{{ v }}</span>}</span>
+                          <button type="button" class="prod-nombre" (click)="abrirProducto(p, it, $event)">{{ it.nombre }}@if (variante(it); as v) {<span class="prod-var">{{ v }}</span>}</button>
                         </li>
                       }
                       @if (p.pedido_items.length > maxProductosVisibles) {
@@ -292,3 +292,7 @@
     <app-pedido-detalle [pedidoId]="id" [chat]="abiertoEnChat()" (cerrar)="cerrarDetalle()" (cambiado)="cargar()"></app-pedido-detalle>
   }
 </div>
+
+@if (fichaProducto(); as f) {
+  <app-producto-detalle [producto]="f.producto" [fotos]="f.fotos" [colorInicial]="f.color" modo="pedido" (cerrar)="fichaProducto.set(null)"></app-producto-detalle>
+}

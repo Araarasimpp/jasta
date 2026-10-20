@@ -462,7 +462,12 @@
 }
 
 .prod-nombre {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
   font-size: 13px;
+  text-align: left;
   line-height: 1.35;
   color: var(--text-2);
   display: -webkit-box;
@@ -1272,3 +1277,5 @@ button.cliente {
   background: color-mix(in srgb, var(--st-ruta) 12%, transparent);
   color: var(--st-ruta);
 }
+
+@media (hover: hover) { .prod-nombre:hover { color: var(--accent); } }

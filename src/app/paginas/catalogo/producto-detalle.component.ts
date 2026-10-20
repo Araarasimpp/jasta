@@ -2,11 +2,12 @@ import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, O
 import { Router } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { addOutline, checkmarkOutline, chevronBackOutline, chevronForwardOutline, closeOutline, copyOutline, expandOutline, shareSocialOutline } from 'ionicons/icons';
+import { addOutline, createOutline, checkmarkOutline, chevronBackOutline, chevronForwardOutline, closeOutline, copyOutline, expandOutline, shareSocialOutline } from 'ionicons/icons';
 import { ToastService } from '../../shared/toast/toast.service';
 import { VisorService } from '../../shared/visor/visor.service';
 import { Producto } from '../../shared/modelos';
-import { pesos } from '../../shared/formato';
+import { pesos, urlImagen } from '../../shared/formato';
+import { SupabaseService } from '../../core/services/supabase.service';
 
 export interface FotoCatalogo {
   url: string;
@@ -15,6 +16,30 @@ export interface FotoCatalogo {
   color: number | null;
   /** Es un video (se reproduce en el carrusel y se comparte junto con la foto) */
   video?: boolean;
+}
+
+/** Todas las fotos del producto para la ficha: principal, la de cada color, las adicionales y los videos */
+export function galeriaProducto(p: Producto): FotoCatalogo[] {
+  const lista: FotoCatalogo[] = [];
+  const principal = urlImagen(p.imagen_url);
+  if (principal) lista.push({ url: principal, titulo: p.nombre, color: null });
+  for (const c of p.colores ?? []) {
+    const u = urlImagen(c.imagen_url);
+    if (!u) continue;
+    const igual = lista.find((x) => x.url === u);
+    // Si la foto del color es la misma principal, esa foto queda como de ese color
+    if (igual) {
+      if (igual.color === null) Object.assign(igual, { titulo: `${p.nombre} · ${c.nombre}`, color: c.id });
+    } else lista.push({ url: u, titulo: `${p.nombre} · ${c.nombre}`, color: c.id });
+  }
+  (p.imagenes ?? []).forEach((ruta, i) => {
+    const u = urlImagen(ruta);
+    if (u && !lista.some((x) => x.url === u)) lista.push({ url: u, titulo: `${p.nombre} · foto ${i + 2}`, color: -1 });
+  });
+  // Los videos van justo después de la foto principal
+  const videos = (p.videos ?? []).map((u, i) => ({ url: u, titulo: `${p.nombre} · video${(p.videos?.length ?? 0) > 1 ? ' ' + (i + 1) : ''}`, color: -2, video: true }));
+  if (videos.length) lista.splice(Math.min(1, lista.length), 0, ...videos);
+  return lista;
 }
 
 /**
@@ -162,11 +187,20 @@ export interface FotoCatalogo {
             @if (producto.sku) { <p>SKU {{ producto.sku }}</p> }
           </div>
 
-          <div class="precios">
-            <div><span>Precio</span><strong>{{ pesos(producto.precio_venta) }}</strong></div>
-            <div><span>Base</span><strong>{{ pesos(producto.precio_base) }}</strong></div>
-            <div class="gana"><span>Ganas</span><strong>{{ pesos(ganancia()) }}</strong></div>
-          </div>
+          @if (modo === 'catalogo') {
+            <div class="precios">
+              <div><span>Precio</span><strong>{{ pesos(producto.precio_venta) }}</strong></div>
+              <div><span>Base</span><strong>{{ pesos(producto.precio_base) }}</strong></div>
+              <div class="gana"><span>Ganas</span><strong>{{ pesos(ganancia()) }}</strong></div>
+            </div>
+          } @else if (esAdmin()) {
+            <!-- Desde un pedido: los precios solo los ve el admin -->
+            <div class="precios">
+              <div><span>Precio venta</span><strong>{{ pesos(producto.precio_venta) }}</strong></div>
+              <div><span>Precio base</span><strong>{{ pesos(producto.precio_base) }}</strong></div>
+              <div class="gana"><span>Costo</span><strong>{{ pesos(producto.precio_compra) }}</strong></div>
+            </div>
+          }
 
           @if (producto.colores?.length) {
             <div class="bloque">
@@ -217,10 +251,17 @@ export interface FotoCatalogo {
         </div>
       </div>
       <div class="hoja-pie">
-        <button class="b" [class.listo]="!!listos()" (click)="compartir()" [disabled]="compartiendo()">
-          <ion-icon [name]="puedeCompartir ? 'share-social-outline' : 'copy-outline'"></ion-icon>{{ textoCompartir() }}
-        </button>
-        <button class="b b-pri" (click)="pedir()"><ion-icon name="add-outline"></ion-icon>Hacer pedido</button>
+        @if (modo === 'catalogo') {
+          <button class="b" [class.listo]="!!listos()" (click)="compartir()" [disabled]="compartiendo()">
+            <ion-icon [name]="puedeCompartir ? 'share-social-outline' : 'copy-outline'"></ion-icon>{{ textoCompartir() }}
+          </button>
+          <button class="b b-pri" (click)="pedir()"><ion-icon name="add-outline"></ion-icon>Hacer pedido</button>
+        } @else {
+          <button class="b" (click)="cerrar.emit()"><ion-icon name="close-outline"></ion-icon>Cerrar</button>
+          @if (esAdmin()) {
+            <button class="b b-pri" (click)="editar()"><ion-icon name="create-outline"></ion-icon>Editar producto</button>
+          }
+        }
       </div>
     </aside>
   `,
@@ -230,6 +271,8 @@ export class ProductoDetalleComponent implements AfterViewInit, OnDestroy {
   @Input() fotos: FotoCatalogo[] = [];
   /** Color que se estaba viendo en la tarjeta: la ficha abre en su foto */
   @Input() colorInicial: number | null = null;
+  /** 'pedido' = abierta desde un pedido: sin compartir; precios y Editar solo para el admin */
+  @Input() modo: 'catalogo' | 'pedido' = 'catalogo';
   @Output() cerrar = new EventEmitter<void>();
 
   @ViewChild('carrusel') carrusel?: ElementRef<HTMLDivElement>;
@@ -238,6 +281,8 @@ export class ProductoDetalleComponent implements AfterViewInit, OnDestroy {
   private visor = inject(VisorService);
   private toast = inject(ToastService);
   private router = inject(Router);
+  private sb = inject(SupabaseService);
+  esAdmin = computed(() => this.sb.tiene('admin'));
 
   actual = signal(0);
   /** Color tocado aunque no tenga foto propia */
@@ -274,7 +319,7 @@ export class ProductoDetalleComponent implements AfterViewInit, OnDestroy {
   };
 
   constructor() {
-    addIcons({ addOutline, checkmarkOutline, chevronBackOutline, chevronForwardOutline, closeOutline, copyOutline, expandOutline, shareSocialOutline });
+    addIcons({ addOutline, createOutline, checkmarkOutline, chevronBackOutline, chevronForwardOutline, closeOutline, copyOutline, expandOutline, shareSocialOutline });
   }
 
   ngAfterViewInit(): void {
@@ -347,10 +392,17 @@ export class ProductoDetalleComponent implements AfterViewInit, OnDestroy {
     this.timerCopia = setTimeout(() => this.copiado.set(false), 1800);
   }
 
+  /** Abre el producto en Productos para editarlo (solo el admin) */
+  editar(): void {
+    this.cerrar.emit();
+    void this.router.navigate(['/app/productos'], { queryParams: { editar: this.producto.id } });
+  }
+
   /** El visor es solo de fotos */
   ampliar(i: number): void {
     const fotos = this.fotos.filter((f) => !f.video);
-    this.visor.abrir(fotos.map((f) => ({ url: f.url, titulo: `${f.titulo} · ${pesos(this.producto.precio_venta)}` })), Math.max(0, fotos.indexOf(this.fotos[i])));
+    const precio = this.modo === 'catalogo' || this.esAdmin() ? ` · ${pesos(this.producto.precio_venta)}` : '';
+    this.visor.abrir(fotos.map((f) => ({ url: f.url, titulo: f.titulo + precio })), Math.max(0, fotos.indexOf(this.fotos[i])));
   }
 
   /** Texto para mandarle al cliente (sin precio base ni ganancia) */
