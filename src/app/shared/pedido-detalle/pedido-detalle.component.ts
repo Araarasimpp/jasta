@@ -15,6 +15,7 @@ import { EstadoPedido, Nota, Pedido, PedidoItem, Usuario, estadoLabel } from '..
 import { mensajeError, pesos, urlImagen, urlMini } from '../formato';
 import { formatoFechaCO, formatoHoraCO } from '../fecha-colombia';
 import { ChatPedidoComponent } from '../chat-pedido/chat-pedido.component';
+import { AvatarComponent } from '../avatar/avatar.component';
 import { VisorService } from '../visor/visor.service';
 import { fotoDeItem, nombreConVariante, variante } from '../variante';
 import { urlsComprobantes } from '../comprobantes';
@@ -23,7 +24,7 @@ import { urlsComprobantes } from '../comprobantes';
 @Component({
   selector: 'app-pedido-detalle',
   standalone: true,
-  imports: [FormsModule, IonIcon, EntregarComponent, ChatPedidoComponent],
+  imports: [FormsModule, IonIcon, EntregarComponent, ChatPedidoComponent, AvatarComponent],
   styles: [
     `
       .resumen { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -77,6 +78,15 @@ import { urlsComprobantes } from '../comprobantes';
       @media (hover: hover) { .abrir-chat:hover { background: var(--accent-soft); } }
       /* En el celular la ventana de chat usa casi toda la pantalla */
       @media (max-width: 760px) { .hoja-chat { height: 92dvh; } }
+      /* Cabecera del chat como en WhatsApp: foto y nombre de con quién se habla */
+      .hoja-chat .hoja-head { padding-left: 10px; gap: 8px; }
+      .wa { display: flex; align-items: center; gap: 10px; min-width: 0; margin-right: auto; }
+      .wa-fotos { display: flex; flex-shrink: 0; }
+      .wa-fotos .foto { display: flex; border-radius: 50%; box-shadow: 0 0 0 2px var(--surface); }
+      .wa-fotos .foto + .foto { margin-left: -14px; }
+      .wa-txt { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+      .wa-txt strong { font-size: 16px; font-weight: 650; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .wa-txt span { font-size: 12.5px; color: var(--text-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .chat-cab { display: flex; flex-direction: column; gap: 4px; padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
       .chat-cli { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
       .chat-cli strong { font-size: 15.5px; font-weight: 650; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -93,7 +103,17 @@ import { urlsComprobantes } from '../comprobantes';
       <div class="hoja-head">
         @if (enChat()) {
           <button class="b b-icono" aria-label="Ver el pedido" (click)="vista.set('pedido')"><ion-icon name="arrow-back-outline"></ion-icon></button>
-          <h2 id="t-pedido">Chat <span class="guia guia-grande">#{{ pedidoId }}</span></h2>
+          <div class="wa">
+            <span class="wa-fotos" aria-hidden="true">
+              @for (c of contactos(); track c.nombre) {
+                <span class="foto"><app-avatar [nombre]="c.nombre" [foto]="c.foto" [tam]="40"></app-avatar></span>
+              }
+            </span>
+            <span class="wa-txt">
+              <strong id="t-pedido">{{ tituloChat() }}</strong>
+              <span>{{ subtituloChat() }}</span>
+            </span>
+          </div>
         } @else {
           <h2 id="t-pedido">Pedido <span class="guia guia-grande">#{{ pedidoId }}</span></h2>
         }
@@ -111,7 +131,6 @@ import { urlsComprobantes } from '../comprobantes';
             <p class="chat-sub">
               <span class="num fuerte">{{ pesos(p.total) }}</span>
               @if (p.barrio) { · {{ p.barrio }} }
-              @if (p.mensajero?.nombre) { · {{ p.mensajero!.nombre }} }
             </p>
             @if (p.pedido_items?.length) {
               <p class="chat-items">{{ resumenItems(p) }}</p>
@@ -429,6 +448,32 @@ export class PedidoDetalleComponent implements OnChanges {
       ? `Hola ${nombre}, soy ${this.sb.usuario()?.nombre.split(' ')[0] ?? ''}, mensajero de Jasta. Voy en camino con ${que} por ${pesos(p?.total)}.`
       : `Hola ${nombre}, te escribimos de Jasta por ${que}.`;
     return enlaceWhatsapp(tel, texto);
+  }
+
+  /** Con quién se habla en el chat (foto y nombre de la cabecera), según quién lo abre */
+  contactos = computed<{ nombre: string; foto: string | null; rol: string }[]>(() => {
+    const p = this.pedido();
+    if (!p) return [];
+    const yo = this.sb.usuario()?.id;
+    const vend = p.vendedora_id ? { nombre: p.vendedora?.nombre ?? 'Vendedora', foto: p.vendedora?.avatar_url ?? null, rol: 'Vendedora' } : null;
+    const mens = p.mensajero_id ? { nombre: p.mensajero?.nombre ?? 'Mensajero', foto: p.mensajero?.avatar_url ?? null, rol: 'Mensajero' } : null;
+    let lista: (typeof vend)[];
+    if (yo === p.mensajero_id && yo !== p.vendedora_id) lista = [vend];
+    else if (yo === p.vendedora_id && yo !== p.mensajero_id) lista = [mens];
+    else lista = [vend, mens];
+    const quedan = lista.filter((c): c is NonNullable<typeof c> => !!c);
+    return quedan.length ? quedan : [{ nombre: 'Jasta', foto: null, rol: 'Tienda' }];
+  });
+
+  tituloChat(): string {
+    const c = this.contactos();
+    return c.length > 1 ? c.map((x) => x.nombre.trim().split(/\s+/)[0]).join(' y ') : c[0]?.nombre ?? 'Chat';
+  }
+
+  subtituloChat(): string {
+    const c = this.contactos();
+    const quien = c.length > 1 ? 'Vendedora y mensajero' : c[0]?.rol ?? '';
+    return `${quien} · Pedido #${this.pedidoId}`;
   }
 
   /** Con quién se habla en el chat, según quién lo abre */
