@@ -60,12 +60,8 @@ export class NotificacionesService {
     this.detener();
     this.usuarioId = usuario.id;
 
-    const { data } = await this.sb.client
-      .from('notificaciones')
-      .select('id, tipo, titulo, cuerpo, url, pedido_id, leida, created_at')
-      .order('created_at', { ascending: false })
-      .limit(60);
-    this.avisos.set((data ?? []) as Aviso[]);
+    await this.recargar();
+    document.addEventListener('visibilitychange', this.alVolver);
 
     this.canal = this.sb.client
       .channel(`avisos-${usuario.id}`)
@@ -83,7 +79,31 @@ export class NotificacionesService {
     }
   }
 
+  private async recargar(): Promise<void> {
+    const { data } = await this.sb.client
+      .from('notificaciones')
+      .select('id, tipo, titulo, cuerpo, url, pedido_id, leida, created_at')
+      .order('created_at', { ascending: false })
+      .limit(60);
+    if (!data) return;
+    this.avisos.set(data as Aviso[]);
+    this.marcarEntregados(this.avisos().filter((a) => !a.leida && a.tipo === 'mensaje' && a.pedido_id).map((a) => a.pedido_id!));
+  }
+
+  /** Al volver a la app se trae lo que llegó mientras tanto (el celular corta la conexión en segundo plano) */
+  private alVolver = (): void => {
+    if (document.visibilityState === 'visible' && this.usuarioId) void this.recargar();
+  };
+
+  /** Los mensajes de estos chats ya le llegaron a la persona (doble chulo gris para quien los mandó) */
+  private marcarEntregados(pedidos: number[]): void {
+    const unicos = [...new Set(pedidos)];
+    // (las consultas de Supabase solo salen al pedir el resultado: de ahí el then)
+    if (unicos.length) void this.sb.client.rpc('chat_marcar_entregados', { p_pedidos: unicos }).then();
+  }
+
   detener(): void {
+    document.removeEventListener('visibilitychange', this.alVolver);
     if (this.canal) this.sb.client.removeChannel(this.canal);
     this.canal = null;
     this.usuarioId = null;
@@ -103,7 +123,8 @@ export class NotificacionesService {
   }
 
   private recibir(aviso: Aviso): void {
-    this.avisos.update((lista) => [aviso, ...lista].slice(0, 80));
+    this.avisos.update((lista) => [aviso, ...lista.filter((a) => a.id !== aviso.id)].slice(0, 80));
+    if (aviso.tipo === 'mensaje' && aviso.pedido_id) this.marcarEntregados([aviso.pedido_id]);
     this.sonar();
     this.avisoDelSistema(aviso);
   }

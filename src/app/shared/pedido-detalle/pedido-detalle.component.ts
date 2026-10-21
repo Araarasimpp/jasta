@@ -7,6 +7,7 @@ import { arrowBackOutline, chatbubbleEllipsesOutline, chevronForwardOutline, clo
 import { PedidosService } from '../../core/services/pedidos.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { NotificacionesService } from '../../core/services/notificaciones.service';
+import { PresenciaService } from '../../core/services/presencia.service';
 import { ToastService } from '../toast/toast.service';
 import { EntregarComponent } from '../entregar/entregar.component';
 import { RotulosService } from '../rotulo/rotulos.service';
@@ -107,7 +108,7 @@ import { urlsComprobantes } from '../comprobantes';
           <div class="wa">
             <span class="wa-fotos" aria-hidden="true">
               @for (c of contactos(); track c.nombre) {
-                <span class="foto"><app-avatar [nombre]="c.nombre" [foto]="c.foto" [tam]="40"></app-avatar></span>
+                <span class="foto"><app-avatar [nombre]="c.nombre" [foto]="c.foto" [usuario]="c.id" [tam]="40"></app-avatar></span>
               }
             </span>
             <span class="wa-txt">
@@ -322,6 +323,7 @@ export class PedidoDetalleComponent implements OnChanges {
   escribe = signal<string | null>(null);
   enChat = computed(() => this.vista() === 'chat' && this.participa());
   avisos = inject(NotificacionesService);
+  presencia = inject(PresenciaService);
 
   pesos = pesos;
   urlImagen = urlImagen;
@@ -385,6 +387,7 @@ export class PedidoDetalleComponent implements OnChanges {
     try {
       const { pedido, notas } = await this.ps.detalle(this.pedidoId);
       this.pedido.set(pedido);
+      void this.presencia.cargarVistos([pedido.vendedora_id, pedido.mensajero_id]);
       this.notas.set(notas);
       if (pedido.evidencias?.length) urlsComprobantes(this.sb.client, pedido.evidencias).then((u) => this.comprobantes.set(u)).catch(() => undefined);
       this.mensajeroSel = pedido.mensajero_id;
@@ -458,18 +461,18 @@ export class PedidoDetalleComponent implements OnChanges {
   }
 
   /** Con quién se habla en el chat (foto y nombre de la cabecera), según quién lo abre */
-  contactos = computed<{ nombre: string; foto: string | null; rol: string }[]>(() => {
+  contactos = computed<{ id: number | null; nombre: string; foto: string | null; rol: string }[]>(() => {
     const p = this.pedido();
     if (!p) return [];
     const yo = this.sb.usuario()?.id;
-    const vend = p.vendedora_id ? { nombre: p.vendedora?.nombre ?? 'Vendedora', foto: p.vendedora?.avatar_url ?? null, rol: 'Vendedora' } : null;
-    const mens = p.mensajero_id ? { nombre: p.mensajero?.nombre ?? 'Mensajero', foto: p.mensajero?.avatar_url ?? null, rol: 'Mensajero' } : null;
+    const vend = p.vendedora_id ? { id: p.vendedora_id as number | null, nombre: p.vendedora?.nombre ?? 'Vendedora', foto: p.vendedora?.avatar_url ?? null, rol: 'Vendedora' } : null;
+    const mens = p.mensajero_id ? { id: p.mensajero_id as number | null, nombre: p.mensajero?.nombre ?? 'Mensajero', foto: p.mensajero?.avatar_url ?? null, rol: 'Mensajero' } : null;
     let lista: (typeof vend)[];
     if (yo === p.mensajero_id && yo !== p.vendedora_id) lista = [vend];
     else if (yo === p.vendedora_id && yo !== p.mensajero_id) lista = [mens];
     else lista = [vend, mens];
     const quedan = lista.filter((c): c is NonNullable<typeof c> => !!c);
-    return quedan.length ? quedan : [{ nombre: 'Jasta', foto: null, rol: 'Tienda' }];
+    return quedan.length ? quedan : [{ id: null, nombre: 'Jasta', foto: null, rol: 'Tienda' }];
   });
 
   tituloChat(): string {
@@ -477,8 +480,10 @@ export class PedidoDetalleComponent implements OnChanges {
     return c.length > 1 ? c.map((x) => x.nombre.trim().split(/\s+/)[0]).join(' y ') : c[0]?.nombre ?? 'Chat';
   }
 
+  /** Con una persona: su estado (Activo, Ausente, Desconectado · visto hace…), como en Discord; con dos, el punto de cada foto */
   subtituloChat(): string {
     const c = this.contactos();
+    if (c.length === 1 && c[0].id != null) return `${this.presencia.texto(c[0].id)} · ${c[0].rol} · #${this.pedidoId}`;
     const quien = c.length > 1 ? 'Vendedora y mensajero' : c[0]?.rol ?? '';
     return `${quien} · Pedido #${this.pedidoId}`;
   }
