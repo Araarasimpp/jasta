@@ -16,6 +16,16 @@ Hecha con Ionic + Angular sobre Supabase, con el estilo de Home ALS.
 Una persona puede tener varios roles. Quien se registra con el mismo correo que tenía en el WordPress
 de Jasta queda automáticamente con sus roles.
 
+## Con Variedades JYB (Kaesuri)
+
+Quien reparte para los dos negocios (con el mismo correo en las dos apps) ve los pedidos de ambos en una
+sola ruta, en cualquiera de las dos apps, y entrega cada uno en el sistema que corresponde. Los cuadres
+siguen separados por negocio.
+
+- Pedidos de Variedades JYB en Mis entregas: función `jasta-puente` del proyecto de Kaesuri (`JybService`).
+- Pedidos de Jasta en la app de Kaesuri: función `kaesuri-puente` y funciones `kaesuri_*` de esta base
+  (`supabase/sql/entregas_desde_kaesuri.sql`).
+
 ## Datos
 
 Los pedidos, productos, usuarios, cuadres e historial vienen del WordPress/WooCommerce anterior
