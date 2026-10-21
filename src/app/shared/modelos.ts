@@ -82,8 +82,8 @@ export interface Pedido {
   rotulo_impreso_at: string | null;
   alistado_at?: string | null;
   canal?: 'domicilio' | 'local';
-  vendedora?: { nombre: string } | null;
-  mensajero?: { nombre: string } | null;
+  vendedora?: { nombre: string; avatar_url?: string | null } | null;
+  mensajero?: { nombre: string; avatar_url?: string | null } | null;
   pedido_items?: PedidoItem[];
 }
 
