@@ -87,6 +87,7 @@ import { urlsComprobantes } from '../comprobantes';
       .wa-txt { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
       .wa-txt strong { font-size: 16px; font-weight: 650; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .wa-txt span { font-size: 12.5px; color: var(--text-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .wa-txt span.escribe { color: var(--accent); font-weight: 600; }
       .chat-cab { display: flex; flex-direction: column; gap: 4px; padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
       .chat-cli { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
       .chat-cli strong { font-size: 15.5px; font-weight: 650; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -111,7 +112,11 @@ import { urlsComprobantes } from '../comprobantes';
             </span>
             <span class="wa-txt">
               <strong id="t-pedido">{{ tituloChat() }}</strong>
-              <span>{{ subtituloChat() }}</span>
+              @if (escribe(); as q) {
+                <span class="escribe">{{ contactos().length > 1 ? q + ' está escribiendo…' : 'escribiendo…' }}</span>
+              } @else {
+                <span>{{ subtituloChat() }}</span>
+              }
             </span>
           </div>
         } @else {
@@ -138,7 +143,7 @@ import { urlsComprobantes } from '../comprobantes';
             <button type="button" class="ver-pedido" (click)="vista.set('pedido')">Ver pedido completo<ion-icon name="chevron-forward-outline" aria-hidden="true"></ion-icon></button>
           </div>
           @for (id of [pedidoId]; track id) {
-            <app-chat-pedido [pedidoId]="id" [completo]="true"></app-chat-pedido>
+            <app-chat-pedido [pedidoId]="id" [completo]="true" (escribiendo)="escribe.set($event)"></app-chat-pedido>
           }
         } @else {
         <div class="hoja-body">
@@ -313,6 +318,8 @@ export class PedidoDetalleComponent implements OnChanges {
   mensajeroSel: number | null = null;
   /** 'chat' = ventana de la conversación, aparte de la información del pedido */
   vista = signal<'pedido' | 'chat'>('pedido');
+  /** Quién está escribiendo ahora en el chat (lo avisa el chat) */
+  escribe = signal<string | null>(null);
   enChat = computed(() => this.vista() === 'chat' && this.participa());
   avisos = inject(NotificacionesService);
 
