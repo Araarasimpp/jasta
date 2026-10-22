@@ -10,7 +10,12 @@
 //   /vincular CÓDIGO (en el grupo)  vincula el grupo a un mensajero
 //   /ruta          (en el grupo)    lista lo que lleva el mensajero
 //   /ayuda
-// Si una foto no se puede leer, también sirve escribir el número: 23345
+// Si una foto no se puede leer, también sirve escribir el número: 23345 (o "Jasta 23345"
+// si en el grupo también está el bot de Variedades JYB).
+//
+// El grupo puede tener también el bot de Variedades JYB: las fotos de sus rótulos
+// (QR "KAESURI-…") se ignoran sin responder, y la hora de asignación es la hora en
+// que se mandó la foto, para que las dos rutas queden en el orden de las fotos.
 //
 // Telegram manda el encabezado X-Telegram-Bot-Api-Secret-Token con el secreto
 // que se configuró en setWebhook (telegram-config); sin él no se atiende nada.
@@ -57,14 +62,22 @@ function pedidoDeQr(texto: string): number | null {
   return m ? Number(m[1]) : null;
 }
 
-/** Número escrito a mano: "23345", "#23345" o "pedido 23345" */
+/** Número escrito a mano: "23345", "#23345", "pedido 23345" o "Jasta 23345" ("JYB 215" es del otro bot) */
 function pedidoDeTexto(texto: string): number | null {
-  const m = texto.trim().match(/^(?:pedido\s*)?#?\s*(\d{3,9})$/i);
-  return m ? Number(m[1]) : null;
+  const m = texto.trim().match(/^(jasta|j)?\s*(?:pedido\s*)?#?\s*(\d{3,9})$/i);
+  return m ? Number(m[2]) : null;
 }
 
-/** Baja la foto de Telegram y busca el QR con el lector robusto (prueba primero la más grande) */
-async function leerQr(token: string, ids: string[]): Promise<number | null> {
+/** ¿El QR es de un rótulo de Variedades JYB? (lo atiende el bot de Variedades JYB) */
+function esDeJyb(texto: string): boolean {
+  return /KAESURI[\s:#-]*\d/i.test(texto);
+}
+
+/**
+ * Baja la foto de Telegram y busca el QR con el lector robusto (prueba primero la más grande).
+ * 'otro' = es un rótulo de Variedades JYB.
+ */
+async function leerQr(token: string, ids: string[]): Promise<number | 'otro' | null> {
   for (const id of ids) {
     try {
       const f = await api(token, 'getFile', { file_id: id });
@@ -73,6 +86,7 @@ async function leerQr(token: string, ids: string[]): Promise<number | null> {
       const bytes = new Uint8Array(await r.arrayBuffer());
       const img = jpeg.decode(bytes, { useTArray: true, formatAsRGBA: true, maxMemoryUsageInMB: 256 });
       const texto = await leerQrImagen(new Uint8ClampedArray(img.data.buffer, img.data.byteOffset, img.data.byteLength), img.width, img.height);
+      if (texto && esDeJyb(texto)) return 'otro';
       const n = texto ? pedidoDeQr(texto) : null;
       if (n) return n;
     } catch (e) {
@@ -96,7 +110,9 @@ const AYUDA =
   'Si una foto no se lee, escriban el número del pedido (ej. 23345). /ruta muestra lo que lleva el mensajero.';
 
 async function despachar(token: string, msg: any, pedido: number): Promise<void> {
-  const [{ r }] = await sql`select public.telegram_despachar(${msg.chat.id}, ${msg.message_id}, ${msg.from.id}, ${pedido}) as r`;
+  // Con la hora de la foto (msg.date): así la ruta queda en el orden de las fotos aunque el
+  // bot de Variedades JYB, en el mismo grupo, lea las suyas más rápido o más despacio
+  const [{ r }] = await sql`select public.telegram_despachar_orden(${msg.chat.id}, ${msg.message_id}, ${msg.from.id}, ${pedido}, ${msg.date ?? null}) as r`;
   if (r?.texto && !r.repetido) await responder(token, msg, r.texto);
 }
 
@@ -143,7 +159,9 @@ async function atender(cfg: Config, msg: any): Promise<void> {
   if (fotos.length) {
     // Las fotos de otras personas (p. ej. el mensajero mandando evidencias) se ignoran
     if (!(await esDespachador(msg.from.id))) return;
-    const pedido = (await leerQr(token, fotos)) ?? (texto ? pedidoDeTexto(texto) : null);
+    const qr = await leerQr(token, fotos);
+    if (qr === 'otro') return;
+    const pedido = qr ?? (texto ? pedidoDeTexto(texto) : null);
     if (!pedido) {
       await responder(token, msg, '⚠️ No pude leer el código del rótulo. Manda otra foto más de cerca y con luz, o escribe el número del pedido.');
       return;

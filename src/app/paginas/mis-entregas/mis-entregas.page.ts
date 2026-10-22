@@ -14,7 +14,7 @@ import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detal
 import { PedidoJybComponent } from '../../shared/pedido-jyb/pedido-jyb.component';
 import { Cuadre, Pedido, TipoRecaudo } from '../../shared/modelos';
 import { mensajeError, pesos } from '../../shared/formato';
-import { finDiaColombia, formatoFechaCO, formatoHoraCO, inicioDiaColombia } from '../../shared/fecha-colombia';
+import { finDiaColombia, formatoFechaCO, formatoHoraCO, inicioDiaColombia, microsAsignado } from '../../shared/fecha-colombia';
 import { RangoFechas } from '../../shared/rango/rango.component';
 import { DiaComponent } from '../../shared/rango/dia.component';
 import { nombreConVariante } from '../../shared/variante';
@@ -412,10 +412,14 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   arrastrandoId = signal<string | null>(null);
   rutaOrdenada = computed<Parada[]>(() => {
     const pos = new Map(this.orden().map((clave, i) => [clave, i]));
+    // Sin orden propio, va en el orden en que se los asignaron: por Telegram es el orden de las
+    // fotos de los rótulos (de Jasta y de Variedades JYB mezcladas)
     const todas: Parada[] = [
-      ...this.enRuta().map((p) => ({ clave: 'j:' + p.id, jasta: p })),
-      ...(this.jyb()?.en_ruta ?? []).map((p) => ({ clave: 'k:' + p.id, jyb: p })),
-    ];
+      ...this.enRuta().map((p) => ({ clave: 'j:' + p.id, jasta: p, cuando: microsAsignado(p.asignado_at) })),
+      ...(this.jyb()?.en_ruta ?? []).map((p) => ({ clave: 'k:' + p.id, jyb: p, cuando: microsAsignado(p.asignado_at ?? p.created_at) })),
+    ]
+      .sort((a, b) => a.cuando - b.cuando)
+      .map(({ cuando: _, ...p }) => p);
     return todas
       .map((p, i) => ({ p, k: pos.has(p.clave) ? pos.get(p.clave)! : 1e6 + i }))
       .sort((a, b) => a.k - b.k)
