@@ -2,6 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SupabaseService } from '../../core/services/supabase.service';
+import { Preferencia, PresenciaService } from '../../core/services/presencia.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { AvatarComponent } from '../../shared/avatar/avatar.component';
 import { RecortarFotoComponent } from '../../shared/recortar-foto/recortar-foto.component';
@@ -24,6 +25,15 @@ import { mensajeError } from '../../shared/formato';
       .foto input { display: none; }
       .roles { display: flex; gap: 6px; flex-wrap: wrap; }
       .fila { display: flex; gap: 8px; flex-wrap: wrap; }
+      .estados { display: grid; gap: 8px; }
+      .estado-op { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 8px 12px; text-align: left; cursor: pointer;
+        border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font: inherit; }
+      .estado-op.on { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-wash); }
+      .estado-op strong { display: block; font-size: 14.5px; font-weight: 600; }
+      .estado-op small { display: block; font-size: 12.5px; color: var(--text-soft); }
+      .pres { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; background: #80848e; }
+      .pres.activo { background: #23a55a; }
+      .pres.ausente { background: #f0b232; }
     `,
   ],
   template: `
@@ -32,7 +42,7 @@ import { mensajeError } from '../../shared/formato';
 
       <section class="panel">
         <div class="foto">
-          <app-avatar [nombre]="nombre" [foto]="foto()" [tam]="72"></app-avatar>
+          <app-avatar [nombre]="nombre" [foto]="foto()" [usuario]="sb.usuario()?.id" [tam]="72"></app-avatar>
           <div class="fila">
             <label class="b">{{ subiendo() ? 'Subiendo…' : 'Cambiar foto' }}
               <input type="file" accept="image/*" (change)="elegirFoto($event)" [disabled]="subiendo()" />
@@ -55,6 +65,20 @@ import { mensajeError } from '../../shared/formato';
           </span>
         </div>
         <div><button class="b b-pri" [disabled]="guardando()" (click)="guardar()">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button></div>
+      </section>
+
+      <!-- Como en Discord: así te ven los demás (punto en tu foto y en los chats) -->
+      <section class="panel">
+        <h2>Mi estado</h2>
+        <div class="estados" role="radiogroup" aria-label="Mi estado">
+          @for (e of estados; track e.valor) {
+            <button type="button" class="estado-op" role="radio" [class.on]="presencia.preferencia() === e.valor"
+              [attr.aria-checked]="presencia.preferencia() === e.valor" (click)="presencia.elegir(e.valor)">
+              <i [class]="'pres ' + e.punto"></i>
+              <span><strong>{{ e.etiqueta }}</strong><small>{{ e.ayuda }}</small></span>
+            </button>
+          }
+        </div>
       </section>
 
       @if (despacha()) {
@@ -84,6 +108,13 @@ import { mensajeError } from '../../shared/formato';
 })
 export class PerfilPage implements OnInit {
   sb = inject(SupabaseService);
+  presencia = inject(PresenciaService);
+  /** Como en Discord: automático (activo / ausente según uso), ausente fijo o invisible */
+  estados: { valor: Preferencia; etiqueta: string; ayuda: string; punto: string }[] = [
+    { valor: 'auto', etiqueta: 'Activo', ayuda: 'Pasas a ausente solo si no usas la app', punto: 'activo' },
+    { valor: 'ausente', etiqueta: 'Ausente', ayuda: 'Aunque tengas la app abierta', punto: 'ausente' },
+    { valor: 'invisible', etiqueta: 'Invisible', ayuda: 'Te ven desconectado', punto: 'desconectado' },
+  ];
   private toast = inject(ToastService);
   private router = inject(Router);
 

@@ -16,6 +16,8 @@ export interface PedidoJyb {
   total: number;
   observaciones: string | null;
   created_at?: string;
+  /** Cuándo se lo asignaron (por Telegram, la hora de la foto del rótulo) */
+  asignado_at?: string | null;
   vendedor?: string | null;
   items: { nombre: string; cantidad: number; precio?: number | null }[];
 }
