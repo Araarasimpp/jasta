@@ -216,6 +216,9 @@
                       @if (gestiona() && p.estado === 'alistado') {
                         <button role="menuitem" (click)="quitarAlistado(p)">Quitar de alistados</button>
                       }
+                      @if (esAdmin() && p.estado === 'entregado' && !p.cuadre_id && p.mensajero_id) {
+                        <button role="menuitem" (click)="devolverEntrega(p)">Devolver a En ruta</button>
+                      }
                       @if (puedeCancelar(p)) {
                         <button role="menuitem" (click)="cancelar(p)">Cancelar pedido</button>
                       }

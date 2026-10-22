@@ -223,6 +223,11 @@ export class PedidosService {
     this.check(await this.db.rpc('cambiar_estado', { p_pedido: id, p_estado: estado, p_mensajero: mensajeroId }));
   }
 
+  /** Admin: un entregado (aún sin cuadre) vuelve a En ruta para que el mensajero lo entregue de nuevo */
+  async devolverEntrega(id: number): Promise<void> {
+    this.check(await this.db.rpc('devolver_entrega', { p_pedido: id }));
+  }
+
   async asignarMensajero(id: number, mensajeroId: number | null): Promise<void> {
     this.check(await this.db.rpc('asignar_mensajero', { p_pedido: id, p_mensajero: mensajeroId }));
   }

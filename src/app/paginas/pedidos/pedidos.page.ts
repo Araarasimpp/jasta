@@ -418,6 +418,14 @@ export class PedidosPage implements OnInit, OnDestroy {
     await this.enLote([p], (x) => this.ps.cambiarEstado(x.id, 'cancelado'), 'cancelado(s)');
   }
 
+  /** Entregado por error o con el comprobante equivocado: vuelve a En ruta con el mismo mensajero */
+  async devolverEntrega(p: Pedido): Promise<void> {
+    this.menuAbierto.set(null);
+    const quien = p.mensajero?.nombre ?? 'el mensajero';
+    if (!confirm(`¿Devolver el pedido #${p.id} a En ruta? Se quita el pago y el comprobante, y ${quien} lo puede volver a marcar como entregado.`)) return;
+    await this.enLote([p], (x) => this.ps.devolverEntrega(x.id), 'devuelto(s) a En ruta');
+  }
+
   async eliminar(p: Pedido): Promise<void> {
     this.menuAbierto.set(null);
     if (p.estado === 'entregado') return;
