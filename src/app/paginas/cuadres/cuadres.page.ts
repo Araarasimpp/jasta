@@ -183,7 +183,7 @@ interface Pendiente {
         }
         <div class="tabla-wrap">
           <table class="tabla tarjetas-cel">
-            <thead><tr><th>Fecha</th><th>Mensajero</th><th class="der">Pedidos</th><th class="der">Efectivo</th><th class="der">Transferencia</th><th class="der">Domicilios</th><th class="der">Recibido</th><th>Estado</th><th>Cerró</th></tr></thead>
+            <thead><tr><th>Fecha</th><th>Mensajero</th><th class="der">Pedidos</th><th class="der">Efectivo</th><th class="der">Transferencia</th><th class="der">Domicilios</th><th class="der">Recibido</th><th>Estado</th><th>Cerró</th><th>Recibió</th></tr></thead>
             <tbody>
               @for (c of historial(); track c.id) {
                 <tr class="click" (click)="verCuadre(c)">
@@ -196,9 +196,10 @@ interface Pendiente {
                   <td class="der num recibido" data-etq="Recibido">{{ pesos(c.total_efectivo - c.total_domicilios) }}</td>
                   <td data-etq="Estado"><span class="estado-cuadre" [class.pendiente]="c.estado === 'pendiente'">{{ c.estado === 'pendiente' ? 'Por confirmar' : 'Confirmado' }}</span></td>
                   <td class="suave corta" data-etq="Cerró">{{ c.cerrado_por_nombre || '—' }}</td>
+                  <td class="suave corta" data-etq="Recibió">{{ c.estado === 'pendiente' ? 'Falta confirmar' : c.confirmado_por_nombre || '—' }}</td>
                 </tr>
                 @if (cuadreAbierto() === c.id) {
-                  <tr><td colspan="9">
+                  <tr><td colspan="10">
                     <table class="mini">
                       @for (p of pedidosCuadre(); track p.id) {
                         <tr (click)="abierto.set(p.id)">
@@ -209,7 +210,7 @@ interface Pendiente {
                   </td></tr>
                 }
               } @empty {
-                <tr><td colspan="9" class="suave">No se cerraron cuadres este día.</td></tr>
+                <tr><td colspan="10" class="suave">No se cerraron cuadres este día.</td></tr>
               }
             </tbody>
           </table>
