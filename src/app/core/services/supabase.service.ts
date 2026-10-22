@@ -1,5 +1,5 @@
 import { Injectable, computed, signal } from '@angular/core';
-import { createClient, Session, SupabaseClient } from '@supabase/supabase-js';
+import { createClient, RealtimeChannel, Session, SupabaseClient } from '@supabase/supabase-js';
 import { environment } from '../../../environments/environment';
 import { Rol, Usuario } from '../../shared/modelos';
 
@@ -16,6 +16,8 @@ export class SupabaseService {
   constructor() {
     this.client = createClient(environment.supabaseUrl, environment.supabaseKey, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+      // Latido más seguido: una conexión muerta (celular que se durmió) se nota en ~15 s y no en ~50 s
+      realtime: { heartbeatIntervalMs: 15000 },
     });
     this.listo = this.iniciar();
     this.client.auth.onAuthStateChange((evento, session) => {
@@ -46,6 +48,75 @@ export class SupabaseService {
     }
     const { data } = await this.client.from('usuarios').select('*').eq('auth_id', uid).maybeSingle();
     this.usuario.set((data as Usuario) ?? null);
+  }
+
+  /**
+   * Canal de Realtime que no se queda dormido. El celular corta la conexión cuando la app
+   * pasa a segundo plano o se bloquea la pantalla, y Realtime no repite lo que llegó mientras
+   * tanto. Por eso `alVolver` (traer de nuevo los datos) se llama:
+   *  · al volver a la app o recuperar internet (y se reconecta el socket si quedó caído),
+   *  · cuando el canal se vuelve a unir después de una caída,
+   *  · cada minuto mientras la app está a la vista, como respaldo.
+   * Si el canal falla (error o tiempo agotado) se arma de nuevo, esperando cada vez más.
+   * Devuelve la función para cerrarlo.
+   */
+  enVivo(nombre: string, armar: (canal: RealtimeChannel) => RealtimeChannel, alVolver: () => void): () => void {
+    let canal: RealtimeChannel | null = null;
+    let cerrado = false;
+    let unidoAntes = false;
+    let espera = 10000;
+    let reintento: ReturnType<typeof setTimeout> | undefined;
+    let ultimo = 0;
+    const avisar = () => {
+      if (cerrado || Date.now() - ultimo < 1500) return;
+      ultimo = Date.now();
+      alVolver();
+    };
+    const abrir = () => {
+      if (cerrado) return;
+      const c = armar(this.client.channel(`${nombre}-${Math.random().toString(36).slice(2, 8)}`));
+      canal = c;
+      c.subscribe((estado) => {
+        if (cerrado || canal !== c) return;
+        if (estado === 'SUBSCRIBED') {
+          clearTimeout(reintento);
+          // Siempre: lo que cambió entre el último aviso y este momento no llegó por el canal
+          if (unidoAntes) alVolver();
+          unidoAntes = true;
+          espera = 10000;
+        } else if (estado === 'CHANNEL_ERROR' || estado === 'TIMED_OUT') {
+          // Casi siempre Realtime se vuelve a unir solo; si no lo logró en un rato, se arma de nuevo
+          clearTimeout(reintento);
+          reintento = setTimeout(() => {
+            if (cerrado || canal !== c || c.state === 'joined') return;
+            canal = null;
+            void this.client.removeChannel(c);
+            abrir();
+          }, espera);
+          espera = Math.min(espera * 2, 60000);
+        }
+      });
+    };
+    const despertar = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (!this.client.realtime.isConnected()) this.client.realtime.connect();
+      avisar();
+    };
+    const respaldo = setInterval(() => {
+      if (document.visibilityState === 'visible') avisar();
+    }, 60000);
+    document.addEventListener('visibilitychange', despertar);
+    window.addEventListener('online', despertar);
+    abrir();
+    return () => {
+      cerrado = true;
+      clearTimeout(reintento);
+      clearInterval(respaldo);
+      document.removeEventListener('visibilitychange', despertar);
+      window.removeEventListener('online', despertar);
+      if (canal) void this.client.removeChannel(canal);
+      canal = null;
+    };
   }
 
   tiene(...roles: Rol[]): boolean {

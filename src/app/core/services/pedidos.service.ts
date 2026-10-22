@@ -393,12 +393,11 @@ export class PedidosService {
     ) ?? []) as unknown as Pedido[];
   }
 
-  /** Avisa cuando cambia cualquier pedido (para refrescar listas) */
+  /**
+   * Avisa cuando cambia cualquier pedido (para refrescar listas). También avisa al volver
+   * a la app o al reconectarse, para traer lo que llegó mientras la conexión estaba caída.
+   */
   escuchar(cb: () => void): () => void {
-    const canal = this.db
-      .channel('pedidos-' + Math.random().toString(36).slice(2))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, () => cb())
-      .subscribe();
-    return () => void this.db.removeChannel(canal);
+    return this.sb.enVivo('pedidos', (c) => c.on('postgres_changes', { event: '*', schema: 'public', table: 'pedidos' }, () => cb()), cb);
   }
 }

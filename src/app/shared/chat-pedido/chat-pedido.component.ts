@@ -209,14 +209,13 @@ export class ChatPedidoComponent implements OnInit, AfterViewInit, OnDestroy {
   /** Mensaje propio abierto con el detalle de entregado / leído */
   detalle = signal<number | null>(null);
 
-  private canal: RealtimeChannel | null = null;
+  private cerrarCanal?: () => void;
   /** Canal aparte (solo broadcast) para avisar "está escribiendo…" */
   private canalEscribe: RealtimeChannel | null = null;
   quienEscribe = signal<string | null>(null);
   private timerEscribe?: ReturnType<typeof setTimeout>;
   private ultimoAviso = 0;
   private respaldo?: ReturnType<typeof setInterval>;
-  private conectadoAntes = false;
 
   constructor() {
     addIcons({ sendOutline });
@@ -224,35 +223,34 @@ export class ChatPedidoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit(): void {
     void this.cargar();
-    this.canal = this.sb.client
-      .channel(`chat-${this.pedidoId}-${Math.random().toString(36).slice(2, 8)}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'pedido_mensajes', filter: `pedido_id=eq.${this.pedidoId}` },
-        (payload) => {
-          const m = payload.new as Mensaje;
-          this.agregar(m);
-          void this.avisos.marcarMensajesLeidos(this.pedidoId);
-          if (m.autor_id !== this.yo()) this.marcarLeido();
-        }
-      )
-      // Los chulos de mis mensajes cambian al instante cuando al otro le llegan o los lee
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'pedido_chat_lecturas', filter: `pedido_id=eq.${this.pedidoId}` },
-        (payload) => {
-          const l = payload.new as Lectura;
-          if (!l?.usuario_id) return;
-          this.lecturas.update((lista) => [...lista.filter((x) => x.usuario_id !== l.usuario_id), l]);
-        }
-      )
-      // Al volver la conexión (el iPhone la corta cuando la app queda en segundo plano)
-      // se trae lo que llegó mientras tanto: Realtime no repite los mensajes perdidos
-      .subscribe((estado) => {
-        if (estado !== 'SUBSCRIBED') return;
-        if (this.conectadoAntes) void this.cargar(true);
-        this.conectadoAntes = true;
-      });
+    // Al volver a la app o reconectarse (el iPhone corta la conexión en segundo plano)
+    // se trae lo que llegó mientras tanto: Realtime no repite los mensajes perdidos
+    this.cerrarCanal = this.sb.enVivo(
+      `chat-${this.pedidoId}`,
+      (c) =>
+        c
+          .on(
+            'postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'pedido_mensajes', filter: `pedido_id=eq.${this.pedidoId}` },
+            (payload) => {
+              const m = payload.new as Mensaje;
+              this.agregar(m);
+              void this.avisos.marcarMensajesLeidos(this.pedidoId);
+              if (m.autor_id !== this.yo()) this.marcarLeido();
+            }
+          )
+          // Los chulos de mis mensajes cambian al instante cuando al otro le llegan o los lee
+          .on(
+            'postgres_changes',
+            { event: '*', schema: 'public', table: 'pedido_chat_lecturas', filter: `pedido_id=eq.${this.pedidoId}` },
+            (payload) => {
+              const l = payload.new as Lectura;
+              if (!l?.usuario_id) return;
+              this.lecturas.update((lista) => [...lista.filter((x) => x.usuario_id !== l.usuario_id), l]);
+            }
+          ),
+      () => void this.cargar(true)
+    );
     this.canalEscribe = this.sb.client
       .channel(`escribiendo-${this.pedidoId}`, { config: { broadcast: { self: false } } })
       .on('broadcast', { event: 'escribiendo' }, ({ payload }) => {
@@ -276,7 +274,7 @@ export class ChatPedidoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.canal) this.sb.client.removeChannel(this.canal);
+    this.cerrarCanal?.();
     if (this.canalEscribe) this.sb.client.removeChannel(this.canalEscribe);
     clearInterval(this.respaldo);
     clearTimeout(this.timerEscribe);

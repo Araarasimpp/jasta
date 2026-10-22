@@ -3,7 +3,6 @@ import { FormsModule } from '@angular/forms';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import { addCircleOutline, bagHandleOutline, checkmarkOutline, closeOutline, walletOutline } from 'ionicons/icons';
-import { RealtimeChannel } from '@supabase/supabase-js';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { VisorService } from '../../shared/visor/visor.service';
@@ -297,7 +296,7 @@ export class RecolectorPage implements OnInit, OnDestroy {
   numero = numero;
   private dia = '';
   private consulta = 0;
-  private canal: RealtimeChannel | null = null;
+  private cerrarCanal?: () => void;
   private timer?: ReturnType<typeof setTimeout>;
 
   constructor() {
@@ -310,15 +309,18 @@ export class RecolectorPage implements OnInit, OnDestroy {
       clearTimeout(this.timer);
       this.timer = setTimeout(() => this.cargar(), 500);
     };
-    this.canal = this.sb.client
-      .channel('recoleccion-' + Math.random().toString(36).slice(2))
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'recoleccion_bases' }, recargar)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'recoleccion_compras' }, recargar)
-      .subscribe();
+    this.cerrarCanal = this.sb.enVivo(
+      'recoleccion',
+      (c) =>
+        c
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'recoleccion_bases' }, recargar)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'recoleccion_compras' }, recargar),
+      recargar
+    );
   }
 
   ngOnDestroy(): void {
-    if (this.canal) void this.sb.client.removeChannel(this.canal);
+    this.cerrarCanal?.();
     clearTimeout(this.timer);
   }
 

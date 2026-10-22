@@ -1,6 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { RealtimeChannel } from '@supabase/supabase-js';
 import { SupabaseService } from './supabase.service';
 
 /** Estado de los avisos con la app cerrada (push) en este dispositivo. */
@@ -50,7 +49,7 @@ export class NotificacionesService {
   /** Cambiando entre activar y desactivar (para deshabilitar el botón). */
   readonly cambiando = signal(false);
 
-  private canal: RealtimeChannel | null = null;
+  private cerrarCanal: (() => void) | null = null;
   private usuarioId: number | null = null;
 
   /** Se llama desde el shell al entrar. Seguro de llamar varias veces. */
@@ -61,16 +60,17 @@ export class NotificacionesService {
     this.usuarioId = usuario.id;
 
     await this.recargar();
-    document.addEventListener('visibilitychange', this.alVolver);
-
-    this.canal = this.sb.client
-      .channel(`avisos-${usuario.id}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'notificaciones', filter: `usuario_id=eq.${usuario.id}` },
-        (payload) => this.recibir(payload.new as Aviso)
-      )
-      .subscribe();
+    // Al volver a la app (o reconectarse) se trae lo que llegó mientras tanto
+    this.cerrarCanal = this.sb.enVivo(
+      `avisos-${usuario.id}`,
+      (c) =>
+        c.on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'notificaciones', filter: `usuario_id=eq.${usuario.id}` },
+          (payload) => this.recibir(payload.new as Aviso)
+        ),
+      () => void this.recargar()
+    );
 
     // Si en este dispositivo ya se dio permiso, se renueva la suscripción en
     // silencio (por ejemplo, si ahora entró otra persona en el mismo celular)
@@ -90,11 +90,6 @@ export class NotificacionesService {
     this.marcarEntregados(this.avisos().filter((a) => !a.leida && a.tipo === 'mensaje' && a.pedido_id).map((a) => a.pedido_id!));
   }
 
-  /** Al volver a la app se trae lo que llegó mientras tanto (el celular corta la conexión en segundo plano) */
-  private alVolver = (): void => {
-    if (document.visibilityState === 'visible' && this.usuarioId) void this.recargar();
-  };
-
   /** Los mensajes de estos chats ya le llegaron a la persona (doble chulo gris para quien los mandó) */
   private marcarEntregados(pedidos: number[]): void {
     const unicos = [...new Set(pedidos)];
@@ -103,9 +98,8 @@ export class NotificacionesService {
   }
 
   detener(): void {
-    document.removeEventListener('visibilitychange', this.alVolver);
-    if (this.canal) this.sb.client.removeChannel(this.canal);
-    this.canal = null;
+    this.cerrarCanal?.();
+    this.cerrarCanal = null;
     this.usuarioId = null;
     this.avisos.set([]);
     this.abierto.set(false);
