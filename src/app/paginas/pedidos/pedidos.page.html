@@ -170,7 +170,7 @@
                 </span>
 
                 <div class="c-dom">
-                  @if (gestiona() && editable(p) && p.canal !== 'local') {
+                  @if (puedeAsignar(p)) {
                     <app-avatar [nombre]="p.mensajero_id ? nombreMensajero(p) : null" [foto]="fotoMensajero(p.mensajero_id)" [tam]="24"></app-avatar>
                     <select class="dom-select" [class.unassigned]="!p.mensajero_id" (change)="cambioMensajero(p, $event)"
                       [disabled]="guardandoId() === p.id" [attr.aria-label]="'Mensajero del pedido ' + p.id">
@@ -269,22 +269,26 @@
   @if (sel().size) {
     <div class="selection-bar" role="toolbar" aria-label="Acciones de selección">
       <span class="num sel-count">{{ sel().size }} {{ sel().size === 1 ? 'seleccionado' : 'seleccionados' }}</span>
-      <select class="bar-select" (change)="asignarLote($event)" [disabled]="ocupado() || !mensajeros().length" aria-label="Asignar mensajero a la selección">
-        <option value="" selected disabled>{{ ocupado() ? 'Asignando…' : 'Asignar mensajero' }}</option>
-        @for (m of mensajeros(); track m.id) {
-          <option [value]="m.id">{{ m.nombre }}</option>
-        }
-      </select>
+      @if (selAsignables().length) {
+        <select class="bar-select" (change)="asignarLote($event)" [disabled]="ocupado() || !mensajeros().length" aria-label="Asignar mensajero a la selección">
+          <option value="" selected disabled>{{ ocupado() ? 'Asignando…' : 'Asignar mensajero' + (selAsignables().length < sel().size ? ' (' + selAsignables().length + ')' : '') }}</option>
+          @for (m of mensajeros(); track m.id) {
+            <option [value]="m.id">{{ m.nombre }}</option>
+          }
+        </select>
+      }
       @if (selPorAlistar().length) {
         <button class="bar-btn" (click)="alistar(selPorAlistar())" [disabled]="ocupado()">
           <ion-icon name="cube-outline" aria-hidden="true"></ion-icon>
           {{ ocupado() ? 'Alistando…' : 'Alistar (' + selPorAlistar().length + ')' }}
         </button>
       }
-      <button class="bar-btn" (click)="imprimirSeleccion()" [disabled]="imprimiendo()">
-        <ion-icon name="print-outline" aria-hidden="true"></ion-icon>
-        {{ imprimiendo() ? 'Preparando…' : 'Imprimir rótulos' }}
-      </button>
+      @if (selImprimibles().length) {
+        <button class="bar-btn" (click)="imprimirSeleccion()" [disabled]="imprimiendo()">
+          <ion-icon name="print-outline" aria-hidden="true"></ion-icon>
+          {{ imprimiendo() ? 'Preparando…' : 'Imprimir rótulos' + (selImprimibles().length < sel().size ? ' (' + selImprimibles().length + ')' : '') }}
+        </button>
+      }
       <button class="bar-icon" (click)="limpiarSel()" aria-label="Quitar selección">
         <ion-icon name="close"></ion-icon>
       </button>

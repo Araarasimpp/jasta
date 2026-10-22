@@ -148,6 +148,8 @@ export class PedidosPage implements OnInit, OnDestroy {
   /** Número de cada pedido en la selección (1, 2, 3…), para saber en qué orden se va a asignar */
   numSel = computed(() => new Map([...this.sel()].map((id, i) => [id, i + 1])));
   selPorAlistar = computed(() => this.selPedidos().filter((p) => this.puedeAlistar(p)));
+  selAsignables = computed(() => this.selPedidos().filter((p) => this.puedeAsignar(p)));
+  selImprimibles = computed(() => this.selPedidos().filter((p) => this.puedeImprimir(p)));
   todosSel = computed(() => this.visibles().length > 0 && this.visibles().every((p) => this.sel().has(p.id)));
   /** Alistados a los que les falta el rótulo (en la pestaña Alistados la lista está completa) */
   alistadosSinRotulo = computed(() => this.filas().filter((p) => p.estado === 'alistado' && !p.rotulo_impreso_at && p.canal !== 'local').length);
@@ -299,6 +301,16 @@ export class PedidosPage implements OnInit, OnDestroy {
     return p.estado !== 'entregado' && p.estado !== 'cancelado';
   }
 
+  /** Mensajero: solo a los alistados (se despachan) y a los en ruta (se cambia de mensajero) */
+  puedeAsignar(p: Pedido): boolean {
+    return this.gestiona() && (p.estado === 'alistado' || p.estado === 'despachado') && p.canal !== 'local';
+  }
+
+  /** Rótulo: solo se imprime a los alistados */
+  puedeImprimir(p: Pedido): boolean {
+    return p.estado === 'alistado' && p.canal !== 'local';
+  }
+
   puedeAlistar(p: Pedido): boolean {
     return this.gestiona() && p.estado === 'por_alistar' && p.canal !== 'local';
   }
@@ -400,11 +412,8 @@ export class PedidosPage implements OnInit, OnDestroy {
     const id = Number(select.value);
     select.value = ''; // vuelve a mostrar "Asignar mensajero"
     if (!id) return;
-    const lista = this.selPedidos().filter((p) => this.editable(p) && p.canal !== 'local');
-    if (!lista.length) {
-      this.toast.error('Los pedidos seleccionados ya están entregados o cancelados.');
-      return;
-    }
+    const lista = this.selAsignables();
+    if (!lista.length) return;
     void this.enLote(
       lista,
       (p) => (p.estado === 'despachado' ? this.ps.asignarMensajero(p.id, id) : this.ps.cambiarEstado(p.id, 'despachado', id)),
@@ -469,14 +478,10 @@ export class PedidosPage implements OnInit, OnDestroy {
 
   /** Los alistados salen primero y en el orden en que se alistaron; el resto, en el orden de la lista */
   async imprimirSeleccion(): Promise<void> {
-    const ids = this.selPedidos()
-      .filter((p) => p.canal !== 'local')
+    const ids = this.selImprimibles()
       .sort((a, b) => this.puesto(a) - this.puesto(b))
       .map((p) => p.id);
-    if (!ids.length) {
-      this.toast.error('Las ventas en local no llevan rótulo.');
-      return;
-    }
+    if (!ids.length) return;
     this.imprimiendo.set(true);
     try {
       if (await this.rotulos.imprimir(() => this.ps.conItems(ids))) {
