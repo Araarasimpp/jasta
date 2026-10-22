@@ -5,6 +5,7 @@ import { addIcons } from 'ionicons';
 import { searchOutline, closeOutline, personAddOutline } from 'ionicons/icons';
 import { PedidosService } from '../../core/services/pedidos.service';
 import { SupabaseService } from '../../core/services/supabase.service';
+import { PresenciaService } from '../../core/services/presencia.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { ROLES, Rol, Usuario } from '../../shared/modelos';
 import { mensajeError } from '../../shared/formato';
@@ -18,6 +19,11 @@ type Filtro = 'activos' | 'sin_rol' | 'inactivos' | 'todos';
   styles: [
     `
       .roles { display: flex; gap: 4px; flex-wrap: wrap; }
+      /* Estado como en Discord: verde activo, amarillo ausente, gris desconectado */
+      .con-punto { display: inline-flex; align-items: center; gap: 8px; }
+      .pres { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; background: #80848e; }
+      .pres.activo { background: #23a55a; }
+      .pres.ausente { background: #f0b232; }
       .cuenta { font-size: 12px; }
       .cuenta.si { color: var(--efectivo-texto); }
       .cuenta.no { color: var(--text-muted); }
@@ -57,7 +63,7 @@ type Filtro = 'activos' | 'sin_rol' | 'inactivos' | 'todos';
           <tbody>
             @for (u of filtrados(); track u.id) {
               <tr class="click" (click)="abrir(u)" [style.opacity]="u.activo ? 1 : 0.55">
-                <td>{{ u.nombre }}</td>
+                <td><span class="con-punto"><i [class]="'pres ' + presencia.estado(u.id)" role="img" [attr.aria-label]="presencia.texto(u.id)" [attr.title]="presencia.texto(u.id)"></i>{{ u.nombre }}</span></td>
                 <td class="suave corta solo-pc">{{ u.email || '—' }}</td>
                 <td>
                   <span class="roles">
@@ -156,6 +162,7 @@ type Filtro = 'activos' | 'sin_rol' | 'inactivos' | 'todos';
 export class UsuariosPage implements OnInit {
   private ps = inject(PedidosService);
   private sb = inject(SupabaseService);
+  presencia = inject(PresenciaService);
   private toast = inject(ToastService);
 
   usuarios = signal<Usuario[]>([]);
@@ -209,6 +216,7 @@ export class UsuariosPage implements OnInit {
   async cargar(): Promise<void> {
     try {
       this.usuarios.set(await this.ps.usuarios());
+      void this.presencia.cargarVistos(this.usuarios().map((u) => u.id));
     } catch (e) {
       this.toast.error(mensajeError(e));
     } finally {

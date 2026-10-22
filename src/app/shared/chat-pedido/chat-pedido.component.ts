@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, HostBinding, Input, OnDestroy, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, HostBinding, HostListener, Input, OnDestroy, OnInit, Output, ViewChild, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
@@ -17,6 +17,27 @@ interface Mensaje {
   autor_nombre: string;
   texto: string;
   created_at: string;
+}
+
+/** Hasta cuándo le llegaron y hasta cuándo leyó cada persona los mensajes del pedido */
+interface Lectura {
+  usuario_id: number;
+  usuario_nombre: string | null;
+  entregado_at: string | null;
+  leido_at: string | null;
+}
+
+type Chulos = 'enviado' | 'entregado' | 'leido';
+
+/** Milisegundos de una fecha de la base (llega con o sin "T" y con microsegundos, según la vía) */
+function ms(iso: string): number {
+  const t = iso.replace(' ', 'T').replace(/(\.\d{3})\d+/, '$1').replace(/([+-]\d{2})$/, '$1:00');
+  return Date.parse(t);
+}
+
+/** ¿La marca a es igual o posterior al mensaje b? */
+function despues(a: string | null | undefined, b: string): boolean {
+  return !!a && ms(a) >= ms(b);
 }
 
 /** Mensajes frecuentes: se mandan con un toque (sobre todo en la calle) */
@@ -63,7 +84,23 @@ const RAPIDOS_TIENDA = [
         font-size: 14px; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; }
       .msg.mio .burbuja { border-radius: 10px 10px 3px 10px; background: var(--accent-wash); border-color: var(--accent-soft); }
       .meta { font-size: 11px; color: var(--text-muted); }
+      /* La otra persona está escribiendo (tres puntos, como en WhatsApp) */
+      .puntos { display: flex; gap: 4px; align-items: center; padding: 11px 13px; }
+      .puntos i { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); animation: salta 1.2s infinite ease-in-out; }
+      .puntos i:nth-child(2) { animation-delay: .15s; }
+      .puntos i:nth-child(3) { animation-delay: .3s; }
+      @keyframes salta { 0%, 60%, 100% { transform: translateY(0); opacity: .45; } 30% { transform: translateY(-4px); opacity: 1; } }
+      @media (prefers-reduced-motion: reduce) { .puntos i { animation: none; } }
       .meta .hora { font-family: var(--mono-font); }
+      /* Chulos como en WhatsApp: uno gris enviado, dos grises entregado, dos azules leído */
+      .meta { display: inline-flex; align-items: center; gap: 3px; }
+      .chulos { display: inline-flex; width: 17px; height: 11px; color: var(--text-muted); }
+      .chulos.leido { color: #53bdeb; }
+      .chulos svg { width: 100%; height: 100%; }
+      button.msg-mio { all: unset; display: contents; cursor: pointer; }
+      .detalle { margin-top: 2px; padding: 7px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface);
+        font-size: 12px; color: var(--text-soft); display: flex; flex-direction: column; gap: 2px; text-align: left; }
+      .detalle b { font-weight: 600; color: var(--text-2); }
       .rapidos { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 8px 0; }
       .rapidos::-webkit-scrollbar { display: none; }
       .rapido { flex-shrink: 0; height: 30px; padding: 0 11px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface);
@@ -84,13 +121,46 @@ const RAPIDOS_TIENDA = [
     <div class="lista" #lista aria-live="polite">
       @for (m of mensajes(); track m.id) {
         <div class="msg" [class.mio]="m.autor_id === yo()">
-          <div class="burbuja">{{ m.texto }}</div>
-          <span class="meta">
-            @if (m.autor_id !== yo()) { {{ m.autor_nombre }} · }<span class="hora">{{ hora(m.created_at) }}</span>
-          </span>
+          @if (m.autor_id === yo()) {
+            <!-- Al tocar un mensaje propio se ve a quién le llegó y quién lo leyó -->
+            <button type="button" class="msg-mio" (click)="verDetalle(m.id)" [attr.aria-expanded]="detalle() === m.id"
+              [attr.aria-label]="'Mensaje: ' + m.texto + '. ' + textoChulos(chulos(m))">
+              <div class="burbuja">{{ m.texto }}</div>
+              <span class="meta">
+                <span class="hora">{{ hora(m.created_at) }}</span>
+                <span class="chulos" [class.leido]="chulos(m) === 'leido'" [attr.title]="textoChulos(chulos(m))" aria-hidden="true">
+                  @if (chulos(m) === 'enviado') {
+                    <svg viewBox="0 0 16 11"><path d="M11.07.65 4.9 7.43 2.4 5.05a.7.7 0 1 0-.97 1.02l3.03 2.88a.7.7 0 0 0 1-.04l6.65-7.3a.7.7 0 0 0-1.04-.96Z" fill="currentColor"/></svg>
+                  } @else {
+                    <svg viewBox="0 0 16 11"><path d="M11.07.65 4.9 7.43 2.4 5.05a.7.7 0 1 0-.97 1.02l3.03 2.88a.7.7 0 0 0 1-.04l6.65-7.3a.7.7 0 0 0-1.04-.96Zm3.5 0L8.4 7.43l-.6-.57-.96 1.05 1.1 1.04a.7.7 0 0 0 1-.04l6.65-7.3a.7.7 0 0 0-1.04-.96Z" fill="currentColor"/></svg>
+                  }
+                </span>
+              </span>
+            </button>
+            @if (detalle() === m.id) {
+              <div class="detalle">
+                @for (l of quienes(m); track l.nombre) {
+                  <span><b>{{ l.nombre }}</b> · {{ l.texto }}</span>
+                } @empty {
+                  <span>Todavía no le ha llegado a nadie</span>
+                }
+              </div>
+            }
+          } @else {
+            <div class="burbuja">{{ m.texto }}</div>
+            <span class="meta">{{ m.autor_nombre }} · <span class="hora">{{ hora(m.created_at) }}</span></span>
+          }
         </div>
       } @empty {
+        @if (!quienEscribe()) {
         <p class="vacio">{{ cargando() ? 'Cargando mensajes…' : 'Sin mensajes. Escribe aquí lo que el otro necesite saber de este pedido.' }}</p>
+        }
+      }
+      @if (quienEscribe(); as q) {
+        <div class="msg" aria-live="polite">
+          <div class="burbuja puntos" aria-hidden="true"><i></i><i></i><i></i></div>
+          <span class="meta">{{ q }} está escribiendo…</span>
+        </div>
       }
     </div>
 
@@ -102,7 +172,7 @@ const RAPIDOS_TIENDA = [
 
     <form class="escribir" (ngSubmit)="enviar(texto)">
       <textarea name="texto" rows="1" [(ngModel)]="texto" placeholder="Escribe un mensaje…" aria-label="Mensaje"
-        maxlength="1000" (keydown.enter)="enter($event)"></textarea>
+        maxlength="1000" (keydown.enter)="enter($event)" (input)="tecleando()"></textarea>
       <button type="submit" class="enviar" [disabled]="!texto.trim() || enviando()" aria-label="Enviar">
         <ion-icon name="send-outline"></ion-icon>
       </button>
@@ -116,6 +186,8 @@ export class ChatPedidoComponent implements OnInit, AfterViewInit, OnDestroy {
   /** Ocupa todo el alto disponible (ventana de chat aparte del pedido) */
   @Input() @HostBinding('class.completo') completo = false;
   @ViewChild('lista') lista?: ElementRef<HTMLElement>;
+  /** Quién está escribiendo en este momento (para mostrarlo en la cabecera), o null */
+  @Output() escribiendo = new EventEmitter<string | null>();
 
   private sb = inject(SupabaseService);
   private avisos = inject(NotificacionesService);
@@ -133,7 +205,18 @@ export class ChatPedidoComponent implements OnInit, AfterViewInit, OnDestroy {
     return soloMensajero ? RAPIDOS_MENSAJERO : RAPIDOS_TIENDA;
   });
 
+  lecturas = signal<Lectura[]>([]);
+  /** Mensaje propio abierto con el detalle de entregado / leído */
+  detalle = signal<number | null>(null);
+
   private canal: RealtimeChannel | null = null;
+  /** Canal aparte (solo broadcast) para avisar "está escribiendo…" */
+  private canalEscribe: RealtimeChannel | null = null;
+  quienEscribe = signal<string | null>(null);
+  private timerEscribe?: ReturnType<typeof setTimeout>;
+  private ultimoAviso = 0;
+  private respaldo?: ReturnType<typeof setInterval>;
+  private conectadoAntes = false;
 
   constructor() {
     addIcons({ sendOutline });
@@ -147,11 +230,42 @@ export class ChatPedidoComponent implements OnInit, AfterViewInit, OnDestroy {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'pedido_mensajes', filter: `pedido_id=eq.${this.pedidoId}` },
         (payload) => {
-          this.agregar(payload.new as Mensaje);
+          const m = payload.new as Mensaje;
+          this.agregar(m);
           void this.avisos.marcarMensajesLeidos(this.pedidoId);
+          if (m.autor_id !== this.yo()) this.marcarLeido();
         }
       )
+      // Los chulos de mis mensajes cambian al instante cuando al otro le llegan o los lee
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'pedido_chat_lecturas', filter: `pedido_id=eq.${this.pedidoId}` },
+        (payload) => {
+          const l = payload.new as Lectura;
+          if (!l?.usuario_id) return;
+          this.lecturas.update((lista) => [...lista.filter((x) => x.usuario_id !== l.usuario_id), l]);
+        }
+      )
+      // Al volver la conexión (el iPhone la corta cuando la app queda en segundo plano)
+      // se trae lo que llegó mientras tanto: Realtime no repite los mensajes perdidos
+      .subscribe((estado) => {
+        if (estado !== 'SUBSCRIBED') return;
+        if (this.conectadoAntes) void this.cargar(true);
+        this.conectadoAntes = true;
+      });
+    this.canalEscribe = this.sb.client
+      .channel(`escribiendo-${this.pedidoId}`, { config: { broadcast: { self: false } } })
+      .on('broadcast', { event: 'escribiendo' }, ({ payload }) => {
+        const quien = payload as { id: unknown; nombre: string; escribiendo: boolean };
+        if (quien.id === this.yo()) return;
+        if (quien.escribiendo) this.mostrarEscribiendo(quien.nombre);
+        else this.ocultarEscribiendo();
+      })
       .subscribe();
+    // Respaldo: mientras el chat está abierto y a la vista, se revisa cada 20 s
+    this.respaldo = setInterval(() => {
+      if (document.visibilityState === 'visible') void this.cargar(true);
+    }, 20000);
   }
 
   ngAfterViewInit(): void {
@@ -163,27 +277,88 @@ export class ChatPedidoComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     if (this.canal) this.sb.client.removeChannel(this.canal);
+    if (this.canalEscribe) this.sb.client.removeChannel(this.canalEscribe);
+    clearInterval(this.respaldo);
+    clearTimeout(this.timerEscribe);
+    this.escribiendo.emit(null);
   }
 
-  async cargar(): Promise<void> {
-    const { data, error } = await this.sb.client
-      .from('pedido_mensajes')
-      .select('id, pedido_id, autor_id, autor_nombre, texto, created_at')
-      .eq('pedido_id', this.pedidoId)
-      .order('created_at')
-      .limit(200);
+  /** silencio: recargas automáticas (sin aviso de error si no hay señal) */
+  async cargar(silencio = false): Promise<void> {
+    const [{ data, error }, lect] = await Promise.all([
+      this.sb.client
+        .from('pedido_mensajes')
+        .select('id, pedido_id, autor_id, autor_nombre, texto, created_at')
+        .eq('pedido_id', this.pedidoId)
+        .order('created_at')
+        .limit(200),
+      this.sb.client
+        .from('pedido_chat_lecturas')
+        .select('usuario_id, usuario_nombre, entregado_at, leido_at')
+        .eq('pedido_id', this.pedidoId),
+    ]);
+    if (lect.data) this.lecturas.set(lect.data as Lectura[]);
     this.cargando.set(false);
     if (error) {
-      this.toast.error('No se pudieron cargar los mensajes: ' + mensajeError(error));
+      if (!silencio) this.toast.error('No se pudieron cargar los mensajes: ' + mensajeError(error));
       return;
     }
-    this.mensajes.set((data ?? []) as Mensaje[]);
-    this.bajar();
+    const antes = this.mensajes().at(-1)?.id;
+    const lista = (data ?? []) as Mensaje[];
+    this.mensajes.set(lista);
+    // Solo baja al final si hay algo nuevo (así no salta mientras se leen mensajes viejos)
+    if (lista.at(-1)?.id !== antes) this.bajar();
     void this.avisos.marcarMensajesLeidos(this.pedidoId);
+    this.marcarLeido();
+  }
+
+  /** Lo que llegó de los demás queda leído (solo con el chat a la vista) */
+  private marcarLeido(): void {
+    if (document.visibilityState !== 'visible') return;
+    const yo = this.yo();
+    const ultimo = [...this.mensajes()].reverse().find((m) => m.autor_id !== yo);
+    if (!ultimo) return;
+    const mia = this.lecturas().find((l) => l.usuario_id === yo);
+    if (despues(mia?.leido_at, ultimo.created_at)) return;
+    // (las consultas de Supabase solo salen al pedir el resultado: de ahí el then)
+    void this.sb.client.rpc('chat_marcar', { p_pedido: this.pedidoId, p_leido: true }).then();
+  }
+
+  /** Enviado (un chulo), entregado (dos grises) o leído (dos azules) por alguien distinto de quien lo mandó */
+  chulos(m: Mensaje): Chulos {
+    let entregado = false;
+    for (const l of this.lecturas()) {
+      if (l.usuario_id === m.autor_id) continue;
+      if (despues(l.leido_at, m.created_at)) return 'leido';
+      if (despues(l.entregado_at, m.created_at)) entregado = true;
+    }
+    return entregado ? 'entregado' : 'enviado';
+  }
+
+  textoChulos(c: Chulos): string {
+    return c === 'leido' ? 'Leído' : c === 'entregado' ? 'Entregado' : 'Enviado';
+  }
+
+  /** Quién lo leyó y a quién le llegó (detalle al tocar un mensaje propio) */
+  quienes(m: Mensaje): { nombre: string; texto: string }[] {
+    const out: { nombre: string; texto: string; orden: number }[] = [];
+    for (const l of this.lecturas()) {
+      if (l.usuario_id === m.autor_id) continue;
+      const nombre = (l.usuario_nombre ?? 'Alguien').trim().split(/\s+/).slice(0, 2).join(' ');
+      if (despues(l.leido_at, m.created_at)) out.push({ nombre, texto: 'leído ' + this.hora(l.leido_at!), orden: 0 });
+      else if (despues(l.entregado_at, m.created_at)) out.push({ nombre, texto: 'le llegó ' + this.hora(l.entregado_at!), orden: 1 });
+    }
+    return out.sort((a, b) => a.orden - b.orden);
+  }
+
+  verDetalle(id: number): void {
+    this.detalle.set(this.detalle() === id ? null : id);
   }
 
   private agregar(m: Mensaje): void {
     if (this.mensajes().some((x) => x.id === m.id)) return;
+    // Quien escribía ya mandó su mensaje
+    if (m.autor_id !== this.yo()) this.ocultarEscribiendo();
     this.mensajes.update((l) => [...l, m]);
     this.bajar();
   }
@@ -207,8 +382,48 @@ export class ChatPedidoComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
     if (t === this.texto.trim()) this.texto = '';
+    this.avisarEscribiendo(false);
     // Por si Realtime tarda: se recarga la conversación
     await this.cargar();
+  }
+
+  /** Al teclear se avisa a los demás (a lo sumo cada 2,5 s) */
+  tecleando(): void {
+    if (!this.texto.trim()) return this.avisarEscribiendo(false);
+    if (Date.now() - this.ultimoAviso < 2500) return;
+    this.avisarEscribiendo(true);
+  }
+
+  private avisarEscribiendo(escribiendo: boolean): void {
+    if (!this.canalEscribe || !this.yo()) return;
+    this.ultimoAviso = escribiendo ? Date.now() : 0;
+    const nombre = (this.sb.usuario()?.nombre ?? '').trim().split(/\s+/)[0] || 'Alguien';
+    void this.canalEscribe.send({ type: 'broadcast', event: 'escribiendo', payload: { id: this.yo(), nombre, escribiendo } });
+  }
+
+  private mostrarEscribiendo(nombre: string): void {
+    const yaEstaba = !!this.quienEscribe();
+    this.quienEscribe.set(nombre);
+    this.escribiendo.emit(nombre);
+    if (!yaEstaba) this.bajar();
+    // Si deja de llegar el aviso (dejó de escribir o se fue), se quita
+    clearTimeout(this.timerEscribe);
+    this.timerEscribe = setTimeout(() => this.ocultarEscribiendo(), 4500);
+  }
+
+  private ocultarEscribiendo(): void {
+    clearTimeout(this.timerEscribe);
+    if (!this.quienEscribe()) return;
+    this.quienEscribe.set(null);
+    this.escribiendo.emit(null);
+  }
+
+  /** Al volver a la app, al enfocar la ventana o al recuperar internet se trae lo nuevo */
+  @HostListener('document:visibilitychange')
+  @HostListener('window:focus')
+  @HostListener('window:online')
+  alVolver(): void {
+    if (document.visibilityState === 'visible') void this.cargar(true);
   }
 
   private bajar(): void {

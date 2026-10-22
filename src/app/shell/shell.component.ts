@@ -39,6 +39,7 @@ import { ToastComponent } from '../shared/toast/toast.component';
 import { AvatarComponent } from '../shared/avatar/avatar.component';
 import { AvisosPanelComponent } from '../shared/avisos/avisos-panel.component';
 import { NotificacionesService } from '../core/services/notificaciones.service';
+import { PresenciaService } from '../core/services/presencia.service';
 
 interface ItemMenu {
   label: string;
@@ -126,7 +127,7 @@ const MENU: ItemMenu[] = [
             }
           </button>
           <a class="usuario" routerLink="/app/perfil" [attr.aria-label]="'Mi perfil: ' + sb.usuario()?.nombre">
-            <app-avatar [nombre]="sb.usuario()?.nombre" [foto]="sb.usuario()?.avatar_url" [tam]="32"></app-avatar>
+            <app-avatar [nombre]="sb.usuario()?.nombre" [foto]="sb.usuario()?.avatar_url" [usuario]="sb.usuario()?.id" [tam]="32"></app-avatar>
             @if (!colapsado()) {
               <div>
                 <strong>{{ sb.usuario()?.nombre }}</strong>
@@ -210,6 +211,7 @@ export class ShellComponent implements OnInit, OnDestroy {
   sb = inject(SupabaseService);
   theme = inject(ThemeService);
   avisos = inject(NotificacionesService);
+  private presencia = inject(PresenciaService);
   private router = inject(Router);
 
   colapsado = signal(this.leerColapsado());
@@ -241,6 +243,8 @@ export class ShellComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     void this.avisos.iniciar();
+    // Estado activo / ausente / desconectado (como en Discord)
+    void this.presencia.iniciar();
   }
 
   ngOnDestroy(): void {

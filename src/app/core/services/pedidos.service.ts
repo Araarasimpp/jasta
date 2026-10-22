@@ -4,7 +4,7 @@ import { Cuadre, EstadoPedido, Nota, Pedido, Producto, TarifaDomicilio, TipoReca
 import { PRODUCTO_DE_ITEM } from '../../shared/variante';
 
 export const SELECT_PEDIDO =
-  '*, vendedora:usuarios!pedidos_vendedora_id_fkey(nombre), mensajero:usuarios!pedidos_mensajero_id_fkey(nombre)';
+  '*, vendedora:usuarios!pedidos_vendedora_id_fkey(nombre, avatar_url), mensajero:usuarios!pedidos_mensajero_id_fkey(nombre, avatar_url)';
 
 export interface FiltroPedidos {
   estado?: EstadoPedido | null;
