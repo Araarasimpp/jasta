@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 import { Cuadre, EstadoPedido, Nota, Pedido, Producto, TarifaDomicilio, TipoRecaudo, Usuario } from '../../shared/modelos';
 import { PRODUCTO_DE_ITEM } from '../../shared/variante';
+import { finDiaColombia, inicioDiaColombia } from '../../shared/fecha-colombia';
 
 export const SELECT_PEDIDO =
   '*, vendedora:usuarios!pedidos_vendedora_id_fkey(nombre, avatar_url), mensajero:usuarios!pedidos_mensajero_id_fkey(nombre, avatar_url)';
@@ -330,20 +331,25 @@ export class PedidosService {
     return r?.[0] ?? null;
   }
 
+  /** Lo que falta por cuadrar: uno por mensajero y día de entrega (el más viejo primero) */
   async cuadresPendientes() {
-    return (this.check(await this.db.rpc('cuadres_pendientes')) ?? []) as {
+    return (this.check(await this.db.rpc('cuadres_pendientes_dia')) ?? []) as {
       mensajero_id: number;
       nombre: string;
+      /** Día de entrega, YYYY-MM-DD (hora Colombia) */
+      fecha: string;
       pedidos: number;
       efectivo: number;
       transferencia: number;
       domicilios: number;
       desde: string;
+      hasta: string;
     }[];
   }
 
-  async cerrarCuadre(mensajeroId: number): Promise<number> {
-    return this.check(await this.db.rpc('cerrar_cuadre', { p_mensajero: mensajeroId })) as number;
+  /** Cierra el cuadre de un mensajero de UN día de entrega (los otros días quedan pendientes) */
+  async cerrarCuadre(mensajeroId: number, fecha: string): Promise<number> {
+    return this.check(await this.db.rpc('cerrar_cuadre', { p_mensajero: mensajeroId, p_fecha: fecha })) as number;
   }
 
   /** Cuadres que entregó el mensajero y la oficina todavía no confirma (de uno o de todos) */
@@ -358,13 +364,15 @@ export class PedidosService {
     this.check(await this.db.rpc('confirmar_cuadre', { p_cuadre: cuadreId }));
   }
 
+  /** Historial por día de entrega (desde/hasta: YYYY-MM-DD), no por el día en que se cerró */
   async historialCuadres(pagina: number, mensajeroId?: number | null, desde?: string | null, hasta?: string | null): Promise<Cuadre[]> {
     let q = this.db.from('cuadres').select('*, mensajero:usuarios!cuadres_mensajero_id_fkey(nombre)').neq('estado', 'anulado');
     if (mensajeroId) q = q.eq('mensajero_id', mensajeroId);
-    if (desde) q = q.gte('cerrado_at', desde);
-    if (hasta) q = q.lte('cerrado_at', hasta);
-    return (this.check(await q.order('cerrado_at', { ascending: false }).range(pagina * 30, pagina * 30 + 29)) ??
-      []) as unknown as Cuadre[];
+    if (desde) q = q.gte('fecha_entrega', desde);
+    if (hasta) q = q.lte('fecha_entrega', hasta);
+    return (this.check(
+      await q.order('fecha_entrega', { ascending: false }).order('cerrado_at', { ascending: false }).range(pagina * 30, pagina * 30 + 29)
+    ) ?? []) as unknown as Cuadre[];
   }
 
   async pedidosDeCuadre(cuadreId: number): Promise<Pedido[]> {
@@ -381,16 +389,11 @@ export class PedidosService {
     return (this.check(await q.order('entregado_at', { ascending: false }).limit(300)) ?? []) as unknown as Pedido[];
   }
 
-  async pendientesDe(mensajeroId: number): Promise<Pedido[]> {
-    return (this.check(
-      await this.db
-        .from('pedidos')
-        .select(SELECT_PEDIDO)
-        .eq('mensajero_id', mensajeroId)
-        .eq('estado', 'entregado')
-        .is('cuadre_id', null)
-        .order('entregado_at')
-    ) ?? []) as unknown as Pedido[];
+  /** Entregados sin cuadre de un mensajero; con `fecha` (YYYY-MM-DD), solo los de ese día */
+  async pendientesDe(mensajeroId: number, fecha?: string): Promise<Pedido[]> {
+    let q = this.db.from('pedidos').select(SELECT_PEDIDO).eq('mensajero_id', mensajeroId).eq('estado', 'entregado').is('cuadre_id', null);
+    if (fecha) q = q.gte('entregado_at', inicioDiaColombia(fecha).toISOString()).lte('entregado_at', finDiaColombia(fecha).toISOString());
+    return (this.check(await q.order('entregado_at')) ?? []) as unknown as Pedido[];
   }
 
   /**

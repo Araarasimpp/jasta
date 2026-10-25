@@ -140,7 +140,7 @@ interface Tarea {
         <a class="kpi" role="listitem" routerLink="/app/cuadres">
           <span class="kpi-label">Por recibir en cuadres</span>
           <span class="kpi-valor num">{{ pesos(porRecibir()) }}</span>
-          <span class="kpi-nota">{{ cuadres().length ? cuadres().length + (cuadres().length === 1 ? ' mensajero' : ' mensajeros') : 'Todo cuadrado' }}</span>
+          <span class="kpi-nota">{{ cuadres().length ? mensajerosPorCuadrar() + (mensajerosPorCuadrar() === 1 ? ' mensajero' : ' mensajeros') : 'Todo cuadrado' }}</span>
         </a>
       </div>
 
@@ -275,6 +275,8 @@ export class InicioPage implements OnInit, OnDestroy {
   cargandoGrafica = signal(false);
 
   puedeVender = computed(() => this.sb.tiene('admin', 'vendedora'));
+  /** Un mensajero puede tener varios cuadres pendientes (uno por día de entrega) */
+  mensajerosPorCuadrar = computed(() => new Set(this.cuadres().map((c) => c.mensajero_id)).size);
   porRecibir = computed(() => this.cuadres().reduce((s, c) => s + Number(c.efectivo) - Number(c.domicilios), 0));
   maxVend = computed(() => Math.max(1, ...(this.r()?.vendedoras ?? []).map((d) => Number(d.ventas))));
   maxProd = computed(() => Math.max(1, ...(this.r()?.productos ?? []).map((d) => Number(d.cantidad))));

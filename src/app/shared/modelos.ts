@@ -114,6 +114,8 @@ export interface Cuadre {
   codigo: string | null;
   mensajero_id: number | null;
   cerrado_at: string;
+  /** Día (YYYY-MM-DD, hora Colombia) en que se entregaron los pedidos del cuadre */
+  fecha_entrega?: string | null;
   cerrado_por_nombre: string | null;
   cantidad_pedidos: number;
   total_efectivo: number;

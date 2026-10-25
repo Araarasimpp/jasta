@@ -11,7 +11,7 @@ import { RangoFechas } from '../../shared/rango/rango.component';
 import { DiaComponent } from '../../shared/rango/dia.component';
 import { Cuadre, Pedido } from '../../shared/modelos';
 import { mensajeError, pesos } from '../../shared/formato';
-import { finDiaColombia, formatoFechaCO, formatoHoraCO, hoyColombiaISO, inicioDiaColombia } from '../../shared/fecha-colombia';
+import { diaCorto, formatoFechaCO, formatoHoraCO, hoyColombiaISO } from '../../shared/fecha-colombia';
 
 interface Pendiente {
   mensajero_id: number;
@@ -20,7 +20,10 @@ interface Pendiente {
   efectivo: number;
   transferencia: number;
   domicilios: number;
+  /** Día de entrega (YYYY-MM-DD) */
+  fecha: string;
   desde: string;
+  hasta: string;
 }
 
 @Component({
@@ -34,10 +37,14 @@ interface Pendiente {
       .cifra small { font-size: 12px; color: var(--text-soft); }
       .cifra strong { font-size: 15px; }
       .cifra.clave { background: var(--ok-wash); }
+      .cuando { display: block; font-size: 11.5px; opacity: .8; }
       td.recibido { font-weight: 650; color: var(--efectivo-texto); }
       .estado-cuadre { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 11px; font-size: 11.5px; font-weight: 650;
         background: var(--ok-wash); color: var(--efectivo-texto); white-space: nowrap; }
       .estado-cuadre.pendiente { background: var(--oro-wash); color: var(--oro-texto); }
+      .dia-entrega { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 11px; font-size: 11.5px; font-weight: 650;
+        background: var(--surface-2); color: var(--text-soft); white-space: nowrap; }
+      .dia-entrega.atrasado { background: var(--danger-wash); color: var(--danger); }
       .tarjeta.por-confirmar { border-color: var(--oro); box-shadow: 0 0 0 3px var(--oro-wash); }
       .cifra.clave small { color: var(--efectivo-texto); }
       .cifra.clave strong { color: var(--text); }
@@ -101,7 +108,7 @@ interface Pendiente {
                   <div class="cifra"><small>Transferencias</small><strong class="num">{{ pesos(c.total_transferencia) }}</strong></div>
                   <div class="cifra"><small>Domicilios</small><strong class="num">{{ pesos(c.total_domicilios) }}</strong></div>
                 </div>
-                <p class="suave" style="font-size: 12.5px">Entregado {{ fecha(c.cerrado_at) }}</p>
+                <p class="suave" style="font-size: 12.5px">Entregas de {{ dia(c.fecha_entrega) }} · cuadre entregado {{ fecha(c.cerrado_at) }}</p>
                 @if (cuadreAbierto() === c.id) {
                   <table class="mini">
                     @for (p of pedidosCuadre(); track p.id) {
@@ -127,12 +134,13 @@ interface Pendiente {
         }
 
         <h2>Mensajeros pendientes por cuadrar</h2>
+        <p class="ayuda">Cada cuadre es de un solo día de entrega. Si quedó uno de un día anterior sin cerrar, sale aparte.</p>
         <div class="tarjetas">
-          @for (c of pendientes(); track c.mensajero_id) {
+          @for (c of pendientes(); track clave(c)) {
             <article class="tarjeta">
               <div class="tarjeta-top">
                 <h3>{{ c.nombre }}</h3>
-                <span class="suave" style="font-size: 12px">desde {{ fecha(c.desde) }}</span>
+                <span class="dia-entrega" [class.atrasado]="c.fecha < hoy">Entregas de {{ dia(c.fecha) }}</span>
               </div>
               <div class="cifras">
                 <div class="cifra"><small>Pedidos</small><strong class="num">{{ c.pedidos }}</strong></div>
@@ -141,7 +149,7 @@ interface Pendiente {
                 <div class="cifra"><small>Domicilios (para él)</small><strong class="num">{{ pesos(c.domicilios) }}</strong></div>
               </div>
               <p>Efectivo cobrado {{ pesos(c.efectivo) }} menos domicilios {{ pesos(c.domicilios) }}.</p>
-              @if (abiertoM() === c.mensajero_id) {
+              @if (abiertoM() === clave(c)) {
                 <table class="mini">
                   @for (p of pedidosM(); track p.id) {
                     <tr (click)="abierto.set(p.id)">
@@ -152,12 +160,12 @@ interface Pendiente {
                 </table>
               }
               <div class="acciones">
-                <button class="b" (click)="verPedidos(c.mensajero_id)">
-                  <ion-icon [name]="abiertoM() === c.mensajero_id ? 'chevron-up-outline' : 'chevron-down-outline'"></ion-icon>
-                  {{ abiertoM() === c.mensajero_id ? 'Ocultar pedidos' : 'Ver pedidos' }}
+                <button class="b" (click)="verPedidos(c)">
+                  <ion-icon [name]="abiertoM() === clave(c) ? 'chevron-up-outline' : 'chevron-down-outline'"></ion-icon>
+                  {{ abiertoM() === clave(c) ? 'Ocultar pedidos' : 'Ver pedidos' }}
                 </button>
                 @if (puedeCerrarDe(c)) {
-                  <button class="b b-ok" [disabled]="cerrando() === c.mensajero_id" (click)="cerrar(c)">{{ esMio(c) ? 'Entregar mi cuadre' : 'Cerrar cuadre' }}</button>
+                  <button class="b b-ok" [disabled]="cerrando() === clave(c)" (click)="cerrar(c)">{{ esMio(c) ? 'Entregar mi cuadre' : 'Cerrar cuadre' }} de {{ dia(c.fecha) }}</button>
                 }
               </div>
             </article>
@@ -167,7 +175,7 @@ interface Pendiente {
         </div>
 
         <div class="hist-head">
-          <h2>Historial de cuadres</h2>
+          <h2>Historial de cuadres <span class="suave" style="font-weight: 500">· por día de entrega</span></h2>
           <app-dia (cambio)="cambiarRango($event)"></app-dia>
         </div>
         @if (historial().length) {
@@ -183,11 +191,11 @@ interface Pendiente {
         }
         <div class="tabla-wrap">
           <table class="tabla tarjetas-cel">
-            <thead><tr><th>Fecha</th><th>Mensajero</th><th class="der">Pedidos</th><th class="der">Efectivo</th><th class="der">Transferencia</th><th class="der">Domicilios</th><th class="der">Recibido</th><th>Estado</th><th>Cerró</th><th>Recibió</th></tr></thead>
+            <thead><tr><th>Entregas de</th><th>Mensajero</th><th class="der">Pedidos</th><th class="der">Efectivo</th><th class="der">Transferencia</th><th class="der">Domicilios</th><th class="der">Recibido</th><th>Estado</th><th>Cerró</th><th>Recibió</th></tr></thead>
             <tbody>
               @for (c of historial(); track c.id) {
                 <tr class="click" (click)="verCuadre(c)">
-                  <td class="suave" data-etq="Fecha">{{ fecha(c.cerrado_at) }}</td>
+                  <td data-etq="Entregas de">{{ dia(c.fecha_entrega) }}</td>
                   <td data-etq="Mensajero">{{ c.mensajero?.nombre || '—' }}</td>
                   <td class="der num" data-etq="Pedidos">{{ c.cantidad_pedidos }}</td>
                   <td class="der num" data-etq="Efectivo">{{ pesos(c.total_efectivo) }}</td>
@@ -195,7 +203,7 @@ interface Pendiente {
                   <td class="der num" data-etq="Domicilios">{{ pesos(c.total_domicilios) }}</td>
                   <td class="der num recibido" data-etq="Recibido">{{ pesos(c.total_efectivo - c.total_domicilios) }}</td>
                   <td data-etq="Estado"><span class="estado-cuadre" [class.pendiente]="c.estado === 'pendiente'">{{ c.estado === 'pendiente' ? 'Por confirmar' : 'Confirmado' }}</span></td>
-                  <td class="suave corta" data-etq="Cerró">{{ c.cerrado_por_nombre || '—' }}</td>
+                  <td class="suave corta" data-etq="Cerró">{{ c.cerrado_por_nombre || '—' }}<small class="cuando">{{ fecha(c.cerrado_at) }}</small></td>
                   <td class="suave corta" data-etq="Recibió">{{ c.estado === 'pendiente' ? 'Falta confirmar' : c.confirmado_por_nombre || '—' }}</td>
                 </tr>
                 @if (cuadreAbierto() === c.id) {
@@ -210,7 +218,7 @@ interface Pendiente {
                   </td></tr>
                 }
               } @empty {
-                <tr><td colspan="10" class="suave">No se cerraron cuadres este día.</td></tr>
+                <tr><td colspan="10" class="suave">No hay cuadres de entregas de este día.</td></tr>
               }
             </tbody>
           </table>
@@ -239,10 +247,11 @@ export class CuadresPage implements OnInit {
   historial = signal<Cuadre[]>([]);
   pagina = signal(0);
   cargando = signal(true);
-  cerrando = signal<number | null>(null);
+  cerrando = signal<string | null>(null);
   porConfirmar = signal<Cuadre[]>([]);
   confirmando = signal<number | null>(null);
-  abiertoM = signal<number | null>(null);
+  /** Tarjeta pendiente abierta: mensajero + día */
+  abiertoM = signal<string | null>(null);
   pedidosM = signal<Pedido[]>([]);
   cuadreAbierto = signal<number | null>(null);
   pedidosCuadre = signal<Pedido[]>([]);
@@ -273,6 +282,15 @@ export class CuadresPage implements OnInit {
   veRecolector = computed(() => this.sb.tiene('admin', 'cuadres'));
   recolectores = signal<{ id: number; nombre: string; base: number; compras: number; n_compras: number; pendientes: number }[]>([]);
   pesos = pesos;
+  hoy = hoyColombiaISO();
+
+  clave(c: Pendiente): string {
+    return c.mensajero_id + '|' + c.fecha;
+  }
+
+  dia(f: string | null | undefined): string {
+    return f ? diaCorto(f) : '—';
+  }
 
   constructor() {
     addIcons({ refreshOutline, chevronDownOutline, chevronUpOutline });
@@ -325,12 +343,7 @@ export class CuadresPage implements OnInit {
 
   private historialPagina(n: number) {
     const r = this.rango;
-    return this.ps.historialCuadres(
-      n,
-      this.soloMio(),
-      r.desde ? inicioDiaColombia(r.desde).toISOString() : null,
-      r.hasta ? finDiaColombia(r.hasta).toISOString() : null
-    );
+    return this.ps.historialCuadres(n, this.soloMio(), r.desde || null, r.hasta || null);
   }
 
   cambiarRango(r: RangoFechas): void {
@@ -343,11 +356,12 @@ export class CuadresPage implements OnInit {
     this.historial.set(await this.historialPagina(n));
   }
 
-  async verPedidos(id: number): Promise<void> {
-    if (this.abiertoM() === id) return this.abiertoM.set(null);
+  async verPedidos(c: Pendiente): Promise<void> {
+    const k = this.clave(c);
+    if (this.abiertoM() === k) return this.abiertoM.set(null);
     this.pedidosM.set([]);
-    this.abiertoM.set(id);
-    this.pedidosM.set(await this.ps.pendientesDe(id));
+    this.abiertoM.set(k);
+    this.pedidosM.set(await this.ps.pendientesDe(c.mensajero_id, c.fecha));
   }
 
   async verCuadre(c: Cuadre): Promise<void> {
@@ -375,13 +389,14 @@ export class CuadresPage implements OnInit {
 
   async cerrar(c: Pendiente): Promise<void> {
     const recibe = pesos(c.efectivo - c.domicilios);
+    const dia = this.dia(c.fecha);
     const pregunta = this.esMio(c)
-      ? `¿Entregar tu cuadre? ${c.pedidos} pedidos · entregas ${recibe} en efectivo. La oficina debe confirmar que recibió la plata.`
-      : `¿Cerrar el cuadre de ${c.nombre}? ${c.pedidos} pedidos · recibes ${recibe} en efectivo.`;
+      ? `¿Entregar tu cuadre de ${dia}? ${c.pedidos} pedidos · entregas ${recibe} en efectivo. La oficina debe confirmar que recibió la plata.`
+      : `¿Cerrar el cuadre de ${c.nombre} de ${dia}? ${c.pedidos} pedidos · recibes ${recibe} en efectivo.`;
     if (!confirm(pregunta)) return;
-    this.cerrando.set(c.mensajero_id);
+    this.cerrando.set(this.clave(c));
     try {
-      await this.ps.cerrarCuadre(c.mensajero_id);
+      await this.ps.cerrarCuadre(c.mensajero_id, c.fecha);
       this.toast.ok(this.esMio(c) ? 'Cuadre entregado: falta que la oficina confirme' : `Cuadre de ${c.nombre} cerrado`);
       this.abiertoM.set(null);
       await this.cargar();

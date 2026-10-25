@@ -31,6 +31,14 @@ export function formatoFechaCO(fechaIso: string, opts: Intl.DateTimeFormatOption
   return new Date(fechaIso).toLocaleDateString('es-CO', { timeZone: TZ, ...opts });
 }
 
+/** Un día (YYYY-MM-DD) para mostrar: "hoy", "ayer" o "jue, 23 oct" */
+export function diaCorto(dia: string): string {
+  const hoy = hoyColombiaISO();
+  if (dia === hoy) return 'hoy';
+  if (dia === diaColombiaDe(new Date(inicioDiaColombia(hoy).getTime() - 1).toISOString())) return 'ayer';
+  return formatoFechaCO(`${dia}T12:00:00${OFFSET}`, { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
 export function formatoHoraCO(fechaIso: string): string {
   return new Date(fechaIso).toLocaleTimeString('es-CO', {
     timeZone: TZ,

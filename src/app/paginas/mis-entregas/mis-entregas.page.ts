@@ -14,7 +14,7 @@ import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detal
 import { PedidoJybComponent } from '../../shared/pedido-jyb/pedido-jyb.component';
 import { Cuadre, Pedido, TipoRecaudo } from '../../shared/modelos';
 import { mensajeError, pesos } from '../../shared/formato';
-import { finDiaColombia, formatoFechaCO, formatoHoraCO, inicioDiaColombia, microsAsignado } from '../../shared/fecha-colombia';
+import { diaCorto, finDiaColombia, formatoFechaCO, formatoHoraCO, hoyColombiaISO, inicioDiaColombia, microsAsignado } from '../../shared/fecha-colombia';
 import { RangoFechas } from '../../shared/rango/rango.component';
 import { DiaComponent } from '../../shared/rango/dia.component';
 import { nombreConVariante } from '../../shared/variante';
@@ -64,6 +64,8 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
       .acciones-cuadre { display: flex; gap: 8px; flex-wrap: wrap; }
       .acciones-cuadre .b { flex: 1 1 200px; justify-content: center; }
       .en-ruta { font-size: 13px; color: var(--text-soft); }
+      .entregar-total.atrasado { background: var(--danger-wash); }
+      .entregar-total.atrasado span { color: var(--danger); }
       .entregar-total { display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border-radius: var(--radius); background: var(--ok-wash); }
       .entregar-total span { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--efectivo-texto); }
       .entregar-total strong { font-family: var(--mono-font); font-size: 28px; font-weight: 600; color: var(--text); letter-spacing: -0.03em; }
@@ -109,8 +111,10 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
             <div>
               <h2>{{ conJyb() ? 'Por cuadrar Jasta' : 'Por cuadrar' }}</h2>
               <p class="panel-sub">
-                @if (pendiente(); as c) {
-                  {{ c.pedidos }} {{ c.pedidos === 1 ? 'pedido entregado' : 'pedidos entregados' }} desde {{ fecha(c.desde) }}
+                @if (misPendientes().length > 1) {
+                  Tienes {{ misPendientes().length }} cuadres sin entregar: uno por cada día
+                } @else if (pendiente(); as c) {
+                  {{ c.pedidos }} {{ c.pedidos === 1 ? 'pedido entregado' : 'pedidos entregados' }} {{ dia(c.fecha) }}
                 } @else {
                   No tienes entregas pendientes por cuadrar
                 }
@@ -120,14 +124,14 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
           </div>
           @for (pc of misPorConfirmar(); track pc.id) {
             <div class="entregado-espera">
-              <span>Cuadre entregado · esperando confirmación</span>
+              <span>Cuadre de {{ dia(pc.fecha_entrega) }} entregado · esperando confirmación</span>
               <strong class="num">{{ pesos(pc.total_efectivo - pc.total_domicilios) }}</strong>
               <small>{{ pc.cantidad_pedidos }} {{ pc.cantidad_pedidos === 1 ? 'pedido' : 'pedidos' }} · la oficina debe confirmar que recibió la plata</small>
             </div>
           }
-          @if (pendiente(); as c) {
-            <div class="entregar-total">
-              <span>Efectivo que debes entregar</span>
+          @for (c of misPendientes(); track c.fecha) {
+            <div class="entregar-total" [class.atrasado]="c.fecha < hoy">
+              <span>Entregas de {{ dia(c.fecha) }} · efectivo que debes entregar</span>
               <strong class="num">{{ pesos(c.efectivo - c.domicilios) }}</strong>
             </div>
             <dl class="desglose">
@@ -136,11 +140,11 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
               <dt>Transferencias (ya le llegaron a la tienda)</dt><dd class="num">{{ pesos(c.transferencia) }}</dd>
             </dl>
             <div class="acciones-cuadre">
-              <button class="b" (click)="verDetalle()">{{ detalle().length ? 'Ocultar pedidos' : 'Ver pedidos por cuadrar' }}</button>
-              <button class="b b-ok" [disabled]="cerrandoCuadre()" (click)="cerrarMiCuadre()">
-                {{ cerrandoCuadre() ? 'Entregando…' : 'Entregar mi cuadre (' + c.pedidos + (c.pedidos === 1 ? ' pedido)' : ' pedidos)') }}</button>
+              <button class="b" (click)="verDetalle(c.fecha)">{{ detalleDia() === c.fecha ? 'Ocultar pedidos' : 'Ver pedidos' }}</button>
+              <button class="b b-ok" [disabled]="cerrandoCuadre()" (click)="cerrarMiCuadre(c)">
+                {{ cerrandoCuadre() ? 'Entregando…' : 'Entregar cuadre de ' + dia(c.fecha) + ' (' + c.pedidos + (c.pedidos === 1 ? ' pedido)' : ' pedidos)') }}</button>
             </div>
-            @if (detalle().length) {
+            @if (detalleDia() === c.fecha && detalle().length) {
               <ul class="items-mini">
                 @for (p of detalle(); track p.id) {
                   <li (click)="abierto.set(p.id)" style="cursor: pointer">
@@ -426,9 +430,12 @@ export class MisEntregasPage implements OnInit, OnDestroy {
       .map((x) => x.p);
   });
   pendientes = signal<
-    { mensajero_id: number; pedidos: number; efectivo: number; transferencia: number; domicilios: number; desde: string }[]
+    { mensajero_id: number; fecha: string; pedidos: number; efectivo: number; transferencia: number; domicilios: number; desde: string }[]
   >([]);
   detalle = signal<Pedido[]>([]);
+  /** Día cuyos pedidos por cuadrar se están viendo */
+  detalleDia = signal<string | null>(null);
+  hoy = hoyColombiaISO();
   cargando = signal(true);
   entregando = signal<Pedido | null>(null);
   abierto = signal<number | null>(null);
@@ -459,7 +466,9 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   });
 
   esMensajero = computed(() => this.sb.tiene('mensajero'));
-  pendiente = computed(() => this.pendientes().find((x) => x.mensajero_id === this.sb.usuario()?.id) ?? null);
+  /** Mis cuadres sin entregar: uno por día de entrega, el más viejo primero */
+  misPendientes = computed(() => this.pendientes().filter((x) => x.mensajero_id === this.sb.usuario()?.id));
+  pendiente = computed(() => this.misPendientes()[0] ?? null);
 
   private dejar?: () => void;
   private subParams?: { unsubscribe(): void };
@@ -533,7 +542,8 @@ export class MisEntregasPage implements OnInit, OnDestroy {
       this.enRuta.set(r);
       this.pendientes.set(c);
       this.misPorConfirmar.set(pc);
-      if (this.detalle().length && this.sb.usuario()) this.detalle.set(await this.ps.pendientesDe(this.sb.usuario()!.id));
+      const dd = this.detalleDia();
+      if (dd && this.sb.usuario()) this.detalle.set(await this.ps.pendientesDe(this.sb.usuario()!.id, dd));
     } catch (e) {
       this.toast.error(mensajeError(e));
     } finally {
@@ -777,17 +787,17 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   }
 
   /** El mensajero entrega su cuadre; queda por confirmar hasta que la oficina reciba la plata */
-  async cerrarMiCuadre(): Promise<void> {
-    const c = this.pendiente();
+  async cerrarMiCuadre(c: { fecha: string; pedidos: number; efectivo: number; domicilios: number }): Promise<void> {
     const yo = this.sb.usuario()?.id;
-    if (!c || !yo) return;
+    if (!yo) return;
     const entrega = pesos(c.efectivo - c.domicilios);
-    if (!confirm(`¿Entregar tu cuadre? ${c.pedidos} ${c.pedidos === 1 ? 'pedido' : 'pedidos'} · entregas ${entrega} en efectivo. La oficina debe confirmar que recibió la plata.`)) return;
+    if (!confirm(`¿Entregar tu cuadre de ${this.dia(c.fecha)}? ${c.pedidos} ${c.pedidos === 1 ? 'pedido' : 'pedidos'} · entregas ${entrega} en efectivo. La oficina debe confirmar que recibió la plata.`)) return;
     this.cerrandoCuadre.set(true);
     try {
-      await this.ps.cerrarCuadre(yo);
-      this.toast.ok(`Cuadre entregado (${entrega}): falta que la oficina confirme`);
+      await this.ps.cerrarCuadre(yo, c.fecha);
+      this.toast.ok(`Cuadre de ${this.dia(c.fecha)} entregado (${entrega}): falta que la oficina confirme`);
       this.detalle.set([]);
+      this.detalleDia.set(null);
       await this.cargar();
       await this.cargarHechas();
     } catch (e) {
@@ -826,10 +836,16 @@ export class MisEntregasPage implements OnInit, OnDestroy {
     await Promise.all([this.cargar(), this.cargarHechas()]);
   }
 
-  async verDetalle(): Promise<void> {
-    if (this.detalle().length) return this.detalle.set([]);
+  async verDetalle(dia: string): Promise<void> {
+    this.detalle.set([]);
+    if (this.detalleDia() === dia) return this.detalleDia.set(null);
+    this.detalleDia.set(dia);
     const yo = this.sb.usuario()?.id;
-    if (yo) this.detalle.set(await this.ps.pendientesDe(yo));
+    if (yo) this.detalle.set(await this.ps.pendientesDe(yo, dia));
+  }
+
+  dia(f: string | null | undefined): string {
+    return f ? diaCorto(f) : '—';
   }
 
   fecha(iso: string): string {
