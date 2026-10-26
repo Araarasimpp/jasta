@@ -310,8 +310,9 @@ export class PedidosPage implements OnInit, OnDestroy {
   }
 
   /** Rótulo: solo se imprime a los alistados */
+  /** Rótulo: a los alistados y a los que ya van en ruta (por si hay que reimprimirlo) */
   puedeImprimir(p: Pedido): boolean {
-    return p.estado === 'alistado' && p.canal !== 'local';
+    return (p.estado === 'alistado' || p.estado === 'despachado') && p.canal !== 'local';
   }
 
   puedeAlistar(p: Pedido): boolean {
@@ -491,6 +492,17 @@ export class PedidosPage implements OnInit, OnDestroy {
         this.sel.set(new Set());
         await this.cargar();
       }
+    } finally {
+      this.imprimiendo.set(false);
+    }
+  }
+
+  /** Desde el menú "•••" de un pedido */
+  async imprimirUno(p: Pedido): Promise<void> {
+    this.menuAbierto.set(null);
+    this.imprimiendo.set(true);
+    try {
+      if (await this.rotulos.imprimir(() => this.ps.conItems([p.id]))) await this.cargar();
     } finally {
       this.imprimiendo.set(false);
     }

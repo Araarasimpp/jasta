@@ -221,6 +221,9 @@
                       @if (esAdmin() && p.estado === 'entregado' && !p.cuadre_id && p.mensajero_id) {
                         <button role="menuitem" (click)="devolverEntrega(p)">Devolver a En ruta</button>
                       }
+                      @if (gestiona() && puedeImprimir(p)) {
+                        <button role="menuitem" (click)="imprimirUno(p)" [disabled]="imprimiendo()">{{ p.rotulo_impreso_at ? 'Reimprimir rótulo' : 'Imprimir rótulo' }}</button>
+                      }
                       @if (gestiona() && p.estado === 'despachado') {
                         <button role="menuitem" (click)="menuAbierto.set(null); novedadDe.set(p)">No se pudo entregar…</button>
                       }
