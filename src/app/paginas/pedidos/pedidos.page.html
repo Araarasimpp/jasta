@@ -125,6 +125,11 @@
                       <span class="num">{{ n }}°</span> de {{ nombreMensajero(p).split(' ')[0] }}
                     </span>
                   }
+                  @if (p.novedades && p.ultima_novedad && p.estado !== 'entregado' && p.estado !== 'cancelado') {
+                    <span class="chip-novedad" [title]="'No se pudo entregar' + (p.novedades > 1 ? ' (' + p.novedades + ' veces)' : '') + ': ' + p.ultima_novedad">
+                      <ion-icon name="alert-circle-outline" aria-hidden="true"></ion-icon>{{ p.ultima_novedad }}@if (p.novedades > 1) { ×{{ p.novedades }} }
+                    </span>
+                  }
                   @if (p.estado === 'alistado' && ordinal(p)) {
                     <span class="chip-alistado" [title]="'Alistado en el puesto ' + ordinal(p)">
                       <ion-icon name="checkmark-circle" aria-hidden="true"></ion-icon>
@@ -219,6 +224,9 @@
                       @if (esAdmin() && p.estado === 'entregado' && !p.cuadre_id && p.mensajero_id) {
                         <button role="menuitem" (click)="devolverEntrega(p)">Devolver a En ruta</button>
                       }
+                      @if (gestiona() && p.estado === 'despachado') {
+                        <button role="menuitem" (click)="menuAbierto.set(null); novedadDe.set(p)">No se pudo entregar…</button>
+                      }
                       @if (puedeCancelar(p)) {
                         <button role="menuitem" (click)="cancelar(p)">Cancelar pedido</button>
                       }
@@ -293,6 +301,10 @@
         <ion-icon name="close"></ion-icon>
       </button>
     </div>
+  }
+
+  @if (novedadDe(); as p) {
+    <app-novedad [pedido]="p" (cerrar)="novedadDe.set(null)" (reportado)="novedadDe.set(null); cargar()"></app-novedad>
   }
 
   @if (abierto(); as id) {

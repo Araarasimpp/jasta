@@ -224,6 +224,11 @@ export class PedidosService {
     this.check(await this.db.rpc('cambiar_estado', { p_pedido: id, p_estado: estado, p_mensajero: mensajeroId }));
   }
 
+  /** No se pudo entregar: queda el motivo y el pedido sigue en ruta (reintentar) o vuelve a la tienda (devolver) */
+  async reportarNovedad(id: number, motivo: string, detalle: string, accion: 'reintentar' | 'devolver'): Promise<void> {
+    this.check(await this.db.rpc('reportar_novedad', { p_pedido: id, p_motivo: motivo, p_detalle: detalle, p_accion: accion }));
+  }
+
   /** Admin: un entregado (aún sin cuadre) vuelve a En ruta para que el mensajero lo entregue de nuevo */
   async devolverEntrega(id: number): Promise<void> {
     this.check(await this.db.rpc('devolver_entrega', { p_pedido: id }));

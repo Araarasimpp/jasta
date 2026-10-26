@@ -4,7 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import {
-  add, searchOutline, printOutline, cubeOutline, checkmarkCircle, close, ellipsisHorizontal, chatbubbleEllipses,
+  add, searchOutline, printOutline, cubeOutline, checkmarkCircle, close, ellipsisHorizontal, chatbubbleEllipses, alertCircleOutline,
 } from 'ionicons/icons';
 import { PedidosService } from '../../core/services/pedidos.service';
 import { SupabaseService } from '../../core/services/supabase.service';
@@ -12,6 +12,7 @@ import { NotificacionesService } from '../../core/services/notificaciones.servic
 import { ToastService } from '../../shared/toast/toast.service';
 import { RotulosService } from '../../shared/rotulo/rotulos.service';
 import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detalle.component';
+import { NovedadComponent } from '../../shared/novedad/novedad.component';
 import { AvatarComponent } from '../../shared/avatar/avatar.component';
 import { EstadoIconComponent } from '../../shared/estado-icon/estado-icon.component';
 import { VisorService } from '../../shared/visor/visor.service';
@@ -57,7 +58,7 @@ const ETIQUETA_GRUPO: Record<EstadoPedido, string> = {
 @Component({
   selector: 'app-pedidos',
   standalone: true,
-  imports: [FormsModule, RouterLink, IonIcon, PedidoDetalleComponent, AvatarComponent, EstadoIconComponent, ProductoDetalleComponent],
+  imports: [FormsModule, RouterLink, IonIcon, PedidoDetalleComponent, NovedadComponent, AvatarComponent, EstadoIconComponent, ProductoDetalleComponent],
   templateUrl: './pedidos.page.html',
   styleUrls: ['./pedidos.page.scss'],
 })
@@ -97,6 +98,8 @@ export class PedidosPage implements OnInit, OnDestroy {
   /** Puesto de cada pedido en ruta dentro de los de su mensajero (orden de asignación) */
   ordenRuta = signal<Map<number, number>>(new Map());
   abierto = signal<number | null>(null);
+  /** Pedido en ruta al que la oficina le reporta que no se pudo entregar */
+  novedadDe = signal<Pedido | null>(null);
   /** El pedido se abrió desde un aviso de mensaje: va directo a la conversación */
   abiertoEnChat = signal(false);
   mensajeros = signal<Usuario[]>([]);
@@ -178,7 +181,7 @@ export class PedidosPage implements OnInit, OnDestroy {
   private enCarga = false;
 
   constructor() {
-    addIcons({ add, searchOutline, printOutline, cubeOutline, checkmarkCircle, close, ellipsisHorizontal, chatbubbleEllipses });
+    addIcons({ add, searchOutline, printOutline, cubeOutline, checkmarkCircle, close, ellipsisHorizontal, chatbubbleEllipses, alertCircleOutline });
   }
 
   ngOnInit(): void {

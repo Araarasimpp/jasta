@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses, chatbubbleEllipsesOutline } from 'ionicons/icons';
+import { refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses, chatbubbleEllipsesOutline, alertCircleOutline } from 'ionicons/icons';
 import { enlaceWhatsapp, productosDelPedido } from '../../shared/whatsapp';
 import { PedidosService } from '../../core/services/pedidos.service';
 import { EntregadoJyb, JybService, PedidoJyb, ResumenJyb } from '../../core/services/jyb.service';
@@ -10,6 +10,7 @@ import { SupabaseService } from '../../core/services/supabase.service';
 import { NotificacionesService } from '../../core/services/notificaciones.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { EntregarComponent } from '../../shared/entregar/entregar.component';
+import { NovedadComponent } from '../../shared/novedad/novedad.component';
 import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detalle.component';
 import { PedidoJybComponent } from '../../shared/pedido-jyb/pedido-jyb.component';
 import { Cuadre, Pedido, TipoRecaudo } from '../../shared/modelos';
@@ -30,7 +31,7 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
 @Component({
   selector: 'app-mis-entregas',
   standalone: true,
-  imports: [IonIcon, EntregarComponent, PedidoDetalleComponent, PedidoJybComponent, DiaComponent],
+  imports: [IonIcon, EntregarComponent, NovedadComponent, PedidoDetalleComponent, PedidoJybComponent, DiaComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -94,6 +95,9 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
       .tarjeta.jyb { border-left: 4px solid var(--oro); }
       .hist tr.sin-detalle { cursor: default; }
       .hist .negocio { margin: 0 6px 0 0; padding: 1px 6px; font-size: 10px; vertical-align: 1px; }
+      .novedad-previa { display: flex; align-items: center; gap: 6px; margin: 0; padding: 7px 10px; border-radius: var(--radius-sm);
+        background: var(--oro-wash); color: var(--oro-texto); font-size: 13px; font-weight: 600; }
+      .b-novedad { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 35%, var(--border)); }
       .parada { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 6px; margin-right: 6px; border-radius: 12px;
         background: var(--accent); color: #fff; font-size: 12.5px; font-weight: 750; font-family: var(--mono-font); vertical-align: 2px; }
     `,
@@ -229,6 +233,10 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
                 <ion-icon name="chatbubble-ellipses" aria-hidden="true"></ion-icon>Mensaje nuevo de la tienda
               </button>
             }
+            @if (p.ultima_novedad && p.novedades) {
+              <p class="novedad-previa"><ion-icon name="alert-circle-outline" aria-hidden="true"></ion-icon>
+                {{ p.novedades === 1 ? 'Ya se intentó' : 'Ya se intentó ' + p.novedades + ' veces' }}: {{ p.ultima_novedad }}</p>
+            }
             <p>{{ p.direccion }}<br />{{ p.barrio || 'Sin barrio' }}</p>
             @if (p.observaciones) {
               <p style="color: var(--st-pendiente-text)">{{ p.observaciones }}</p>
@@ -244,6 +252,7 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
                 <a class="b b-wa" [href]="whatsapp(p)" target="_blank" rel="noopener"><ion-icon name="logo-whatsapp"></ion-icon>WhatsApp</a>
               }
               <a class="b" [href]="mapa(p)" target="_blank" rel="noopener"><ion-icon name="navigate-outline"></ion-icon>Mapa</a>
+              <button class="b b-novedad" (click)="novedadDe.set(p)">No se pudo</button>
               <button class="b b-ok" style="flex: 1" (click)="entregando.set(p)">Entregar</button>
             </div>
           </article>
@@ -346,6 +355,9 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
       }
     </div>
 
+    @if (novedadDe(); as p) {
+      <app-novedad [pedido]="p" (cerrar)="novedadDe.set(null)" (reportado)="alReportar(p, $event)"></app-novedad>
+    }
     @if (entregando(); as p) {
       <app-entregar [pedido]="p" (cerrar)="entregando.set(null)" (entregado)="alEntregar(p)"></app-entregar>
     }
@@ -480,7 +492,7 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   private timerJyb?: ReturnType<typeof setTimeout>;
 
   constructor() {
-    addIcons({ refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses, chatbubbleEllipsesOutline });
+    addIcons({ refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses, chatbubbleEllipsesOutline, alertCircleOutline });
   }
 
   ngOnInit(): void {
@@ -828,6 +840,15 @@ export class MisEntregasPage implements OnInit, OnDestroy {
 
   hora(iso: string | null): string {
     return iso ? formatoFechaCO(iso, { day: 'numeric', month: 'short' }) + ' ' + formatoHoraCO(iso) : '';
+  }
+
+  /** Pedido al que se le está reportando que no se pudo entregar */
+  novedadDe = signal<Pedido | null>(null);
+
+  async alReportar(p: Pedido, accion: 'reintentar' | 'devolver'): Promise<void> {
+    this.novedadDe.set(null);
+    this.toast.ok(accion === 'devolver' ? `#${p.id}: novedad reportada, vuelve a la tienda` : `#${p.id}: novedad reportada, sigue en tu ruta`);
+    await this.cargar();
   }
 
   async alEntregar(p: Pedido): Promise<void> {

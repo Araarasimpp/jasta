@@ -72,6 +72,20 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/clientes/clientes.page').then((m) => m.ClientesPage),
       },
       {
+        // Pedidos que no se pudieron entregar (motivo y qué pasó)
+        path: 'novedades', canActivate: [rolGuard], data: { roles: ['admin', 'alistador', 'cuadres', 'vendedora', 'mensajero'] },
+        loadComponent: () => import('./paginas/novedades/novedades.page').then((m) => m.NovedadesPage),
+      },
+      {
+        // El admin paga las comisiones; la vendedora ve lo que tiene por cobrar y sus pagos
+        path: 'comisiones', canActivate: [rolGuard], data: { roles: ['admin', 'vendedora'] },
+        loadComponent: () => import('./paginas/comisiones/comisiones.page').then((m) => m.ComisionesPage),
+      },
+      {
+        path: 'gastos', canActivate: [rolGuard], data: { roles: ['admin'] },
+        loadComponent: () => import('./paginas/gastos/gastos.page').then((m) => m.GastosPage),
+      },
+      {
         path: 'actividad', canActivate: [rolGuard], data: { roles: ['admin'] },
         loadComponent: () => import('./paginas/actividad/actividad.page').then((m) => m.ActividadPage),
       },

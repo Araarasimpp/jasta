@@ -13,6 +13,9 @@ import {
   moonOutline,
   peopleOutline,
   receiptOutline,
+  alertCircleOutline,
+  cardOutline,
+  trendingDownOutline,
   bicycleOutline,
   clipboardOutline,
   sunnyOutline,
@@ -65,6 +68,9 @@ const MENU: ItemMenu[] = [
   { label: 'Catálogo', path: '/app/catalogo', icon: 'book-outline', roles: ['admin', 'vendedora'] },
   { label: 'Ranking', path: '/app/ranking', icon: 'trophy-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador'] },
   { label: 'Clientes', path: '/app/clientes', icon: 'people-circle-outline', roles: ['admin', 'venta_local'] },
+  { label: 'Novedades', path: '/app/novedades', icon: 'alert-circle-outline', roles: ['admin', 'alistador', 'cuadres', 'vendedora', 'mensajero'] },
+  { label: 'Comisiones', path: '/app/comisiones', icon: 'card-outline', roles: ['admin', 'vendedora'] },
+  { label: 'Gastos', path: '/app/gastos', icon: 'trending-down-outline', roles: ['admin'] },
   { label: 'Productos', path: '/app/productos', icon: 'cube-outline', roles: ['admin'] },
   { label: 'Barrios', path: '/app/barrios', icon: 'location-outline', roles: ['admin'] },
   { label: 'Usuarios', path: '/app/usuarios', icon: 'people-outline', roles: ['admin'] },
@@ -235,7 +241,7 @@ export class ShellComponent implements OnInit, OnDestroy {
 
   constructor() {
     addIcons({
-      add, barChartOutline, chevronBackOutline, chevronForwardOutline, cubeOutline, ellipsisHorizontal,
+      add, alertCircleOutline, cardOutline, trendingDownOutline, barChartOutline, chevronBackOutline, chevronForwardOutline, cubeOutline, ellipsisHorizontal,
       logOutOutline, moonOutline, peopleOutline, receiptOutline, bicycleOutline, clipboardOutline, sunnyOutline, walletOutline, statsChartOutline, settingsOutline,
       storefrontOutline, listOutline, trophyOutline, bookOutline, gridOutline, cashOutline, bagHandleOutline, peopleCircleOutline, timeOutline, personCircleOutline, notificationsOutline, locationOutline,
     });

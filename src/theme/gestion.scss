@@ -1291,3 +1291,19 @@ select.inp,
     visibility: hidden;
   }
 }
+
+/* Pedido que no se pudo entregar (Pedidos) */
+.chip-novedad {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  margin-top: 4px;
+  padding: 0 8px;
+  border-radius: var(--radius-xs);
+  background: var(--danger-wash);
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+}

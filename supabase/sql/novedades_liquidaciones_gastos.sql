@@ -1,6 +1,5 @@
 -- ============================================================================
---  Novedades de entrega, liquidación de vendedoras y gastos
---  Aplicado en Supabase: la parte de Novedades. Pendiente: liquidaciones y gastos.
+--  Novedades de entrega, liquidación de vendedoras y gastos · YA APLICADO en Supabase
 -- ============================================================================
 
 -- ---------------------------------------------------------------- Novedades

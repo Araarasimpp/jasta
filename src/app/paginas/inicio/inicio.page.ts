@@ -65,6 +65,8 @@ interface Tarea {
       .variacion { margin-left: 6px; font-size: 12px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
       .variacion.sube { color: var(--efectivo-texto); }
       .variacion.baja { color: var(--danger); }
+      .titulo-mes { margin: 4px 0 -4px; font-size: 13px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
+      .kpi-valor.neg { color: var(--danger); }
       .cols { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 16px; align-items: start; }
       .lado { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
       .cuenta { margin-left: 8px; font-family: var(--mono-font); font-size: 13px; font-weight: 500; color: var(--text-muted); }
@@ -143,6 +145,33 @@ interface Tarea {
           <span class="kpi-nota">{{ cuadres().length ? mensajerosPorCuadrar() + (mensajerosPorCuadrar() === 1 ? ' mensajero' : ' mensajeros') : 'Todo cuadrado' }}</span>
         </a>
       </div>
+
+      <!-- Este mes: ganancia, gastos, utilidad real y comisiones por pagar -->
+      @if (mes(); as m) {
+        <h2 class="titulo-mes">Este mes</h2>
+        <div class="kpis" role="list">
+          <div class="kpi" role="listitem">
+            <span class="kpi-label">Ganancia tienda</span>
+            <span class="kpi-valor num">{{ pesos(m.ganancia_tienda) }}</span>
+            <span class="kpi-nota">Pedidos entregados</span>
+          </div>
+          <a class="kpi" role="listitem" routerLink="/app/gastos">
+            <span class="kpi-label">Gastos</span>
+            <span class="kpi-valor num">{{ pesos(m.gastos) }}</span>
+            <span class="kpi-nota">{{ m.gastos ? 'Ver en qué se gastó' : 'Registra arriendo, nómina…' }}</span>
+          </a>
+          <a class="kpi kpi-principal" role="listitem" routerLink="/app/gastos">
+            <span class="kpi-label">Utilidad real</span>
+            <span class="kpi-valor num" [class.neg]="m.utilidad < 0">{{ pesos(m.utilidad) }}</span>
+            <span class="kpi-nota">Ganancia − gastos</span>
+          </a>
+          <a class="kpi" role="listitem" routerLink="/app/comisiones">
+            <span class="kpi-label">Comisiones por pagar</span>
+            <span class="kpi-valor num">{{ pesos(m.comisiones) }}</span>
+            <span class="kpi-nota">{{ m.vendedoras ? m.vendedoras + (m.vendedoras === 1 ? ' vendedora' : ' vendedoras') : 'Todo pagado' }}</span>
+          </a>
+        </div>
+      }
 
       <!-- Ganancia de la tienda -->
       <section class="panel" aria-labelledby="t-ganancia">
@@ -320,12 +349,31 @@ export class InicioPage implements OnInit, OnDestroy {
 
   async cargarTodo(): Promise<void> {
     try {
-      await Promise.all([this.cargarHoy(), this.cargarAtencion(), this.cargarGrafica()]);
+      await Promise.all([this.cargarHoy(), this.cargarAtencion(), this.cargarGrafica(), this.cargarMes()]);
     } catch (e) {
       this.toast.error(mensajeError(e));
     } finally {
       this.cargando.set(false);
     }
+  }
+
+  // -------------------------------------------------------------- Este mes
+  mes = signal<{ ganancia_tienda: number; gastos: number; utilidad: number; comisiones: number; vendedoras: number } | null>(null);
+
+  private async cargarMes(): Promise<void> {
+    const hoy = hoyColombiaISO();
+    const [g, c] = await Promise.all([
+      this.sb.client.rpc('gastos_resumen', { p_desde: hoy.slice(0, 8) + '01', p_hasta: hoy }),
+      this.sb.client.rpc('liquidaciones_pendientes'),
+    ]);
+    // Si algo falla, el resto del Inicio se ve igual
+    if (g.error || c.error) return;
+    const res = g.data as { ganancia_tienda: number; gastos: number; utilidad: number };
+    const pend = (c.data ?? []) as { total: number }[];
+    this.mes.set({
+      ganancia_tienda: Number(res.ganancia_tienda), gastos: Number(res.gastos), utilidad: Number(res.utilidad),
+      comisiones: pend.reduce((s, x) => s + Number(x.total), 0), vendedoras: pend.length,
+    });
   }
 
   // ------------------------------------------------------------------- Hoy

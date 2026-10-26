@@ -79,6 +79,10 @@ export interface Pedido {
   aporte_alcancia?: number | null;
   evidencias: string[] | null;
   cuadre_id: number | null;
+  /** Veces que no se pudo entregar, y la última (texto del motivo) */
+  novedades?: number;
+  ultima_novedad?: string | null;
+  novedad_at?: string | null;
   rotulo_impreso_at: string | null;
   alistado_at?: string | null;
   canal?: 'domicilio' | 'local';
