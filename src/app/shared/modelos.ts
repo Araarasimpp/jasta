@@ -80,6 +80,8 @@ export interface Pedido {
   evidencias: string[] | null;
   cuadre_id: number | null;
   /** Veces que no se pudo entregar, y la última (texto del motivo) */
+  /** Código del enlace público de seguimiento (/seguimiento/<código>) */
+  seguimiento?: string;
   novedades?: number;
   ultima_novedad?: string | null;
   novedad_at?: string | null;

@@ -7,6 +7,8 @@ import {
   barChartOutline,
   chevronBackOutline,
   chevronDownOutline,
+  layersOutline,
+  pricetagsOutline,
   close,
   chevronForwardOutline,
   cubeOutline,
@@ -57,10 +59,11 @@ interface ItemMenu {
   grupo?: Grupo;
 }
 
-type Grupo = 'Ventas' | 'Entregas' | 'Finanzas' | 'Equipo' | 'Ajustes';
+type Grupo = 'Ventas' | 'Entregas' | 'Bodega' | 'Finanzas' | 'Equipo' | 'Ajustes';
 const GRUPOS: { id: Grupo; icon: string }[] = [
   { id: 'Ventas', icon: 'storefront-outline' },
   { id: 'Entregas', icon: 'bicycle-outline' },
+  { id: 'Bodega', icon: 'cube-outline' },
   { id: 'Finanzas', icon: 'cash-outline' },
   { id: 'Equipo', icon: 'people-outline' },
   { id: 'Ajustes', icon: 'settings-outline' },
@@ -82,13 +85,15 @@ const MENU: ItemMenu[] = [
   { label: 'Novedades', path: '/app/novedades', icon: 'alert-circle-outline', roles: ['admin', 'alistador', 'cuadres', 'vendedora', 'mensajero'], grupo: 'Entregas' },
   { label: 'Recolector', path: '/app/recolector', icon: 'bag-handle-outline', roles: ['admin', 'recolector', 'cuadres'], grupo: 'Entregas' },
   { label: 'Barrios', path: '/app/barrios', icon: 'location-outline', roles: ['admin'], grupo: 'Entregas' },
+  { label: 'Inventario', path: '/app/inventario', icon: 'layers-outline', roles: ['admin', 'alistador'], grupo: 'Bodega' },
+  { label: 'Productos', path: '/app/productos', icon: 'pricetags-outline', roles: ['admin'], grupo: 'Bodega' },
   { label: 'Reportes', path: '/app/reportes', icon: 'stats-chart-outline', roles: ['admin', 'vendedora'], grupo: 'Finanzas' },
   { label: 'Comisiones', path: '/app/comisiones', icon: 'card-outline', roles: ['admin', 'vendedora'], grupo: 'Finanzas' },
   { label: 'Gastos', path: '/app/gastos', icon: 'trending-down-outline', roles: ['admin'], grupo: 'Finanzas' },
   { label: 'Ranking', path: '/app/ranking', icon: 'trophy-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador'], grupo: 'Equipo' },
   { label: 'Usuarios', path: '/app/usuarios', icon: 'people-outline', roles: ['admin'], grupo: 'Equipo' },
   { label: 'Actividad', path: '/app/actividad', icon: 'time-outline', roles: ['admin'], grupo: 'Equipo' },
-  { label: 'Productos', path: '/app/productos', icon: 'cube-outline', roles: ['admin'], grupo: 'Ajustes' },
+
   { label: 'Configuración', path: '/app/configuracion', icon: 'settings-outline', roles: ['admin'], grupo: 'Ajustes' },
   { label: 'Mi perfil', path: '/app/perfil', icon: 'person-circle-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador', 'venta_local', 'recolector'], grupo: 'Ajustes' },
 ];
@@ -328,7 +333,7 @@ export class ShellComponent implements OnInit, OnDestroy {
 
   constructor() {
     addIcons({
-      add, close, chevronDownOutline, alertCircleOutline, cardOutline, trendingDownOutline, barChartOutline, chevronBackOutline, chevronForwardOutline, cubeOutline, ellipsisHorizontal,
+      add, close, chevronDownOutline, layersOutline, pricetagsOutline, alertCircleOutline, cardOutline, trendingDownOutline, barChartOutline, chevronBackOutline, chevronForwardOutline, cubeOutline, ellipsisHorizontal,
       logOutOutline, moonOutline, peopleOutline, receiptOutline, bicycleOutline, clipboardOutline, sunnyOutline, walletOutline, statsChartOutline, settingsOutline,
       storefrontOutline, listOutline, trophyOutline, bookOutline, gridOutline, cashOutline, bagHandleOutline, peopleCircleOutline, timeOutline, personCircleOutline, notificationsOutline, locationOutline,
     });

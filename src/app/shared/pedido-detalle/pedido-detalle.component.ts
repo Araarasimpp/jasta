@@ -185,6 +185,17 @@ import { urlsComprobantes } from '../comprobantes';
                   </span>
                 } @else { — }
               </dd>
+              @if (p.seguimiento && p.estado !== 'cancelado' && !soloMensajero()) {
+                <dt>Seguimiento</dt>
+                <dd>
+                  <span class="contacto">
+                    @if (p.cliente_telefono) {
+                      <a [href]="whatsappSeguimiento(p.cliente_telefono)" target="_blank" rel="noopener">Enviar enlace por WhatsApp</a> ·
+                    }
+                    <a href="" (click)="$event.preventDefault(); copiarSeguimiento()">Copiar enlace</a>
+                  </span>
+                </dd>
+              }
               <dt>Dirección</dt><dd>{{ p.direccion || '—' }}</dd>
               <dt>Barrio</dt><dd>{{ p.barrio || '—' }}</dd>
               @if (p.observaciones) {
@@ -447,6 +458,28 @@ export class PedidoDetalleComponent implements OnChanges {
     this.toast.ok(`Pedido #${this.pedidoId} entregado`);
     await this.cargar();
     this.cambiado.emit();
+  }
+
+  /** Quien solo es mensajero no manda el enlace de seguimiento (ya habla con el cliente en la entrega) */
+  soloMensajero = computed(() => !this.sb.tiene('admin', 'vendedora', 'alistador', 'cuadres', 'venta_local'));
+
+  enlaceSeguimiento(): string {
+    return `${location.origin}/seguimiento/${this.pedido()?.seguimiento ?? ''}`;
+  }
+
+  whatsappSeguimiento(tel: string): string {
+    const p = this.pedido();
+    const nombre = p?.cliente_nombre.split(' ')[0] ?? '';
+    return enlaceWhatsapp(tel, `Hola ${nombre}, aquí puedes ver en qué va tu pedido #${p?.id} de Jasta: ${this.enlaceSeguimiento()}`);
+  }
+
+  async copiarSeguimiento(): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(this.enlaceSeguimiento());
+      this.toast.ok('Enlace de seguimiento copiado');
+    } catch {
+      this.toast.error('No se pudo copiar: ' + this.enlaceSeguimiento());
+    }
   }
 
   whatsapp(tel: string): string {

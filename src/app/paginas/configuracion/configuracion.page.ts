@@ -35,6 +35,7 @@ const EJEMPLO: PedidoRotulo = {
   imports: [FormsModule, TelegramPanelComponent],
   styles: [
     `
+      .cierre { margin: 12px 0 0; padding: 12px 14px; border-radius: var(--radius); background: var(--surface-2); font-family: inherit; font-size: 13.5px; line-height: 1.5; white-space: pre-wrap; }
       .grid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 24px; align-items: start; }
       .form { display: flex; flex-direction: column; gap: 14px; max-width: 520px; }
       .previa { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; background: var(--bg); }
@@ -81,6 +82,16 @@ const EJEMPLO: PedidoRotulo = {
           <p class="ayuda">Quien despacha manda la foto del rótulo al grupo de cada mensajero y el pedido se le asigna solo, en el orden de las fotos.</p>
           <app-telegram-panel modo="admin"></app-telegram-panel>
         </section>
+
+        <section class="tg">
+          <h2>Cierre del día por Telegram</h2>
+          <p class="ayuda">Todos los días a las 9:00 p. m. le llega al chat privado de cada admin (con su cuenta vinculada al bot) el resumen:
+            entregas, ganancia, gastos, utilidad, novedades, lo que falta por despachar, cuadres y comisiones por pagar.</p>
+          <button class="b" (click)="enviarCierre()" [disabled]="enviandoCierre()">{{ enviandoCierre() ? 'Enviando…' : 'Enviar el de hoy ahora' }}</button>
+          @if (cierre(); as c) {
+            <pre class="cierre">{{ c }}</pre>
+          }
+        </section>
       </div>
     </div>
   `,
@@ -94,6 +105,19 @@ export class ConfiguracionPage implements OnInit {
   datos: DatosNegocio = { ...NEGOCIO_POR_DEFECTO };
   private version = signal(0);
   guardando = signal(false);
+  enviandoCierre = signal(false);
+  cierre = signal('');
+
+  async enviarCierre(): Promise<void> {
+    this.enviandoCierre.set(true);
+    const { data, error } = await this.sb.client.rpc('enviar_cierre_dia_ahora');
+    this.enviandoCierre.set(false);
+    if (error) return this.toast.error(error.message);
+    const r = data as { enviados: number; texto: string };
+    this.cierre.set(r.texto);
+    if (r.enviados) this.toast.ok(r.enviados === 1 ? 'Enviado a 1 admin por Telegram' : `Enviado a ${r.enviados} admins por Telegram`);
+    else this.toast.error('Ningún admin tiene Telegram vinculado (Mi perfil → Telegram) o el bot no está conectado.');
+  }
 
   previa = computed<SafeHtml>(() => {
     this.version();

@@ -16,6 +16,8 @@ export const routes: Routes = [
   { path: 'auth/login', canActivate: [invitadoGuard], loadComponent: () => import('./auth/login/login.page').then((m) => m.LoginPage) },
   { path: 'auth/registro', canActivate: [invitadoGuard], loadComponent: () => import('./auth/registro/registro.page').then((m) => m.RegistroPage) },
   { path: 'auth/recuperar', loadComponent: () => import('./auth/recuperar/recuperar.page').then((m) => m.RecuperarPage) },
+  // Público (sin sesión): el cliente ve en qué va su pedido con el enlace que le mandaron
+  { path: 'seguimiento/:codigo', loadComponent: () => import('./seguimiento/seguimiento.page').then((m) => m.SeguimientoPage) },
   { path: 'auth/nueva-clave', loadComponent: () => import('./auth/nueva-clave/nueva-clave.page').then((m) => m.NuevaClavePage) },
   {
     path: 'app',
@@ -80,6 +82,11 @@ export const routes: Routes = [
         // El admin paga las comisiones; la vendedora ve lo que tiene por cobrar y sus pagos
         path: 'comisiones', canActivate: [rolGuard], data: { roles: ['admin', 'vendedora'] },
         loadComponent: () => import('./paginas/comisiones/comisiones.page').then((m) => m.ComisionesPage),
+      },
+      {
+        // Stock, conteos, historial por producto y compras a proveedores
+        path: 'inventario', canActivate: [rolGuard], data: { roles: ['admin', 'alistador'] },
+        loadComponent: () => import('./paginas/inventario/inventario.page').then((m) => m.InventarioPage),
       },
       {
         path: 'gastos', canActivate: [rolGuard], data: { roles: ['admin'] },
