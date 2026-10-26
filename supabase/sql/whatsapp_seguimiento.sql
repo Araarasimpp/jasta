@@ -1,5 +1,5 @@
 -- ============================================================================
---  Enlace de seguimiento por WhatsApp (API oficial de Meta) · PENDIENTE de aplicar en Supabase
+--  Enlace de seguimiento por WhatsApp (API oficial de Meta) · YA APLICADO en Supabase
 --
 --  Cuando un pedido a domicilio sale en ruta (pasa a "despachado" por primera vez),
 --  se le manda al cliente la plantilla aprobada de WhatsApp con su nombre, el número

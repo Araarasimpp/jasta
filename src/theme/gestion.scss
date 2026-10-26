@@ -1307,3 +1307,17 @@ select.inp,
   font-weight: 650;
   white-space: nowrap;
 }
+
+/* Pedidos: cantidad junto al nombre del producto (sobre la foto a veces no se leía) */
+.prod-cant {
+  display: inline-block;
+  margin-right: 5px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-family: var(--mono-font);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+}

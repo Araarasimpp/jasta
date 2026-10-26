@@ -150,11 +150,8 @@
                             } @else {
                               <span class="prod-inicial" aria-hidden="true">{{ inicial(it.nombre) }}</span>
                             }
-                            @if (it.cantidad > 1) {
-                              <span class="prod-cant num" aria-hidden="true">×{{ it.cantidad }}</span>
-                            }
                           </button>
-                          <button type="button" class="prod-nombre" (click)="abrirProducto(p, it, $event)">{{ it.nombre }}@if (variante(it); as v) {<span class="prod-var">{{ v }}</span>}</button>
+                          <button type="button" class="prod-nombre" (click)="abrirProducto(p, it, $event)">@if (it.cantidad > 1) {<span class="prod-cant num" [attr.aria-label]="it.cantidad + ' unidades'">{{ it.cantidad }} ×</span>}{{ it.nombre }}@if (variante(it); as v) {<span class="prod-var">{{ v }}</span>}</button>
                         </li>
                       }
                       @if (p.pedido_items.length > maxProductosVisibles) {
