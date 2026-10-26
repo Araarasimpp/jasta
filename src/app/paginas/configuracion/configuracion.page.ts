@@ -35,6 +35,15 @@ const EJEMPLO: PedidoRotulo = {
   imports: [FormsModule, TelegramPanelComponent],
   styles: [
     `
+      .wa-campos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 14px; margin-top: 10px; }
+      .wa-check { display: flex; gap: 8px; align-items: center; margin: 6px 0 12px; font-size: 14px; }
+      .wa-acciones { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+      .wa-acciones .inp { width: 190px; }
+      .wa-envios { width: 100%; margin-top: 14px; border-collapse: collapse; font-size: 13px; }
+      .wa-envios th { text-align: left; font-size: 11.5px; color: var(--text-muted); font-weight: 650; padding: 6px 4px; border-bottom: 1px solid var(--border); }
+      .wa-envios td { padding: 7px 4px; border-bottom: 1px solid var(--border-soft); }
+      .wa-envios td.mal { color: var(--danger); }
+      @media (max-width: 640px) { .wa-campos { grid-template-columns: 1fr; } }
       .cierre { margin: 12px 0 0; padding: 12px 14px; border-radius: var(--radius); background: var(--surface-2); font-family: inherit; font-size: 13.5px; line-height: 1.5; white-space: pre-wrap; }
       .grid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 24px; align-items: start; }
       .form { display: flex; flex-direction: column; gap: 14px; max-width: 520px; }
@@ -84,6 +93,43 @@ const EJEMPLO: PedidoRotulo = {
         </section>
 
         <section class="tg">
+          <h2>Seguimiento automático por WhatsApp</h2>
+          <p class="ayuda">Cuando un pedido sale en ruta por primera vez, al cliente le llega por WhatsApp (API oficial de Meta) el enlace para ver en qué va su pedido.
+            Una sola vez por pedido y solo a celulares colombianos. Meta cobra cada mensaje (categoría Utilidad).</p>
+          @if (wa(); as w) {
+            <div class="wa-campos">
+              <div class="campo"><label for="wa-id">Phone number ID</label><input id="wa-id" [(ngModel)]="waForm.phone_number_id" placeholder="Ej: 123456789012345" /></div>
+              <div class="campo"><label for="wa-tk">Token de acceso permanente</label>
+                <input id="wa-tk" type="password" autocomplete="off" [(ngModel)]="waForm.token" [placeholder]="w.token_guardado ? 'Guardado · escribe uno nuevo para cambiarlo' : 'Pega el token de Meta'" /></div>
+              <div class="campo"><label for="wa-pl">Nombre de la plantilla</label><input id="wa-pl" [(ngModel)]="waForm.plantilla" /></div>
+              <div class="campo"><label for="wa-id2">Idioma de la plantilla</label><input id="wa-id2" [(ngModel)]="waForm.idioma" placeholder="es" /></div>
+              <div class="campo"><label for="wa-url">Dirección de la app</label><input id="wa-url" [(ngModel)]="waForm.app_url" placeholder="https://…" /></div>
+            </div>
+            <label class="wa-check"><input type="checkbox" [(ngModel)]="waForm.activo" /> Mandar el enlace automáticamente cuando el pedido sale en ruta</label>
+            <div class="wa-acciones">
+              <button class="b b-pri" (click)="guardarWa()" [disabled]="waOcupado()">{{ waOcupado() ? 'Guardando…' : 'Guardar' }}</button>
+              <input class="inp inp-chico" [(ngModel)]="waPrueba" inputmode="tel" placeholder="Celular para probar" aria-label="Celular para la prueba" />
+              <button class="b" (click)="probarWa()" [disabled]="waOcupado() || !w.token_guardado">Enviar prueba</button>
+            </div>
+            @if (waEnvios().length) {
+              <table class="wa-envios">
+                <thead><tr><th>Cuándo</th><th>Pedido</th><th>Celular</th><th>Resultado</th></tr></thead>
+                <tbody>
+                  @for (e of waEnvios(); track $index) {
+                    <tr>
+                      <td>{{ cuando(e.fecha) }}</td><td>{{ e.pedido_id ? '#' + e.pedido_id : 'Prueba' }}</td><td>{{ e.telefono }}</td>
+                      <td [class.mal]="!!e.error">{{ e.error ? e.error : e.codigo ? (e.codigo < 300 ? 'Enviado' : 'Error ' + e.codigo) : 'Enviando…' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            }
+          } @else {
+            <p class="ayuda">{{ waError() || 'Cargando…' }}</p>
+          }
+        </section>
+
+        <section class="tg">
           <h2>Cierre del día por Telegram</h2>
           <p class="ayuda">Todos los días a las 9:00 p. m. le llega al chat privado de cada admin (con su cuenta vinculada al bot) el resumen:
             entregas, ganancia, gastos, utilidad, novedades, lo que falta por despachar, cuadres y comisiones por pagar.</p>
@@ -106,6 +152,48 @@ export class ConfiguracionPage implements OnInit {
   private version = signal(0);
   guardando = signal(false);
   enviandoCierre = signal(false);
+
+  // ---------- WhatsApp (seguimiento automático)
+  wa = signal<{ phone_number_id: string | null; token_guardado: boolean; plantilla: string; idioma: string; app_url: string | null; activo: boolean } | null>(null);
+  waForm = { phone_number_id: '', token: '', plantilla: 'seguimiento_pedido', idioma: 'es', app_url: '', activo: false };
+  waEnvios = signal<{ fecha: string; pedido_id: number | null; tipo: string; telefono: string; codigo: number | null; error: string | null }[]>([]);
+  waOcupado = signal(false);
+  waError = signal('');
+  waPrueba = '';
+
+  private async cargarWa(): Promise<void> {
+    const [c, e] = await Promise.all([this.sb.client.rpc('whatsapp_config_leer'), this.sb.client.rpc('whatsapp_envios_recientes')]);
+    if (c.error) return this.waError.set('No se pudo leer la configuración de WhatsApp: ' + c.error.message);
+    const w = c.data as NonNullable<ReturnType<typeof this.wa>>;
+    this.wa.set(w);
+    this.waForm = { phone_number_id: w.phone_number_id ?? '', token: '', plantilla: w.plantilla, idioma: w.idioma, app_url: w.app_url ?? location.origin, activo: w.activo };
+    this.waEnvios.set((e.data ?? []) as ReturnType<typeof this.waEnvios>);
+  }
+
+  async guardarWa(): Promise<void> {
+    this.waOcupado.set(true);
+    const f = this.waForm;
+    const { error } = await this.sb.client.rpc('whatsapp_config_guardar', {
+      p_phone_number_id: f.phone_number_id, p_token: f.token || null, p_plantilla: f.plantilla, p_idioma: f.idioma, p_app_url: f.app_url, p_activo: f.activo,
+    });
+    this.waOcupado.set(false);
+    if (error) return this.toast.error(error.message);
+    this.toast.ok(f.activo ? 'Guardado: el enlace se manda solo cuando el pedido sale en ruta' : 'Guardado (apagado)');
+    await this.cargarWa();
+  }
+
+  async probarWa(): Promise<void> {
+    this.waOcupado.set(true);
+    const { error } = await this.sb.client.rpc('whatsapp_probar', { p_telefono: this.waPrueba });
+    this.waOcupado.set(false);
+    if (error) return this.toast.error(error.message);
+    this.toast.ok('Prueba enviada: en unos segundos aparece el resultado abajo');
+    setTimeout(() => void this.cargarWa(), 4000);
+  }
+
+  cuando(iso: string): string {
+    return new Date(iso).toLocaleString('es-CO', { timeZone: 'America/Bogota', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  }
   cierre = signal('');
 
   async enviarCierre(): Promise<void> {
@@ -125,6 +213,7 @@ export class ConfiguracionPage implements OnInit {
   });
 
   async ngOnInit(): Promise<void> {
+    void this.cargarWa();
     this.datos = await cargarDatosNegocio(this.sb.client);
     this.actualizar();
   }
