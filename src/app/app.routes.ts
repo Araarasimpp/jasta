@@ -89,6 +89,14 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/inventario/inventario.page').then((m) => m.InventarioPage),
       },
       {
+        path: 'devoluciones', canActivate: [rolGuard], data: { roles: ['admin', 'alistador', 'venta_local', 'cuadres'] },
+        loadComponent: () => import('./paginas/devoluciones/devoluciones.page').then((m) => m.DevolucionesPage),
+      },
+      {
+        path: 'rentabilidad', canActivate: [rolGuard], data: { roles: ['admin'] },
+        loadComponent: () => import('./paginas/rentabilidad/rentabilidad.page').then((m) => m.RentabilidadPage),
+      },
+      {
         path: 'gastos', canActivate: [rolGuard], data: { roles: ['admin'] },
         loadComponent: () => import('./paginas/gastos/gastos.page').then((m) => m.GastosPage),
       },

@@ -9,6 +9,7 @@ import { SupabaseService } from '../../core/services/supabase.service';
 import { NotificacionesService } from '../../core/services/notificaciones.service';
 import { PresenciaService } from '../../core/services/presencia.service';
 import { ToastService } from '../toast/toast.service';
+import { DevolucionComponent } from '../devolucion/devolucion.component';
 import { EntregarComponent } from '../entregar/entregar.component';
 import { RotulosService } from '../rotulo/rotulos.service';
 import { enlaceWhatsapp, productosDelPedido } from '../whatsapp';
@@ -25,7 +26,7 @@ import { urlsComprobantes } from '../comprobantes';
 @Component({
   selector: 'app-pedido-detalle',
   standalone: true,
-  imports: [FormsModule, IonIcon, EntregarComponent, ChatPedidoComponent, AvatarComponent],
+  imports: [FormsModule, IonIcon, EntregarComponent, ChatPedidoComponent, AvatarComponent, DevolucionComponent],
   styles: [
     `
       .resumen { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -300,6 +301,9 @@ import { urlsComprobantes } from '../comprobantes';
       }
     </aside>
 
+    @if (devolviendo() && pedido()) {
+      <app-devolucion [pedido]="pedido()!" (cerrar)="devolviendo.set(false)" (registrado)="alDevolver()"></app-devolucion>
+    }
     @if (entregando() && pedido()) {
       <app-entregar [pedido]="pedido()!" (cerrar)="entregando.set(false)" (entregado)="alEntregar()"></app-entregar>
     }
@@ -379,6 +383,8 @@ export class PedidoDetalleComponent implements OnChanges {
       out.push({ id: 'rotulo', label: p.rotulo_impreso_at ? 'Reimprimir rótulo' : 'Imprimir rótulo' });
     if (p.estado !== 'cancelado' && admin) out.push({ id: 'editar', label: 'Editar' });
     if (p.estado === 'cancelado' && admin) out.push({ id: 'por_alistar', label: 'Reactivar' });
+    if (p.estado === 'entregado' && this.sb.tiene('admin', 'alistador', 'venta_local', 'cuadres'))
+      out.push({ id: 'devolucion', label: 'Devolución o garantía' });
     return out;
   });
 
@@ -409,6 +415,7 @@ export class PedidoDetalleComponent implements OnChanges {
 
   async ejecutar(id: string): Promise<void> {
     if (id === 'entregar') return this.entregando.set(true);
+    if (id === 'devolucion') return this.devolviendo.set(true);
     if (id === 'editar') {
       void this.router.navigate(['/app/pedidos', this.pedidoId, 'editar']);
       return;
@@ -451,6 +458,15 @@ export class PedidoDetalleComponent implements OnChanges {
     } finally {
       this.ocupado.set(false);
     }
+  }
+
+  devolviendo = signal(false);
+
+  async alDevolver(): Promise<void> {
+    this.devolviendo.set(false);
+    this.toast.ok(`Devolución del pedido #${this.pedidoId} registrada`);
+    await this.cargar();
+    this.cambiado.emit();
   }
 
   async alEntregar(): Promise<void> {
