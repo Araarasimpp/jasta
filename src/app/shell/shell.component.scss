@@ -323,3 +323,80 @@
 .avisos-btn .icono-badge {
   display: inline-flex;
 }
+
+// Grupos desplegables del menú (Ventas, Entregas, Finanzas, Equipo, Ajustes)
+.grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.grupo-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 34px;
+  margin-top: 6px;
+  padding: 0 10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: left;
+  cursor: pointer;
+}
+
+.grupo-head ion-icon {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.grupo-head span {
+  flex: 1;
+}
+
+.grupo-punto {
+  flex: 0 0 6px !important;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--oro);
+}
+
+.grupo-flecha {
+  transition: transform var(--dur) var(--ease);
+}
+
+.grupo.abierto .grupo-flecha {
+  transform: rotate(180deg);
+}
+
+@media (hover: hover) {
+  .grupo-head:hover {
+    background: var(--hover);
+    color: var(--text);
+  }
+}
+
+.grupo-items {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  animation: grupo-entra 160ms var(--ease) both;
+}
+
+.grupo-items .menu-item {
+  padding-left: 18px;
+}
+
+@keyframes grupo-entra {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}

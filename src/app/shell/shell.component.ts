@@ -1,11 +1,13 @@
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import {
   add,
   barChartOutline,
   chevronBackOutline,
+  chevronDownOutline,
+  close,
   chevronForwardOutline,
   cubeOutline,
   ellipsisHorizontal,
@@ -51,7 +53,18 @@ interface ItemMenu {
   roles: Rol[];
   /** No se muestra a quien tenga alguno de estos roles (ya tiene otra versión de la sección) */
   sinRoles?: Rol[];
+  /** Grupo desplegable del menú del computador (sin grupo = siempre a la vista, arriba) */
+  grupo?: Grupo;
 }
+
+type Grupo = 'Ventas' | 'Entregas' | 'Finanzas' | 'Equipo' | 'Ajustes';
+const GRUPOS: { id: Grupo; icon: string }[] = [
+  { id: 'Ventas', icon: 'storefront-outline' },
+  { id: 'Entregas', icon: 'bicycle-outline' },
+  { id: 'Finanzas', icon: 'cash-outline' },
+  { id: 'Equipo', icon: 'people-outline' },
+  { id: 'Ajustes', icon: 'settings-outline' },
+];
 
 const MENU: ItemMenu[] = [
   { label: 'Inicio', path: '/app/inicio', icon: 'bar-chart-outline', roles: ['admin'] },
@@ -60,24 +73,24 @@ const MENU: ItemMenu[] = [
   { label: 'Mi panel', path: '/app/mi-panel', icon: 'grid-outline', roles: ['vendedora'] },
   { label: 'Pedidos', path: '/app/pedidos', icon: 'receipt-outline', roles: ['admin', 'alistador', 'cuadres'] },
   { label: 'Mis entregas', path: '/app/mis-entregas', icon: 'bicycle-outline', roles: ['mensajero'] },
-  { label: 'Venta en local', path: '/app/venta-local', icon: 'storefront-outline', roles: ['admin', 'venta_local'] },
-  { label: 'Ventas del local', path: '/app/ventas-local', icon: 'list-outline', roles: ['admin', 'venta_local'] },
-  { label: 'Servicio local', path: '/app/servicio-local', icon: 'cash-outline', roles: ['admin', 'venta_local', 'cuadres'] },
-  { label: 'Recolector', path: '/app/recolector', icon: 'bag-handle-outline', roles: ['admin', 'recolector', 'cuadres'] },
-  { label: 'Cuadres', path: '/app/cuadres', icon: 'wallet-outline', roles: ['admin', 'cuadres', 'mensajero'] },
-  { label: 'Catálogo', path: '/app/catalogo', icon: 'book-outline', roles: ['admin', 'vendedora'] },
-  { label: 'Ranking', path: '/app/ranking', icon: 'trophy-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador'] },
-  { label: 'Clientes', path: '/app/clientes', icon: 'people-circle-outline', roles: ['admin', 'venta_local'] },
-  { label: 'Novedades', path: '/app/novedades', icon: 'alert-circle-outline', roles: ['admin', 'alistador', 'cuadres', 'vendedora', 'mensajero'] },
-  { label: 'Comisiones', path: '/app/comisiones', icon: 'card-outline', roles: ['admin', 'vendedora'] },
-  { label: 'Gastos', path: '/app/gastos', icon: 'trending-down-outline', roles: ['admin'] },
-  { label: 'Productos', path: '/app/productos', icon: 'cube-outline', roles: ['admin'] },
-  { label: 'Barrios', path: '/app/barrios', icon: 'location-outline', roles: ['admin'] },
-  { label: 'Usuarios', path: '/app/usuarios', icon: 'people-outline', roles: ['admin'] },
-  { label: 'Reportes', path: '/app/reportes', icon: 'stats-chart-outline', roles: ['admin', 'vendedora'] },
-  { label: 'Actividad', path: '/app/actividad', icon: 'time-outline', roles: ['admin'] },
-  { label: 'Configuración', path: '/app/configuracion', icon: 'settings-outline', roles: ['admin'] },
-  { label: 'Mi perfil', path: '/app/perfil', icon: 'person-circle-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador', 'venta_local', 'recolector'] },
+  { label: 'Venta en local', path: '/app/venta-local', icon: 'storefront-outline', roles: ['admin', 'venta_local'], grupo: 'Ventas' },
+  { label: 'Ventas del local', path: '/app/ventas-local', icon: 'list-outline', roles: ['admin', 'venta_local'], grupo: 'Ventas' },
+  { label: 'Servicio local', path: '/app/servicio-local', icon: 'cash-outline', roles: ['admin', 'venta_local', 'cuadres'], grupo: 'Ventas' },
+  { label: 'Catálogo', path: '/app/catalogo', icon: 'book-outline', roles: ['admin', 'vendedora'], grupo: 'Ventas' },
+  { label: 'Clientes', path: '/app/clientes', icon: 'people-circle-outline', roles: ['admin', 'venta_local'], grupo: 'Ventas' },
+  { label: 'Cuadres', path: '/app/cuadres', icon: 'wallet-outline', roles: ['admin', 'cuadres', 'mensajero'], grupo: 'Entregas' },
+  { label: 'Novedades', path: '/app/novedades', icon: 'alert-circle-outline', roles: ['admin', 'alistador', 'cuadres', 'vendedora', 'mensajero'], grupo: 'Entregas' },
+  { label: 'Recolector', path: '/app/recolector', icon: 'bag-handle-outline', roles: ['admin', 'recolector', 'cuadres'], grupo: 'Entregas' },
+  { label: 'Barrios', path: '/app/barrios', icon: 'location-outline', roles: ['admin'], grupo: 'Entregas' },
+  { label: 'Reportes', path: '/app/reportes', icon: 'stats-chart-outline', roles: ['admin', 'vendedora'], grupo: 'Finanzas' },
+  { label: 'Comisiones', path: '/app/comisiones', icon: 'card-outline', roles: ['admin', 'vendedora'], grupo: 'Finanzas' },
+  { label: 'Gastos', path: '/app/gastos', icon: 'trending-down-outline', roles: ['admin'], grupo: 'Finanzas' },
+  { label: 'Ranking', path: '/app/ranking', icon: 'trophy-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador'], grupo: 'Equipo' },
+  { label: 'Usuarios', path: '/app/usuarios', icon: 'people-outline', roles: ['admin'], grupo: 'Equipo' },
+  { label: 'Actividad', path: '/app/actividad', icon: 'time-outline', roles: ['admin'], grupo: 'Equipo' },
+  { label: 'Productos', path: '/app/productos', icon: 'cube-outline', roles: ['admin'], grupo: 'Ajustes' },
+  { label: 'Configuración', path: '/app/configuracion', icon: 'settings-outline', roles: ['admin'], grupo: 'Ajustes' },
+  { label: 'Mi perfil', path: '/app/perfil', icon: 'person-circle-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador', 'venta_local', 'recolector'], grupo: 'Ajustes' },
 ];
 
 @Component({
@@ -108,14 +121,37 @@ const MENU: ItemMenu[] = [
         }
 
         <nav class="menu" aria-label="Secciones">
-          @for (item of menu(); track item.path) {
-            <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.path === '/app/pedidos' }"
-              class="menu-item" [attr.aria-label]="colapsado() ? item.label : null">
-              <ion-icon [name]="item.icon"></ion-icon>
-              @if (!colapsado()) {
-                <span>{{ item.label }}</span>
-              }
-            </a>
+          @if (colapsado()) {
+            @for (item of menu(); track item.path) {
+              <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.path === '/app/pedidos' }"
+                class="menu-item" [attr.aria-label]="item.label" [title]="item.label">
+                <ion-icon [name]="item.icon"></ion-icon>
+              </a>
+            }
+          } @else {
+            @for (item of sueltos(); track item.path) {
+              <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.path === '/app/pedidos' }" class="menu-item">
+                <ion-icon [name]="item.icon"></ion-icon><span>{{ item.label }}</span>
+              </a>
+            }
+            @for (g of grupos(); track g.id) {
+              <div class="grupo" [class.abierto]="abierto(g.id)">
+                <button type="button" class="grupo-head" (click)="alternarGrupo(g.id)" [attr.aria-expanded]="abierto(g.id)">
+                  <ion-icon [name]="g.icon"></ion-icon><span>{{ g.id }}</span>
+                  @if (!abierto(g.id) && g.activo) { <span class="grupo-punto" aria-hidden="true"></span> }
+                  <ion-icon class="grupo-flecha" name="chevron-down-outline"></ion-icon>
+                </button>
+                @if (abierto(g.id)) {
+                  <div class="grupo-items">
+                    @for (item of g.items; track item.path) {
+                      <a [routerLink]="item.path" routerLinkActive="active" class="menu-item">
+                        <ion-icon [name]="item.icon"></ion-icon><span>{{ item.label }}</span>
+                      </a>
+                    }
+                  </div>
+                }
+              </div>
+            }
           }
         </nav>
 
@@ -161,8 +197,12 @@ const MENU: ItemMenu[] = [
       </main>
 
       <nav class="pill-nav mobile-only" aria-label="Secciones">
-        @for (item of tabs(); track item.path; let i = $index) {
-          @if (i === 1 && puedeVender()) {
+        @for (item of tabs(); track item.path; let i = $index; let ultimo = $last) {
+          <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.path === '/app/pedidos' }" (click)="mas.set(false); avisos.cerrar()">
+            <ion-icon [name]="item.icon"></ion-icon>
+            <span class="tab-label">{{ item.label }}</span>
+          </a>
+          @if ((i === 1 || ultimo) && i <= 1 && puedeVender()) {
             <div class="pill-center">
               <a routerLink="/app/pedidos/nuevo" class="pill-action" (click)="mas.set(false)">
                 <ion-icon name="add"></ion-icon>
@@ -170,10 +210,6 @@ const MENU: ItemMenu[] = [
               </a>
             </div>
           }
-          <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.path === '/app/pedidos' }" (click)="mas.set(false); avisos.cerrar()">
-            <ion-icon [name]="item.icon"></ion-icon>
-            <span class="tab-label">{{ item.label }}</span>
-          </a>
         }
         <button class="tab" [class.active]="avisos.abierto()" (click)="mas.set(false); avisos.toggle()" [attr.aria-expanded]="avisos.abierto()">
           <span class="icono-badge">
@@ -193,20 +229,27 @@ const MENU: ItemMenu[] = [
 
       @if (mas()) {
         <button class="more-backdrop" aria-label="Cerrar menú" (click)="mas.set(false)"></button>
-        <div class="more-sheet">
-          @for (item of masItems(); track item.path) {
-            <a [routerLink]="item.path" routerLinkActive="active" (click)="mas.set(false)">
-              <ion-icon [name]="item.icon"></ion-icon>{{ item.label }}
-            </a>
-          }
-          @if (masItems().length) {
-            <hr />
-          }
-          <button (click)="theme.toggle()">
-            <ion-icon [name]="theme.isDark() ? 'sunny-outline' : 'moon-outline'"></ion-icon>
-            {{ theme.isDark() ? 'Modo claro' : 'Modo oscuro' }}
-          </button>
-          <button (click)="salir()"><ion-icon name="log-out-outline"></ion-icon>Cerrar sesión ({{ sb.usuario()?.nombre }})</button>
+        <div class="more-sheet" role="dialog" aria-labelledby="t-mas">
+          <span class="more-agarre" aria-hidden="true"></span>
+          <div class="more-head">
+            <h2 id="t-mas">Menú</h2>
+            <button class="more-cerrar" aria-label="Cerrar menú" (click)="mas.set(false)"><ion-icon name="close"></ion-icon></button>
+          </div>
+          <div class="more-grid">
+            @for (item of masItems(); track item.path) {
+              <a [routerLink]="item.path" routerLinkActive="active" (click)="mas.set(false)" class="more-op">
+                <span class="more-ico"><ion-icon [name]="item.icon"></ion-icon></span>
+                <span class="more-label">{{ item.label }}</span>
+              </a>
+            }
+          </div>
+          <div class="more-pie">
+            <button class="more-btn" (click)="theme.toggle()">
+              <ion-icon [name]="theme.isDark() ? 'sunny-outline' : 'moon-outline'"></ion-icon>
+              {{ theme.isDark() ? 'Modo claro' : 'Modo oscuro' }}
+            </button>
+            <button class="more-btn salir" (click)="salir()"><ion-icon name="log-out-outline"></ion-icon>Cerrar sesión</button>
+          </div>
         </div>
       }
       <app-toast></app-toast>
@@ -231,6 +274,50 @@ export class ShellComponent implements OnInit, OnDestroy {
     const i = items.findIndex((m) => m.path === inicio);
     return i > 0 ? [items[i], ...items.slice(0, i), ...items.slice(i + 1)] : items;
   });
+  /** Computador: las secciones sin grupo van arriba y las demás en grupos desplegables */
+  /** La pantalla principal de cada quien también va suelta arriba, aunque sea de un grupo */
+  sueltos = computed(() => this.menu().filter((m) => !m.grupo || m.path === this.sb.inicioSegunRoles()));
+  grupos = computed(() => {
+    const url = this.url();
+    return GRUPOS.map((g) => {
+      const items = this.menu().filter((m) => m.grupo === g.id && m.path !== this.sb.inicioSegunRoles());
+      return { ...g, items, activo: items.some((m) => url.startsWith(m.path)) };
+    }).filter((g) => g.items.length);
+  });
+  /** Grupos abiertos a mano (se recuerdan); el de la página actual siempre se abre */
+  private abiertos = signal<Set<string>>(this.leerAbiertos());
+  private url = signal(this.router.url);
+
+  abierto(g: string): boolean {
+    return this.abiertos().has(g);
+  }
+
+  alternarGrupo(g: string): void {
+    const s = new Set(this.abiertos());
+    if (s.has(g)) s.delete(g);
+    else s.add(g);
+    this.abiertos.set(s);
+    try {
+      localStorage.setItem('jasta-menu-grupos', JSON.stringify([...s]));
+    } catch {
+      /* sin almacenamiento */
+    }
+  }
+
+  private leerAbiertos(): Set<string> {
+    try {
+      return new Set(JSON.parse(localStorage.getItem('jasta-menu-grupos') ?? '[]') as string[]);
+    } catch {
+      return new Set();
+    }
+  }
+
+  /** Al entrar a una página de un grupo cerrado, ese grupo se abre */
+  private abrirGrupoActual(): void {
+    const g = this.grupos().find((x) => x.activo);
+    if (g && !this.abierto(g.id)) this.alternarGrupo(g.id);
+  }
+
   /** En el celular caben 2 secciones en la barra (más Nuevo, Avisos y Más); el resto va en "Más" */
   tabs = computed(() => this.menu().slice(0, 2));
   masItems = computed(() => this.menu().slice(2));
@@ -241,19 +328,29 @@ export class ShellComponent implements OnInit, OnDestroy {
 
   constructor() {
     addIcons({
-      add, alertCircleOutline, cardOutline, trendingDownOutline, barChartOutline, chevronBackOutline, chevronForwardOutline, cubeOutline, ellipsisHorizontal,
+      add, close, chevronDownOutline, alertCircleOutline, cardOutline, trendingDownOutline, barChartOutline, chevronBackOutline, chevronForwardOutline, cubeOutline, ellipsisHorizontal,
       logOutOutline, moonOutline, peopleOutline, receiptOutline, bicycleOutline, clipboardOutline, sunnyOutline, walletOutline, statsChartOutline, settingsOutline,
       storefrontOutline, listOutline, trophyOutline, bookOutline, gridOutline, cashOutline, bagHandleOutline, peopleCircleOutline, timeOutline, personCircleOutline, notificationsOutline, locationOutline,
     });
   }
 
   ngOnInit(): void {
+    this.abrirGrupoActual();
+    this.subNav = this.router.events.subscribe((e) => {
+      if (e instanceof NavigationEnd) {
+        this.url.set(e.urlAfterRedirects);
+        this.abrirGrupoActual();
+      }
+    });
     void this.avisos.iniciar();
     // Estado activo / ausente / desconectado (como en Discord)
     void this.presencia.iniciar();
   }
 
+  private subNav?: { unsubscribe(): void };
+
   ngOnDestroy(): void {
+    this.subNav?.unsubscribe();
     this.avisos.detener();
   }
 

@@ -237,7 +237,7 @@ export class GastosPage {
     if (error) return this.toast.error(mensajeError(error));
     const res = data as Resumen;
     this.r.set(res);
-    const faltan = res.lista.flatMap((g) => g.comprobantes.slice(0, 1)).filter((f) => !this.fotos()[f]);
+    const faltan = (res?.lista ?? []).flatMap((g) => g.comprobantes.slice(0, 1)).filter((f) => !this.fotos()[f]);
     if (faltan.length) {
       const urls = await urlsComprobantes(this.sb.client, faltan);
       this.fotos.update((m) => ({ ...m, ...Object.fromEntries(faltan.map((f, i) => [f, urls[i]])) }));
