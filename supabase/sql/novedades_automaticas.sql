@@ -1,6 +1,6 @@
 -- Avisos automáticos de actualizaciones
 -- Cada versión publicada trae src/assets/novedades.json (lo nuevo, en palabras del equipo).
--- Cada 10 minutos la base lee ese archivo de la app publicada y, por cada novedad que
+-- Cada minuto la base lee ese archivo de la app publicada y, por cada novedad que
 -- no se haya avisado, le manda la notificación (campana + push) a todo el equipo o a
 -- los roles que diga la novedad. Así el aviso sale solo cuando la versión ya está en línea.
 --
@@ -68,4 +68,4 @@ begin
 end $function$;
 revoke execute on function privado.revisar_novedades() from public, anon, authenticated;
 
-select cron.schedule('novedades-app', '*/10 * * * *', 'select privado.revisar_novedades()');
+select cron.schedule('novedades-app', '* * * * *', 'select privado.revisar_novedades()');

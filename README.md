@@ -68,6 +68,6 @@ Site URL (y agrégalo en Redirect URLs).
 
 Cada cambio que el equipo deba conocer se anota en `src/assets/novedades.json` (la más nueva
 primero: `id` único, `fecha`, `titulo`, `cuerpo` y `roles`; sin roles le llega a todos). Al
-publicarse la versión, la base (`privado.revisar_novedades`, cada 10 min) lee ese archivo de
+publicarse la versión, la base (`privado.revisar_novedades`, cada minuto) lee ese archivo de
 app.jastatechnology.com y manda la notificación una sola vez por novedad. Ver
 `supabase/sql/novedades_automaticas.sql`.
