@@ -2,24 +2,109 @@
   {
     "id": "2026-10-27-alertas-inventario",
     "fecha": "2026-10-27",
-    "titulo": "Nuevo: alertas de inventario",
-    "cuerpo": "Cuando un producto llega a su mínimo o se agota, te llega una notificación. El mínimo de cada producto se cambia en Inventario.",
-    "roles": [
-      "admin"
-    ]
+    "titulo": "Nuevo: te avisamos cuando un producto se esté acabando",
+    "cuerpo": "Ya no tienes que revisar el inventario a cada rato: cuando un producto llegue a su cantidad mínima o se agote, te llega una notificación con cuántas unidades quedan.",
+    "roles": ["admin"],
+    "secciones": [
+      {
+        "titulo": "¿Para qué sirve?",
+        "texto": "Para pedir mercancía a tiempo y no vender algo que ya no hay. La app vigila el inventario de cada producto y te avisa en el momento en que baja de lo que tú consideras normal."
+      },
+      {
+        "titulo": "Cómo funciona",
+        "pasos": [
+          "Cada producto que lleva control de inventario tiene una cantidad mínima (hoy todos tienen 3).",
+          "Cuando por una venta, un alistamiento o un ajuste el producto llega a ese mínimo, te llega el aviso \"Por acabarse\" con las unidades que quedan.",
+          "Si llega a 0, te llega \"Se agotó\".",
+          "Al tocar el aviso se abre Inventario para que revises o registres una compra."
+        ]
+      },
+      {
+        "titulo": "Cómo cambiar el mínimo de un producto",
+        "pasos": [
+          "Entra a Más → Inventario.",
+          "Toca el producto.",
+          "Cambia el campo \"Mínimo\" y guarda. Por ejemplo, a lo que más se vende ponle 10 para que el aviso llegue con tiempo."
+        ]
+      },
+      {
+        "titulo": "Ten en cuenta",
+        "puntos": [
+          "Llega una sola vez cada vez que cruza el mínimo, no con cada venta.",
+          "Le llega a todos los admins, también al que hizo el movimiento.",
+          "Los productos sin control de inventario o desactivados no generan avisos."
+        ]
+      }
+    ],
+    "enlace": { "texto": "Ir a Inventario", "url": "/app/inventario" }
   },
   {
     "id": "2026-10-27-clientes-alerta",
     "fecha": "2026-10-27",
-    "titulo": "Nuevo: alerta de clientes con problemas",
-    "cuerpo": "Al escribir el teléfono en Nuevo pedido, si ese cliente ha cancelado pedidos que ya habían salido, ha tenido devoluciones o varias novedades de entrega, te sale un aviso para que confirmes antes de despachar.",
-    "roles": []
+    "titulo": "Nuevo: la app te avisa si un cliente ha tenido problemas",
+    "cuerpo": "Cuando escribas el teléfono en Nuevo pedido, si ese cliente ya canceló pedidos que habían salido, hizo devoluciones o tuvo varias novedades de entrega, te sale un aviso en amarillo o rojo para que confirmes con él antes de despachar.",
+    "roles": [],
+    "secciones": [
+      {
+        "titulo": "¿Para qué sirve?",
+        "texto": "Para no perder plata ni viajes del mensajero con clientes que no reciben. Antes de enviar el pedido sabes si ese cliente ha fallado antes, y puedes llamarlo para confirmar o pedirle el pago por adelantado."
+      },
+      {
+        "titulo": "Cómo funciona",
+        "pasos": [
+          "En Nuevo pedido, escribe el teléfono del cliente.",
+          "Si tiene historial de problemas, debajo del teléfono aparece un recuadro con el resumen: cuántos pedidos salieron y se cancelaron, devoluciones, novedades de entrega y cuántos ha recibido.",
+          "Amarillo: tuvo un problema (por ejemplo, un pedido cancelado en ruta). Confírmale el pedido.",
+          "Rojo: tuvo varios problemas, nunca ha recibido, o el admin lo marcó. Llámalo antes de despachar y, si es posible, pídele el pago anticipado."
+        ]
+      },
+      {
+        "titulo": "Marcar a un cliente (solo admin)",
+        "pasos": [
+          "Entra a Más → Clientes y abre el cliente.",
+          "Toca \"Marcar como cliente problemático\" y escribe por qué (por ejemplo: \"no contesta, pedir pago anticipado\").",
+          "Desde ese momento, a quien le haga un pedido le sale ese mensaje en rojo. La marca se puede quitar cuando quieras."
+        ]
+      },
+      {
+        "titulo": "Ten en cuenta",
+        "puntos": [
+          "El aviso no bloquea el pedido: solo te informa para que decidas.",
+          "Un pedido cuenta como \"cancelado en ruta\" si ya tenía mensajero cuando se canceló; a veces es por un error interno y no por el cliente."
+        ]
+      }
+    ],
+    "enlace": { "texto": "Hacer un pedido", "url": "/app/pedidos/nuevo" }
   },
   {
     "id": "2026-10-27-telefono-y-avisos",
     "fecha": "2026-10-27",
     "titulo": "Nuevo en Jasta: indicativo de país",
     "cuerpo": "Al crear un pedido ya puedes elegir el indicativo del país (+57 por defecto). El nombre solo acepta letras y el teléfono solo números. Además, desde ahora te avisamos aquí cada vez que la app tenga algo nuevo.",
-    "roles": []
+    "roles": [],
+    "secciones": [
+      {
+        "titulo": "¿Para qué sirve?",
+        "texto": "Para que los datos del cliente queden bien escritos desde el principio: el WhatsApp, la llamada del mensajero y el enlace de seguimiento funcionan solo si el teléfono es correcto."
+      },
+      {
+        "titulo": "Cómo se usa",
+        "pasos": [
+          "En Nuevo pedido, al lado del teléfono está el indicativo del país. Viene en 🇨🇴 +57 Colombia; si el cliente es de otro país, cámbialo.",
+          "Para Colombia el número debe tener 10 dígitos y empezar por 3 (celular) o 60 (fijo). Si está mal, te sale el error debajo y no deja guardar.",
+          "Si pegas un número con espacios, guiones o con +57 adelante, la app lo limpia sola.",
+          "En el nombre solo se pueden escribir letras: los números y símbolos se borran solos."
+        ]
+      },
+      {
+        "titulo": "Ten en cuenta",
+        "puntos": [
+          "En los pedidos a domicilio el teléfono es obligatorio.",
+          "Cuando haya una versión nueva de la app, arriba te sale \"✨ Nueva versión de Jasta\": toca Actualizar para cargarla.",
+          "Todo lo nuevo queda explicado en Más → Actualizaciones."
+        ]
+      }
+    ],
+    "enlace": { "texto": "Hacer un pedido", "url": "/app/pedidos/nuevo" }
   }
 ]

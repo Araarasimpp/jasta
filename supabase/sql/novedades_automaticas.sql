@@ -55,7 +55,8 @@ begin
           perform privado.avisar(
             case when cardinality(v_roles) = 0 then (select coalesce(array_agg(id), '{}') from public.usuarios where activo)
                  else privado.con_rol(v_roles) end,
-            'actualizacion', left(e->>'titulo', 120), left(coalesce(e->>'cuerpo', ''), 500), null, null);
+            'actualizacion', left(e->>'titulo', 120), left(coalesce(e->>'cuerpo', ''), 500),
+            '/app/actualizaciones?n=' || (e->>'id'), null);  -- abre la explicación completa
         end loop;
       end if;
     end if;

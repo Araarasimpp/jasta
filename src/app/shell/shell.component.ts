@@ -40,6 +40,7 @@ import {
   personCircleOutline,
   notificationsOutline,
   locationOutline,
+  sparklesOutline,
 } from 'ionicons/icons';
 import { SupabaseService } from '../core/services/supabase.service';
 import { ThemeService } from '../core/services/theme.service';
@@ -99,6 +100,7 @@ const MENU: ItemMenu[] = [
   { label: 'Actividad', path: '/app/actividad', icon: 'time-outline', roles: ['admin'], grupo: 'Equipo' },
 
   { label: 'Configuración', path: '/app/configuracion', icon: 'settings-outline', roles: ['admin'], grupo: 'Ajustes' },
+  { label: 'Actualizaciones', path: '/app/actualizaciones', icon: 'sparkles-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador', 'venta_local', 'recolector'], grupo: 'Ajustes' },
   { label: 'Mi perfil', path: '/app/perfil', icon: 'person-circle-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador', 'venta_local', 'recolector'], grupo: 'Ajustes' },
 ];
 
@@ -337,7 +339,7 @@ export class ShellComponent implements OnInit, OnDestroy {
 
   constructor() {
     addIcons({
-      add, close, chevronDownOutline, layersOutline, pricetagsOutline, returnDownBackOutline, pieChartOutline, alertCircleOutline, cardOutline, trendingDownOutline, barChartOutline, chevronBackOutline, chevronForwardOutline, cubeOutline, ellipsisHorizontal,
+      sparklesOutline, add, close, chevronDownOutline, layersOutline, pricetagsOutline, returnDownBackOutline, pieChartOutline, alertCircleOutline, cardOutline, trendingDownOutline, barChartOutline, chevronBackOutline, chevronForwardOutline, cubeOutline, ellipsisHorizontal,
       logOutOutline, moonOutline, peopleOutline, receiptOutline, bicycleOutline, clipboardOutline, sunnyOutline, walletOutline, statsChartOutline, settingsOutline,
       storefrontOutline, listOutline, trophyOutline, bookOutline, gridOutline, cashOutline, bagHandleOutline, peopleCircleOutline, timeOutline, personCircleOutline, notificationsOutline, locationOutline,
     });

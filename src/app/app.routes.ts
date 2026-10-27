@@ -105,6 +105,11 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/actividad/actividad.page').then((m) => m.ActividadPage),
       },
       {
+        // Lo nuevo de la app, explicado (lo leen todos)
+        path: 'actualizaciones',
+        loadComponent: () => import('./paginas/actualizaciones/actualizaciones.page').then((m) => m.ActualizacionesPage),
+      },
+      {
         path: 'perfil',
         loadComponent: () => import('./paginas/perfil/perfil.page').then((m) => m.PerfilPage),
       },
