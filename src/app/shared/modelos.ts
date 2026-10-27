@@ -155,3 +155,10 @@ export const ESTADOS: { id: EstadoPedido; label: string }[] = [
 export function estadoLabel(e: EstadoPedido): string {
   return ESTADOS.find((x) => x.id === e)?.label ?? e;
 }
+
+/** Historial del cliente (riesgo_cliente): rechazos, devoluciones, novedades y marca del admin */
+export interface Riesgo {
+  nivel: 'alto' | 'medio' | null;
+  pedidos: number; entregados: number; rechazados: number; novedades: number; devoluciones: number;
+  marca: { nota: string; autor: string | null; fecha: string } | null;
+}

@@ -7,7 +7,7 @@ import { add, remove, closeOutline, searchOutline } from 'ionicons/icons';
 import { PedidosService } from '../../core/services/pedidos.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
-import { Producto, TipoRecaudo, Usuario } from '../../shared/modelos';
+import { Producto, Riesgo, TipoRecaudo, Usuario } from '../../shared/modelos';
 import { mensajeError, pesos, urlImagen, urlMini } from '../../shared/formato';
 import { VisorService } from '../../shared/visor/visor.service';
 import { pideComprobante } from '../../shared/comprobantes';
@@ -95,6 +95,8 @@ function normal(s: string): string {
       .comision { margin: 0; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--oro-wash); font-size: 13px; color: var(--text-soft); }
       .comision strong { color: var(--oro-texto); }
       .cliente-previo { margin: 0; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--accent-wash); font-size: 13px; }
+      .riesgo { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--oro-wash); color: var(--oro-texto); font-size: 13px; }
+      .riesgo.alto { background: var(--danger-wash); color: var(--danger); }
       .barrio-campo { position: relative; }
       .sugerencias { position: absolute; z-index: 20; top: 100%; left: 0; right: 0; margin-top: 4px; max-height: 280px; overflow-y: auto; display: flex; flex-direction: column;
         border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); box-shadow: 0 10px 28px rgba(15, 23, 42, 0.14); animation: aparece 140ms ease both; }
@@ -151,6 +153,13 @@ function normal(s: string): string {
               </div>
               @if (errorTel()) { <p class="error-campo">{{ errorTel() }}</p> }
             </div>
+            @if (riesgo(); as r) {
+              <div class="riesgo" [class.alto]="r.nivel === 'alto'" role="alert">
+                <strong>{{ r.nivel === 'alto' ? '⚠️ Ojo con este cliente' : '⚠️ Este cliente ha tenido problemas' }}</strong>
+                @if (r.marca) { <span>"{{ r.marca.nota }}"{{ r.marca.autor ? ' — ' + r.marca.autor : '' }}</span> }
+                <span>{{ resumenRiesgo(r) }}</span>
+              </div>
+            }
             @if (clientePrevio()) {
               <p class="cliente-previo">Cliente conocido: {{ clientePrevio() }} pedido(s) antes. Llenamos sus datos.</p>
             }
@@ -350,6 +359,7 @@ export class NuevoPedidoPage implements OnInit {
   lineas = signal<Linea[]>([]);
   busqueda = signal('');
   clientePrevio = signal(0);
+  riesgo = signal<Riesgo | null>(null);
   guardando = signal(false);
   cargandoPedido = signal(false);
   error = signal('');
@@ -494,11 +504,26 @@ export class NuevoPedidoPage implements OnInit {
     if (color && p.colores?.some((c) => c.nombre === color) && this.lineas().at(-1)?.color !== color) this.elegir(this.lineas().length - 1, 'color', color);
   }
 
+  resumenRiesgo(r: Riesgo): string {
+    const p: string[] = [];
+    if (r.rechazados) p.push(`${r.rechazados} ${r.rechazados === 1 ? 'pedido salió y se canceló' : 'pedidos salieron y se cancelaron'}`);
+    if (r.devoluciones) p.push(`${r.devoluciones} ${r.devoluciones === 1 ? 'devolución' : 'devoluciones'}`);
+    if (r.novedades) p.push(`${r.novedades} ${r.novedades === 1 ? 'novedad' : 'novedades'} de entrega`);
+    p.push(`${r.entregados} de ${r.pedidos} entregados`);
+    return p.join(' · ');
+  }
+
   async buscarCliente(): Promise<void> {
-    const tel = this.telefono.replace(/\D/g, '');
-    if (tel.length < 7 || this.editId() || errorTelefono(this.prefijo, tel)) return;
+    const digitos = this.telefono.replace(/\D/g, '');
+    this.riesgo.set(null);
+    if (digitos.length < 7 || this.editId() || errorTelefono(this.prefijo, digitos)) return;
+    const tel = this.telefonoGuardar();
+    void this.sb.client.rpc('riesgo_cliente', { p_telefono: tel }).then(({ data }) => {
+      const r = data as Riesgo | null;
+      if (tel === this.telefonoGuardar()) this.riesgo.set(r?.nivel ? r : null);
+    });
     try {
-      const c = await this.ps.buscarCliente(this.telefonoGuardar());
+      const c = await this.ps.buscarCliente(tel);
       this.clientePrevio.set(c?.pedidos ?? 0);
       if (c) {
         if (!this.nombre) this.nombre = c.cliente_nombre;
@@ -544,6 +569,7 @@ export class NuevoPedidoPage implements OnInit {
     this.tipo.set(null);
     this.evidencias.set([]);
     this.clientePrevio.set(0);
+    this.riesgo.set(null);
     this.error.set('');
     document.querySelector('app-nuevo-pedido h1')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }

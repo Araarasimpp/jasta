@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-10-27-alertas-inventario",
+    "fecha": "2026-10-27",
+    "titulo": "Nuevo: alertas de inventario",
+    "cuerpo": "Cuando un producto llega a su mínimo o se agota, te llega una notificación. El mínimo de cada producto se cambia en Inventario.",
+    "roles": [
+      "admin"
+    ]
+  },
+  {
+    "id": "2026-10-27-clientes-alerta",
+    "fecha": "2026-10-27",
+    "titulo": "Nuevo: alerta de clientes con problemas",
+    "cuerpo": "Al escribir el teléfono en Nuevo pedido, si ese cliente ha cancelado pedidos que ya habían salido, ha tenido devoluciones o varias novedades de entrega, te sale un aviso para que confirmes antes de despachar.",
+    "roles": []
+  },
+  {
     "id": "2026-10-27-telefono-y-avisos",
     "fecha": "2026-10-27",
     "titulo": "Nuevo en Jasta: indicativo de país",

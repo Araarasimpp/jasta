@@ -9,6 +9,7 @@ import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detal
 import { mensajeError, numero, pesos } from '../../shared/formato';
 import { formatoFechaCO } from '../../shared/fecha-colombia';
 import { enlaceWhatsapp, mensajeSeguimiento } from '../../shared/whatsapp';
+import { Riesgo } from '../../shared/modelos';
 
 /** Una compra entregada del cliente (de la función compras_cliente) */
 interface Compra { id: number; created_at: string; canal: string; total: number; vendedora: string | null; productos: string[] }
@@ -31,6 +32,10 @@ interface Cliente {
       @media (hover: hover) { .lista li:not(.fija):hover { color: var(--accent); } }
       .lista li.fija { cursor: default; }
       .lista small { display: block; color: var(--text-muted); font-size: 12px; }
+      .riesgo { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--oro-wash); color: var(--oro-texto); font-size: 13px; }
+      .riesgo.alto { background: var(--danger-wash); color: var(--danger); }
+      .marcar { display: flex; flex-direction: column; gap: 8px; }
+      .marcar .fila { display: flex; gap: 8px; flex-wrap: wrap; }
     `,
   ],
   template: `
@@ -87,6 +92,30 @@ interface Cliente {
             <dt>Barrio</dt><dd>{{ c.barrio || '—' }}</dd>
             <dt>Compras</dt><dd>{{ c.entregados }} entregadas · {{ pesos(c.total) }}</dd>
           </dl>
+          @if (riesgo(); as r) {
+            @if (r.nivel) {
+              <div class="riesgo" [class.alto]="r.nivel === 'alto'">
+                <strong>{{ r.marca ? '⚠️ Marcado como problemático' : '⚠️ Ha tenido problemas' }}</strong>
+                @if (r.marca) { <span>"{{ r.marca.nota }}"{{ r.marca.autor ? ' — ' + r.marca.autor : '' }}</span> }
+                <span>{{ r.rechazados }} cancelados después de salir · {{ r.devoluciones }} devoluciones · {{ r.novedades }} novedades</span>
+              </div>
+            }
+            @if (esAdmin()) {
+              @if (marcando()) {
+                <div class="marcar">
+                  <input class="inp" maxlength="300" [(ngModel)]="notaMarca" placeholder="Ej: No recibe y no contesta, pedir pago anticipado" aria-label="Por qué" />
+                  <div class="fila">
+                    <button class="b b-pri" (click)="marcar(c, notaMarca)" [disabled]="!notaMarca.trim()">Guardar marca</button>
+                    <button class="b" (click)="marcando.set(false)">Cancelar</button>
+                  </div>
+                </div>
+              } @else if (r.marca) {
+                <button class="b" (click)="marcar(c, '')">Quitar la marca</button>
+              } @else {
+                <button class="b" (click)="notaMarca = ''; marcando.set(true)">Marcar como cliente problemático</button>
+              }
+            }
+          }
           <a class="b" [href]="whatsapp(c)" target="_blank" rel="noopener"><ion-icon name="logo-whatsapp"></ion-icon>Escribir por WhatsApp</a>
           <section>
             <h3 class="seccion-titulo">Lo que ha comprado</h3>
@@ -124,6 +153,9 @@ export class ClientesPage implements OnInit {
   cargandoCli = signal(false);
   esAdmin = computed(() => this.sb.tiene('admin'));
   abierto = signal<number | null>(null);
+  riesgo = signal<Riesgo | null>(null);
+  marcando = signal(false);
+  notaMarca = '';
   q = '';
   private timer?: ReturnType<typeof setTimeout>;
 
@@ -158,12 +190,28 @@ export class ClientesPage implements OnInit {
   async abrir(c: Cliente): Promise<void> {
     this.sel.set(c);
     this.pedidosCli.set([]);
+    this.riesgo.set(null);
+    this.marcando.set(false);
+    void this.cargarRiesgo(c);
     this.cargandoCli.set(true);
     // Solo lo que de verdad recibió (sin cancelados ni pendientes), a domicilio y en el local
     const { data, error } = await this.sb.client.rpc('compras_cliente', { p_telefono: c.telefono });
     this.cargandoCli.set(false);
     if (error) return this.toast.error(mensajeError(error));
     this.pedidosCli.set((data ?? []) as Compra[]);
+  }
+
+  private async cargarRiesgo(c: Cliente): Promise<void> {
+    const { data } = await this.sb.client.rpc('riesgo_cliente', { p_telefono: c.telefono });
+    if (this.sel()?.telefono === c.telefono) this.riesgo.set((data ?? null) as Riesgo | null);
+  }
+
+  async marcar(c: Cliente, nota: string): Promise<void> {
+    const { error } = await this.sb.client.rpc('marcar_cliente', { p_telefono: c.telefono, p_nota: nota.trim() });
+    if (error) return this.toast.error(mensajeError(error));
+    this.marcando.set(false);
+    this.toast.ok(nota.trim() ? 'Listo: avisaremos cuando le hagan un pedido' : 'Marca quitada');
+    await this.cargarRiesgo(c);
   }
 
   /** Mensaje de seguimiento con lo que compró en su último pedido entregado */
