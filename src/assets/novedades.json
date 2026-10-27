@@ -1,10 +1,112 @@
 [
   {
+    "id": "2026-10-27-tienda-web",
+    "fecha": "2026-10-27",
+    "titulo": "Nuevo: tu propio catálogo para que los clientes pidan solos",
+    "cuerpo": "Ahora tienes un enlace de catálogo con todos los productos y sus precios. Lo compartes en tus estados, Instagram o grupos, el cliente arma su pedido desde el celular y te llega aquí para que lo confirmes. Queda a tu nombre, con tu comisión normal.",
+    "roles": [
+      "vendedora",
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "¿Para qué sirve?",
+        "texto": "Para vender más sin tener que escribir cada pedido. El cliente ve las fotos, los precios y lo que hay disponible, elige lo que quiere y deja su dirección. Tú solo lo llamas o le escribes para confirmar."
+      },
+      {
+        "titulo": "Cómo compartir tu enlace",
+        "pasos": [
+          "Entra a Más → Pedidos de la tienda.",
+          "Arriba está tu enlace. Toca \"Compartir enlace\" para mandarlo por WhatsApp, Instagram o donde quieras, o \"Copiar\" para pegarlo en tus estados.",
+          "Con \"Ver como cliente\" puedes ver exactamente lo que ve tu cliente."
+        ]
+      },
+      {
+        "titulo": "Lo que hace el cliente",
+        "pasos": [
+          "Abre tu enlace (no necesita cuenta ni contraseña).",
+          "Busca productos, elige color o talla si tiene, y los agrega a su pedido.",
+          "Escribe su nombre, celular, dirección y barrio. El domicilio se calcula solo según el barrio.",
+          "Toca \"Hacer pedido\" y le sale que tú lo vas a contactar para confirmar."
+        ]
+      },
+      {
+        "titulo": "Cómo confirmar un pedido",
+        "pasos": [
+          "Cuando un cliente pide, te llega una notificación \"Pedido de la tienda\".",
+          "Ábrela: ves al cliente, lo que pidió, el total y, si ha tenido problemas antes, el aviso en amarillo o rojo.",
+          "Llámalo o toca WhatsApp (el mensaje ya va escrito con el resumen del pedido).",
+          "Si todo está bien, toca \"Confirmar\". Puedes ajustar el domicilio y dejar una nota para alistamiento. El pedido pasa a Pedidos por alistar a tu nombre y sigue como cualquier otro.",
+          "Si no contesta o no lo quiere, toca \"Cancelar\" y escribe el motivo."
+        ]
+      },
+      {
+        "titulo": "Ten en cuenta",
+        "puntos": [
+          "Los precios son los de venta sugeridos de cada producto y nadie los puede cambiar en el catálogo.",
+          "Los productos agotados aparecen con la etiqueta \"Agotado\" y no se pueden pedir.",
+          "Nada pasa a alistamiento hasta que tú lo confirmes, así se evitan pedidos falsos o de broma.",
+          "Si el barrio del cliente no está en la tabla de domicilios, te sale \"Por definir\" y tú pones el valor al confirmar.",
+          "El admin también tiene un enlace general de la tienda; esos pedidos los atiende el admin."
+        ]
+      }
+    ],
+    "enlace": {
+      "texto": "Ir a Pedidos de la tienda",
+      "url": "/app/pedidos-web"
+    }
+  },
+  {
+    "id": "2026-10-27-respaldo-semanal",
+    "fecha": "2026-10-27",
+    "titulo": "Nuevo: respaldo de la semana en Excel por Telegram",
+    "cuerpo": "Cada domingo a las 9:15 p. m. te llega al chat del bot de Telegram un Excel con toda la semana: pedidos, lo vendido con sus ganancias, cuadres, gastos, comisiones, devoluciones e inventario. Así tienes una copia de todo fuera de la app.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "¿Para qué sirve?",
+        "texto": "Para tener una copia de seguridad de la información del negocio y poder revisarla o compartirla con tu contador sin entrar a la app."
+      },
+      {
+        "titulo": "Qué trae el Excel",
+        "puntos": [
+          "Pedidos: todos los creados en la semana, con cliente, vendedora, mensajero, productos, total y forma de pago.",
+          "Vendido: cada producto entregado con precio de venta, base y compra, y la ganancia de la tienda y de la vendedora.",
+          "Cuadres: cada cierre de mensajero, quién lo cerró y quién lo recibió.",
+          "Gastos, comisiones pagadas y devoluciones de la semana.",
+          "Movimientos de inventario y cómo quedó el inventario ese día, con su valor a precio de compra."
+        ]
+      },
+      {
+        "titulo": "Cómo recibirlo",
+        "pasos": [
+          "Llega solo cada domingo a los admins que tienen su cuenta vinculada al bot de Telegram (la misma vinculación del cierre del día).",
+          "Si lo necesitas antes, entra a Más → Configuración → Respaldo semanal en Excel y toca \"Mandar el de esta semana ahora\"."
+        ]
+      },
+      {
+        "titulo": "Ten en cuenta",
+        "puntos": [
+          "La semana va de lunes a domingo (los últimos 7 días hasta el día en que se envía).",
+          "Las columnas de plata son números, así que en Excel puedes sumarlas y filtrarlas."
+        ]
+      }
+    ],
+    "enlace": {
+      "texto": "Ir a Configuración",
+      "url": "/app/configuracion"
+    }
+  },
+  {
     "id": "2026-10-27-alertas-inventario",
     "fecha": "2026-10-27",
     "titulo": "Nuevo: te avisamos cuando un producto se esté acabando",
     "cuerpo": "Ya no tienes que revisar el inventario a cada rato: cuando un producto llegue a su cantidad mínima o se agote, te llega una notificación con cuántas unidades quedan.",
-    "roles": ["admin"],
+    "roles": [
+      "admin"
+    ],
     "secciones": [
       {
         "titulo": "¿Para qué sirve?",
@@ -36,7 +138,10 @@
         ]
       }
     ],
-    "enlace": { "texto": "Ir a Inventario", "url": "/app/inventario" }
+    "enlace": {
+      "texto": "Ir a Inventario",
+      "url": "/app/inventario"
+    }
   },
   {
     "id": "2026-10-27-clientes-alerta",
@@ -74,7 +179,10 @@
         ]
       }
     ],
-    "enlace": { "texto": "Hacer un pedido", "url": "/app/pedidos/nuevo" }
+    "enlace": {
+      "texto": "Hacer un pedido",
+      "url": "/app/pedidos/nuevo"
+    }
   },
   {
     "id": "2026-10-27-telefono-y-avisos",
@@ -105,6 +213,9 @@
         ]
       }
     ],
-    "enlace": { "texto": "Hacer un pedido", "url": "/app/pedidos/nuevo" }
+    "enlace": {
+      "texto": "Hacer un pedido",
+      "url": "/app/pedidos/nuevo"
+    }
   }
 ]

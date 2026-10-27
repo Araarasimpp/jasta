@@ -138,6 +138,13 @@ const EJEMPLO: PedidoRotulo = {
             <pre class="cierre">{{ c }}</pre>
           }
         </section>
+
+        <section class="tg">
+          <h2>Respaldo semanal en Excel</h2>
+          <p class="ayuda">Todos los domingos a las 9:15 p. m. le llega por Telegram a cada admin (con su cuenta vinculada al bot) un Excel con la semana:
+            pedidos, productos vendidos, cuadres, gastos, comisiones pagadas, devoluciones, movimientos de inventario y el inventario de ese día.</p>
+          <button class="b" (click)="pedirRespaldo()" [disabled]="pidiendoRespaldo()">{{ pidiendoRespaldo() ? 'Enviando…' : 'Mandar el de esta semana ahora' }}</button>
+        </section>
       </div>
     </div>
   `,
@@ -195,6 +202,15 @@ export class ConfiguracionPage implements OnInit {
     return new Date(iso).toLocaleString('es-CO', { timeZone: 'America/Bogota', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   }
   cierre = signal('');
+  pidiendoRespaldo = signal(false);
+
+  async pedirRespaldo(): Promise<void> {
+    this.pidiendoRespaldo.set(true);
+    const { data, error } = await this.sb.client.rpc('pedir_respaldo');
+    this.pidiendoRespaldo.set(false);
+    if (error) return this.toast.error(error.message);
+    this.toast.ok(`En un momento le llega el Excel por Telegram a ${data} ${data === 1 ? 'admin' : 'admins'}`);
+  }
 
   async enviarCierre(): Promise<void> {
     this.enviandoCierre.set(true);
