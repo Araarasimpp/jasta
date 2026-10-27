@@ -42,6 +42,103 @@
     ]
   },
   {
+    "id": "2026-10-27-whatsapp-seguimiento",
+    "fecha": "2026-10-27",
+    "titulo": "WhatsApp automático: el cliente recibe el enlace de su pedido cuando sale en ruta",
+    "cuerpo": "Jasta puede mandarle al cliente, por WhatsApp y sin que nadie lo escriba, el enlace para ver en qué va su pedido apenas sale con el domiciliario. Usa la API oficial de WhatsApp (Meta) y cuesta unos 3 a 4 pesos por mensaje. Aquí está cómo configurarlo paso a paso.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "¿Para qué sirve?",
+        "texto": "Cuando un pedido a domicilio pasa a \"En ruta\" por primera vez, al cliente le llega este mensaje desde el número de WhatsApp de la tienda: \"Hola María, tu pedido #4812 de Jasta Technology va en camino 🛵 Míralo aquí: (enlace)\". En el enlace ve si ya salió, quién se lo lleva y puede escribirle a su vendedora. Así llegan menos preguntas de \"¿y mi pedido?\" y el cliente está pendiente para recibir, lo que reduce las novedades de \"no estaba\" o \"no contesta\"."
+      },
+      {
+        "titulo": "¿Cuánto cuesta?",
+        "puntos": [
+          "Es un mensaje de categoría Utilidad. Meta cobra US$ 0,0008 por mensaje entregado a un celular colombiano, unos 3 a 4 pesos colombianos (con el dólar entre $4.000 y $4.500).",
+          "Ejemplo: 1.000 pedidos en ruta al mes ≈ $3.200 a $3.600 COP. 5.000 pedidos ≈ $16.000 a $18.000 COP.",
+          "Meta no cobra mensualidad: solo se paga lo que se envía. Se cobra a la tarjeta que pongas en la cuenta de WhatsApp de Meta, en dólares o en pesos según la moneda que elijas al crear la cuenta (después no se puede cambiar).",
+          "Jasta manda un solo mensaje por pedido y solo a celulares colombianos.",
+          "Las tarifas las fija Meta y pueden cambiar; la tabla oficial está en developers.facebook.com/docs/whatsapp/pricing (busca Colombia, categoría Utility)."
+        ]
+      },
+      {
+        "titulo": "Antes de empezar necesitas",
+        "puntos": [
+          "Una cuenta de Meta Business (business.facebook.com) de la tienda.",
+          "Un número de celular para la tienda que NO esté usando WhatsApp normal ni WhatsApp Business en un celular (o estar dispuesto a pasarlo a la API: ese número ya no se podrá usar en la app del celular).",
+          "Una tarjeta de crédito o débito para los cobros de Meta."
+        ]
+      },
+      {
+        "titulo": "Paso 1: crear la app y el número en Meta",
+        "pasos": [
+          "Entra a developers.facebook.com con la cuenta de Facebook del negocio y toca \"Mis apps\" → \"Crear app\".",
+          "Elige el tipo \"Empresa\" (Business), ponle un nombre (por ejemplo, Jasta) y asóciala a la cuenta de Meta Business de la tienda.",
+          "Dentro de la app, agrega el producto \"WhatsApp\" y toca \"Configurar\".",
+          "En WhatsApp → \"Configuración de la API\", toca \"Agregar número de teléfono\": escribe el nombre que verán los clientes (por ejemplo, Jasta Technology), el número de la tienda y verifícalo con el código que llega por SMS o llamada.",
+          "En esa misma pantalla copia el \"Identificador del número de teléfono\" (Phone number ID). Lo vas a pegar en Jasta."
+        ]
+      },
+      {
+        "titulo": "Paso 2: poner el método de pago",
+        "pasos": [
+          "Entra a business.facebook.com → Configuración del negocio → Cuentas → Cuentas de WhatsApp.",
+          "Abre la cuenta de la tienda → \"Configuración de pago\" y agrega la tarjeta. Si te deja elegir la moneda, elige pesos colombianos (COP).",
+          "Sin método de pago, Meta no deja enviar las plantillas."
+        ]
+      },
+      {
+        "titulo": "Paso 3: crear la plantilla del mensaje",
+        "pasos": [
+          "Abre el Administrador de WhatsApp (business.facebook.com/wa/manage) → \"Plantillas de mensajes\" → \"Crear plantilla\".",
+          "Categoría: Utilidad. Nombre: seguimiento_pedido (así, en minúsculas y con guion bajo). Idioma: Español.",
+          "En el cuerpo escribe exactamente: Hola {{1}}, tu pedido #{{2}} de Jasta Technology va en camino 🛵 Míralo aquí: {{3}}",
+          "Meta pide ejemplos de las variables: {{1}} = María, {{2}} = 4812, {{3}} = https://app.jastatechnology.com/seguimiento/ejemplo",
+          "Envíala a revisión. Normalmente la aprueban en minutos (a veces hasta 24 horas). Debe quedar en estado \"Activa\"."
+        ]
+      },
+      {
+        "titulo": "Paso 4: crear el token permanente",
+        "pasos": [
+          "En business.facebook.com → Configuración del negocio → Usuarios → \"Usuarios del sistema\" → \"Agregar\". Ponle un nombre (por ejemplo, jasta-api) y rol Administrador.",
+          "Toca \"Asignar activos\": agrega la app que creaste (control total) y la cuenta de WhatsApp de la tienda (control total).",
+          "Toca \"Generar token\": elige la app, caducidad \"Nunca\" y marca los permisos whatsapp_business_messaging y whatsapp_business_management.",
+          "Copia el token que aparece (solo se muestra una vez) y guárdalo en un lugar seguro. No lo mandes por chat a nadie."
+        ]
+      },
+      {
+        "titulo": "Paso 5: configurarlo en Jasta",
+        "pasos": [
+          "Entra a Más → Configuración → \"Seguimiento automático por WhatsApp\".",
+          "Phone number ID: pega el identificador del Paso 1.",
+          "Token de acceso permanente: pega el token del Paso 4 (queda guardado de forma privada; nadie lo puede volver a ver desde la app).",
+          "Nombre de la plantilla: seguimiento_pedido. Idioma de la plantilla: es.",
+          "Dirección de la app: https://app.jastatechnology.com",
+          "Toca Guardar (todavía sin marcar la casilla de envío automático).",
+          "Escribe tu celular en \"Celular para probar\" y toca \"Enviar prueba\". En unos segundos aparece el resultado en la tabla de abajo y te debe llegar el mensaje.",
+          "Si dice \"Enviado\", marca \"Mandar el enlace automáticamente cuando el pedido sale en ruta\" y toca Guardar. Desde ese momento funciona solo."
+        ]
+      },
+      {
+        "titulo": "Si algo falla",
+        "puntos": [
+          "La tabla de Configuración muestra cada envío y el error que devolvió Meta.",
+          "\"Template name does not exist\" o similar: la plantilla aún no está aprobada, o el nombre o el idioma no coinciden (revisa que el idioma sea es).",
+          "Error de pago o de cuenta: falta el método de pago en el Paso 2.",
+          "Error de token (401 o \"OAuth\"): el token se copió incompleto o no tiene los permisos del Paso 4; genera uno nuevo y pégalo.",
+          "Si el cliente no tiene WhatsApp en ese número, el mensaje no se cobra."
+        ]
+      }
+    ],
+    "enlace": {
+      "texto": "Ir a Configuración",
+      "url": "/app/configuracion"
+    }
+  },
+  {
     "id": "2026-10-27-tienda-web",
     "fecha": "2026-10-27",
     "titulo": "Nuevo: tu propio catálogo para que los clientes pidan solos",
