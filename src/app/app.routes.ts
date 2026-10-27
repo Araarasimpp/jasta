@@ -16,6 +16,9 @@ export const routes: Routes = [
   { path: 'auth/login', canActivate: [invitadoGuard], loadComponent: () => import('./auth/login/login.page').then((m) => m.LoginPage) },
   { path: 'auth/registro', canActivate: [invitadoGuard], loadComponent: () => import('./auth/registro/registro.page').then((m) => m.RegistroPage) },
   { path: 'auth/recuperar', loadComponent: () => import('./auth/recuperar/recuperar.page').then((m) => m.RecuperarPage) },
+  // Público (sin sesión): catálogo con pedido directo (general o de una vendedora)
+  { path: 'tienda', loadComponent: () => import('./tienda/tienda.page').then((m) => m.TiendaPage) },
+  { path: 'tienda/:codigo', loadComponent: () => import('./tienda/tienda.page').then((m) => m.TiendaPage) },
   // Público (sin sesión): el cliente ve en qué va su pedido con el enlace que le mandaron
   { path: 'seguimiento/:codigo', loadComponent: () => import('./seguimiento/seguimiento.page').then((m) => m.SeguimientoPage) },
   { path: 'auth/nueva-clave', loadComponent: () => import('./auth/nueva-clave/nueva-clave.page').then((m) => m.NuevaClavePage) },
@@ -103,6 +106,11 @@ export const routes: Routes = [
       {
         path: 'actividad', canActivate: [rolGuard], data: { roles: ['admin'] },
         loadComponent: () => import('./paginas/actividad/actividad.page').then((m) => m.ActividadPage),
+      },
+      {
+        // Pedidos que llegan del catálogo público, para confirmar con el cliente
+        path: 'pedidos-web', canActivate: [rolGuard], data: { roles: ['admin', 'vendedora'] },
+        loadComponent: () => import('./paginas/pedidos-web/pedidos-web.page').then((m) => m.PedidosWebPage),
       },
       {
         // Lo nuevo de la app, explicado (lo leen todos)
