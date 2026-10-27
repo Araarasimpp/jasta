@@ -12,6 +12,7 @@ import { mensajeError, pesos, urlImagen, urlMini } from '../../shared/formato';
 import { VisorService } from '../../shared/visor/visor.service';
 import { pideComprobante } from '../../shared/comprobantes';
 import { ComprobantesInputComponent } from '../../shared/comprobantes/comprobantes-input.component';
+import { PAISES, bandera, errorTelefono, limpiarNombre, separarTelefono, unirTelefono } from '../../shared/paises';
 
 interface Linea {
   /** Para seguir la línea en la lista aunque se repita el producto */
@@ -44,6 +45,10 @@ function normal(s: string): string {
   imports: [FormsModule, IonIcon, ComprobantesInputComponent],
   styles: [
     `
+      .tel-grupo { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 6px; }
+      .tel-grupo .prefijo { padding-right: 22px; text-overflow: ellipsis; }
+      .tel-grupo.invalido input { border-color: var(--danger); }
+      .error-campo { margin: 4px 0 0; font-size: 12.5px; color: var(--danger); }
       .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 20px; align-items: start; }
       .panel { border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; display: flex; flex-direction: column; gap: 14px; }
       .panel h2 { margin: 0; font-size: 14px; font-weight: 600; }
@@ -136,14 +141,22 @@ function normal(s: string): string {
             <h2>Cliente</h2>
             <div class="campo">
               <label for="tel">Teléfono{{ local() ? ' (opcional)' : '' }}</label>
-              <input id="tel" type="tel" inputmode="tel" autocomplete="off" [(ngModel)]="telefono" (blur)="buscarCliente()" />
+              <div class="tel-grupo" [class.invalido]="errorTel()">
+                <select class="prefijo" [(ngModel)]="prefijo" (ngModelChange)="prefijoS.set($event); buscarCliente()" aria-label="Indicativo del país">
+                  @for (p of paises; track p.iso) { <option [value]="p.prefijo">{{ bandera(p.iso) }} +{{ p.prefijo }} {{ p.nombre }}</option> }
+                </select>
+                <input id="tel" type="tel" inputmode="numeric" autocomplete="off"
+                  [placeholder]="prefijoS() === '57' ? '3001234567' : 'Solo números'"
+                  [ngModel]="telefono" (ngModelChange)="cambioTelefono($event)" (blur)="buscarCliente()" />
+              </div>
+              @if (errorTel()) { <p class="error-campo">{{ errorTel() }}</p> }
             </div>
             @if (clientePrevio()) {
               <p class="cliente-previo">Cliente conocido: {{ clientePrevio() }} pedido(s) antes. Llenamos sus datos.</p>
             }
             <div class="campo">
               <label for="nom">Nombre{{ local() ? ' (opcional)' : '' }}</label>
-              <input id="nom" autocomplete="off" [(ngModel)]="nombre" [placeholder]="local() ? 'Cliente del local' : ''" />
+              <input id="nom" autocomplete="off" [ngModel]="nombre" (ngModelChange)="cambioNombre($event)" [placeholder]="local() ? 'Cliente del local' : ''" />
             </div>
             @if (!local()) {
               <div class="campo">
@@ -357,6 +370,37 @@ export class NuevoPedidoPage implements OnInit {
   ];
 
   telefono = '';
+  /** Indicativo del país (Colombia por defecto) */
+  prefijo = '57';
+  prefijoS = signal('57');
+  telS = signal('');
+  paises = PAISES;
+  bandera = bandera;
+  errorTel = computed(() => errorTelefono(this.prefijoS(), this.telS()));
+
+  /** Teléfono: solo números (si pegan "+57 300 123 4567" se quita el +57) */
+  cambioTelefono(v: string): void {
+    let n = (v ?? '').replace(/\D/g, '');
+    if (this.prefijo === '57' && n.length > 10 && n.startsWith('57')) n = n.slice(2);
+    n = n.slice(0, this.prefijo === '57' ? 10 : 14);
+    this.telefono = n;
+    this.telS.set(n);
+    const el = document.getElementById('tel') as HTMLInputElement | null;
+    if (el && el.value !== n) el.value = n;
+  }
+
+  /** Nombre: solo letras, espacios y signos de nombres (tildes, ñ, punto, guion) */
+  cambioNombre(v: string): void {
+    const limpio = limpiarNombre(v ?? '');
+    this.nombre = limpio;
+    const el = document.getElementById('nom') as HTMLInputElement | null;
+    if (el && el.value !== limpio) el.value = limpio;
+  }
+
+  /** Lo que se guarda: 10 dígitos si es de Colombia; "+<prefijo> <número>" si no */
+  private telefonoGuardar(): string {
+    return unirTelefono(this.prefijo, this.telefono);
+  }
   nombre = '';
   direccion = '';
   barrio = '';
@@ -409,7 +453,11 @@ export class NuevoPedidoPage implements OnInit {
     try {
       const { pedido: p } = await this.ps.detalle(id);
       this.local.set(p.canal === 'local');
-      this.telefono = p.cliente_telefono ?? '';
+      const t = separarTelefono(p.cliente_telefono);
+      this.prefijo = t.prefijo;
+      this.prefijoS.set(t.prefijo);
+      this.telefono = t.numero;
+      this.telS.set(t.numero);
       this.nombre = p.cliente_nombre;
       this.direccion = p.direccion ?? '';
       this.barrio = p.barrio ?? '';
@@ -448,10 +496,9 @@ export class NuevoPedidoPage implements OnInit {
 
   async buscarCliente(): Promise<void> {
     const tel = this.telefono.replace(/\D/g, '');
-    if (tel.length < 7 || this.editId()) return;
-    this.telefono = tel;
+    if (tel.length < 7 || this.editId() || errorTelefono(this.prefijo, tel)) return;
     try {
-      const c = await this.ps.buscarCliente(tel);
+      const c = await this.ps.buscarCliente(this.telefonoGuardar());
       this.clientePrevio.set(c?.pedidos ?? 0);
       if (c) {
         if (!this.nombre) this.nombre = c.cliente_nombre;
@@ -486,6 +533,9 @@ export class NuevoPedidoPage implements OnInit {
     this.lineas.set([]);
     this.busqueda.set('');
     this.telefono = '';
+    this.telS.set('');
+    this.prefijo = '57';
+    this.prefijoS.set('57');
     this.nombre = '';
     this.observaciones = '';
     this.efectivo = 0;
@@ -644,6 +694,9 @@ export class NuevoPedidoPage implements OnInit {
     this.error.set('');
     const local = this.local();
     if (!local && !this.nombre.trim()) return this.error.set('Escribe el nombre del cliente.');
+    if (this.nombre.trim() && !/\p{L}/u.test(this.nombre)) return this.error.set('El nombre debe tener letras.');
+    if (!local && !this.telefono) return this.error.set('Escribe el teléfono del cliente.');
+    if (errorTelefono(this.prefijo, this.telefono)) return this.error.set(errorTelefono(this.prefijo, this.telefono));
     if (!local && !this.direccion.trim()) return this.error.set('Escribe la dirección.');
     if (!this.lineas().length) return this.error.set('Agrega al menos un producto.');
     const bajo = this.lineas().find((l) => l.precio < Number(l.producto.precio_base));
@@ -674,7 +727,7 @@ export class NuevoPedidoPage implements OnInit {
       if (this.editId()) {
         await this.ps.editar(this.editId()!, {
           cliente_nombre: this.nombre || 'Cliente del local',
-          cliente_telefono: this.telefono,
+          cliente_telefono: this.telefonoGuardar(),
           direccion: this.direccion,
           barrio: this.barrio,
           observaciones: this.observaciones,
@@ -686,7 +739,7 @@ export class NuevoPedidoPage implements OnInit {
       } else if (local) {
         const id = await this.ps.crearVentaLocal({
           cliente_nombre: this.nombre,
-          cliente_telefono: this.telefono,
+          cliente_telefono: this.telefonoGuardar(),
           observaciones: this.observaciones,
           items,
           tipo: this.tipo()!,
@@ -702,7 +755,7 @@ export class NuevoPedidoPage implements OnInit {
       } else {
         const id = await this.ps.crear({
           cliente_nombre: this.nombre,
-          cliente_telefono: this.telefono,
+          cliente_telefono: this.telefonoGuardar(),
           direccion: this.direccion,
           barrio: this.barrio,
           observaciones: this.observaciones,
