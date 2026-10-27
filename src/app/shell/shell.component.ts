@@ -44,6 +44,7 @@ import {
   globeOutline,
 } from 'ionicons/icons';
 import { SupabaseService } from '../core/services/supabase.service';
+import { RequisitosComponent } from '../shared/requisitos/requisitos.component';
 import { ThemeService } from '../core/services/theme.service';
 import { ROLES, Rol } from '../shared/modelos';
 import { ToastComponent } from '../shared/toast/toast.component';
@@ -109,7 +110,7 @@ const MENU: ItemMenu[] = [
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, IonIcon, ToastComponent, AvatarComponent, AvisosPanelComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, IonIcon, ToastComponent, AvatarComponent, AvisosPanelComponent, RequisitosComponent],
   styleUrls: ['../shared/pill-nav.scss', './shell.component.scss'],
   template: `
     <div class="shell" [class.collapsed]="colapsado()">
@@ -266,6 +267,9 @@ const MENU: ItemMenu[] = [
         </div>
       }
       <app-toast></app-toast>
+      @if (avisos.requisito()) {
+        <app-requisitos (salir)="salir()"></app-requisitos>
+      }
     </div>
   `,
 })

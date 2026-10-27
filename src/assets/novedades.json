@@ -1,5 +1,47 @@
 [
   {
+    "id": "2026-10-27-avisos-obligatorios",
+    "fecha": "2026-10-27",
+    "titulo": "Importante: Jasta ahora se usa instalada y con los avisos activos",
+    "cuerpo": "Para que a todos nos lleguen los pedidos y los mensajes del domiciliario aunque el celular esté bloqueado, ahora la app pide estar instalada en el celular y con los avisos activados. Si te sale la pantalla de instalar, sigue los pasos: toma un minuto.",
+    "roles": [],
+    "secciones": [
+      {
+        "titulo": "¿Por qué?",
+        "texto": "Muchos mensajes del domiciliario a la vendedora (por ejemplo: \"el cliente no contesta\" o \"llegué\") no se veían a tiempo porque la app estaba cerrada y los avisos apagados. Con la app instalada y los avisos activos, te llegan como cualquier notificación del celular, al instante."
+      },
+      {
+        "titulo": "En iPhone",
+        "pasos": [
+          "Abre app.jastatechnology.com en Safari (no en WhatsApp, Chrome ni Brave).",
+          "Toca Compartir (el cuadrito con la flecha hacia arriba).",
+          "Toca \"Agregar a pantalla de inicio\" y luego Agregar.",
+          "Abre Jasta desde el ícono nuevo y toca \"Activar avisos\" → Permitir."
+        ]
+      },
+      {
+        "titulo": "En Android",
+        "pasos": [
+          "Abre la app en Chrome y toca \"Instalar Jasta\" (o menú ⋮ → Instalar app).",
+          "Abre Jasta desde el ícono nuevo.",
+          "Toca \"Activar avisos\" → Permitir."
+        ]
+      },
+      {
+        "titulo": "En el computador",
+        "texto": "No hay que instalar nada: solo toca \"Activar avisos\" y permite las notificaciones en el navegador."
+      },
+      {
+        "titulo": "Ten en cuenta",
+        "puntos": [
+          "Si alguna vez tocaste \"No permitir\", la app te muestra cómo activarlos desde los ajustes del celular.",
+          "Los avisos ya no se pueden apagar desde la campana.",
+          "Abre siempre Jasta desde el ícono, no desde el navegador."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-10-27-tienda-web",
     "fecha": "2026-10-27",
     "titulo": "Nuevo: tu propio catálogo para que los clientes pidan solos",

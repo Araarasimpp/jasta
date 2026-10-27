@@ -3,12 +3,25 @@ import { Router } from '@angular/router';
 import { SupabaseService } from './supabase.service';
 
 /** Estado de los avisos con la app cerrada (push) en este dispositivo. */
-export type EstadoPush = 'activo' | 'inactivo' | 'no-soportado' | 'instalar-ios' | 'error' | 'desactivado';
+export type EstadoPush = 'activo' | 'inactivo' | 'no-soportado' | 'instalar-ios' | 'error';
 
-/** Si la persona apagó los avisos en este dispositivo (se recuerda aunque cierre la app). */
+/** Antes se podían apagar los avisos en un dispositivo; esta marca se borra al entrar */
 const CLAVE_DESACTIVADOS = 'jasta-avisos-desactivados';
 
 const SW_URL = '/assets/sw-push.js';
+
+/** Lo que le falta a este dispositivo para poder usar la app (ver RequisitosComponent) */
+export type Requisito = 'instalar' | 'permiso' | 'bloqueado' | 'activando' | 'error' | 'no-soportado';
+
+/** Evento del navegador para instalar la app (Chrome/Edge/Samsung en Android y computador) */
+interface EventoInstalar extends Event {
+  prompt(): Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
+function esStandalone(): boolean {
+  return window.matchMedia?.('(display-mode: standalone)').matches || (navigator as unknown as { standalone?: boolean }).standalone === true;
+}
 
 export interface Aviso {
   id: string;
@@ -46,11 +59,84 @@ export class NotificacionesService {
   );
 
   readonly push = signal<EstadoPush>(this.estadoPushInicial());
-  /** Cambiando entre activar y desactivar (para deshabilitar el botón). */
-  readonly cambiando = signal(false);
+
+  // ---------- Requisitos para usar la app: instalada (en celular) y con avisos activos
+  readonly ios = typeof navigator !== 'undefined' &&
+    (/iphone|ipad|ipod/i.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1));
+  readonly esMovil = typeof navigator !== 'undefined' && (this.ios || /android|mobile/i.test(navigator.userAgent));
+  readonly instalada = signal(typeof window !== 'undefined' && esStandalone());
+  /** El navegador ofrece instalar con un botón (si es null, se explica cómo hacerlo a mano) */
+  readonly instalable = signal<EventoInstalar | null>(null);
+  readonly recienInstalada = signal(false);
+  /** Solo el admin puede entrar sin avisos (por ejemplo, en un computador prestado), hasta cerrar la pestaña */
+  readonly saltado = signal(typeof sessionStorage !== 'undefined' && sessionStorage.getItem('jasta-sin-requisitos') === '1');
+  readonly requisito = computed<Requisito | null>(() => {
+    if (this.saltado()) return null;
+    if (this.esMovil && !this.instalada()) return 'instalar';
+    const push = this.push();
+    if (push === 'activo') return null;
+    if (push === 'no-soportado' || this.permiso() === 'no-soportado') return 'no-soportado';
+    if (this.permiso() === 'denied') return 'bloqueado';
+    if (push === 'error') return 'error';
+    if (this.permiso() === 'granted') return 'activando';
+    return 'permiso';
+  });
 
   private cerrarCanal: (() => void) | null = null;
   private usuarioId: number | null = null;
+
+  constructor() {
+    if (typeof window === 'undefined') return;
+    // Los avisos ya no se pueden apagar: si alguien los había desactivado aquí, vuelven
+    try {
+      localStorage.removeItem(CLAVE_DESACTIVADOS);
+    } catch {
+      /* sin almacenamiento */
+    }
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      this.instalable.set(e as EventoInstalar);
+    });
+    window.addEventListener('appinstalled', () => {
+      this.instalable.set(null);
+      this.recienInstalada.set(true);
+    });
+    window.matchMedia?.('(display-mode: standalone)').addEventListener?.('change', () => this.instalada.set(esStandalone()));
+    // Si activó los avisos en los ajustes del celular y vuelve a la app, se nota sin recargar
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') void this.revisarPermiso();
+    });
+  }
+
+  /** Abre la ventana del navegador para instalar la app */
+  async instalar(): Promise<void> {
+    const e = this.instalable();
+    if (!e) return;
+    await e.prompt();
+    const r = await e.userChoice.catch(() => null);
+    if (r?.outcome === 'accepted') {
+      this.instalable.set(null);
+      this.recienInstalada.set(true);
+    }
+  }
+
+  /** Vuelve a mirar el permiso del navegador (por si lo cambió en los ajustes) */
+  async revisarPermiso(): Promise<void> {
+    if (typeof Notification === 'undefined') return;
+    this.permiso.set(Notification.permission);
+    if (Notification.permission === 'granted' && this.push() !== 'activo' && this.push() !== 'no-soportado' && this.push() !== 'instalar-ios') {
+      await this.activarPush().catch(() => this.push.set('error'));
+    }
+  }
+
+  saltarRequisitos(): void {
+    try {
+      sessionStorage.setItem('jasta-sin-requisitos', '1');
+    } catch {
+      /* solo por ahora */
+    }
+    this.saltado.set(true);
+  }
 
   /** Se llama desde el shell al entrar. Seguro de llamar varias veces. */
   async iniciar(): Promise<void> {
@@ -74,7 +160,7 @@ export class NotificacionesService {
 
     // Si en este dispositivo ya se dio permiso, se renueva la suscripción en
     // silencio (por ejemplo, si ahora entró otra persona en el mismo celular)
-    if (this.permiso() === 'granted' && !this.desactivadosAqui() && this.push() !== 'no-soportado' && this.push() !== 'instalar-ios') {
+    if (this.permiso() === 'granted' && this.push() !== 'no-soportado' && this.push() !== 'instalar-ios') {
       this.activarPush().catch(() => undefined);
     }
   }
@@ -160,73 +246,11 @@ export class NotificacionesService {
   /** Pide permiso para mostrar avisos del sistema y los activa con la app cerrada. */
   async pedirPermiso(): Promise<void> {
     if (typeof Notification === 'undefined') return;
-    this.recordarDesactivados(false);
     const r = await Notification.requestPermission();
     this.permiso.set(r);
     if (r === 'granted') {
       this.sonar();
       await this.activarPush().catch(() => this.push.set('error'));
-    }
-  }
-
-  // ---------------------------------------------------------------------
-  // Activar / desactivar en este dispositivo
-  // ---------------------------------------------------------------------
-
-  /**
-   * Apaga los avisos en este dispositivo: lo da de baja de los avisos con la
-   * app cerrada y deja de mostrar ventanas del sistema y sonido. La campana
-   * dentro de la app sigue funcionando.
-   */
-  async desactivar(): Promise<void> {
-    if (this.cambiando()) return;
-    this.cambiando.set(true);
-    this.recordarDesactivados(true);
-    try {
-      const sub = await this.suscripcionActual();
-      if (sub) {
-        await this.sb.client.rpc('quitar_push', { p_endpoint: sub.endpoint });
-        await sub.unsubscribe();
-      }
-    } catch {
-      /* aunque falle la baja en el servidor, el dispositivo queda sin suscripción */
-    } finally {
-      this.push.set('desactivado');
-      this.cambiando.set(false);
-    }
-  }
-
-  /** Vuelve a encender los avisos en este dispositivo. */
-  async reactivar(): Promise<void> {
-    if (this.cambiando()) return;
-    this.cambiando.set(true);
-    this.recordarDesactivados(false);
-    try {
-      this.push.set('inactivo');
-      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-        await this.activarPush().catch(() => this.push.set('error'));
-      } else {
-        await this.pedirPermiso();
-      }
-    } finally {
-      this.cambiando.set(false);
-    }
-  }
-
-  private desactivadosAqui(): boolean {
-    try {
-      return localStorage.getItem(CLAVE_DESACTIVADOS) === '1';
-    } catch {
-      return false;
-    }
-  }
-
-  private recordarDesactivados(si: boolean): void {
-    try {
-      if (si) localStorage.setItem(CLAVE_DESACTIVADOS, '1');
-      else localStorage.removeItem(CLAVE_DESACTIVADOS);
-    } catch {
-      /* sin almacenamiento: solo dura mientras la app esté abierta */
     }
   }
 
@@ -244,7 +268,6 @@ export class NotificacionesService {
     if (!('serviceWorker' in navigator) || !('PushManager' in window) || typeof Notification === 'undefined') {
       return 'no-soportado';
     }
-    if (this.desactivadosAqui()) return 'desactivado';
     return 'inactivo';
   }
 
@@ -257,7 +280,7 @@ export class NotificacionesService {
 
   /** Registra el service worker y suscribe este dispositivo a los avisos. */
   async activarPush(): Promise<void> {
-    if (this.push() === 'no-soportado' || this.push() === 'instalar-ios' || this.push() === 'desactivado') return;
+    if (this.push() === 'no-soportado' || this.push() === 'instalar-ios') return;
     if (Notification.permission !== 'granted') return;
 
     const registro = await this.registrarServiceWorker();
@@ -324,7 +347,6 @@ export class NotificacionesService {
 
   private avisoDelSistema(aviso: Aviso): void {
     if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
-    if (this.push() === 'desactivado') return;
     // Si la persona está mirando la app, basta con la campana y el sonido
     if (document.visibilityState === 'visible' && document.hasFocus()) return;
     const opciones: NotificationOptions = {
@@ -347,7 +369,6 @@ export class NotificacionesService {
 
   /** Dos tonos cortos, generados en el navegador (no necesita archivos de audio). */
   private sonar(): void {
-    if (this.push() === 'desactivado') return;
     try {
       const w = window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
       const Ctx = w.AudioContext || w.webkitAudioContext;
