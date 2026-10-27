@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { SupabaseService } from '../core/services/supabase.service';
@@ -35,9 +35,10 @@ function normal(s: string): string {
   imports: [FormsModule],
   styles: [
     `
-      /* Ionic deja el body fijo y sin desplazamiento: la página pública es su propio contenedor con scroll */
-      :host { display: block; position: absolute; inset: 0; height: 100vh; height: 100dvh; overflow-x: hidden; overflow-y: auto;
-        overscroll-behavior-y: contain; background: var(--bg); color: var(--text); }
+      /* Ionic deja el body fijo y le pone contain: layout a la página (lo "fijo" queda pegado a ella):
+         la página se queda quieta y lo que se desplaza es .scroll; la barra y las hojas quedan fijas en pantalla */
+      :host { display: block; background: var(--bg); color: var(--text); }
+      .scroll { position: absolute; inset: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain; }
       .caja { max-width: 1080px; margin: 0 auto; padding: calc(16px + env(safe-area-inset-top)) 16px calc(96px + env(safe-area-inset-bottom)); }
       .marca { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
       .marca img { width: 44px; height: 44px; border-radius: 12px; background: #fff; object-fit: contain; }
@@ -45,7 +46,9 @@ function normal(s: string): string {
       .marca small { display: block; font-size: 13px; color: var(--text-soft); }
       .filtros { position: sticky; top: 0; z-index: 5; display: flex; gap: 8px; align-items: center; padding: 8px 0 12px; background: var(--bg); }
       .filtros input { flex: 1; min-width: 0; height: 44px; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface); color: var(--text); font: inherit; font-size: 15px; }
-      .solo { flex-shrink: 0; display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-soft); }
+      .solo { flex-shrink: 0; height: 44px; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface);
+        color: var(--text-soft); font: inherit; font-size: 14px; cursor: pointer; }
+      .solo.on { border-color: var(--accent); background: var(--accent-wash); color: var(--accent); font-weight: 650; }
       .rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
       .prod { display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); overflow: hidden; }
       .foto { position: relative; display: block; width: 100%; aspect-ratio: 1; padding: 0; border: 0; background: #fff; cursor: pointer; }
@@ -102,6 +105,7 @@ function normal(s: string): string {
     `,
   ],
   template: `
+    <div class="scroll" #scroll>
     <div class="caja">
       <header class="marca">
         <img src="assets/icon/logo.png" alt="" />
@@ -123,7 +127,7 @@ function normal(s: string): string {
       } @else if (t(); as tienda) {
         <div class="filtros">
           <input type="search" [ngModel]="q()" (ngModelChange)="q.set($event); limite.set(40)" placeholder="Buscar producto" aria-label="Buscar producto" />
-          <label class="solo"><input type="checkbox" [ngModel]="soloDisp()" (ngModelChange)="soloDisp.set($event)" /> Disponibles</label>
+          <button type="button" class="solo" [class.on]="soloDisp()" [attr.aria-pressed]="soloDisp()" (click)="soloDisp.set(!soloDisp())">Disponibles</button>
         </div>
         <div class="rejilla">
           @for (p of filtrados().slice(0, limite()); track p.id) {
@@ -150,6 +154,7 @@ function normal(s: string): string {
           @if (cargando()) { Cargando el catálogo… } @else { <strong>Este catálogo no existe</strong>Pídele el enlace de nuevo a quien te lo compartió. }
         </div>
       }
+    </div>
     </div>
 
     @if (lineas().length && !verCarrito() && !sel() && !hecho()) {
@@ -268,7 +273,6 @@ function normal(s: string): string {
 export class TiendaPage implements OnInit {
   private sb = inject(SupabaseService);
   private route = inject(ActivatedRoute);
-  private host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   t = signal<Tienda | null>(null);
   cargando = signal(true);
@@ -298,6 +302,7 @@ export class TiendaPage implements OnInit {
   bandera = bandera;
   pesos = pesos;
   urlMini = urlMini;
+  @ViewChild('scroll') private scroll?: ElementRef<HTMLElement>;
   private vendedoraId: number | null = null;
   private clave = 'tienda-carrito';
 
@@ -467,7 +472,7 @@ export class TiendaPage implements OnInit {
     this.hecho.set({ id: r.id, total: Number(r.subtotal) + Number(r.domicilio), domicilioPendiente: r.domicilio_por_confirmar });
     this.lineas.set([]);
     this.verCarrito.set(false);
-    this.host.nativeElement.scrollTo({ top: 0 });
+    this.scroll?.nativeElement.scrollTo({ top: 0 });
   }
 
   whatsapp(): string | null {
