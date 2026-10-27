@@ -34,7 +34,9 @@ interface Seguimiento {
   standalone: true,
   styles: [
     `
-      :host { display: block; min-height: 100vh; min-height: 100dvh; background: var(--bg); color: var(--text); }
+      /* Ionic deja el body fijo y sin desplazamiento: la página pública es su propio contenedor con scroll */
+      :host { display: block; position: absolute; inset: 0; height: 100vh; height: 100dvh; overflow-x: hidden; overflow-y: auto;
+        overscroll-behavior-y: contain; background: var(--bg); color: var(--text); }
       .caja { max-width: 520px; margin: 0 auto; padding: calc(20px + env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 14px; }
       .marca { display: flex; align-items: center; gap: 10px; }
       .marca img { width: 40px; height: 40px; border-radius: 10px; background: #fff; object-fit: contain; }
