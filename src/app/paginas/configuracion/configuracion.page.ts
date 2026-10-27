@@ -39,6 +39,8 @@ const EJEMPLO: PedidoRotulo = {
       .wa-check { display: flex; gap: 8px; align-items: center; margin: 6px 0 12px; font-size: 14px; }
       .wa-acciones { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
       .wa-acciones .inp { width: 190px; }
+      .an-roles { display: flex; flex-wrap: wrap; gap: 0 16px; }
+      .an-roles .wa-check { margin: 4px 0; }
       .wa-envios { width: 100%; margin-top: 14px; border-collapse: collapse; font-size: 13px; }
       .wa-envios th { text-align: left; font-size: 11.5px; color: var(--text-muted); font-weight: 650; padding: 6px 4px; border-bottom: 1px solid var(--border); }
       .wa-envios td { padding: 7px 4px; border-bottom: 1px solid var(--border-soft); }
@@ -130,6 +132,22 @@ const EJEMPLO: PedidoRotulo = {
         </section>
 
         <section class="tg">
+          <h2>Avisar una actualización</h2>
+          <p class="ayuda">Cuando la app tenga algo nuevo, cuéntaselo al equipo: les llega como notificación (campana y push en el celular).
+            Además, a quien tenga la app abierta le sale el botón para cargar la versión nueva.</p>
+          <div class="campo"><label for="an-ti">Título</label><input id="an-ti" maxlength="80" [(ngModel)]="anuncio.titulo" placeholder="Ej: Nuevo en Jasta" /></div>
+          <div class="campo"><label for="an-cu">Qué cambió</label>
+            <textarea id="an-cu" rows="3" maxlength="400" [(ngModel)]="anuncio.cuerpo" placeholder="Ej: Ya pueden elegir el indicativo del país al crear un pedido"></textarea></div>
+          <div class="an-roles" role="group" aria-label="A quién">
+            @for (r of rolesAnuncio; track r.id) {
+              <label class="wa-check"><input type="checkbox" [checked]="anuncio.roles.includes(r.id)" (change)="alternarRol(r.id)" /> {{ r.label }}</label>
+            }
+          </div>
+          <p class="ayuda" style="margin: 0">{{ anuncio.roles.length ? 'Solo a los roles marcados.' : 'Sin marcar ninguno, le llega a todo el equipo.' }}</p>
+          <div class="wa-acciones"><button class="b b-pri" (click)="anunciar()" [disabled]="anunciando()">{{ anunciando() ? 'Enviando…' : 'Enviar aviso' }}</button></div>
+        </section>
+
+        <section class="tg">
           <h2>Cierre del día por Telegram</h2>
           <p class="ayuda">Todos los días a las 9:00 p. m. le llega al chat privado de cada admin (con su cuenta vinculada al bot) el resumen:
             entregas, ganancia, gastos, utilidad, novedades, lo que falta por despachar, cuadres y comisiones por pagar.</p>
@@ -194,6 +212,32 @@ export class ConfiguracionPage implements OnInit {
   cuando(iso: string): string {
     return new Date(iso).toLocaleString('es-CO', { timeZone: 'America/Bogota', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
   }
+  // ---------- Avisos de actualización
+  rolesAnuncio = [
+    { id: 'admin', label: 'Admins' }, { id: 'vendedora', label: 'Vendedoras' }, { id: 'mensajero', label: 'Mensajeros' },
+    { id: 'alistador', label: 'Alistadores' }, { id: 'cuadres', label: 'Cuadres' }, { id: 'recolector', label: 'Recolectores' },
+    { id: 'venta_local', label: 'Venta local' },
+  ];
+  anuncio = { titulo: 'Nuevo en Jasta', cuerpo: '', roles: [] as string[] };
+  anunciando = signal(false);
+
+  alternarRol(r: string): void {
+    const l = this.anuncio.roles;
+    this.anuncio.roles = l.includes(r) ? l.filter((x) => x !== r) : [...l, r];
+  }
+
+  async anunciar(): Promise<void> {
+    const a = this.anuncio;
+    if (!a.titulo.trim() || !a.cuerpo.trim()) return this.toast.error('Escribe el título y qué cambió');
+    if (!confirm(`¿Enviar este aviso a ${a.roles.length ? 'los roles marcados' : 'todo el equipo'}?`)) return;
+    this.anunciando.set(true);
+    const { data, error } = await this.sb.client.rpc('anunciar_actualizacion', { p_titulo: a.titulo.trim(), p_cuerpo: a.cuerpo.trim(), p_roles: a.roles });
+    this.anunciando.set(false);
+    if (error) return this.toast.error(error.message);
+    this.toast.ok(`Aviso enviado a ${data} ${data === 1 ? 'persona' : 'personas'}`);
+    this.anuncio = { ...a, cuerpo: '' };
+  }
+
   cierre = signal('');
 
   async enviarCierre(): Promise<void> {

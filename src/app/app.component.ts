@@ -1,12 +1,13 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { IonApp, IonRouterOutlet } from '@ionic/angular';
 import { VisorComponent } from './shared/visor/visor.component';
+import { NuevaVersionComponent } from './shared/version/nueva-version.component';
 import { activarArrastreDeHojas } from './shared/arrastrar-hojas';
 
 @Component({
   selector: 'app-root',
-  template: `<ion-app><ion-router-outlet></ion-router-outlet><app-visor></app-visor></ion-app>`,
-  imports: [IonApp, IonRouterOutlet, VisorComponent],
+  template: `<ion-app><ion-router-outlet></ion-router-outlet><app-visor></app-visor><app-nueva-version></app-nueva-version></ion-app>`,
+  imports: [IonApp, IonRouterOutlet, VisorComponent, NuevaVersionComponent],
 })
 export class AppComponent implements OnInit, OnDestroy {
   private timer?: ReturnType<typeof setTimeout>;
