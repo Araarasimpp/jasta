@@ -140,3 +140,8 @@ revoke execute on function public.tienda_evento(bigint, text, bigint, text), pub
   public.recontactar(integer, integer), public.marcar_contactado(text) from public;
 grant execute on function public.tienda_evento(bigint, text, bigint, text) to anon, authenticated;
 grant execute on function public.tienda_estadisticas(integer), public.recontactar(integer, integer), public.marcar_contactado(text) to authenticated;
+
+-- Supabase da EXECUTE a anon directamente (no por PUBLIC): se le quita en todo lo que no es del catálogo público
+revoke execute on function public.recontactar(integer, integer), public.tienda_estadisticas(integer), public.marcar_contactado(text),
+  public.pedidos_web_lista(), public.confirmar_pedido_web(bigint, numeric, text), public.cancelar_pedido_web(bigint, text),
+  public.pedir_respaldo(), public.riesgo_cliente(text), public.marcar_cliente(text, text) from anon;
