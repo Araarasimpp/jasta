@@ -9,7 +9,7 @@ import { EsqueletoComponent } from '../shared/esqueleto/esqueleto.component';
 interface Color { nombre: string; hex: string | null; imagen_url: string | null }
 interface ProductoTienda {
   id: number; nombre: string; precio: number; imagen_url: string | null; tallas: string[]; colores: Color[];
-  agotado: boolean; disponibles: number | null;
+  agotado: boolean; disponibles: number | null; categoria?: string | null;
 }
 interface Tienda {
   negocio: string | null; telefonos: string | null;
@@ -45,7 +45,13 @@ function normal(s: string): string {
       .marca img { width: 44px; height: 44px; border-radius: 12px; background: #fff; object-fit: contain; }
       .marca h1 { margin: 0; font-size: 19px; line-height: 1.2; }
       .marca small { display: block; font-size: 13px; color: var(--text-soft); }
-      .filtros { position: sticky; top: 0; z-index: 5; display: flex; gap: 8px; align-items: center; padding: 8px 0 12px; background: var(--bg); }
+      .filtros { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 0 12px; background: var(--bg); }
+      .cats { flex: 0 0 calc(100% + 32px); box-sizing: border-box; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 -16px; padding: 0 16px; -webkit-overflow-scrolling: touch; }
+      .cats::-webkit-scrollbar { display: none; }
+      .cats button { flex-shrink: 0; height: 36px; padding: 0 14px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface);
+        color: var(--text-soft); font: inherit; font-size: 13.5px; white-space: nowrap; cursor: pointer; }
+      .cats button.on { border-color: var(--text); background: var(--text); color: var(--bg); font-weight: 650; }
+      .cats small { margin-left: 5px; opacity: .65; font-variant-numeric: tabular-nums; }
       .filtros input { flex: 1; min-width: 0; height: 44px; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface); color: var(--text); font: inherit; font-size: 15px; }
       .solo { flex-shrink: 0; height: 44px; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface);
         color: var(--text-soft); font: inherit; font-size: 14px; cursor: pointer; }
@@ -129,6 +135,14 @@ function normal(s: string): string {
         <div class="filtros">
           <input type="search" [ngModel]="q()" (ngModelChange)="q.set($event); limite.set(40)" placeholder="Buscar producto" aria-label="Buscar producto" />
           <button type="button" class="solo" [class.on]="soloDisp()" [attr.aria-pressed]="soloDisp()" (click)="soloDisp.set(!soloDisp())">Disponibles</button>
+          @if (categorias().length > 1) {
+            <div class="cats" role="group" aria-label="Categorías">
+              <button type="button" [class.on]="!categoria()" [attr.aria-pressed]="!categoria()" (click)="elegirCategoria(null)">Todo</button>
+              @for (c of categorias(); track c.nombre) {
+                <button type="button" [class.on]="categoria() === c.nombre" [attr.aria-pressed]="categoria() === c.nombre" (click)="elegirCategoria(c.nombre)">{{ c.nombre }}<small>{{ c.n }}</small></button>
+              }
+            </div>
+          }
         </div>
         <div class="rejilla">
           @for (p of filtrados().slice(0, limite()); track p.id) {
@@ -279,6 +293,7 @@ export class TiendaPage implements OnInit {
   cargando = signal(true);
   q = signal('');
   soloDisp = signal(false);
+  categoria = signal<string | null>(null);
   limite = signal(40);
   lineas = signal<Linea[]>([]);
   verCarrito = signal(false);
@@ -327,9 +342,23 @@ export class TiendaPage implements OnInit {
     void this.sb.client.rpc('tienda_evento', { p_vendedora: this.vendedoraId, p_tipo: tipo, p_producto: producto, p_sesion: this.sesion }).then();
   }
 
+  /** Categorías con productos, de la que más tiene a la que menos ("Otros" al final) */
+  categorias = computed(() => {
+    const n = new Map<string, number>();
+    for (const p of this.t()?.productos ?? []) if (p.categoria) n.set(p.categoria, (n.get(p.categoria) ?? 0) + 1);
+    return [...n].map(([nombre, n]) => ({ nombre, n })).sort((a, b) => (a.nombre === 'Otros' ? 1 : b.nombre === 'Otros' ? -1 : b.n - a.n));
+  });
+
+  elegirCategoria(c: string | null): void {
+    this.categoria.set(c);
+    this.limite.set(40);
+    this.scroll?.nativeElement.scrollTo({ top: 0 });
+  }
+
   filtrados = computed(() => {
     const q = normal(this.q());
-    return (this.t()?.productos ?? []).filter((p) => (!q || normal(p.nombre).includes(q)) && (!this.soloDisp() || !p.agotado));
+    const c = this.categoria();
+    return (this.t()?.productos ?? []).filter((p) => (!q || normal(p.nombre).includes(q)) && (!this.soloDisp() || !p.agotado) && (!c || p.categoria === c));
   });
   unidades = computed(() => this.lineas().reduce((s, l) => s + l.cantidad, 0));
   subtotal = computed(() => this.lineas().reduce((s, l) => s + l.cantidad * l.precio, 0));

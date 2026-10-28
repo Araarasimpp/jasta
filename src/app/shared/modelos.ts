@@ -43,6 +43,8 @@ export interface Producto {
   tallas?: string[] | null;
   /** Videos del producto (bucket público "videos") */
   videos?: string[] | null;
+  /** Categoría para filtrar el catálogo público (si no se pone, se sugiere por el nombre) */
+  categoria?: string | null;
 }
 
 /** Variante de color de un producto, con su propia foto */

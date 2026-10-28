@@ -126,6 +126,11 @@ const VACIO: Omit<Producto, 'id'> = {
         </div>
         <div class="hoja-body">
           <div class="campo"><label for="pn">Nombre</label><input id="pn" [(ngModel)]="f.nombre" /></div>
+          @if (hayCategorias()) {
+            <div class="campo"><label for="pcat">Categoría <small class="suave">(para filtrar el catálogo; vacío = se elige sola por el nombre)</small></label>
+              <input id="pcat" list="cats-prod" [(ngModel)]="f.categoria" placeholder="Ej: Cocina" autocomplete="off" />
+              <datalist id="cats-prod">@for (c of categorias(); track c) { <option [value]="c"></option> }</datalist></div>
+          }
           <div class="fila-campos">
             <div class="campo"><label for="ps">SKU</label><input id="ps" [(ngModel)]="f.sku" /></div>
             <div class="campo"><label for="pc">Código de barras</label><input id="pc" [(ngModel)]="f.codigo_barras" /></div>
@@ -197,6 +202,9 @@ export class ProductosPage implements OnInit {
   filtro = signal<Filtro>('activos');
   limite = signal(100);
   form = signal<Omit<Producto, 'id'> | null>(null);
+  /** La columna existe en la base (si no, el campo no se muestra ni se manda) */
+  hayCategorias = computed(() => this.productos().some((p) => 'categoria' in p));
+  categorias = computed(() => [...new Set(this.productos().map((p) => p.categoria).filter((c): c is string => !!c))].sort());
   editId = signal<number | null>(null);
   guardando = signal(false);
   error = signal('');
@@ -284,6 +292,7 @@ export class ProductosPage implements OnInit {
       imagenes: f.imagenes ?? [],
       tallas: f.tallas ?? [],
       videos: f.videos ?? [],
+      ...(this.hayCategorias() ? { categoria: f.categoria?.trim() || null } : {}),
       updated_at: new Date().toISOString(),
     };
     const id = this.editId();
