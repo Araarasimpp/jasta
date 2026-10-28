@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { SupabaseService } from '../core/services/supabase.service';
 import { pesos } from '../shared/formato';
@@ -23,6 +24,7 @@ interface Seguimiento {
   negocio: string | null;
   telefonos: string | null;
   items: { nombre: string; cantidad: number; color: string | null; talla: string | null }[];
+  calificacion: { estrellas: number; comentario: string | null } | null;
 }
 
 /**
@@ -32,6 +34,7 @@ interface Seguimiento {
 @Component({
   selector: 'app-seguimiento',
   standalone: true,
+  imports: [FormsModule],
   styles: [
     `
       /* Ionic deja el body fijo y sin desplazamiento: la página pública es su propio contenedor con scroll */
@@ -80,6 +83,19 @@ interface Seguimiento {
       .vacio { padding: 40px 18px; text-align: center; color: var(--text-soft); }
       .vacio strong { display: block; margin-bottom: 6px; font-size: 18px; color: var(--text); }
       .pie { text-align: center; font-size: 12px; color: var(--text-muted); }
+      .califica { display: flex; flex-direction: column; }
+      .estrellas { display: flex; gap: 6px; }
+      .estrellas button, .estrellas span { width: 48px; height: 48px; display: grid; place-items: center; padding: 0; border: 0; background: none;
+        font-size: 38px; line-height: 1; color: var(--border-strong); cursor: pointer; transition: transform 160ms var(--ease), color 160ms var(--ease); }
+      .estrellas button:active { transform: scale(.88); }
+      .estrellas .on { color: var(--oro); }
+      .estrellas.fijas span { width: 34px; height: 34px; font-size: 28px; cursor: default; }
+      .califica textarea { margin-top: 12px; width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--border-strong); border-radius: var(--radius);
+        background: var(--surface); color: var(--text); font: inherit; font-size: 16px; resize: vertical; }
+      .enviar { margin-top: 10px; height: 46px; border: 0; border-radius: var(--radius); background: var(--accent); color: #fff; font: inherit; font-size: 15px; font-weight: 650; cursor: pointer; }
+      .enviar:disabled { opacity: .6; }
+      .gracias { margin: 8px 0 0; font-size: 14px; color: var(--text-soft); line-height: 1.45; }
+      .error-cal { margin: 8px 0 0; font-size: 13px; color: var(--danger); }
     `,
   ],
   template: `
@@ -127,6 +143,33 @@ interface Seguimiento {
           @if (p.domicilio) { <p class="total-nota">Incluye domicilio de {{ pesos(p.domicilio) }}</p> }
         </section>
 
+        @if (p.estado === 'entregado') {
+          <section class="tarjeta califica">
+            @if (p.calificacion; as c) {
+              <h2>Tu calificación</h2>
+              <div class="estrellas fijas" [attr.aria-label]="c.estrellas + ' de 5 estrellas'">
+                @for (n of [1, 2, 3, 4, 5]; track n) { <span [class.on]="n <= c.estrellas">★</span> }
+              </div>
+              <p class="gracias">¡Gracias por contarnos cómo te fue!{{ c.comentario ? ' "' + c.comentario + '"' : '' }}</p>
+            } @else {
+              <h2>¿Cómo te fue con la entrega?</h2>
+              <p class="sub" style="margin: 0 0 10px">{{ p.mensajero ? 'Te la llevó ' + p.mensajero + '. ' : '' }}Tu opinión nos ayuda a mejorar.</p>
+              <div class="estrellas" role="radiogroup" aria-label="Calificación de 1 a 5">
+                @for (n of [1, 2, 3, 4, 5]; track n) {
+                  <button type="button" role="radio" [attr.aria-checked]="estrellas() === n" [attr.aria-label]="n + (n === 1 ? ' estrella' : ' estrellas')"
+                    [class.on]="n <= estrellas()" (click)="estrellas.set(n)">★</button>
+                }
+              </div>
+              @if (estrellas()) {
+                <textarea [(ngModel)]="comentario" maxlength="300" rows="2"
+                  [placeholder]="estrellas() <= 3 ? '¿Qué pasó? Cuéntanos para mejorarlo' : 'Si quieres, déjanos un comentario'"></textarea>
+                @if (errorCal()) { <p class="error-cal" role="alert">{{ errorCal() }}</p> }
+                <button class="enviar" (click)="calificar(p)" [disabled]="enviando()">{{ enviando() ? 'Enviando…' : 'Enviar calificación' }}</button>
+              }
+            }
+          </section>
+        }
+
         <section class="contacto">
           @if (p.vendedora_telefono) {
             <a class="wa" [class.solo]="!telefonoTienda()" [href]="whatsapp(p)" target="_blank" rel="noopener">WhatsApp a {{ p.vendedora || 'la tienda' }}</a>
@@ -151,6 +194,10 @@ interface Seguimiento {
 })
 export class SeguimientoPage implements OnInit, OnDestroy {
   private sb = inject(SupabaseService);
+  estrellas = signal(0);
+  comentario = '';
+  enviando = signal(false);
+  errorCal = signal('');
   private route = inject(ActivatedRoute);
 
   s = signal<Seguimiento | null>(null);
@@ -217,6 +264,16 @@ export class SeguimientoPage implements OnInit, OnDestroy {
       this.s.set(data as Seguimiento);
       this.actualizado.set('revisado a las ' + formatoHoraCO(new Date().toISOString()));
     }
+  }
+
+  async calificar(p: Seguimiento): Promise<void> {
+    const codigo = this.route.snapshot.paramMap.get('codigo') ?? '';
+    this.enviando.set(true);
+    this.errorCal.set('');
+    const { error } = await this.sb.client.rpc('calificar_entrega', { p_codigo: codigo, p_estrellas: this.estrellas(), p_comentario: this.comentario.trim() });
+    this.enviando.set(false);
+    if (error) return this.errorCal.set((error.message ?? '').replace(/^.*?ERROR:\s*/, ''));
+    this.s.set({ ...p, calificacion: { estrellas: this.estrellas(), comentario: this.comentario.trim() || null } });
   }
 
   variante(i: { color: string | null; talla: string | null }): string {

@@ -1,5 +1,85 @@
 [
   {
+    "id": "2026-10-28-calificaciones",
+    "fecha": "2026-10-28",
+    "titulo": "Nuevo: los clientes califican la entrega",
+    "cuerpo": "Cuando el pedido se entrega, el cliente puede calificar de 1 a 5 estrellas desde su enlace de seguimiento y dejar un comentario. Así sabemos cómo nos ven y dónde mejorar.",
+    "roles": [
+      "admin",
+      "mensajero"
+    ],
+    "secciones": [
+      {
+        "titulo": "¿Para qué sirve?",
+        "texto": "Para saber de primera mano cómo le fue al cliente con la entrega, reconocer a los mensajeros que lo hacen bien y enterarnos rápido cuando algo sale mal."
+      },
+      {
+        "titulo": "Cómo funciona",
+        "pasos": [
+          "El cliente abre el enlace de seguimiento que le llegó (por WhatsApp o el que le pasó la vendedora).",
+          "Cuando el pedido ya está entregado, abajo le aparece \"¿Cómo te fue con la entrega?\" con 5 estrellas.",
+          "Toca las estrellas, si quiere escribe un comentario y envía. Solo puede calificar una vez por pedido.",
+          "Si califica con 3 estrellas o menos, a los admins les llega un aviso con el comentario para revisar qué pasó.",
+          "Si califica con 5 estrellas, al mensajero que lo entregó le llega un aviso de felicitación."
+        ]
+      },
+      {
+        "titulo": "Dónde ver los resultados (admin)",
+        "pasos": [
+          "Entra a Más → Reportes y elige las fechas.",
+          "Abre la pestaña \"Por mensajero\": debajo de la tabla está el promedio general, el de cada mensajero, cuántas calificaciones de 3 o menos tuvo y los últimos comentarios."
+        ]
+      },
+      {
+        "titulo": "Ten en cuenta",
+        "puntos": [
+          "Entre más clientes reciban el enlace de seguimiento, más calificaciones llegan: compártelo siempre.",
+          "La calificación no se puede cambiar después de enviada."
+        ]
+      }
+    ],
+    "enlace": {
+      "texto": "Ir a Reportes",
+      "url": "/app/reportes"
+    }
+  },
+  {
+    "id": "2026-10-28-recordatorio-cuadres",
+    "fecha": "2026-10-28",
+    "titulo": "Nuevo: recordatorio de cuadres sin cerrar",
+    "cuerpo": "Todos los días a las 8:10 a. m., si quedaron pedidos entregados de días anteriores sin cuadrar, al mensajero le llega un aviso con los días, los pedidos y el efectivo pendiente. A los admins y a cuadres, el resumen.",
+    "roles": [
+      "mensajero",
+      "admin",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "¿Para qué sirve?",
+        "texto": "Para que ningún día quede sin cuadrar y la plata del efectivo llegue a tiempo, sin tener que estar preguntando."
+      },
+      {
+        "titulo": "Cómo funciona",
+        "puntos": [
+          "Mensajero: si tienes entregas de días anteriores sin cerrar, a las 8:10 a. m. te llega \"Tienes cuadres sin cerrar\" con los días, cuántos pedidos son y cuánto efectivo tienes. Al tocarlo se abre Cuadres para cerrarlo.",
+          "Admins y cuadres: les llega el resumen de qué mensajeros tienen cuadres sin cerrar (y de qué días), más los cuadres que ya se cerraron pero nadie ha recibido.",
+          "Si todo está al día, no llega nada."
+        ]
+      },
+      {
+        "titulo": "Ten en cuenta",
+        "puntos": [
+          "Solo cuenta lo entregado antes de hoy: lo de hoy se cierra en la tarde como siempre.",
+          "El aviso se repite cada mañana mientras el cuadre siga sin cerrar."
+        ]
+      }
+    ],
+    "enlace": {
+      "texto": "Ir a Cuadres",
+      "url": "/app/cuadres"
+    }
+  },
+  {
     "id": "2026-10-28-recontactar",
     "fecha": "2026-10-28",
     "titulo": "Nuevo: clientes para recontactar, con tu catálogo en el mensaje",

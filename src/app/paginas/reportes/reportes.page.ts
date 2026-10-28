@@ -56,6 +56,15 @@ const ESTADOS: { id: EstadoFiltro; label: string }[] = [
   styles: [
     `
       .periodo { margin: 0 0 0 auto; font-size: 13px; color: var(--text-soft); }
+      .califs { padding: 20px; border-top: 1px solid var(--border-soft); display: flex; flex-direction: column; gap: 12px; }
+      .califs h3 { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); }
+      .resumen-cal { margin: 0; font-size: 14px; color: var(--text-soft); }
+      .resumen-cal b { font-size: 20px; color: var(--text); }
+      .estrella { color: var(--oro); }
+      .tenue { color: var(--border-strong); }
+      .mala { color: var(--danger); font-weight: 650; }
+      .comentarios { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; }
+      .comentarios small { color: var(--text-muted); }
       .periodo::first-letter { text-transform: uppercase; }
       .pestanas { padding: 12px 20px 0; border-bottom: 1px solid var(--border-soft); }
       .pestanas .chips { padding-bottom: 10px; }
@@ -302,6 +311,34 @@ const ESTADOS: { id: EstadoFiltro; label: string }[] = [
                   <td class="der num">{{ pesos(tot().mEf) }}</td><td class="der num">{{ pesos(tot().mTr) }}</td><td class="der num">{{ pesos(tot().mTotal) }}</td></tr></tfoot>
               }
             </table>
+            @if (califs(); as c) {
+              <section class="califs">
+                <h3>Calificaciones de los clientes</h3>
+                @if (c.total.cantidad) {
+                  <p class="resumen-cal"><span class="estrella">★</span> <b>{{ c.total.promedio }}</b> de 5 · {{ numero(c.total.cantidad) }}
+                    {{ c.total.cantidad === 1 ? 'calificación' : 'calificaciones' }} de {{ numero(c.entregados) }} entregas ({{ pct(c.total.cantidad, c.entregados) }})</p>
+                  <table class="tabla">
+                    <thead><tr><th>Mensajero</th><th class="der">Promedio</th><th class="der">Calificaciones</th><th class="der">De 3 o menos</th></tr></thead>
+                    <tbody>
+                      @for (m of c.mensajeros; track m.nombre) {
+                        <tr><td>{{ m.nombre }}</td><td class="der num"><span class="estrella">★</span> {{ m.promedio }}</td><td class="der num">{{ m.cantidad }}</td>
+                          <td class="der num" [class.mala]="m.bajas > 0">{{ m.bajas }}</td></tr>
+                      }
+                    </tbody>
+                  </table>
+                  @if (c.comentarios.length) {
+                    <ul class="comentarios">
+                      @for (k of c.comentarios; track k.pedido_id) {
+                        <li><span class="estrella">{{ '★'.repeat(k.estrellas) }}</span><span class="tenue">{{ '★'.repeat(5 - k.estrellas) }}</span>
+                          "{{ k.comentario }}" <small>— {{ k.cliente }} · pedido #{{ k.pedido_id }}{{ k.mensajero ? ' · ' + k.mensajero : '' }}</small></li>
+                      }
+                    </ul>
+                  }
+                } @else {
+                  <p class="suave" style="margin: 0">Todavía no hay calificaciones en este periodo. Los clientes califican desde el enlace de seguimiento cuando reciben su pedido.</p>
+                }
+              </section>
+            }
           }
           @case ('barrios') {
             <table class="tabla">
@@ -387,6 +424,11 @@ export class ReportesPage implements OnInit {
   pestana = signal<Pestana>('detalle');
   etiqueta = signal('');
   agrupado = signal<Agrupado | null>(null);
+  califs = signal<{
+    total: { cantidad: number; promedio: number | null }; entregados: number;
+    mensajeros: { nombre: string; cantidad: number; promedio: number; bajas: number }[];
+    comentarios: { pedido_id: number; estrellas: number; comentario: string; cliente: string; mensajero: string | null }[];
+  } | null>(null);
   cargando = signal(true);
   lineas = signal<LineaVenta[]>([]);
   pedidosV = signal<PedidoVenta[]>([]);
@@ -411,6 +453,10 @@ export class ReportesPage implements OnInit {
 
   pesos = pesos;
   numero = numero;
+
+  pct(a: number, b: number): string {
+    return b ? Math.round((a / b) * 100) + '%' : '—';
+  }
   diaCorto = diaCorto;
   min = Math.min;
 
@@ -463,6 +509,11 @@ export class ReportesPage implements OnInit {
     this.pagina.set(0);
     void this.cargarFilas();
     const args = { p_desde: r.desde, p_hasta: r.hasta, p_estado: this.estadoSel, p_vendedora: this.vendedoraSel };
+    if (this.veTodo()) {
+      void this.sb.client.rpc('calificaciones_resumen', { p_desde: r.desde, p_hasta: r.hasta }).then(({ data }) => {
+        if (this.rango === r) this.califs.set(data ?? null);
+      });
+    }
     const a = await this.sb.client.rpc('reporte_filtrado', args);
     // Si mientras tanto cambiaron los filtros, esta respuesta ya no sirve
     if (this.rango !== r) return;
