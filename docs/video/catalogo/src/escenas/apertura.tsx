@@ -54,7 +54,8 @@ export const Problema: React.FC = () => {
   );
 };
 
-const PALABRAS = ['Copiar.', 'Pegar.', 'Calcular.', 'Volver a escribir.'];
+// Cada palabra entra cuando la voz la dice (ver VOZ en guion.ts)
+const PALABRAS = [{ w: 'Copiar.', en: 3 }, { w: 'Calcular.', en: 40 }, { w: 'Volver a escribir.', en: 84 }];
 
 /** 5–10 s · El desgaste: las tareas que se repiten con cada pedido */
 export const Desgaste: React.FC = () => {
@@ -75,9 +76,8 @@ export const Desgaste: React.FC = () => {
         </div>
       </AbsoluteFill>
       <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center', fontFamily: FUENTE, color: C.texto }}>
-        {PALABRAS.map((w, i) => {
-          const a = 4 + i * 27;
-          const b = i === PALABRAS.length - 1 ? 999 : a + 27;
+        {PALABRAS.map(({ w, en: a }, i) => {
+          const b = PALABRAS[i + 1]?.en ?? 999;
           if (f < a - 2 || f > b + 10) return null;
           const entra = sp(f, a);
           const sale = r(f, b, b + 8, 0, 1);
@@ -88,7 +88,7 @@ export const Desgaste: React.FC = () => {
           );
         })}
         <div style={{ position: 'absolute', top: 640, fontSize: 52, fontWeight: 360, color: C.tenue }}>
-          <Revelar desde={112}>…otra vez.</Revelar>
+          <Revelar desde={133}>…otra vez.</Revelar>
         </div>
       </AbsoluteFill>
     </Fondo>
@@ -99,7 +99,7 @@ export const Desgaste: React.FC = () => {
 export const Solucion: React.FC = () => {
   const f = useCurrentFrame();
   const logo = rebote(f, 2);
-  const tel = sp(f, 40, 200, 1.2);
+  const tel = sp(f, 60, 200, 1.2);
   const zoom = r(f, 150, 194, 1, 1.12);
   return (
     <Fondo halo={{ x: 960, y: 760, color: 'rgba(212,160,23,.16)' }}>
@@ -107,8 +107,8 @@ export const Solucion: React.FC = () => {
         <div style={{ marginTop: 70, display: 'flex', alignItems: 'center', gap: 28, transform: `scale(${0.7 + logo * 0.3})`, opacity: Math.min(1, logo * 1.4) }}>
           <Logo tam={92} />
           <div style={{ fontSize: 84, fontWeight: 780, letterSpacing: '-0.04em' }}>
-            <Revelar desde={16}>Tu catálogo.</Revelar>{' '}
-            <Revelar desde={30} style={{ color: C.azul }}>Tu enlace.</Revelar>
+            <Revelar desde={30}>Tu catálogo.</Revelar>{' '}
+            <Revelar desde={72} style={{ color: C.azul }}>Tu enlace.</Revelar>
           </div>
         </div>
         <div style={{ position: 'absolute', top: 250, transform: `translateY(${(1 - tel) * 700}px)` }}>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { AbsoluteFill, Audio, Sequence, interpolate, staticFile, useCurrentFrame } from 'remotion';
-import { CRUCE, ESCENAS, TOTAL } from './guion';
+import { CRUCE, ESCENAS, TOTAL, VOZ } from './guion';
 import { Desgaste, Problema, Solucion } from './escenas/apertura';
 import { Cliente, Compartir, Confirmar } from './escenas/funciones';
 import { Cierre, Confianza, Impacto } from './escenas/cierre';
@@ -40,7 +40,14 @@ export const Video: React.FC<{ conVoz: boolean }> = ({ conVoz }) => {
         );
       })}
       <Audio src={staticFile('musica.mp3')} volume={volumen} />
-      {conVoz && <Audio src={staticFile('voz.mp3')} />}
+      {conVoz && VOZ.map((v, i) => {
+        const escena = ESCENAS.find((e) => e.id === v.escena)!;
+        return (
+          <Sequence key={i} from={escena.desde + Math.round(v.en * 30)} durationInFrames={Math.ceil((v.a - v.de) * 30) + 6} name={`voz ${v.escena}`}>
+            <Audio src={staticFile('voz.mp3')} trimBefore={Math.round(v.de * 30)} durationInFrames={Math.ceil((v.a - v.de) * 30) + 6} />
+          </Sequence>
+        );
+      })}
     </AbsoluteFill>
   );
 };

@@ -36,13 +36,13 @@ const VistaEnlace: React.FC<{ fondo: string; titulo: string; claro?: boolean; ch
 export const Compartir: React.FC = () => {
   const f = useCurrentFrame();
   const entra = sp(f, 0, 200, 1.1);
-  const fase = sp(f, 215, 200, 1.2); // el teléfono se corre y aparecen los destinos
+  const fase = sp(f, 200, 200, 1.2); // el teléfono se corre y aparecen los destinos
   const telX = TEL_X - fase * 880;
-  const textoSale = r(f, 205, 225, 1, 0);
+  const textoSale = r(f, 190, 210, 1, 0);
   const destinos = [
-    { fondo: 'linear-gradient(160deg,#128C7E,#075E54)', titulo: 'Tu estado de WhatsApp', en: 240 },
-    { fondo: 'linear-gradient(160deg,#F9CE34,#EE2A7B 55%,#6228D7)', titulo: 'Tu historia de Instagram', en: 262 },
-    { fondo: '#EFE7DD', titulo: 'Grupo · Clientas Cali 💛', en: 284, claro: true },
+    { fondo: 'linear-gradient(160deg,#128C7E,#075E54)', titulo: 'Tu estado de WhatsApp', en: 210 },
+    { fondo: 'linear-gradient(160deg,#F9CE34,#EE2A7B 55%,#6228D7)', titulo: 'Tu historia de Instagram', en: 232 },
+    { fondo: '#EFE7DD', titulo: 'Grupo · Clientas Cali 💛', en: 254, claro: true },
   ];
   return (
     <Fondo halo={{ x: telX + 215, y: 540 }}>
@@ -50,21 +50,21 @@ export const Compartir: React.FC = () => {
         <Rotulo numero="01 · Compartes" titulo={['Comparte', 'tu enlace']} desde={8} />
         <Frases style={{ marginTop: 30, width: 640 }} frases={[
           { desde: 30, texto: 'Entra a Pedidos de la tienda y toca Compartir.' },
-          { desde: 120, texto: 'Mándalo a tus estados, a Instagram o a tus grupos.' },
+          { desde: 115, texto: 'Mándalo a tus estados, a Instagram o a tus grupos.' },
         ]} />
       </div>
       <div style={{ position: 'absolute', left: telX, top: TEL_Y, transform: `translateY(${(1 - entra) * 120}px) scale(${1 - fase * 0.08})`, opacity: entra }}>
         <Telefono>
-          <PantallaPedidosTienda toqueCompartir={100} />
-          <Toque x={100} y={196} en={100} />
-          {f >= 104 && <HojaCompartir desde={106} toqueWa={170} />}
-          <Toque x={57} y={604} en={170} />
+          <PantallaPedidosTienda toqueCompartir={92} />
+          <Toque x={100} y={196} en={92} />
+          {f >= 96 && <HojaCompartir desde={98} toqueWa={150} />}
+          <Toque x={57} y={604} en={150} />
         </Telefono>
       </div>
       {/* Destinos: el mismo enlace en estados, historias y grupos */}
       <div style={{ position: 'absolute', left: 760, top: 110, fontFamily: FUENTE, color: C.texto, opacity: fase }}>
         <div style={{ fontSize: 76, fontWeight: 770, letterSpacing: '-0.035em', lineHeight: 1.04 }}>
-          <Revelar desde={236}>Es tu enlace,</Revelar><br /><Revelar desde={248} style={{ color: C.azul }}>con tu nombre.</Revelar>
+          <Revelar desde={222}>Es tu enlace,</Revelar><br /><Revelar desde={240} style={{ color: C.azul }}>con tu nombre.</Revelar>
         </div>
       </div>
       <div style={{ position: 'absolute', left: 760, top: 390, display: 'flex', gap: 34 }}>
@@ -92,41 +92,41 @@ export const Compartir: React.FC = () => {
 export const Cliente: React.FC = () => {
   const f = useCurrentFrame();
   const entra = sp(f, 0, 200, 1.1);
-  const scroll = f < 100 ? r(f, 28, 62, 0, 250) : r(f, 100, 140, 250, 900);
-  const agregados = [...(f >= 78 ? [2] : []), ...(f >= 178 ? [7] : [])];
-  const activo = f < 266 ? 0 : f < 292 ? 1 : f < 334 ? 2 : f < 362 ? 3 : -1;
-  const anillo = r(f, 140, 150, 0, 1) * r(f, 205, 215, 1, 0);
+  const scroll = f < 120 ? r(f, 30, 70, 0, 250) : r(f, 128, 165, 250, 900);
+  const agregados = [...(f >= 108 ? [2] : []), ...(f >= 203 ? [7] : [])];
+  const activo = f < 284 ? 0 : f < 310 ? 1 : f < 344 ? 2 : f < 366 ? 3 : -1;
+  const anillo = r(f, 168, 178, 0, 1) * r(f, 228, 238, 1, 0);
   return (
     <Fondo halo={{ x: TEL_X + 215, y: 540 }}>
       <div style={{ position: 'absolute', left: IZQ, top: 250 }}>
         <Rotulo numero="02 · Tu cliente" titulo={['Tu cliente', 'pide solo']} desde={8} />
         <Frases style={{ marginTop: 30, width: 660 }} frases={[
           { desde: 26, texto: 'Abre tu catálogo, ve las fotos y los precios, y elige.' },
-          { desde: 140, texto: 'Lo agotado ya aparece marcado.' },
-          { desde: 236, texto: 'Escribe su dirección y el domicilio se calcula solo.' },
-          { desde: 420, texto: 'Y hace el pedido, sin escribirte.' },
+          { desde: 168, texto: 'Lo agotado ya aparece marcado.' },
+          { desde: 252, texto: 'Escribe su dirección y el domicilio se calcula solo.' },
+          { desde: 356, texto: 'Y hace el pedido, sin escribirte.' },
         ]} />
       </div>
       <div style={{ position: 'absolute', left: TEL_X, top: TEL_Y, transform: `translateY(${(1 - entra) * 120}px)`, opacity: entra }}>
         <Telefono>
-          <PantallaTienda scroll={scroll} agregados={agregados} toques={[{ i: 2, en: 75 }, { i: 7, en: 175 }]} />
+          <PantallaTienda scroll={scroll} agregados={agregados} toques={[{ i: 2, en: 105 }, { i: 7, en: 200 }]} />
           {/* Resalta la etiqueta de agotado */}
           <div style={{ position: 'absolute', left: 20, top: FILA0 + 3 * FILA + 7 - scroll, width: 76, height: 28, borderRadius: 9, border: `3px solid ${C.rojo}`,
             opacity: anillo, transform: `scale(${1 + 0.1 * Math.sin(f / 4)})`, zIndex: 25 }} />
-          <Toque x={105} y={FILA0 + FILA + BOTON - 250} en={75} />
-          <Toque x={296} y={FILA0 + 3 * FILA + BOTON - 900} en={175} />
-          {f >= 80 && <BarraPedido desde={80} unidades={f >= 178 ? 2 : 1} total={f >= 178 ? 100000 : 65000} toque={215} />}
-          <Toque x={200} y={756} en={215} />
-          {f >= 220 && (
-            <HojaCarrito desde={222} activo={activo} toqueEnviar={410}
-              nombre={escribir('Daniela Hoyos', f, 246, 1.3)}
-              tel={escribir('300 111 2233', f, 270, 1.6)}
-              dir={escribir('Cra 43A # 38 sur-20', f, 296, 1.4)}
-              barrio={escribir('Aguacatal', f, 338, 2)}
-              domicilio={f >= 362 ? 12000 : null} />
+          <Toque x={105} y={FILA0 + FILA + BOTON - 250} en={105} />
+          <Toque x={296} y={FILA0 + 3 * FILA + BOTON - 900} en={200} />
+          {f >= 110 && <BarraPedido desde={110} unidades={f >= 203 ? 2 : 1} total={f >= 203 ? 100000 : 65000} toque={235} />}
+          <Toque x={200} y={756} en={235} />
+          {f >= 240 && (
+            <HojaCarrito desde={242} activo={activo} toqueEnviar={392}
+              nombre={escribir('Daniela Hoyos', f, 262, 1.3)}
+              tel={escribir('300 111 2233', f, 286, 1.6)}
+              dir={escribir('Cra 43A # 38 sur-20', f, 312, 1.4)}
+              barrio={escribir('Aguacatal', f, 346, 2)}
+              domicilio={f >= 366 ? 12000 : null} />
           )}
-          <Toque x={300} y={760} en={410} />
-          {f >= 416 && <PantallaListo desde={418} />}
+          <Toque x={300} y={760} en={392} />
+          {f >= 398 && <PantallaListo desde={400} />}
         </Telefono>
       </div>
     </Fondo>
@@ -137,37 +137,37 @@ export const Cliente: React.FC = () => {
 export const Confirmar: React.FC = () => {
   const f = useCurrentFrame();
   const entra = sp(f, 0, 200, 1.1);
-  const app = r(f, 118, 140, 0, 1);
+  const app = r(f, 96, 118, 0, 1);
   return (
     <Fondo halo={{ x: TEL_X + 215, y: 540, color: 'rgba(22,163,74,.10)' }}>
       <div style={{ position: 'absolute', left: IZQ, top: 250 }}>
         <Rotulo numero="03 · Tú" titulo={['Tú solo', 'confirmas']} desde={8} />
         <Frases style={{ marginTop: 30, width: 660 }} frases={[
           { desde: 26, texto: 'Te llega el aviso al instante, aunque tengas la app cerrada.' },
-          { desde: 140, texto: 'Ves todo el pedido y, si el cliente ha tenido problemas, la app te lo dice.' },
-          { desde: 236, texto: 'Le escribes por WhatsApp con el mensaje ya listo.' },
-          { desde: 370, texto: 'Confirmas, y pasa directo a alistamiento.' },
+          { desde: 91, texto: 'Ves todo el pedido y, si el cliente ha tenido problemas, la app te lo dice.' },
+          { desde: 262, texto: 'Le escribes por WhatsApp con el mensaje ya listo.' },
+          { desde: 315, texto: 'Confirmas, y pasa directo a alistamiento.' },
         ]} />
       </div>
       <div style={{ position: 'absolute', left: TEL_X, top: TEL_Y, transform: `translateY(${(1 - entra) * 120}px)`, opacity: entra }}>
-        <Telefono oscuro={f < 128}>
-          {f >= 110 && (
+        <Telefono oscuro={f < 106}>
+          {f >= 90 && (
             <div style={{ position: 'absolute', inset: 0, opacity: app, transform: `scale(${0.94 + app * 0.06})` }}>
-              <PantallaPedidosTienda scroll={r(f, 140, 175, 0, 230)}>
-                <TarjetaPedidoWeb confirmado={f >= 392} toqueWa={240} toqueConfirmar={385} desdeRiesgo={160} />
+              <PantallaPedidosTienda scroll={r(f, 120, 150, 0, 230)}>
+                <TarjetaPedidoWeb confirmado={f >= 330} toqueWa={262} toqueConfirmar={322} desdeRiesgo={150} />
               </PantallaPedidosTienda>
             </div>
           )}
-          {f < 140 && (
+          {f < 122 && (
             <div style={{ position: 'absolute', inset: 0, opacity: 1 - app, transform: `scale(${1 + app * 0.08})` }}>
-              <PantallaBloqueo aviso={30} toque={108} />
+              <PantallaBloqueo aviso={30} toque={88} />
             </div>
           )}
-          <Toque x={200} y={254} en={108} />
-          <Toque x={66} y={346} en={240} />
-          {f >= 244 && f < 350 && <ChatWhatsApp desde={246} hasta={348} respuesta={300} />}
-          <Toque x={312} y={346} en={385} />
-          {f >= 392 && <Toast desde={394} texto="Listo: quedó como pedido #4812 por alistar" />}
+          <Toque x={200} y={254} en={88} />
+          <Toque x={66} y={346} en={262} />
+          {f >= 266 && f < 320 && <ChatWhatsApp desde={268} hasta={318} respuesta={292} />}
+          <Toque x={312} y={346} en={322} />
+          {f >= 330 && <Toast desde={332} texto="Listo: quedó como pedido #4812 por alistar" />}
         </Telefono>
       </div>
     </Fondo>
