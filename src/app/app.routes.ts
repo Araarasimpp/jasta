@@ -113,6 +113,11 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/pedidos-web/pedidos-web.page').then((m) => m.PedidosWebPage),
       },
       {
+        // Clientes que ya compraron y llevan un tiempo sin volver
+        path: 'recontactar', canActivate: [rolGuard], data: { roles: ['admin', 'vendedora'] },
+        loadComponent: () => import('./paginas/recontactar/recontactar.page').then((m) => m.RecontactarPage),
+      },
+      {
         // Lo nuevo de la app, explicado (lo leen todos)
         path: 'actualizaciones',
         loadComponent: () => import('./paginas/actualizaciones/actualizaciones.page').then((m) => m.ActualizacionesPage),

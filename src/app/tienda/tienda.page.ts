@@ -305,6 +305,26 @@ export class TiendaPage implements OnInit {
   @ViewChild('scroll') private scroll?: ElementRef<HTMLElement>;
   private vendedoraId: number | null = null;
   private clave = 'tienda-carrito';
+  /** Código al azar de este dispositivo, para contar visitas sin datos personales */
+  private sesion = TiendaPage.sesionDispositivo();
+
+  private static sesionDispositivo(): string {
+    try {
+      let s = localStorage.getItem('tienda-sesion');
+      if (!s || !/^[a-z0-9]{12,40}$/.test(s)) {
+        s = Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => (b % 36).toString(36)).join('') + Date.now().toString(36);
+        localStorage.setItem('tienda-sesion', s);
+      }
+      return s;
+    } catch {
+      return Array.from({ length: 16 }, () => Math.floor(Math.random() * 36).toString(36)).join('');
+    }
+  }
+
+  /** Anota lo que pasa en el catálogo (para las estadísticas de la vendedora); si falla, no importa */
+  private evento(tipo: 'visita' | 'ver' | 'agregar', producto: number | null = null): void {
+    void this.sb.client.rpc('tienda_evento', { p_vendedora: this.vendedoraId, p_tipo: tipo, p_producto: producto, p_sesion: this.sesion }).then();
+  }
 
   filtrados = computed(() => {
     const q = normal(this.q());
@@ -357,6 +377,7 @@ export class TiendaPage implements OnInit {
     if (!data) return;
     const t = data as Tienda;
     this.t.set(t);
+    this.evento('visita');
     // Lo guardado se ajusta a lo que hay hoy (precio, agotados)
     const porId = new Map(t.productos.map((p) => [p.id, p]));
     this.lineas.update((ls) => ls.filter((l) => porId.has(l.producto_id) && !porId.get(l.producto_id)!.agotado)
@@ -377,6 +398,7 @@ export class TiendaPage implements OnInit {
   }
 
   async abrir(p: ProductoTienda): Promise<void> {
+    this.evento('ver', p.id);
     this.sel.set(p);
     this.color.set(p.colores.length === 1 ? p.colores[0].nombre : null);
     this.talla.set(p.tallas.length === 1 ? p.tallas[0] : null);
@@ -406,6 +428,7 @@ export class TiendaPage implements OnInit {
   }
 
   private agregar(p: ProductoTienda, cantidad: number, color: string | null, talla: string | null): void {
+    this.evento('agregar', p.id);
     const max = this.maximo(p);
     this.lineas.update((ls) => {
       const i = ls.findIndex((l) => l.producto_id === p.id && l.color === color && l.talla === talla);

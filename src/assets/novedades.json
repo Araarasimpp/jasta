@@ -1,5 +1,83 @@
 [
   {
+    "id": "2026-10-28-recontactar",
+    "fecha": "2026-10-28",
+    "titulo": "Nuevo: clientes para recontactar, con tu catálogo en el mensaje",
+    "cuerpo": "En Más → Recontactar están tus clientes que ya compraron y llevan un tiempo sin volver. Con un toque les escribes por WhatsApp con un mensaje listo que lleva el enlace de tu catálogo.",
+    "roles": [
+      "vendedora",
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "¿Para qué sirve?",
+        "texto": "Un cliente que ya te compró es el más fácil de volver a vender. Esta lista te muestra a quién escribirle hoy, empezando por los que más te han comprado, para que no se te olvide ninguno."
+      },
+      {
+        "titulo": "Cómo se usa",
+        "pasos": [
+          "Entra a Más → Recontactar.",
+          "Arriba elige hace cuánto compraron: 1 a 2 meses, 2 a 3 meses, 3 a 6 meses o más de 6 meses. El número al lado dice cuántos clientes hay en cada grupo.",
+          "En cada cliente ves su barrio, hace cuántos días compró, cuántas compras lleva, cuánto ha comprado y lo último que se llevó.",
+          "Toca WhatsApp: se abre la conversación con un saludo, una pregunta por lo que compró y el enlace de tu catálogo. Revísalo y envíalo.",
+          "Ese cliente queda marcado \"Le escribiste hoy\" y pasa al final de la lista, para que no le escribas dos veces."
+        ]
+      },
+      {
+        "titulo": "Ten en cuenta",
+        "puntos": [
+          "Ves solo los clientes cuyo último pedido fue contigo. El admin ve todos.",
+          "Se muestran hasta 150 por grupo, los que más han comprado primero. Usa el buscador para encontrar a alguien por nombre, barrio o producto.",
+          "Si el cliente tiene la etiqueta \"Cliente marcado\", el admin lo marcó como problemático: piénsalo antes de venderle.",
+          "La marca de \"Le escribiste\" dura 30 días."
+        ]
+      }
+    ],
+    "enlace": {
+      "texto": "Ir a Recontactar",
+      "url": "/app/recontactar"
+    }
+  },
+  {
+    "id": "2026-10-28-estadisticas-tienda",
+    "fecha": "2026-10-28",
+    "titulo": "Nuevo: mira cómo le va a tu catálogo",
+    "cuerpo": "En Pedidos de la tienda ahora ves cuántas personas abrieron tu catálogo, cuántas agregaron algo, cuántas pidieron y cuánto vendiste, además de los productos que más miran.",
+    "roles": [
+      "vendedora",
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "¿Para qué sirve?",
+        "texto": "Para saber si compartir el enlace te está funcionando: cuánta gente lo abre y cuánta termina pidiendo. Si muchos miran un producto y pocos lo piden, quizás vale la pena escribirles o publicarlo de nuevo."
+      },
+      {
+        "titulo": "Qué vas a ver",
+        "puntos": [
+          "Abrieron el catálogo: cuántas personas (celulares distintos) entraron a tu enlace.",
+          "Agregaron algo, Hicieron el pedido y Confirmados, con el porcentaje de las visitas que llegó a cada paso.",
+          "Cuánto vendiste con los pedidos del catálogo que confirmaste.",
+          "Visitas por día: pasa el dedo o el mouse por cada barra para ver las visitas y los pedidos de ese día.",
+          "Lo que más miran: los productos que más abren y agregan en tu catálogo."
+        ]
+      },
+      {
+        "titulo": "Ten en cuenta",
+        "puntos": [
+          "Puedes ver los últimos 7 o 30 días.",
+          "Si una misma persona abre tu enlace varias veces el mismo día, cuenta una sola visita.",
+          "No se guarda ningún dato personal de quien solo mira: solo se cuenta.",
+          "El admin ve todos los catálogos y una tabla por vendedora."
+        ]
+      }
+    ],
+    "enlace": {
+      "texto": "Ir a Pedidos de la tienda",
+      "url": "/app/pedidos-web"
+    }
+  },
+  {
     "id": "2026-10-27-avisos-obligatorios",
     "fecha": "2026-10-27",
     "titulo": "Importante: Jasta ahora se usa instalada y con los avisos activos",

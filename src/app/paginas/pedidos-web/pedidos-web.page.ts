@@ -7,6 +7,7 @@ import { Riesgo } from '../../shared/modelos';
 import { mensajeError, pesos } from '../../shared/formato';
 import { formatoFechaCO, formatoHoraCO } from '../../shared/fecha-colombia';
 import { enlaceWhatsapp } from '../../shared/whatsapp';
+import { EstadisticasTiendaComponent } from './estadisticas-tienda.component';
 
 interface ItemWeb { producto_id: number; nombre: string; cantidad: number; precio: number; color: string | null; talla: string | null }
 interface PedidoWeb {
@@ -30,7 +31,7 @@ export function enlaceTienda(u: { id: number; nombre: string } | null): string {
 @Component({
   selector: 'app-pedidos-web',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, EstadisticasTiendaComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -77,6 +78,8 @@ export function enlaceTienda(u: { id: number; nombre: string } | null): string {
           ? 'Compártelo en tus estados, Instagram o grupos. Lo que pidan por ahí te llega aquí a tu nombre, con tu comisión normal.'
           : 'Los pedidos de este enlace llegan sin vendedora y los atiende el admin. Cada vendedora ve el suyo en esta misma página.' }}</p>
       </section>
+
+      <app-estadisticas-tienda></app-estadisticas-tienda>
 
       @if (porConfirmar().length) {
         <h2 class="seccion-titulo">Por confirmar ({{ porConfirmar().length }})</h2>
