@@ -118,6 +118,11 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/recontactar/recontactar.page').then((m) => m.RecontactarPage),
       },
       {
+        // Ganancias en domicilios, zonas y desempeño del domiciliario (el admin elige a quién ver)
+        path: 'mi-resumen', canActivate: [rolGuard], data: { roles: ['mensajero', 'admin'] },
+        loadComponent: () => import('./paginas/mi-resumen/mi-resumen.page').then((m) => m.MiResumenPage),
+      },
+      {
         // Lo nuevo de la app, explicado (lo leen todos)
         path: 'actualizaciones',
         loadComponent: () => import('./paginas/actualizaciones/actualizaciones.page').then((m) => m.ActualizacionesPage),

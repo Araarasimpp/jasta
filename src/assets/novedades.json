@@ -1,5 +1,50 @@
 [
   {
+    "id": "2026-10-28-mi-resumen",
+    "fecha": "2026-10-28",
+    "titulo": "Nuevo: tu resumen de domicilios",
+    "cuerpo": "En Más → Mi resumen ves cuánto has ganado en domicilios (hoy, esta semana, este mes o el mes pasado), tus entregas por día, los barrios a los que más vas y cómo te califican los clientes.",
+    "roles": [
+      "mensajero",
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "¿Para qué sirve?",
+        "texto": "Para que sepas en todo momento cuánto llevas ganado en domicilios y cómo vas comparado con antes, sin tener que sacar cuentas."
+      },
+      {
+        "titulo": "Qué vas a ver",
+        "puntos": [
+          "Ganaste en domicilios: la suma de los domicilios de tus pedidos entregados en el periodo, cuánto es por día y por entrega, y si vas por encima o por debajo del periodo anterior.",
+          "Si tienes efectivo por cuadrar, un aviso amarillo con el valor y un acceso directo a Cuadres.",
+          "Ganancias por día: toca cada barra para ver lo de ese día.",
+          "Zonas a las que más vas: tus 8 barrios con más entregas y lo que ganaste en cada uno.",
+          "Cómo te fue: qué porcentaje entregaste a la primera, tu hora con más entregas, novedades reportadas y pedidos cancelados en ruta.",
+          "Tu calificación promedio y los últimos comentarios de los clientes."
+        ]
+      },
+      {
+        "titulo": "Cómo se usa",
+        "pasos": [
+          "Entra a Más → Mi resumen.",
+          "Arriba elige el periodo: Hoy, Esta semana, Este mes o Mes pasado."
+        ]
+      },
+      {
+        "titulo": "Ten en cuenta",
+        "puntos": [
+          "Solo cuenta los pedidos de Jasta entregados (no los de Variedades JYB).",
+          "El admin lo ve en Más → Resumen de mensajeros y puede elegir a cualquier domiciliario."
+        ]
+      }
+    ],
+    "enlace": {
+      "texto": "Ver mi resumen",
+      "url": "/app/mi-resumen"
+    }
+  },
+  {
     "id": "2026-10-28-calificaciones",
     "fecha": "2026-10-28",
     "titulo": "Nuevo: los clientes califican la entrega",
