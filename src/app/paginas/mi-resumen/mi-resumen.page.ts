@@ -5,6 +5,7 @@ import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { mensajeError, numero, pesos } from '../../shared/formato';
 import { formatoFechaCO, hoyColombiaISO } from '../../shared/fecha-colombia';
+import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 interface Resumen {
   nombre: string; ganado: number; entregas: number; dias_trabajados: number;
@@ -48,7 +49,7 @@ function rango(p: Periodo): { desde: string; hasta: string } {
 @Component({
   selector: 'app-mi-resumen',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [EsqueletoComponent, FormsModule, RouterLink],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -187,7 +188,7 @@ function rango(p: Periodo): { desde: string; hasta: string } {
           </div>
         }
       } @else {
-        <p class="vacio-txt">Cargando…</p>
+        <app-esqueleto forma="panel"></app-esqueleto>
       }
     </div>
   `,

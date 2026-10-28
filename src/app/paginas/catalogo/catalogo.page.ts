@@ -8,6 +8,7 @@ import { ToastService } from '../../shared/toast/toast.service';
 import { Producto } from '../../shared/modelos';
 import { mensajeError, numero, pesos, urlImagen, urlMini } from '../../shared/formato';
 import { FotoCatalogo, ProductoDetalleComponent, galeriaProducto } from './producto-detalle.component';
+import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 type Filtro = 'todos' | 'disponibles';
 
@@ -19,7 +20,7 @@ function normal(s: string): string {
 @Component({
   selector: 'app-catalogo',
   standalone: true,
-  imports: [FormsModule, IonIcon, ProductoDetalleComponent],
+  imports: [EsqueletoComponent, FormsModule, IonIcon, ProductoDetalleComponent],
   styles: [
     `
       .barra-cat { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; padding: 0 28px 14px; }
@@ -95,7 +96,7 @@ function normal(s: string): string {
       </div>
 
       @if (cargando()) {
-        <p class="vacio" style="margin: 0 28px">Cargando catálogo…</p>
+        <div style="padding: 0 clamp(16px, 4vw, 28px); width: 100%; box-sizing: border-box"><app-esqueleto forma="tarjetas" [filas]="8"></app-esqueleto></div>
       } @else if (!filtrados().length) {
         <p class="vacio" style="margin: 0 28px">No hay productos con esa búsqueda.</p>
       }

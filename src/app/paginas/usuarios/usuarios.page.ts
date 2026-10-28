@@ -9,13 +9,14 @@ import { PresenciaService } from '../../core/services/presencia.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { ROLES, Rol, Usuario } from '../../shared/modelos';
 import { mensajeError } from '../../shared/formato';
+import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 type Filtro = 'activos' | 'sin_rol' | 'inactivos' | 'todos';
 
 @Component({
   selector: 'app-usuarios',
   standalone: true,
-  imports: [FormsModule, IonIcon],
+  imports: [EsqueletoComponent, FormsModule, IonIcon],
   styles: [
     `
       .roles { display: flex; gap: 4px; flex-wrap: wrap; }
@@ -77,7 +78,7 @@ type Filtro = 'activos' | 'sin_rol' | 'inactivos' | 'todos';
                 <td><span class="cuenta" [class.si]="!!u.auth_id" [class.no]="!u.auth_id">{{ u.auth_id ? 'Activa' : 'Sin cuenta' }}</span></td>
               </tr>
             } @empty {
-              <tr><td colspan="4" class="suave">{{ cargando() ? 'Cargando…' : 'No hay usuarios.' }}</td></tr>
+              @if (cargando()) { <tr><td colspan="4" class="suave"><app-esqueleto forma="tabla" [filas]="8" [columnas]="4"></app-esqueleto></td></tr> } @else { <tr><td colspan="4" class="suave">{{ 'No hay usuarios.' }}</td></tr> }
             }
           </tbody>
         </table>

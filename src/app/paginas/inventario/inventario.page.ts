@@ -11,6 +11,7 @@ import { RangoComponent, RangoFechas } from '../../shared/rango/rango.component'
 import { urlsComprobantes } from '../../shared/comprobantes';
 import { mensajeError, numero, pesos, urlMini } from '../../shared/formato';
 import { diaCorto, formatoFechaCO, formatoHoraCO, hoyColombiaISO } from '../../shared/fecha-colombia';
+import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 interface Prod {
   id: number;
@@ -46,7 +47,7 @@ type Filtro = 'con' | 'bajos' | 'agotados' | 'sin' | 'todos';
 @Component({
   selector: 'app-inventario',
   standalone: true,
-  imports: [FormsModule, IonIcon, ComprobantesInputComponent, RangoComponent],
+  imports: [EsqueletoComponent, FormsModule, IonIcon, ComprobantesInputComponent, RangoComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -177,7 +178,7 @@ type Filtro = 'con' | 'bajos' | 'agotados' | 'sin' | 'todos';
               <button class="b mas-btn" (click)="limite.set(limite() + 60)">Ver más ({{ visibles().length - limite() }})</button>
             }
           } @else {
-            <p class="vacio-txt">{{ cargando() ? 'Cargando…' : 'No hay productos con este filtro.' }}</p>
+            @if (cargando()) { <app-esqueleto forma="lista" [filas]="6"></app-esqueleto> } @else { <p class="vacio-txt">{{ 'No hay productos con este filtro.' }}</p> }
           }
         </section>
       } @else {
@@ -247,7 +248,7 @@ type Filtro = 'con' | 'bajos' | 'agotados' | 'sin' | 'todos';
                 <span class="cant" [class.mas]="m.cantidad > 0" [class.menos]="m.cantidad < 0">{{ m.cantidad > 0 ? '+' : '' }}{{ m.cantidad }}</span>
               </li>
             } @empty {
-              <li><span class="suave">{{ cargandoMov() ? 'Cargando…' : 'Sin movimientos todavía.' }}</span></li>
+              <li>@if (cargandoMov()) { <app-esqueleto forma="texto" [filas]="3"></app-esqueleto> } @else { <span class="suave">Sin movimientos todavía.</span> }</li>
             }
           </ul>
         </div>

@@ -8,6 +8,7 @@ import { mensajeError, numero, pesos } from '../../shared/formato';
 import { diaColombiaDe, formatoFechaCO, formatoHoraCO, hoyColombiaISO } from '../../shared/fecha-colombia';
 import { diaLargo, sumarDias } from '../../shared/rango/rango.component';
 import { STOCK_BAJO } from '../../shared/stock';
+import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 // Solo lo que usa la gráfica, para no cargar Chart.js entero
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip);
@@ -51,7 +52,7 @@ interface Tarea {
 @Component({
   selector: 'app-inicio',
   standalone: true,
-  imports: [RouterLink],
+  imports: [EsqueletoComponent, RouterLink],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -220,8 +221,8 @@ interface Tarea {
               }
             </div>
           } @else {
-            <p class="al-dia"><strong>{{ cargando() ? 'Cargando…' : 'Todo al día' }}</strong>
-              @if (!cargando()) { No hay cuadres pendientes, pedidos por mover ni productos con stock bajo. }</p>
+            @if (cargando()) { <app-esqueleto forma="texto" [filas]="3"></app-esqueleto> } @else { <p class="al-dia"><strong>{{ 'Todo al día' }}</strong>
+              @if (!cargando()) { No hay cuadres pendientes, pedidos por mover ni productos con stock bajo. }</p> }
           }
         </section>
 

@@ -16,6 +16,7 @@ import { EstadoPedido } from '../../shared/modelos';
 import { mensajeError, numero, pesos } from '../../shared/formato';
 import { diaColombiaDe, formatoFechaCO, formatoHoraCO, hoyColombiaISO, finDiaColombia, inicioDiaColombia } from '../../shared/fecha-colombia';
 import { diaLargo, sumarDias } from '../../shared/rango/rango.component';
+import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip);
 
@@ -74,7 +75,7 @@ const POR_PAGINA = 20;
 @Component({
   selector: 'app-mi-panel',
   standalone: true,
-  imports: [FormsModule, RouterLink, IonIcon, PedidoDetalleComponent, AvatarComponent, EstadoIconComponent],
+  imports: [EsqueletoComponent, FormsModule, RouterLink, IonIcon, PedidoDetalleComponent, AvatarComponent, EstadoIconComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -249,8 +250,8 @@ const POR_PAGINA = 20;
                 }
               </ul>
             } @else {
-              <p class="sin-msgs"><strong>{{ cargandoConvs() ? 'Cargando…' : 'Sin conversaciones' }}</strong>
-                @if (!cargandoConvs()) { Cuando un pedido tuyo salga a ruta o un mensajero te escriba, la conversación aparece aquí. }</p>
+              @if (cargandoConvs()) { <app-esqueleto forma="lista" [filas]="3"></app-esqueleto> } @else { <p class="sin-msgs"><strong>{{ 'Sin conversaciones' }}</strong>
+                @if (!cargandoConvs()) { Cuando un pedido tuyo salga a ruta o un mensajero te escriba, la conversación aparece aquí. }</p> }
             }
           </section>
         </aside>
@@ -311,8 +312,8 @@ const POR_PAGINA = 20;
                 <div class="mas"><button class="b" (click)="cargarPedidos(true)" [disabled]="cargandoPedidos()">{{ cargandoPedidos() ? 'Cargando…' : 'Ver más' }}</button></div>
               }
             } @else {
-              <p class="sin-msgs"><strong>{{ cargandoPedidos() ? 'Cargando…' : 'No hay pedidos' }}</strong>
-                @if (!cargandoPedidos()) { No subiste pedidos {{ filtro() === 'todos' ? '' : 'con ese estado ' }}en este periodo. }</p>
+              @if (cargandoPedidos()) { <app-esqueleto forma="lista" [filas]="3"></app-esqueleto> } @else { <p class="sin-msgs"><strong>{{ 'No hay pedidos' }}</strong>
+                @if (!cargandoPedidos()) { No subiste pedidos {{ filtro() === 'todos' ? '' : 'con ese estado ' }}en este periodo. }</p> }
             }
           </section>
         </div>

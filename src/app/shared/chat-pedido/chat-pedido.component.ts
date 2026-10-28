@@ -9,6 +9,7 @@ import { NotificacionesService } from '../../core/services/notificaciones.servic
 import { ToastService } from '../toast/toast.service';
 import { mensajeError } from '../formato';
 import { formatoFechaCO, formatoHoraCO } from '../fecha-colombia';
+import { EsqueletoComponent } from '../esqueleto/esqueleto.component';
 
 interface Mensaje {
   id: number;
@@ -66,7 +67,7 @@ const RAPIDOS_TIENDA = [
 @Component({
   selector: 'app-chat-pedido',
   standalone: true,
-  imports: [FormsModule, IonIcon],
+  imports: [EsqueletoComponent, FormsModule, IonIcon],
   styles: [
     `
       :host { display: block; }
@@ -153,7 +154,7 @@ const RAPIDOS_TIENDA = [
         </div>
       } @empty {
         @if (!quienEscribe()) {
-        <p class="vacio">{{ cargando() ? 'Cargando mensajes…' : 'Sin mensajes. Escribe aquí lo que el otro necesite saber de este pedido.' }}</p>
+        @if (cargando()) { <app-esqueleto forma="texto" [filas]="3"></app-esqueleto> } @else { <p class="vacio">Sin mensajes. Escribe aquí lo que el otro necesite saber de este pedido.</p> }
         }
       }
       @if (quienEscribe(); as q) {

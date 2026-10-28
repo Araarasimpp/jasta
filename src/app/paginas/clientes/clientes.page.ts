@@ -10,6 +10,7 @@ import { mensajeError, numero, pesos } from '../../shared/formato';
 import { formatoFechaCO } from '../../shared/fecha-colombia';
 import { enlaceWhatsapp, mensajeSeguimiento } from '../../shared/whatsapp';
 import { Riesgo } from '../../shared/modelos';
+import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 /** Una compra entregada del cliente (de la función compras_cliente) */
 interface Compra { id: number; created_at: string; canal: string; total: number; vendedora: string | null; productos: string[] }
@@ -23,7 +24,7 @@ interface Cliente {
 @Component({
   selector: 'app-clientes',
   standalone: true,
-  imports: [FormsModule, IonIcon, PedidoDetalleComponent],
+  imports: [EsqueletoComponent, FormsModule, IonIcon, PedidoDetalleComponent],
   styles: [
     `
       .tabla td { white-space: nowrap; }
@@ -61,7 +62,7 @@ interface Cliente {
                 <td class="suave" data-etq="Última compra">{{ fecha(c.ultimo) }}</td>
               </tr>
             } @empty {
-              <tr><td colspan="6" class="suave">{{ cargando() ? 'Cargando…' : 'No hay clientes con esa búsqueda.' }}</td></tr>
+              @if (cargando()) { <tr><td colspan="6" class="suave"><app-esqueleto forma="tabla" [filas]="8" [columnas]="5"></app-esqueleto></td></tr> } @else { <tr><td colspan="6" class="suave">{{ 'No hay clientes con esa búsqueda.' }}</td></tr> }
             }
           </tbody>
         </table>
@@ -128,7 +129,7 @@ interface Cliente {
                   <span class="num">{{ pesos(p.total) }}</span>
                 </li>
               } @empty {
-                <li class="suave fija">{{ cargandoCli() ? 'Cargando…' : 'Sin compras entregadas.' }}</li>
+                @if (cargandoCli()) { <app-esqueleto forma="lista" [filas]="3"></app-esqueleto> } @else { <li class="suave fija">{{ 'Sin compras entregadas.' }}</li> }
               }
             </ul>
           </section>

@@ -21,12 +21,13 @@ import { AvatarComponent } from '../avatar/avatar.component';
 import { VisorService } from '../visor/visor.service';
 import { fotoDeItem, nombreConVariante, variante } from '../variante';
 import { urlsComprobantes } from '../comprobantes';
+import { EsqueletoComponent } from '../esqueleto/esqueleto.component';
 
 /** Hoja lateral con todo el pedido y las acciones que le tocan a cada rol */
 @Component({
   selector: 'app-pedido-detalle',
   standalone: true,
-  imports: [FormsModule, IonIcon, EntregarComponent, ChatPedidoComponent, AvatarComponent, DevolucionComponent],
+  imports: [EsqueletoComponent, FormsModule, IonIcon, EntregarComponent, ChatPedidoComponent, AvatarComponent, DevolucionComponent],
   styles: [
     `
       .resumen { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -297,7 +298,7 @@ import { urlsComprobantes } from '../comprobantes';
         }
         }
       } @else {
-        <div class="cargando">{{ error() || 'Cargando pedido…' }}</div>
+        @if (error()) { <div class="cargando">{{ error() }}</div> } @else { <div style="padding: 20px"><app-esqueleto forma="texto" [filas]="8"></app-esqueleto></div> }
       }
     </aside>
 

@@ -9,6 +9,7 @@ import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detal
 import { RangoComponent, RangoFechas } from '../../shared/rango/rango.component';
 import { mensajeError, pesos } from '../../shared/formato';
 import { formatoFechaCO, formatoHoraCO } from '../../shared/fecha-colombia';
+import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 interface Abierta {
   id: number;
@@ -57,7 +58,7 @@ const ESTADOS: Record<string, string> = {
 @Component({
   selector: 'app-novedades',
   standalone: true,
-  imports: [IonIcon, PedidoDetalleComponent, RangoComponent],
+  imports: [EsqueletoComponent, IonIcon, PedidoDetalleComponent, RangoComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -128,7 +129,7 @@ const ESTADOS: Record<string, string> = {
             }
           </div>
         } @else {
-          <p class="vacio-txt">{{ cargando() ? 'Cargando…' : 'No hay pedidos con novedades pendientes.' }}</p>
+          @if (cargando()) { <app-esqueleto forma="lista"></app-esqueleto> } @else { <p class="vacio-txt">{{ 'No hay pedidos con novedades pendientes.' }}</p> }
         }
       </section>
 
@@ -172,7 +173,7 @@ const ESTADOS: Record<string, string> = {
                 <td data-etq="Estado hoy"><span class="estado" [class]="'estado ' + f.estado">{{ estado(f.estado) }}</span></td>
               </tr>
             } @empty {
-              <tr><td colspan="6" class="suave">{{ cargando() ? 'Cargando…' : 'No hubo novedades en este periodo.' }}</td></tr>
+              @if (cargando()) { <tr><td colspan="6" class="suave"><app-esqueleto forma="tabla" [filas]="6" [columnas]="6"></app-esqueleto></td></tr> } @else { <tr><td colspan="6" class="suave">{{ 'No hubo novedades en este periodo.' }}</td></tr> }
             }
           </tbody>
         </table>

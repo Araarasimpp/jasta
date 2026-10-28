@@ -5,6 +5,7 @@ import { ToastService } from '../../shared/toast/toast.service';
 import { RangoComponent, RangoFechas } from '../../shared/rango/rango.component';
 import { mensajeError, numero, pesos, urlMini } from '../../shared/formato';
 import { hoyColombiaISO } from '../../shared/fecha-colombia';
+import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 interface Fila {
   producto_id: number | null;
@@ -33,7 +34,7 @@ type Orden = 'ganancia_neta' | 'ganancia_tienda' | 'unidades' | 'ventas' | 'marg
 @Component({
   selector: 'app-rentabilidad',
   standalone: true,
-  imports: [FormsModule, RangoComponent],
+  imports: [EsqueletoComponent, FormsModule, RangoComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -106,7 +107,7 @@ type Orden = 'ganancia_neta' | 'ganancia_tienda' | 'unidades' | 'ventas' | 'marg
                 <td class="der num" data-etq="Ganancia neta" [class.neg]="f.ganancia_neta < 0"><strong>{{ pesos(f.ganancia_neta) }}</strong></td>
               </tr>
             } @empty {
-              <tr><td colspan="8" class="suave">{{ cargando() ? 'Cargando…' : 'No hay ventas entregadas en este periodo.' }}</td></tr>
+              @if (cargando()) { <tr><td colspan="8" class="suave"><app-esqueleto forma="tabla" [filas]="8" [columnas]="6"></app-esqueleto></td></tr> } @else { <tr><td colspan="8" class="suave">{{ 'No hay ventas entregadas en este periodo.' }}</td></tr> }
             }
           </tbody>
         </table>

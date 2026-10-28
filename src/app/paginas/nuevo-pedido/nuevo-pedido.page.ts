@@ -13,6 +13,7 @@ import { VisorService } from '../../shared/visor/visor.service';
 import { pideComprobante } from '../../shared/comprobantes';
 import { ComprobantesInputComponent } from '../../shared/comprobantes/comprobantes-input.component';
 import { PAISES, bandera, errorTelefono, limpiarNombre, separarTelefono, unirTelefono } from '../../shared/paises';
+import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 interface Linea {
   /** Para seguir la línea en la lista aunque se repita el producto */
@@ -42,7 +43,7 @@ function normal(s: string): string {
 @Component({
   selector: 'app-nuevo-pedido',
   standalone: true,
-  imports: [FormsModule, IonIcon, ComprobantesInputComponent],
+  imports: [EsqueletoComponent, FormsModule, IonIcon, ComprobantesInputComponent],
   styles: [
     `
       .tel-grupo { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 6px; }
@@ -136,7 +137,7 @@ function normal(s: string): string {
       </div>
       <div class="vista-body">
         @if (cargandoPedido()) {
-          <div class="vacio">Cargando pedido…</div>
+          <app-esqueleto forma="texto" [filas]="8"></app-esqueleto>
         } @else {
         <div class="grid">
           <section class="panel">

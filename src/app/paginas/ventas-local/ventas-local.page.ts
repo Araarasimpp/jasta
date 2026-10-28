@@ -13,6 +13,7 @@ import { Pedido } from '../../shared/modelos';
 import { mensajeError, numero, pesos } from '../../shared/formato';
 import { finDiaColombia, formatoFechaCO, formatoHoraCO, inicioDiaColombia } from '../../shared/fecha-colombia';
 import { nombreConVariante } from '../../shared/variante';
+import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 type Metodo = 'todos' | 'efectivo' | 'transferencia' | 'mixto';
 
@@ -20,7 +21,7 @@ type Metodo = 'todos' | 'efectivo' | 'transferencia' | 'mixto';
 @Component({
   selector: 'app-ventas-local',
   standalone: true,
-  imports: [FormsModule, RouterLink, IonIcon, DiaComponent, VentaLocalDetalleComponent],
+  imports: [EsqueletoComponent, FormsModule, RouterLink, IonIcon, DiaComponent, VentaLocalDetalleComponent],
   styles: [
     `
       .seccion { padding: 16px 20px 0; }
@@ -71,7 +72,7 @@ type Metodo = 'todos' | 'efectivo' | 'transferencia' | 'mixto';
                 <td class="der num" data-etq="Total">{{ pesos(v.total) }}</td>
               </tr>
             } @empty {
-              <tr><td colspan="9" class="suave">{{ cargando() ? 'Cargando…' : 'No hay ventas en el local en este periodo.' }}</td></tr>
+              @if (cargando()) { <tr><td colspan="9" class="suave"><app-esqueleto forma="tabla" [filas]="8" [columnas]="6"></app-esqueleto></td></tr> } @else { <tr><td colspan="9" class="suave">{{ 'No hay ventas en el local en este periodo.' }}</td></tr> }
             }
           </tbody>
         </table>

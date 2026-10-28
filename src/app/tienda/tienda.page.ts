@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { SupabaseService } from '../core/services/supabase.service';
 import { mensajeError, pesos, urlImagen, urlMini } from '../shared/formato';
 import { PAISES, bandera, errorTelefono, limpiarNombre, unirTelefono } from '../shared/paises';
+import { EsqueletoComponent } from '../shared/esqueleto/esqueleto.component';
 
 interface Color { nombre: string; hex: string | null; imagen_url: string | null }
 interface ProductoTienda {
@@ -32,7 +33,7 @@ function normal(s: string): string {
 @Component({
   selector: 'app-tienda',
   standalone: true,
-  imports: [FormsModule],
+  imports: [EsqueletoComponent, FormsModule],
   styles: [
     `
       /* Ionic deja el body fijo y le pone contain: layout a la página (lo "fijo" queda pegado a ella):
@@ -151,7 +152,7 @@ function normal(s: string): string {
         }
       } @else {
         <div class="vacio">
-          @if (cargando()) { Cargando el catálogo… } @else { <strong>Este catálogo no existe</strong>Pídele el enlace de nuevo a quien te lo compartió. }
+          @if (cargando()) { <app-esqueleto forma="tarjetas" [filas]="6"></app-esqueleto> } @else { <strong>Este catálogo no existe</strong>Pídele el enlace de nuevo a quien te lo compartió. }
         </div>
       }
     </div>

@@ -16,6 +16,7 @@ import { FotosProductoComponent } from '../../shared/fotos-producto/fotos-produc
 import { TallasProductoComponent } from '../../shared/tallas-producto/tallas-producto.component';
 import { VideosProductoComponent } from '../../shared/videos-producto/videos-producto.component';
 import { CargaMasivaComponent } from './carga-masiva.component';
+import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 type Filtro = 'activos' | 'agotados' | 'bajo' | 'inactivos' | 'todos';
 
@@ -31,7 +32,7 @@ const VACIO: Omit<Producto, 'id'> = {
 @Component({
   selector: 'app-productos',
   standalone: true,
-  imports: [FormsModule, IonIcon, ColoresProductoComponent, ElegirFotoComponent, FotosProductoComponent, TallasProductoComponent, VideosProductoComponent, CargaMasivaComponent],
+  imports: [EsqueletoComponent, FormsModule, IonIcon, ColoresProductoComponent, ElegirFotoComponent, FotosProductoComponent, TallasProductoComponent, VideosProductoComponent, CargaMasivaComponent],
   styles: [
     `
       .tonos { display: inline-flex; gap: 3px; margin-left: 8px; vertical-align: middle; }
@@ -102,7 +103,7 @@ const VACIO: Omit<Producto, 'id'> = {
                 <td class="der num" data-etq="Stock" [class.neg]="p.controla_stock && p.stock <= 0">{{ p.controla_stock ? p.stock : '—' }}</td>
               </tr>
             } @empty {
-              <tr><td colspan="7" class="suave">{{ cargando() ? 'Cargando…' : 'No hay productos.' }}</td></tr>
+              @if (cargando()) { <tr><td colspan="7" class="suave"><app-esqueleto forma="tabla" [filas]="8" [columnas]="5"></app-esqueleto></td></tr> } @else { <tr><td colspan="7" class="suave">{{ 'No hay productos.' }}</td></tr> }
             }
           </tbody>
         </table>

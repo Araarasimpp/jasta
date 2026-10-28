@@ -2,6 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { mensajeError, numero, pesos, urlMini } from '../../shared/formato';
 import { formatoFechaCO } from '../../shared/fecha-colombia';
+import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 interface Estadisticas {
   resumen: { visitas: number; agregaron: number; pedidos: number; confirmados: number; ventas: number };
@@ -18,6 +19,7 @@ interface Estadisticas {
 @Component({
   selector: 'app-estadisticas-tienda',
   standalone: true,
+  imports: [EsqueletoComponent],
   styles: [
     `
       :host { display: block; }
@@ -125,7 +127,7 @@ interface Estadisticas {
           </table>
         }
       } @else {
-        <p class="vacio">{{ error() || 'Cargando…' }}</p>
+        @if (error()) { <p class="vacio">{{ error() }}</p> } @else { <app-esqueleto forma="texto" [filas]="4"></app-esqueleto> }
       }
     </section>
   `,

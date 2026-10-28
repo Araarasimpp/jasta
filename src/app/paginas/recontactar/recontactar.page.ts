@@ -5,6 +5,7 @@ import { ToastService } from '../../shared/toast/toast.service';
 import { mensajeError, numero, pesos } from '../../shared/formato';
 import { enlaceWhatsapp } from '../../shared/whatsapp';
 import { enlaceTienda } from '../pedidos-web/pedidos-web.page';
+import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 interface ClienteDormido {
   telefono: string; nombre: string; barrio: string | null; dias: number; compras: number; total: number; ultima: string;
@@ -30,7 +31,7 @@ function normal(s: string): string {
 @Component({
   selector: 'app-recontactar',
   standalone: true,
-  imports: [FormsModule],
+  imports: [EsqueletoComponent, FormsModule],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -84,7 +85,7 @@ function normal(s: string): string {
             <a class="wa" [href]="whatsapp(c)" target="_blank" rel="noopener" (click)="contactado(c)">WhatsApp</a>
           </article>
         } @empty {
-          <p class="vacio-txt">{{ cargando() ? 'Cargando…' : q() ? 'Nadie coincide con esa búsqueda.' : 'No hay clientes en este rango.' }}</p>
+          @if (cargando()) { <app-esqueleto forma="lista" [filas]="6"></app-esqueleto> } @else { <p class="vacio-txt">{{ q() ? 'Nadie coincide con esa búsqueda.' : 'No hay clientes en este rango.' }}</p> }
         }
       </div>
       @if (lista().length >= 150) {

@@ -11,6 +11,7 @@ import { VentaLocalDetalleComponent } from '../ventas-local/venta-local-detalle.
 import { mensajeError, numero, pesos } from '../../shared/formato';
 import { diaColombiaDe, formatoFechaCO, formatoHoraCO, hoyColombiaISO } from '../../shared/fecha-colombia';
 import { diaLargo, sumarDias } from '../../shared/rango/rango.component';
+import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 interface Movimiento {
   tipo: 'entrada' | 'salida';
@@ -42,7 +43,7 @@ type Atajo = 'hoy' | '7' | 'mes' | 'mes_pasado' | null;
 @Component({
   selector: 'app-alcancia',
   standalone: true,
-  imports: [FormsModule, IonIcon, AvatarComponent, VentaLocalDetalleComponent],
+  imports: [EsqueletoComponent, FormsModule, IonIcon, AvatarComponent, VentaLocalDetalleComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -166,7 +167,7 @@ type Atajo = 'hoy' | '7' | 'mes' | 'mes_pasado' | null;
               }
             </ol>
           } @else {
-            <p class="vacio-txt">{{ cargando() ? 'Cargando…' : 'Sin aportes en este periodo.' }}</p>
+            @if (cargando()) { <app-esqueleto forma="lista" [filas]="4"></app-esqueleto> } @else { <p class="vacio-txt">{{ 'Sin aportes en este periodo.' }}</p> }
           }
         </section>
 
@@ -193,7 +194,7 @@ type Atajo = 'hoy' | '7' | 'mes' | 'mes_pasado' | null;
               }
             </ul>
           } @else {
-            <p class="vacio-txt">{{ cargando() ? 'Cargando…' : 'No hubo movimientos en este periodo.' }}</p>
+            @if (cargando()) { <app-esqueleto forma="lista" [filas]="4"></app-esqueleto> } @else { <p class="vacio-txt">{{ 'No hubo movimientos en este periodo.' }}</p> }
           }
         </section>
       </div>

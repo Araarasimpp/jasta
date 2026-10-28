@@ -19,6 +19,7 @@ import { diaCorto, finDiaColombia, formatoFechaCO, formatoHoraCO, hoyColombiaISO
 import { RangoFechas } from '../../shared/rango/rango.component';
 import { DiaComponent } from '../../shared/rango/dia.component';
 import { nombreConVariante } from '../../shared/variante';
+import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 /** Una parada de la ruta: un pedido de Jasta o uno de Variedades JYB */
 type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: string; jyb: PedidoJyb; jasta?: undefined };
@@ -31,7 +32,7 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
 @Component({
   selector: 'app-mis-entregas',
   standalone: true,
-  imports: [IonIcon, EntregarComponent, NovedadComponent, PedidoDetalleComponent, PedidoJybComponent, DiaComponent],
+  imports: [EsqueletoComponent, IonIcon, EntregarComponent, NovedadComponent, PedidoDetalleComponent, PedidoJybComponent, DiaComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -285,12 +286,14 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
           </article>
           }
         } @empty {
-          <div class="vacio">
-            <span class="vacio-titulo">{{ cargando() ? 'Cargando…' : 'No tienes pedidos en ruta' }}</span>
-            @if (!cargando()) {
+          @if (cargando()) {
+            <app-esqueleto forma="lista" [filas]="4"></app-esqueleto>
+          } @else {
+            <div class="vacio">
+              <span class="vacio-titulo">No tienes pedidos en ruta</span>
               <p>Cuando alistamiento te despache un pedido, aparece aquí.</p>
-            }
-          </div>
+            </div>
+          }
         }
       </div>
 

@@ -11,6 +11,7 @@ import { RangoComponent, RangoFechas } from '../../shared/rango/rango.component'
 import { urlsComprobantes } from '../../shared/comprobantes';
 import { mensajeError, pesos } from '../../shared/formato';
 import { diaCorto, hoyColombiaISO } from '../../shared/fecha-colombia';
+import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 export const CATEGORIAS_GASTO = [
   { id: 'arriendo', label: 'Arriendo' },
@@ -49,7 +50,7 @@ interface Resumen {
 @Component({
   selector: 'app-gastos',
   standalone: true,
-  imports: [FormsModule, IonIcon, ComprobantesInputComponent, RangoComponent],
+  imports: [EsqueletoComponent, FormsModule, IonIcon, ComprobantesInputComponent, RangoComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -145,7 +146,7 @@ interface Resumen {
             }
           </ul>
         } @else {
-          <p class="vacio-txt">{{ cargando() ? 'Cargando…' : 'No hay gastos registrados en este periodo.' }}</p>
+          @if (cargando()) { <app-esqueleto forma="lista" [filas]="5"></app-esqueleto> } @else { <p class="vacio-txt">{{ 'No hay gastos registrados en este periodo.' }}</p> }
         }
       </section>
     </div>

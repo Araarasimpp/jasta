@@ -9,6 +9,7 @@ import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detal
 import { RangoComponent, RangoFechas } from '../../shared/rango/rango.component';
 import { mensajeError } from '../../shared/formato';
 import { finDiaColombia, formatoFechaCO, formatoHoraCO, inicioDiaColombia } from '../../shared/fecha-colombia';
+import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 interface Registro { id: number; created_at: string; autor: string | null; texto: string; tipo: string; pedido_id?: number }
 type Vista = 'pedidos' | 'cambios';
@@ -17,7 +18,7 @@ type Vista = 'pedidos' | 'cambios';
 @Component({
   selector: 'app-actividad',
   standalone: true,
-  imports: [FormsModule, IonIcon, RangoComponent, PedidoDetalleComponent],
+  imports: [EsqueletoComponent, FormsModule, IonIcon, RangoComponent, PedidoDetalleComponent],
   styles: [
     `
       .feed { list-style: none; margin: 0; padding: 0 20px 24px; }
@@ -54,7 +55,7 @@ type Vista = 'pedidos' | 'cambios';
             </span>
           </li>
         } @empty {
-          <li><span></span><span></span><span class="suave">{{ cargando() ? 'Cargando…' : 'Sin actividad en este periodo.' }}</span></li>
+          @if (cargando()) { <app-esqueleto forma="lista" [filas]="8"></app-esqueleto> } @else { <li><span></span><span></span><span class="suave">Sin actividad en este periodo.</span></li> }
         }
       </ul>
       @if (registros().length === limite) {

@@ -12,6 +12,7 @@ import { ComprobantesInputComponent } from '../../shared/comprobantes/comprobant
 import { urlsComprobantes } from '../../shared/comprobantes';
 import { mensajeError, numero, pesos } from '../../shared/formato';
 import { formatoFechaCO, formatoHoraCO } from '../../shared/fecha-colombia';
+import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 interface Pendiente { id: number; monto: number; nombre: string; de: string | null; recolector: string; fecha: string }
 interface Movimiento {
@@ -46,7 +47,7 @@ interface Resumen {
 @Component({
   selector: 'app-recolector',
   standalone: true,
-  imports: [FormsModule, IonIcon, DiaComponent, ComprobantesInputComponent],
+  imports: [EsqueletoComponent, FormsModule, IonIcon, DiaComponent, ComprobantesInputComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -204,7 +205,7 @@ interface Resumen {
             }
           </ul>
         } @else {
-          <p class="vacio-txt">{{ cargando() ? 'Cargando…' : 'Todavía no hay bases ni compras este día.' }}</p>
+          @if (cargando()) { <app-esqueleto forma="lista" [filas]="4"></app-esqueleto> } @else { <p class="vacio-txt">{{ 'Todavía no hay bases ni compras este día.' }}</p> }
         }
       </section>
     </div>

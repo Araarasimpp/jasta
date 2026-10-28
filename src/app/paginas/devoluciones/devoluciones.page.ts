@@ -7,6 +7,7 @@ import { RangoComponent, RangoFechas } from '../../shared/rango/rango.component'
 import { urlsComprobantes } from '../../shared/comprobantes';
 import { mensajeError, pesos } from '../../shared/formato';
 import { formatoFechaCO, formatoHoraCO, hoyColombiaISO } from '../../shared/fecha-colombia';
+import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 interface Devolucion {
   id: number;
@@ -35,7 +36,7 @@ interface Devolucion {
 @Component({
   selector: 'app-devoluciones',
   standalone: true,
-  imports: [PedidoDetalleComponent, RangoComponent],
+  imports: [EsqueletoComponent, PedidoDetalleComponent, RangoComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -117,7 +118,7 @@ interface Devolucion {
             }
           </ul>
         } @else {
-          <p class="vacio-txt">{{ cargando() ? 'Cargando…' : 'No hubo devoluciones ni garantías en este periodo.' }}</p>
+          @if (cargando()) { <app-esqueleto forma="lista" [filas]="4"></app-esqueleto> } @else { <p class="vacio-txt">{{ 'No hubo devoluciones ni garantías en este periodo.' }}</p> }
         }
       </section>
     </div>

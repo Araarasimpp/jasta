@@ -8,6 +8,7 @@ import { ToastService } from '../../shared/toast/toast.service';
 import { AvatarComponent } from '../../shared/avatar/avatar.component';
 import { mensajeError, pesos } from '../../shared/formato';
 import { hoyColombiaISO } from '../../shared/fecha-colombia';
+import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 type Tipo = 'vendedora' | 'mensajero';
 type Periodo = 'hoy' | 'semana' | 'mes';
@@ -61,7 +62,7 @@ function ultimosMeses(): { id: string; label: string }[] {
 @Component({
   selector: 'app-ranking',
   standalone: true,
-  imports: [FormsModule, IonIcon, AvatarComponent],
+  imports: [EsqueletoComponent, FormsModule, IonIcon, AvatarComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -227,7 +228,7 @@ function ultimosMeses(): { id: string; label: string }[] {
           }
         }
       } @else {
-        <p class="vacio">Cargando ranking…</p>
+        <app-esqueleto forma="lista" [filas]="6"></app-esqueleto>
       }
     </div>
   `,

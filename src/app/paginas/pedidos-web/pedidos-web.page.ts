@@ -8,6 +8,7 @@ import { mensajeError, pesos } from '../../shared/formato';
 import { formatoFechaCO, formatoHoraCO } from '../../shared/fecha-colombia';
 import { enlaceWhatsapp } from '../../shared/whatsapp';
 import { EstadisticasTiendaComponent } from './estadisticas-tienda.component';
+import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 interface ItemWeb { producto_id: number; nombre: string; cantidad: number; precio: number; color: string | null; talla: string | null }
 interface PedidoWeb {
@@ -31,7 +32,7 @@ export function enlaceTienda(u: { id: number; nombre: string } | null): string {
 @Component({
   selector: 'app-pedidos-web',
   standalone: true,
-  imports: [FormsModule, RouterLink, EstadisticasTiendaComponent],
+  imports: [EsqueletoComponent, FormsModule, RouterLink, EstadisticasTiendaComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -122,7 +123,7 @@ export function enlaceTienda(u: { id: number; nombre: string } | null): string {
             }
           </article>
         } @empty {
-          <p class="vacio-txt">{{ cargando() ? 'Cargando…' : 'Todavía no han llegado pedidos de la tienda. Comparte tu enlace para empezar.' }}</p>
+          @if (cargando()) { <app-esqueleto forma="lista" [filas]="3"></app-esqueleto> } @else { <p class="vacio-txt">{{ 'Todavía no han llegado pedidos de la tienda. Comparte tu enlace para empezar.' }}</p> }
         }
       </div>
     </div>

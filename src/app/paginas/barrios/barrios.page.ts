@@ -7,6 +7,7 @@ import { PedidosService } from '../../core/services/pedidos.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { TarifaDomicilio } from '../../shared/modelos';
 import { mensajeError, numero, pesos } from '../../shared/formato';
+import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 /** Quita tildes y pasa a minúsculas para buscar sin importar cómo se escriba */
 function normal(s: string): string {
@@ -22,7 +23,7 @@ type Filtro = 'activos' | 'inactivos' | 'todos';
 @Component({
   selector: 'app-barrios',
   standalone: true,
-  imports: [FormsModule, IonIcon],
+  imports: [EsqueletoComponent, FormsModule, IonIcon],
   styles: [
     `
       .tabla td { white-space: normal; }
@@ -74,7 +75,7 @@ type Filtro = 'activos' | 'inactivos' | 'todos';
                 <td class="der num"><strong>{{ pesos(t.domicilio) }}</strong></td>
               </tr>
             } @empty {
-              <tr><td colspan="2" class="suave">{{ cargando() ? 'Cargando…' : 'No hay barrios con esa búsqueda.' }}</td></tr>
+              @if (cargando()) { <tr><td colspan="2" class="suave"><app-esqueleto forma="tabla" [filas]="8" [columnas]="2"></app-esqueleto></td></tr> } @else { <tr><td colspan="2" class="suave">{{ 'No hay barrios con esa búsqueda.' }}</td></tr> }
             }
           </tbody>
         </table>

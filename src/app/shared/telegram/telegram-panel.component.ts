@@ -8,6 +8,7 @@ import { PedidosService } from '../../core/services/pedidos.service';
 import { ToastService } from '../toast/toast.service';
 import { Usuario } from '../modelos';
 import { mensajeError } from '../formato';
+import { EsqueletoComponent } from '../esqueleto/esqueleto.component';
 
 interface Estado {
   conectado: boolean;
@@ -26,7 +27,7 @@ interface Estado {
 @Component({
   selector: 'app-telegram-panel',
   standalone: true,
-  imports: [FormsModule, IonIcon],
+  imports: [EsqueletoComponent, FormsModule, IonIcon],
   styles: [
     `
       :host { display: block; }
@@ -159,7 +160,7 @@ interface Estado {
         </ol>
       }
     } @else {
-      <p class="ayuda">Cargando…</p>
+      <app-esqueleto forma="texto" [filas]="3"></app-esqueleto>
     }
   `,
 })

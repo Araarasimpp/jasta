@@ -12,6 +12,7 @@ import { mensajeError, pesos, urlImagen, urlMini } from '../../shared/formato';
 import { formatoFechaCO, formatoHoraCO } from '../../shared/fecha-colombia';
 import { fotoDeItem, nombreConVariante, variante } from '../../shared/variante';
 import { pideComprobante, urlsComprobantes } from '../../shared/comprobantes';
+import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 const PAGO: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Transferencia', mixto: 'Mixto (efectivo + transferencia)' };
 
@@ -24,7 +25,7 @@ const PAGO: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Tra
 @Component({
   selector: 'app-venta-local-detalle',
   standalone: true,
-  imports: [IonIcon],
+  imports: [EsqueletoComponent, IonIcon],
   styles: [
     `
       .hoja { width: min(480px, 100vw); }
@@ -134,7 +135,7 @@ const PAGO: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Tra
         } @else if (error()) {
           <p class="error" role="alert">{{ error() }}</p>
         } @else {
-          <p class="sin">Cargando…</p>
+          <app-esqueleto forma="texto" [filas]="5"></app-esqueleto>
         }
       </div>
       <!-- Cancelar, editar y eliminar: solo el admin (también lo exige la base) -->

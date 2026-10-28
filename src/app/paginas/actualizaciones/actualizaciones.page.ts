@@ -3,6 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { Rol } from '../../shared/modelos';
 import { formatoFechaCO } from '../../shared/fecha-colombia';
+import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 interface Seccion { titulo: string; texto?: string; pasos?: string[]; puntos?: string[] }
 interface Novedad {
@@ -23,7 +24,7 @@ interface Novedad {
 @Component({
   selector: 'app-actualizaciones',
   standalone: true,
-  imports: [RouterLink],
+  imports: [EsqueletoComponent, RouterLink],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -70,7 +71,7 @@ interface Novedad {
           }
         </div>
       } @else {
-        <p class="vacio">{{ cargando() ? 'Cargando…' : 'Todavía no hay actualizaciones.' }}</p>
+        @if (cargando()) { <app-esqueleto forma="texto" [filas]="8"></app-esqueleto> } @else { <p class="vacio">{{ 'Todavía no hay actualizaciones.' }}</p> }
       }
     </div>
   `,

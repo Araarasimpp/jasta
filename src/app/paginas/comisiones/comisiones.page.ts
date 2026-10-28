@@ -12,6 +12,7 @@ import { RangoComponent, RangoFechas } from '../../shared/rango/rango.component'
 import { urlsComprobantes } from '../../shared/comprobantes';
 import { mensajeError, pesos } from '../../shared/formato';
 import { diaCorto, finDiaColombia, formatoFechaCO, formatoHoraCO, inicioDiaColombia } from '../../shared/fecha-colombia';
+import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 interface Pendiente { vendedora_id: number; nombre: string; pedidos: number; total: number; desde: string; hasta: string }
 interface PedidoComision { id: number; dia: string; cliente_nombre: string; total: number; comision: number }
@@ -45,7 +46,7 @@ const METODOS = [
 @Component({
   selector: 'app-comisiones',
   standalone: true,
-  imports: [FormsModule, IonIcon, PedidoDetalleComponent, ComprobantesInputComponent, RangoComponent],
+  imports: [EsqueletoComponent, FormsModule, IonIcon, PedidoDetalleComponent, ComprobantesInputComponent, RangoComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -117,7 +118,7 @@ const METODOS = [
               </div>
             </article>
           } @empty {
-            <div class="vacio">{{ cargando() ? 'Cargando…' : 'No hay comisiones pendientes por pagar.' }}</div>
+            @if (cargando()) { <app-esqueleto forma="lista" [filas]="4"></app-esqueleto> } @else { <div class="vacio">{{ 'No hay comisiones pendientes por pagar.' }}</div> }
           }
         </div>
       } @else {
@@ -166,7 +167,7 @@ const METODOS = [
                 }
               </tr>
             } @empty {
-              <tr><td [attr.colspan]="esAdmin() ? 8 : 6" class="suave">{{ cargando() ? 'Cargando…' : 'No hay pagos en este periodo.' }}</td></tr>
+              @if (cargando()) { <tr><td [attr.colspan]="esAdmin() ? 8 : 6" class="suave"><app-esqueleto forma="tabla" [filas]="6" [columnas]="5"></app-esqueleto></td></tr> } @else { <tr><td [attr.colspan]="esAdmin() ? 8 : 6" class="suave">{{ 'No hay pagos en este periodo.' }}</td></tr> }
             }
           </tbody>
         </table>

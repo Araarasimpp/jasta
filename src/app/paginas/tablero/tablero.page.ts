@@ -6,6 +6,7 @@ import { ToastService } from '../../shared/toast/toast.service';
 import { mensajeError, numero } from '../../shared/formato';
 import { diaColombiaDe, formatoFechaCO, formatoHoraCO, hoyColombiaISO } from '../../shared/fecha-colombia';
 import { diaLargo, sumarDias } from '../../shared/rango/rango.component';
+import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 interface Operacion {
   creados: number;
@@ -31,7 +32,7 @@ interface Operacion {
 @Component({
   selector: 'app-tablero',
   standalone: true,
-  imports: [RouterLink],
+  imports: [EsqueletoComponent, RouterLink],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -158,8 +159,8 @@ interface Operacion {
               }
             </ul>
           } @else {
-            <p class="al-dia"><strong>{{ cargando() ? 'Cargando…' : 'Todo alistado' }}</strong>
-              @if (!cargando()) { No hay pedidos esperando alistamiento. }</p>
+            @if (cargando()) { <app-esqueleto forma="texto" [filas]="3"></app-esqueleto> } @else { <p class="al-dia"><strong>{{ 'Todo alistado' }}</strong>
+              @if (!cargando()) { No hay pedidos esperando alistamiento. }</p> }
           }
         </section>
 
@@ -173,7 +174,7 @@ interface Operacion {
                   @if (m.entregados) { <span class="pill ok">{{ m.entregados }} entregados</span> }
                 </li>
               } @empty {
-                <li class="suave">{{ cargando() ? 'Cargando…' : 'Ningún mensajero tiene pedidos hoy.' }}</li>
+                @if (cargando()) { <app-esqueleto forma="lista" [filas]="3"></app-esqueleto> } @else { <li class="suave">{{ 'Ningún mensajero tiene pedidos hoy.' }}</li> }
               }
             </ul>
           </section>

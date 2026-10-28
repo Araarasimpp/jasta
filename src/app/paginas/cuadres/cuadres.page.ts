@@ -12,6 +12,7 @@ import { DiaComponent } from '../../shared/rango/dia.component';
 import { Cuadre, Pedido } from '../../shared/modelos';
 import { mensajeError, pesos } from '../../shared/formato';
 import { diaCorto, formatoFechaCO, formatoHoraCO, hoyColombiaISO } from '../../shared/fecha-colombia';
+import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 interface Pendiente {
   mensajero_id: number;
@@ -29,7 +30,7 @@ interface Pendiente {
 @Component({
   selector: 'app-cuadres',
   standalone: true,
-  imports: [IonIcon, RouterLink, PedidoDetalleComponent, DiaComponent],
+  imports: [EsqueletoComponent, IonIcon, RouterLink, PedidoDetalleComponent, DiaComponent],
   styles: [
     `
       .cifras { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
@@ -170,7 +171,7 @@ interface Pendiente {
               </div>
             </article>
           } @empty {
-            <div class="vacio">{{ cargando() ? 'Cargando…' : 'No hay entregas pendientes por cuadrar.' }}</div>
+            @if (cargando()) { <app-esqueleto forma="lista" [filas]="4"></app-esqueleto> } @else { <div class="vacio">{{ 'No hay entregas pendientes por cuadrar.' }}</div> }
           }
         </div>
 

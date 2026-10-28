@@ -12,6 +12,7 @@ import { Usuario } from '../../shared/modelos';
 import { descargarExcel } from '../../shared/exportar';
 import { mensajeError, numero, pesos } from '../../shared/formato';
 import { finDiaColombia, formatoFechaCO, formatoHoraCO, hoyColombiaISO, inicioDiaColombia } from '../../shared/fecha-colombia';
+import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 // ---------- Tipos ----------
 interface FilaVendedora { nombre: string; pedidos: number; unidades: number; ventas: number; base: number; ganancia_vendedora: number; ganancia_tienda: number }
@@ -52,7 +53,7 @@ const ESTADOS: { id: EstadoFiltro; label: string }[] = [
 @Component({
   selector: 'app-reportes',
   standalone: true,
-  imports: [FormsModule, IonIcon, PedidoDetalleComponent],
+  imports: [EsqueletoComponent, FormsModule, IonIcon, PedidoDetalleComponent],
   styles: [
     `
       .periodo { margin: 0 0 0 auto; font-size: 13px; color: var(--text-soft); }
@@ -182,7 +183,7 @@ const ESTADOS: { id: EstadoFiltro; label: string }[] = [
                     <td class="suave">{{ pago(l.tipo_recaudo) }}</td>
                   </tr>
                 } @empty {
-                  <tr><td [attr.colspan]="15" class="suave">{{ cargandoFilas() ? 'Cargando…' : 'No hay ventas con estos filtros.' }}</td></tr>
+                  @if (cargandoFilas()) { <tr><td [attr.colspan]="15" class="suave"><app-esqueleto forma="tabla" [filas]="8" [columnas]="6"></app-esqueleto></td></tr> } @else { <tr><td [attr.colspan]="15" class="suave">{{ 'No hay ventas con estos filtros.' }}</td></tr> }
                 }
               </tbody>
               @if (lineas().length && sumas(); as s) {
@@ -236,7 +237,7 @@ const ESTADOS: { id: EstadoFiltro; label: string }[] = [
                     <td class="der num">{{ p.tipo_recaudo ? pesos(p.valor_transferencia) : '—' }}</td>
                   </tr>
                 } @empty {
-                  <tr><td [attr.colspan]="16" class="suave">{{ cargandoFilas() ? 'Cargando…' : 'No hay pedidos con estos filtros.' }}</td></tr>
+                  @if (cargandoFilas()) { <tr><td [attr.colspan]="16" class="suave"><app-esqueleto forma="tabla" [filas]="8" [columnas]="6"></app-esqueleto></td></tr> } @else { <tr><td [attr.colspan]="16" class="suave">{{ 'No hay pedidos con estos filtros.' }}</td></tr> }
                 }
               </tbody>
               @if (pedidosV().length && sumas(); as s) {
@@ -267,7 +268,7 @@ const ESTADOS: { id: EstadoFiltro; label: string }[] = [
                   <tr><td>{{ f.nombre }}</td><td class="der num">{{ numero(f.pedidos) }}</td><td class="der num">{{ numero(f.unidades) }}</td>
                     <td class="der num">{{ pesos(f.ventas) }}</td><td class="der num suave">{{ pesos(f.base) }}</td>
                     <td class="der num vende">{{ pesos(f.ganancia_vendedora) }}</td><td class="der num tienda">{{ pesos(f.ganancia_tienda) }}</td></tr>
-                } @empty { <tr><td colspan="7" class="suave">{{ vacio() }}</td></tr> }
+                } @empty { <tr><td colspan="7" class="suave">@if (cargando()) { <app-esqueleto forma="tabla" [filas]="5" [columnas]="5"></app-esqueleto> } @else { No hay pedidos con estos filtros. }</td></tr> }
               </tbody>
               @if (agrupado()?.vendedoras?.length) {
                 <tfoot><tr><td>Total</td><td class="der num">{{ numero(tot().vPedidos) }}</td><td class="der num">{{ numero(tot().vUnidades) }}</td>
@@ -287,7 +288,7 @@ const ESTADOS: { id: EstadoFiltro; label: string }[] = [
                     @if (veTodo()) { <td class="der num suave">{{ pesos(f.costo) }}</td> }
                     <td class="der num vende" [class.neg]="f.ganancia_vendedora < 0">{{ pesos(f.ganancia_vendedora) }}</td>
                     @if (veTodo()) { <td class="der num tienda" [class.neg]="f.ganancia_tienda < 0">{{ pesos(f.ganancia_tienda) }}</td><td class="der num">{{ pesos(f.ganancia) }}</td> }</tr>
-                } @empty { <tr><td colspan="7" class="suave">{{ vacio() }}</td></tr> }
+                } @empty { <tr><td colspan="7" class="suave">@if (cargando()) { <app-esqueleto forma="tabla" [filas]="5" [columnas]="5"></app-esqueleto> } @else { No hay pedidos con estos filtros. }</td></tr> }
               </tbody>
               @if (agrupado()?.productos?.length) {
                 <tfoot><tr><td>Total</td><td class="der num">{{ numero(tot().pUnidades) }}</td><td class="der num">{{ pesos(tot().pVentas) }}</td>
@@ -304,7 +305,7 @@ const ESTADOS: { id: EstadoFiltro; label: string }[] = [
                 @for (f of agrupado()?.mensajeros ?? []; track f.nombre) {
                   <tr><td>{{ f.nombre }}</td><td class="der num">{{ numero(f.entregas) }}</td><td class="der num vende">{{ pesos(f.domicilios) }}</td>
                     <td class="der num">{{ pesos(f.efectivo) }}</td><td class="der num">{{ pesos(f.transferencia) }}</td><td class="der num">{{ pesos(f.total) }}</td></tr>
-                } @empty { <tr><td colspan="6" class="suave">{{ vacio() }}</td></tr> }
+                } @empty { <tr><td colspan="6" class="suave">@if (cargando()) { <app-esqueleto forma="tabla" [filas]="5" [columnas]="5"></app-esqueleto> } @else { No hay pedidos con estos filtros. }</td></tr> }
               </tbody>
               @if (agrupado()?.mensajeros?.length) {
                 <tfoot><tr><td>Total</td><td class="der num">{{ numero(tot().mEntregas) }}</td><td class="der num">{{ pesos(tot().mDom) }}</td>
@@ -348,7 +349,7 @@ const ESTADOS: { id: EstadoFiltro; label: string }[] = [
                 @for (f of agrupado()?.barrios ?? []; track f.barrio) {
                   <tr><td>{{ f.barrio }}</td><td class="der num">{{ numero(f.pedidos) }}</td><td class="der num">{{ pesos(f.ventas) }}</td><td class="der num">{{ pesos(f.domicilios) }}</td>
                     <td class="der num vende">{{ pesos(f.ganancia_vendedora) }}</td>@if (veTodo()) { <td class="der num tienda">{{ pesos(f.ganancia_tienda) }}</td> }</tr>
-                } @empty { <tr><td colspan="6" class="suave">{{ vacio() }}</td></tr> }
+                } @empty { <tr><td colspan="6" class="suave">@if (cargando()) { <app-esqueleto forma="tabla" [filas]="5" [columnas]="5"></app-esqueleto> } @else { No hay pedidos con estos filtros. }</td></tr> }
               </tbody>
               @if (agrupado()?.barrios?.length) {
                 <tfoot><tr><td>Total</td><td class="der num">{{ numero(tot().bPedidos) }}</td><td class="der num">{{ pesos(tot().bVentas) }}</td>
@@ -368,7 +369,7 @@ const ESTADOS: { id: EstadoFiltro; label: string }[] = [
                     <td class="der num">{{ pesos(f.domicilios) }}</td>
                     @if (veTodo()) { <td class="der num">{{ pesos(f.efectivo) }}</td><td class="der num">{{ pesos(f.transferencia) }}</td> }
                     <td class="der num vende">{{ pesos(f.ganancia_vendedora) }}</td>@if (veTodo()) { <td class="der num tienda">{{ pesos(f.ganancia_tienda) }}</td> }</tr>
-                } @empty { <tr><td colspan="8" class="suave">{{ vacio() }}</td></tr> }
+                } @empty { <tr><td colspan="8" class="suave">@if (cargando()) { <app-esqueleto forma="tabla" [filas]="5" [columnas]="5"></app-esqueleto> } @else { No hay pedidos con estos filtros. }</td></tr> }
               </tbody>
               @if (agrupado()?.dias?.length) {
                 <tfoot><tr><td>Total</td><td class="der num">{{ numero(tot().dPedidos) }}</td><td class="der num">{{ pesos(tot().dVentas) }}</td>
@@ -486,10 +487,6 @@ export class ReportesPage implements OnInit {
   ngOnInit(): void {
     if (this.veTodo()) this.ps.vendedoras().then((v) => this.vendedoras.set(v)).catch(() => undefined);
     void this.aplicar();
-  }
-
-  vacio(): string {
-    return this.cargando() ? 'Cargando…' : 'No hay pedidos con estos filtros.';
   }
 
   /** Aplica los filtros de fecha, vendedora y estado */
