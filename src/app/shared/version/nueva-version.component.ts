@@ -37,6 +37,7 @@ export class NuevaVersionComponent implements OnInit, OnDestroy {
   private callarHasta = 0;
 
   ngOnInit(): void {
+    document.addEventListener('visibilitychange', this.alOcultarVolver);
     // Solo en la app publicada (en desarrollo el archivo no lleva huella)
     if (!this.actual) return;
     this.reloj = setInterval(() => void this.revisar(), 5 * 60 * 1000);
@@ -44,9 +45,26 @@ export class NuevaVersionComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    document.removeEventListener('visibilitychange', this.alOcultarVolver);
     clearInterval(this.reloj);
     document.removeEventListener('visibilitychange', this.alVolver);
   }
+
+  /**
+   * El celular deja la app "congelada" en segundo plano: al volver después de mucho rato
+   * (sesión vencida, conexiones muertas) a veces quedaba sin información. Pasados 20 minutos
+   * se recarga sola, salvo que esté llenando o editando un pedido.
+   */
+  private ocultaDesde = 0;
+  private alOcultarVolver = (): void => {
+    if (document.visibilityState === 'hidden') {
+      this.ocultaDesde = Date.now();
+      return;
+    }
+    const llenando = /\/pedidos\/(nuevo|\d+\/editar)/.test(location.pathname);
+    if (this.ocultaDesde && Date.now() - this.ocultaDesde > 20 * 60 * 1000 && !llenando) location.reload();
+    this.ocultaDesde = 0;
+  };
 
   private alVolver = (): void => {
     if (document.visibilityState === 'visible') void this.revisar();

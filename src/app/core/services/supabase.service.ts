@@ -3,6 +3,40 @@ import { createClient, RealtimeChannel, Session, SupabaseClient } from '@supabas
 import { environment } from '../../../environments/environment';
 import { Rol, Usuario } from '../../shared/modelos';
 
+/** Ninguna petición se queda esperando para siempre (mala señal): a los 20 s se corta y falla */
+function fetchConLimite(url: RequestInfo | URL, opciones: RequestInit = {}): Promise<Response> {
+  const dir = String(url instanceof Request ? url.url : url);
+  // Las subidas de fotos y comprobantes pueden tardar más con mala señal
+  if (dir.includes('/storage/v1/object') && opciones.method && opciones.method !== 'GET') return fetch(url, opciones);
+  const limite = new AbortController();
+  const reloj = setTimeout(() => limite.abort(), 20000);
+  opciones.signal?.addEventListener('abort', () => limite.abort());
+  return fetch(url, { ...opciones, signal: limite.signal }).finally(() => clearTimeout(reloj));
+}
+
+const CLAVE_USUARIO = 'jasta-usuario';
+
+/** El usuario de la última vez en este dispositivo (para abrir sin esperar a la red) */
+function usuarioGuardado(authId: string): Usuario | null {
+  try {
+    const g = JSON.parse(localStorage.getItem(CLAVE_USUARIO) ?? 'null') as { authId: string; usuario: Usuario } | null;
+    return g?.authId === authId ? g.usuario : null;
+  } catch {
+    return null;
+  }
+}
+
+function guardarUsuario(authId: string, u: Usuario | null): void {
+  try {
+    if (u) localStorage.setItem(CLAVE_USUARIO, JSON.stringify({ authId, usuario: u }));
+    else localStorage.removeItem(CLAVE_USUARIO);
+  } catch {
+    /* sin almacenamiento */
+  }
+}
+
+const esperar = (ms: number) => new Promise((ok) => setTimeout(ok, ms));
+
 @Injectable({ providedIn: 'root' })
 export class SupabaseService {
   readonly client: SupabaseClient;
@@ -16,21 +50,47 @@ export class SupabaseService {
   constructor() {
     this.client = createClient(environment.supabaseUrl, environment.supabaseKey, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+      global: { fetch: fetchConLimite },
       // Latido más seguido: una conexión muerta (celular que se durmió) se nota en ~15 s y no en ~50 s
       realtime: { heartbeatIntervalMs: 15000 },
     });
     this.listo = this.iniciar();
     this.client.auth.onAuthStateChange((evento, session) => {
       this.session.set(session);
-      if (evento === 'SIGNED_OUT') this.usuario.set(null);
+      if (evento === 'SIGNED_OUT') {
+        this.usuario.set(null);
+        guardarUsuario('', null);
+      }
       if (evento === 'SIGNED_IN' || evento === 'USER_UPDATED') void this.cargarUsuario();
     });
   }
 
   private async iniciar(): Promise<void> {
-    const { data } = await this.client.auth.getSession();
-    this.session.set(data.session);
-    if (data.session) await this.cargarUsuario();
+    // Si renovar la sesión se demora (sesión vencida y mala señal), no se traba el arranque:
+    // a los 8 s se sigue con la sesión guardada y se actualiza cuando responda
+    const sesion = await Promise.race([
+      this.client.auth.getSession().then(({ data }) => data.session),
+      esperar(8000).then(() => this.sesionGuardada()),
+    ]);
+    this.session.set(sesion);
+    if (!sesion) return;
+    const previo = usuarioGuardado(sesion.user.id);
+    if (previo) {
+      // Abre de una vez con lo de la última vez y se actualiza por detrás
+      this.usuario.set(previo);
+      void this.cargarUsuario();
+    } else {
+      await this.cargarUsuario();
+    }
+  }
+
+  private sesionGuardada(): Session | null {
+    try {
+      const clave = Object.keys(localStorage).find((k) => k.startsWith('sb-') && k.endsWith('-auth-token'));
+      return clave ? (JSON.parse(localStorage.getItem(clave)!) as Session) : null;
+    } catch {
+      return null;
+    }
   }
 
   /** Espera a que se sepa si hay sesión y quién es el usuario */
@@ -46,8 +106,16 @@ export class SupabaseService {
       this.usuario.set(null);
       return;
     }
-    const { data } = await this.client.from('usuarios').select('*').eq('auth_id', uid).maybeSingle();
-    this.usuario.set((data as Usuario) ?? null);
+    // Con mala señal se intenta otra vez; si de verdad no se puede, se queda lo que había
+    for (let intento = 0; intento < 3; intento++) {
+      const { data, error } = await this.client.from('usuarios').select('*').eq('auth_id', uid).maybeSingle();
+      if (!error) {
+        this.usuario.set((data as Usuario) ?? null);
+        guardarUsuario(uid, (data as Usuario) ?? null);
+        return;
+      }
+      await esperar(1500 * (intento + 1));
+    }
   }
 
   /**
@@ -152,6 +220,7 @@ export class SupabaseService {
   }
 
   async logout(): Promise<void> {
+    guardarUsuario('', null);
     await this.client.auth.signOut();
     this.usuario.set(null);
   }
