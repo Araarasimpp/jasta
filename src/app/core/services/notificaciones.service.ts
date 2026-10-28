@@ -11,7 +11,7 @@ const CLAVE_DESACTIVADOS = 'jasta-avisos-desactivados';
 const SW_URL = '/assets/sw-push.js';
 
 /** Lo que le falta a este dispositivo para poder usar la app (ver RequisitosComponent) */
-export type Requisito = 'instalar' | 'permiso' | 'bloqueado' | 'activando' | 'error' | 'no-soportado';
+export type Requisito = 'instalar' | 'permiso' | 'bloqueado' | 'no-soportado';
 
 /** Evento del navegador para instalar la app (Chrome/Edge/Samsung en Android y computador) */
 interface EventoInstalar extends Event {
@@ -74,11 +74,10 @@ export class NotificacionesService {
     if (this.saltado()) return null;
     if (this.esMovil && !this.instalada()) return 'instalar';
     const push = this.push();
-    if (push === 'activo') return null;
+    // Con el permiso dado no se bloquea: el dispositivo se termina de registrar en segundo plano
+    if (push === 'activo' || this.permiso() === 'granted') return null;
     if (push === 'no-soportado' || this.permiso() === 'no-soportado') return 'no-soportado';
     if (this.permiso() === 'denied') return 'bloqueado';
-    if (push === 'error') return 'error';
-    if (this.permiso() === 'granted') return 'activando';
     return 'permiso';
   });
 

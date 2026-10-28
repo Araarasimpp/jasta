@@ -29,8 +29,6 @@ import { NotificacionesService } from '../../core/services/notificaciones.servic
       .grande { width: 100%; height: 52px; font-size: 16px; }
       .copiar { display: flex; gap: 8px; }
       .copiar code { flex: 1; min-width: 0; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface-2); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .girando { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: gira .8s linear infinite; }
-      @keyframes gira { to { transform: rotate(360deg); } }
       .pie { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
       .link { padding: 0; border: 0; background: none; color: var(--text-muted); font: inherit; font-size: 13.5px; text-decoration: underline; cursor: pointer; }
     `,
@@ -85,12 +83,6 @@ import { NotificacionesService } from '../../core/services/notificaciones.servic
           <p>Cuando {{ n.esMovil ? 'el celular' : 'el navegador' }} pregunte, toca <strong>Permitir</strong>.</p>
         }
 
-        @case ('activando') {
-          <h1>Activando los avisos…</h1>
-          <div class="girando" aria-hidden="true"></div>
-          <p>Un momento, estamos conectando este dispositivo.</p>
-        }
-
         @case ('bloqueado') {
           <h1>Los avisos están bloqueados</h1>
           <p>En algún momento se tocó "No permitir". Sin los avisos no puedes usar Jasta: actívalos así y vuelve aquí.</p>
@@ -112,12 +104,6 @@ import { NotificacionesService } from '../../core/services/notificaciones.servic
           </ol>
           <button class="b b-pri grande" (click)="revisar()">Ya las activé</button>
           @if (sigue()) { <div class="aviso">Todavía aparecen bloqueadas. Revisa el paso anterior o cierra y vuelve a abrir la app.</div> }
-        }
-
-        @case ('error') {
-          <h1>No pudimos activar los avisos</h1>
-          <p>Revisa tu conexión a internet e inténtalo otra vez.</p>
-          <button class="b b-pri grande" (click)="activar()" [disabled]="ocupado()">{{ ocupado() ? 'Activando…' : 'Intentar de nuevo' }}</button>
         }
 
         @case ('no-soportado') {
@@ -149,13 +135,6 @@ export class RequisitosComponent {
   /** En iPhone solo Safari (no los navegadores de adentro de WhatsApp, Instagram, Chrome…) deja instalar bien */
   enSafari = !/CriOS|FxiOS|EdgiOS|OPiOS|GSA\/|Instagram|FBAN|FBAV|WhatsApp|Line\//i.test(navigator.userAgent) &&
     !(navigator as unknown as { brave?: unknown }).brave;
-
-  constructor() {
-    // Si ya tenía permiso pero la conexión de avisos no arrancó sola, se intenta de nuevo
-    setTimeout(() => {
-      if (this.n.requisito() === 'activando') void this.n.revisarPermiso();
-    }, 3000);
-  }
 
   async activar(): Promise<void> {
     this.ocupado.set(true);
