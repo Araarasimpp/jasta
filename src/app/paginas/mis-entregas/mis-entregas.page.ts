@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses, chatbubbleEllipsesOutline, alertCircleOutline } from 'ionicons/icons';
+import { qrCodeOutline, refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses, chatbubbleEllipsesOutline, alertCircleOutline } from 'ionicons/icons';
 import { enlaceWhatsapp, productosDelPedido } from '../../shared/whatsapp';
 import { PedidosService } from '../../core/services/pedidos.service';
 import { EntregadoJyb, JybService, PedidoJyb, ResumenJyb } from '../../core/services/jyb.service';
@@ -19,6 +19,8 @@ import { diaCorto, finDiaColombia, formatoFechaCO, formatoHoraCO, hoyColombiaISO
 import { RangoFechas } from '../../shared/rango/rango.component';
 import { DiaComponent } from '../../shared/rango/dia.component';
 import { nombreConVariante } from '../../shared/variante';
+import { QrPagoComponent } from '../../shared/qr-pago/qr-pago.component';
+import { cargarCuentas } from '../../shared/qr-pago/cuentas-pago';
 import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
 /** Una parada de la ruta: un pedido de Jasta o uno de Variedades JYB */
@@ -32,7 +34,7 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
 @Component({
   selector: 'app-mis-entregas',
   standalone: true,
-  imports: [EsqueletoComponent, IonIcon, EntregarComponent, NovedadComponent, PedidoDetalleComponent, PedidoJybComponent, DiaComponent],
+  imports: [EsqueletoComponent, QrPagoComponent, IonIcon, EntregarComponent, NovedadComponent, PedidoDetalleComponent, PedidoJybComponent, DiaComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -107,7 +109,12 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
     <div class="page">
       <div class="head">
         <div><h1>Mis entregas</h1></div>
-        <button class="b b-icono" aria-label="Actualizar" (click)="cargar()"><ion-icon name="refresh-outline"></ion-icon></button>
+        <div style="display: flex; gap: 8px">
+          @if (hayCuentas()) {
+            <button class="b" (click)="qrDe.set({ total: null, detalle: '' })"><ion-icon name="qr-code-outline"></ion-icon>QR de pago</button>
+          }
+          <button class="b b-icono" aria-label="Actualizar" (click)="cargar()"><ion-icon name="refresh-outline"></ion-icon></button>
+        </div>
       </div>
 
       @if (esMensajero()) {
@@ -253,6 +260,10 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
                 <a class="b b-wa" [href]="whatsapp(p)" target="_blank" rel="noopener"><ion-icon name="logo-whatsapp"></ion-icon>WhatsApp</a>
               }
               <a class="b" [href]="mapa(p)" target="_blank" rel="noopener"><ion-icon name="navigate-outline"></ion-icon>Mapa</a>
+              @if (hayCuentas()) {
+                <button class="b" (click)="qrDe.set({ total: p.total, detalle: 'Pedido #' + p.id + ' · ' + p.cliente_nombre })" aria-label="Mostrar el QR para que el cliente pague por transferencia">
+                  <ion-icon name="qr-code-outline"></ion-icon>QR</button>
+              }
               <button class="b b-novedad" (click)="novedadDe.set(p)">No se pudo</button>
               <button class="b b-ok" style="flex: 1" (click)="entregando.set(p)">Entregar</button>
             </div>
@@ -362,7 +373,8 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
       <app-novedad [pedido]="p" (cerrar)="novedadDe.set(null)" (reportado)="alReportar(p, $event)"></app-novedad>
     }
     @if (entregando(); as p) {
-      <app-entregar [pedido]="p" (cerrar)="entregando.set(null)" (entregado)="alEntregar(p)"></app-entregar>
+      <app-entregar [pedido]="p" [conQr]="hayCuentas()" (qr)="qrDe.set({ total: $event, detalle: 'Pedido #' + p.id + ' · ' + p.cliente_nombre, titulo: 'Valor de la transferencia' })"
+        (cerrar)="entregando.set(null)" (entregado)="alEntregar(p)"></app-entregar>
     }
     @if (entregandoJyb(); as e) {
       <app-entregar [pedido]="e.resumen" [alConfirmar]="e.guardar" (cerrar)="entregandoJyb.set(null)" (entregado)="alEntregarJyb(e.resumen.id)"></app-entregar>
@@ -372,6 +384,9 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
     }
     @if (abierto(); as id) {
       <app-pedido-detalle [pedidoId]="id" [chat]="abiertoEnChat()" (cerrar)="cerrarDetalle()" (cambiado)="cargar()"></app-pedido-detalle>
+    }
+    @if (qrDe(); as q) {
+      <app-qr-pago [total]="q.total" [titulo]="q.titulo || 'Total del pedido'" [detalle]="q.detalle" (cerrar)="qrDe.set(null)"></app-qr-pago>
     }
   `,
 })
@@ -495,10 +510,11 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   private timerJyb?: ReturnType<typeof setTimeout>;
 
   constructor() {
-    addIcons({ refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses, chatbubbleEllipsesOutline, alertCircleOutline });
+    addIcons({ qrCodeOutline, refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses, chatbubbleEllipsesOutline, alertCircleOutline });
   }
 
   ngOnInit(): void {
+    void cargarCuentas(this.sb.client).then((l) => this.hayCuentas.set(l.length > 0));
     try {
       const guardado = JSON.parse(localStorage.getItem(this.claveOrden()) || '[]');
       // Antes se guardaban solo ids de Jasta (números)
@@ -847,6 +863,9 @@ export class MisEntregasPage implements OnInit, OnDestroy {
 
   /** Pedido al que se le está reportando que no se pudo entregar */
   novedadDe = signal<Pedido | null>(null);
+  /** QR de la cuenta del negocio en pantalla completa (total = lo que se cobra; null = sin valor) */
+  qrDe = signal<{ total: number | null; detalle: string; titulo?: string } | null>(null);
+  hayCuentas = signal(false);
 
   async alReportar(p: Pedido, accion: 'reintentar' | 'devolver'): Promise<void> {
     this.novedadDe.set(null);

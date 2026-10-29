@@ -16,6 +16,7 @@ import {
 } from '../../shared/rotulo/rotulo';
 import { mensajeError } from '../../shared/formato';
 import { TelegramPanelComponent } from '../../shared/telegram/telegram-panel.component';
+import { CuentasPagoConfigComponent } from './cuentas-pago-config.component';
 
 const EJEMPLO: PedidoRotulo = {
   numero: 23270,
@@ -32,7 +33,7 @@ const EJEMPLO: PedidoRotulo = {
 @Component({
   selector: 'app-configuracion',
   standalone: true,
-  imports: [FormsModule, TelegramPanelComponent],
+  imports: [FormsModule, TelegramPanelComponent, CuentasPagoConfigComponent],
   styles: [
     `
       .wa-campos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 14px; margin-top: 10px; }
@@ -85,6 +86,10 @@ const EJEMPLO: PedidoRotulo = {
             </div>
           </section>
         </div>
+
+        <section class="tg">
+          <app-cuentas-pago-config></app-cuentas-pago-config>
+        </section>
 
         <section class="tg">
           <h2>Despacho por Telegram</h2>

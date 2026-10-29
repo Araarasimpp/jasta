@@ -1,5 +1,58 @@
 [
   {
+    "id": "2026-10-29-qr-pago-admin",
+    "fecha": "2026-10-29",
+    "titulo": "Nuevo: QR de pago para los mensajeros",
+    "cuerpo": "Pon el QR de tus cuentas en Configuración y los mensajeros se lo muestran al cliente en Mis entregas, con el valor a pagar en grande.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se configura",
+        "pasos": [
+          "En la app de tu banco (Bancolombia, Nequi, Daviplata…) busca la opción de recibir con QR y toma un pantallazo.",
+          "Entra a Configuración → Cuentas para recibir transferencias.",
+          "Escribe el banco o la app, a nombre de quién está y el número de cuenta o celular, y sube la foto del QR.",
+          "Toca Guardar. Puedes agregar varias cuentas; el mensajero elige cuál mostrar.",
+          "Con \"Ver como lo ve el mensajero\" revisas cómo queda."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "puntos": [
+          "Si desactivas una cuenta, los mensajeros dejan de verla.",
+          "Solo sale en los pedidos de Jasta, no en los de Variedades JYB.",
+          "El comprobante sigue siendo obligatorio al entregar con transferencia."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-10-29-qr-pago-mensajero",
+    "fecha": "2026-10-29",
+    "titulo": "Nuevo: muéstrale el QR al cliente para que pague",
+    "cuerpo": "Si el cliente paga por transferencia, toca QR en el pedido: sale el QR de la cuenta y el valor a pagar en grande, para que lo escanee.",
+    "roles": [
+      "mensajero"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se usa",
+        "pasos": [
+          "En Mis entregas, toca QR en el pedido (o, al entregar, elige Transferencia y toca \"Mostrar QR para que pague\").",
+          "El cliente escanea el QR con la app de su banco. Si hay varias cuentas, toca la que el cliente prefiera (Nequi, Bancolombia…).",
+          "Si no puede escanear, tócale Copiar al número y díctaselo.",
+          "Cuando pague, pídele el comprobante y súbelo al entregar."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "Mientras el QR está abierto la pantalla no se apaga. También está el botón \"QR de pago\" arriba en Mis entregas para mostrarlo sin un pedido."
+      }
+    ]
+  },
+  {
     "id": "2026-10-29-caja-duplicados-quietos",
     "fecha": "2026-10-29",
     "titulo": "Nuevo: cuadre de caja, pedidos repetidos y pedidos quietos",

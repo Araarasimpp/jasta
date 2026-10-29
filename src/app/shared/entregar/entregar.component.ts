@@ -50,6 +50,10 @@ import { ComprobantesInputComponent } from '../comprobantes/comprobantes-input.c
           </div>
           <p class="ayuda">Deben sumar {{ pesos(pedido.total) }}.</p>
         }
+        @if (pideComprobante(tipo()) && conQr) {
+          <button type="button" class="b" style="width: 100%" (click)="qr.emit(tipo() === 'mixto' ? (transferencia || 0) : pedido.total)">
+            Mostrar QR para que pague {{ pesos(tipo() === 'mixto' ? (transferencia || 0) : pedido.total) }}</button>
+        }
         @if (pideComprobante(tipo())) {
           <app-comprobantes-input [rutas]="evidencias()" (cambio)="evidencias.set($event); error.set('')"></app-comprobantes-input>
         }
@@ -72,6 +76,10 @@ export class EntregarComponent {
   @Input() alConfirmar?: (tipo: TipoRecaudo, efectivo: number, transferencia: number, evidencias: string[]) => Promise<void>;
   @Output() cerrar = new EventEmitter<void>();
   @Output() entregado = new EventEmitter<void>();
+  /** Hay cuentas del negocio con QR: se ofrece mostrarlo cuando paga por transferencia */
+  @Input() conQr = false;
+  /** Pide mostrar el QR de pago con este valor */
+  @Output() qr = new EventEmitter<number>();
 
   private ps = inject(PedidosService);
   pesos = pesos;
