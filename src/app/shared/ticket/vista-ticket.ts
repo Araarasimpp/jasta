@@ -26,6 +26,7 @@ export function mostrarTicket(png: Blob, nombre: string): void {
   const url = URL.createObjectURL(png);
   const archivo = new File([png], nombre, { type: 'image/png' });
   const puedeCompartir = !!navigator.canShare?.({ files: [archivo] });
+  const iphone = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
   const raiz = document.createElement('div');
   raiz.id = 'vista-ticket';
@@ -38,7 +39,8 @@ export function mostrarTicket(png: Blob, nombre: string): void {
       <button type="button" class="${puedeCompartir ? 'sec' : 'pri'}" data-a="imprimir">Imprimir con el celular</button>
       <button type="button" class="sec" data-a="cerrar">Cerrar</button>
     </div>
-    ${puedeCompartir ? '<p class="ayuda">En "Compartir" eliges Imprimir (AirPrint), la app de tu impresora, o lo mandas por WhatsApp.</p>' : ''}`;
+    ${puedeCompartir ? '<p class="ayuda">En "Compartir" eliges Imprimir (AirPrint), la app de tu impresora, o lo mandas por WhatsApp.</p>' : ''}
+    ${iphone ? '<p class="ayuda">En iPhone no se puede imprimir por Bluetooth (solo en Android). Sirve una impresora con AirPrint; las otras opciones están en Más → Actualizaciones.</p>' : ''}`;
   raiz.querySelector('img')!.src = url;
 
   const cerrar = () => {

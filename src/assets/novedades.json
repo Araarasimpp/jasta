@@ -2,8 +2,8 @@
   {
     "id": "2026-10-29-ticket-local",
     "fecha": "2026-10-29",
-    "titulo": "Nuevo: imprime el ticket de las ventas del local",
-    "cuerpo": "Al registrar una venta en el local aparece el botón Imprimir ticket. Sale por Bluetooth en la impresora portátil Goojprt (58 mm) directo desde el celular.",
+    "titulo": "Nuevo: imprime el ticket de las ventas del local (Android)",
+    "cuerpo": "Al registrar una venta en el local aparece el botón Imprimir ticket. En Android sale por Bluetooth en la impresora portátil Goojprt (58 mm), directo desde el celular. En iPhone la impresión por Bluetooth no funciona: abajo están las alternativas.",
     "roles": [
       "admin",
       "venta_local"
@@ -14,7 +14,11 @@
         "texto": "Para entregarle al cliente un ticket con lo que compró, el total, cómo pagó y la garantía, sin papeles a mano."
       },
       {
-        "titulo": "Cómo se usa",
+        "titulo": "Solo funciona en Android",
+        "texto": "La impresión directa por Bluetooth funciona en celulares Android con Chrome (o con la app instalada desde Chrome). En iPhone no se puede: Apple no deja que las páginas web ni las apps instaladas desde el navegador usen Bluetooth, y en iPhone todos los navegadores (Safari, Chrome, Edge) tienen ese mismo bloqueo. Si en el local hay un Android, aunque sea uno sencillo, úsalo para registrar las ventas: imprime al instante."
+      },
+      {
+        "titulo": "Cómo se usa en Android",
         "pasos": [
           "Prende la impresora y activa el Bluetooth y la ubicación del celular.",
           "Registra la venta como siempre. Arriba sale el aviso \"Venta registrada\" con el botón Imprimir ticket.",
@@ -23,11 +27,21 @@
         ]
       },
       {
-        "titulo": "Si la impresora no aparece en la lista",
+        "titulo": "Si la impresora no aparece en la lista (Android)",
         "puntos": [
           "Algunas impresoras solo tienen Bluetooth clásico y Chrome no las ve. Instala la app gratis RawBT de Play Store, vincula ahí la impresora una vez, y en la app toca los tres puntos al lado de Imprimir ticket → Imprimir con la app RawBT.",
-          "En iPhone, el navegador no deja conectar la impresora por Bluetooth. Al tocar Imprimir ticket se abre el ticket dentro de la app: toca Compartir / imprimir y elige la app de tu impresora (Goojprt), Imprimir (AirPrint) o WhatsApp.",
           "Los datos del encabezado (nombre, teléfonos, redes y texto de garantía) son los de Configuración."
+        ]
+      },
+      {
+        "titulo": "En iPhone: qué se puede hacer",
+        "texto": "En iPhone, al tocar Imprimir ticket se abre el ticket como imagen dentro de la app, con el botón Compartir / imprimir. Desde ahí hay estas opciones:",
+        "puntos": [
+          "Impresora con AirPrint (wifi): es la forma más cómoda en iPhone. Tocas Compartir / imprimir → Imprimir, eliges la impresora y sale el ticket. Ojo: no sirve cualquier impresora wifi, tiene que decir \"AirPrint\" en la caja o en la ficha del producto. Las impresoras térmicas wifi baratas (las que solo dicen ESC/POS) no le reciben al iPhone.",
+          "Impresoras de tickets con AirPrint que se consiguen: Epson TM-m30III y Star Micronics mC-Print3 o TSP143IV (son de 80 mm, de mostrador, y el ticket sale bien en ese papel). Antes de comprar, confirma con el vendedor que el modelo exacto diga AirPrint.",
+          "Navegador Bluefy (gratis en la App Store): es de los pocos navegadores de iPhone que dejan usar Bluetooth. Abres Jasta en Bluefy (no en la app instalada) y Imprimir ticket funciona igual que en Android, siempre que la impresora tenga Bluetooth de bajo consumo (BLE). Muchas Goojprt PT-210 lo tienen; hay que probar con la tuya.",
+          "La app de la impresora: tocas Compartir / imprimir → Guardar imagen, y la imprimes desde la app de Goojprt o de tu marca. Funciona, pero son más pasos por venta.",
+          "Mandarlo por WhatsApp: en Compartir / imprimir eliges WhatsApp y el cliente recibe el ticket como imagen, sin imprimir nada."
         ]
       }
     ]
