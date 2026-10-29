@@ -57,6 +57,11 @@
     }
   </div>
 
+  <!-- Pedidos de Variedades JYB: sus rótulos se imprimen aquí mismo -->
+  @if (gestiona()) {
+    <app-jyb-rotulos [jastaAlistados]="traerAlistados" (impreso)="cargar()"></app-jyb-rotulos>
+  }
+
   @if (error()) {
     <p class="error-carga" role="alert">{{ error() }} <button class="btn" (click)="cargar()">Reintentar</button></p>
   }

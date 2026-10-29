@@ -22,6 +22,7 @@ import { diaColombiaDe, formatoFechaCO, formatoHoraCO, hoyColombiaISO } from '..
 import { sumarDias } from '../../shared/rango/rango.component';
 import { fotoDeItem, nombreConVariante, variante } from '../../shared/variante';
 import { FotoCatalogo, ProductoDetalleComponent, galeriaProducto } from '../catalogo/producto-detalle.component';
+import { JybRotulosComponent } from '../../shared/jyb-rotulos/jyb-rotulos.component';
 
 type Filtro = EstadoPedido | 'todos';
 
@@ -58,7 +59,7 @@ const ETIQUETA_GRUPO: Record<EstadoPedido, string> = {
 @Component({
   selector: 'app-pedidos',
   standalone: true,
-  imports: [FormsModule, RouterLink, IonIcon, PedidoDetalleComponent, NovedadComponent, AvatarComponent, EstadoIconComponent, ProductoDetalleComponent],
+  imports: [FormsModule, RouterLink, IonIcon, PedidoDetalleComponent, NovedadComponent, AvatarComponent, EstadoIconComponent, ProductoDetalleComponent, JybRotulosComponent],
   templateUrl: './pedidos.page.html',
   styleUrls: ['./pedidos.page.scss'],
 })
@@ -116,6 +117,8 @@ export class PedidosPage implements OnInit, OnDestroy {
   puedeVender = computed(() => this.sb.tiene('admin', 'vendedora'));
   /** Admin y alistamiento alistan, despachan e imprimen rótulos desde aquí */
   gestiona = computed(() => this.sb.tiene('admin', 'alistador'));
+  /** Para "Imprimir todo" del panel de Variedades JYB */
+  traerAlistados = () => this.ps.alistadosSinRotulo();
   esAdmin = computed(() => this.sb.tiene('admin'));
 
   grupos = computed<Grupo[]>(() => {

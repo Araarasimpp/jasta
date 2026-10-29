@@ -46,6 +46,30 @@ export interface ResumenJyb {
   por_confirmar?: { id: string; fecha: string; cantidad_pedidos: number; total_a_entregar: number }[];
 }
 
+/** Pedido de Variedades JYB por despachar (para imprimir su rótulo desde Jasta) */
+export interface PedidoRotuloJybFila {
+  id: string;
+  numero: number;
+  cliente_nombre: string;
+  cliente_telefono: string | null;
+  direccion: string | null;
+  barrio: string | null;
+  observaciones: string | null;
+  total: number;
+  created_at: string;
+  alistado_at: string | null;
+  rotulo_impreso_at: string | null;
+  vendedor: string | null;
+  items: { nombre: string; cantidad: number }[];
+}
+
+export interface RotulosJyb {
+  /** false: esta persona no puede imprimir rótulos de Variedades JYB */
+  vinculado: boolean;
+  negocio?: { nombre_negocio: string | null; telefonos: string | null; redes: string | null; texto_garantia: string | null } | null;
+  pedidos?: PedidoRotuloJybFila[];
+}
+
 /**
  * Pedidos de Variedades JYB para el mensajero que también reparte allá.
  * Se reconoce por el correo con el que entra a las dos apps; los cuadres siguen separados.
@@ -94,5 +118,14 @@ export class JybService {
 
   async cerrarCuadre(): Promise<void> {
     await this.llamar({ accion: 'cerrar_cuadre' });
+  }
+
+  /** Pedidos de Variedades JYB por despachar, para imprimir sus rótulos aquí (admin o alistador) */
+  rotulos(): Promise<RotulosJyb> {
+    return this.llamar<RotulosJyb>({ accion: 'rotulos' });
+  }
+
+  async marcarRotulos(ids: string[]): Promise<void> {
+    await this.llamar({ accion: 'marcar_rotulos', ids });
   }
 }
