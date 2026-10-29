@@ -6,6 +6,7 @@ import { ToastService } from '../../shared/toast/toast.service';
 import { mensajeError, numero, pesos } from '../../shared/formato';
 import { formatoFechaCO, hoyColombiaISO } from '../../shared/fecha-colombia';
 import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
+import { MiMetaComponent } from '../../shared/mi-meta/mi-meta.component';
 
 interface Resumen {
   nombre: string; ganado: number; entregas: number; dias_trabajados: number;
@@ -49,7 +50,7 @@ function rango(p: Periodo): { desde: string; hasta: string } {
 @Component({
   selector: 'app-mi-resumen',
   standalone: true,
-  imports: [EsqueletoComponent, FormsModule, RouterLink],
+  imports: [MiMetaComponent, EsqueletoComponent, FormsModule, RouterLink],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -112,6 +113,8 @@ function rango(p: Periodo): { desde: string; hasta: string } {
           </select>
         }
       </div>
+
+      @if (!esAdmin()) { <app-mi-meta></app-mi-meta> }
 
       @if (r(); as d) {
         <section class="heroe">

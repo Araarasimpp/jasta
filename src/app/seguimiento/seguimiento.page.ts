@@ -7,6 +7,8 @@ import { formatoFechaCO, formatoHoraCO } from '../shared/fecha-colombia';
 
 interface Seguimiento {
   id: number;
+  canal?: 'domicilio' | 'local';
+  garantia?: string | null;
   estado: 'por_alistar' | 'alistado' | 'despachado' | 'entregado' | 'cancelado';
   creado_at: string;
   alistado_at: string | null;
@@ -84,6 +86,9 @@ interface Seguimiento {
       .vacio strong { display: block; margin-bottom: 6px; font-size: 18px; color: var(--text); }
       .pie { text-align: center; font-size: 12px; color: var(--text-muted); }
       .califica { display: flex; flex-direction: column; }
+      .garantia h2 { margin-bottom: 2px; }
+      .garantia-txt { margin: 10px 0 0; padding: 10px 12px; border-radius: var(--radius); background: var(--ok-wash); color: var(--efectivo-texto); font-size: 14px; font-weight: 600; line-height: 1.45; }
+      .garantia-nota { margin: 10px 0 0; font-size: 13px; color: var(--text-muted); line-height: 1.45; }
       .estrellas { display: flex; gap: 6px; }
       .estrellas button, .estrellas span { width: 48px; height: 48px; display: grid; place-items: center; padding: 0; border: 0; background: none;
         font-size: 38px; line-height: 1; color: var(--border-strong); cursor: pointer; transition: transform 160ms var(--ease), color 160ms var(--ease); }
@@ -102,13 +107,18 @@ interface Seguimiento {
     <div class="caja">
       <div class="marca">
         <img src="assets/icon/logo.png" alt="" />
-        <div><strong>{{ s()?.negocio || 'Jasta' }}</strong><small>Seguimiento de tu pedido</small></div>
+        <div><strong>{{ s()?.negocio || 'Jasta' }}</strong><small>{{ s()?.canal === 'local' ? 'Tu compra' : 'Seguimiento de tu pedido' }}</small></div>
       </div>
 
       @if (s(); as p) {
         <section class="tarjeta">
-          <h1>Hola {{ p.cliente }}, este es tu pedido #{{ p.id }}</h1>
-          <p class="sub">{{ p.barrio ? 'Entrega en ' + p.barrio : 'Pedido del ' + fecha(p.creado_at) }}</p>
+          @if (p.canal === 'local') {
+            <h1>{{ p.cliente && p.cliente !== 'Cliente' ? 'Hola ' + p.cliente + ', esta' : 'Esta' }} es tu compra #{{ p.id }}</h1>
+            <p class="sub">Compra en el local · {{ fecha(p.creado_at) }}</p>
+          } @else {
+            <h1>Hola {{ p.cliente }}, este es tu pedido #{{ p.id }}</h1>
+            <p class="sub">{{ p.barrio ? 'Entrega en ' + p.barrio : 'Pedido del ' + fecha(p.creado_at) }}</p>
+          }
           <span class="estado" [class.entregado]="p.estado === 'entregado'" [class.cancelado]="p.estado === 'cancelado'">{{ titulo() }}</span>
         </section>
 
@@ -119,7 +129,7 @@ interface Seguimiento {
           </div>
         }
 
-        @if (p.estado !== 'cancelado') {
+        @if (p.estado !== 'cancelado' && p.canal !== 'local') {
           <section class="tarjeta">
             <ol class="pasos">
               @for (paso of pasos(); track paso.titulo) {
@@ -133,17 +143,26 @@ interface Seguimiento {
         }
 
         <section class="tarjeta">
-          <h2>Lo que pediste</h2>
+          <h2>{{ p.canal === 'local' ? 'Lo que compraste' : 'Lo que pediste' }}</h2>
           <ul class="items">
             @for (i of p.items; track $index) {
               <li><span>{{ i.cantidad }} × {{ i.nombre }}@if (i.color || i.talla) {&nbsp;<small>· {{ variante(i) }}</small>}</span></li>
             }
           </ul>
-          <div class="total"><span>Total a pagar</span><strong>{{ pesos(p.total) }}</strong></div>
+          <div class="total"><span>{{ p.canal === 'local' || p.estado === 'entregado' ? 'Total pagado' : 'Total a pagar' }}</span><strong>{{ pesos(p.total) }}</strong></div>
           @if (p.domicilio) { <p class="total-nota">Incluye domicilio de {{ pesos(p.domicilio) }}</p> }
         </section>
 
         @if (p.estado === 'entregado') {
+          <section class="tarjeta garantia">
+            <h2>Tu garantía</h2>
+            <p class="sub" style="margin: 0">{{ p.canal === 'local' ? 'Compra del ' : 'Entregado el ' }}{{ fechaLarga(p.entregado_at || p.creado_at) }}</p>
+            @if (p.garantia) { <p class="garantia-txt">{{ p.garantia }}</p> }
+            <p class="garantia-nota">Guarda este enlace: es el soporte de tu compra. Si algo falla, escríbenos y lo revisamos.</p>
+          </section>
+        }
+
+        @if (p.estado === 'entregado' && p.canal !== 'local') {
           <section class="tarjeta califica">
             @if (p.calificacion; as c) {
               <h2>Tu calificación</h2>
@@ -209,6 +228,7 @@ export class SeguimientoPage implements OnInit, OnDestroy {
   titulo = computed(() => {
     const p = this.s();
     if (!p) return '';
+    if (p.canal === 'local') return p.estado === 'cancelado' ? 'Compra cancelada' : 'Compra realizada';
     return {
       por_alistar: 'Recibimos tu pedido',
       alistado: 'Tu pedido está listo para salir',
@@ -288,5 +308,9 @@ export class SeguimientoPage implements OnInit, OnDestroy {
 
   fecha(iso: string): string {
     return formatoFechaCO(iso, { weekday: 'short', day: 'numeric', month: 'short' }) + ', ' + formatoHoraCO(iso);
+  }
+
+  fechaLarga(iso: string): string {
+    return formatoFechaCO(iso, { day: 'numeric', month: 'long', year: 'numeric' });
   }
 }

@@ -17,6 +17,7 @@ import { mensajeError, numero, pesos } from '../../shared/formato';
 import { diaColombiaDe, formatoFechaCO, formatoHoraCO, hoyColombiaISO, finDiaColombia, inicioDiaColombia } from '../../shared/fecha-colombia';
 import { diaLargo, sumarDias } from '../../shared/rango/rango.component';
 import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
+import { MiMetaComponent } from '../../shared/mi-meta/mi-meta.component';
 
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip);
 
@@ -75,7 +76,7 @@ const POR_PAGINA = 20;
 @Component({
   selector: 'app-mi-panel',
   standalone: true,
-  imports: [EsqueletoComponent, FormsModule, RouterLink, IonIcon, PedidoDetalleComponent, AvatarComponent, EstadoIconComponent],
+  imports: [MiMetaComponent, EsqueletoComponent, FormsModule, RouterLink, IonIcon, PedidoDetalleComponent, AvatarComponent, EstadoIconComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -175,6 +176,8 @@ const POR_PAGINA = 20;
           <a class="b b-pri" routerLink="/app/pedidos/nuevo"><ion-icon name="add"></ion-icon>Nuevo pedido</a>
         </div>
       </div>
+
+      <app-mi-meta></app-mi-meta>
 
       <!-- Rango de las ganancias -->
       <div class="rango">

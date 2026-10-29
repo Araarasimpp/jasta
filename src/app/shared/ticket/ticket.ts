@@ -1,5 +1,6 @@
 // Ticket de venta para impresora térmica de 58 mm (Goojprt PT-210 y parecidas, ESC/POS).
 // El mismo contenido sale como bytes ESC/POS (Bluetooth o RawBT) y como imagen (ver / compartir).
+import qrcode from 'qrcode-generator';
 import { Pedido } from '../modelos';
 import { DatosNegocio } from '../rotulo/rotulo';
 import { nombreConVariante } from '../variante';
@@ -9,7 +10,7 @@ import { formatoFechaCO, formatoHoraCO } from '../fecha-colombia';
 export const ANCHO = 32;
 
 type Estilo = 'normal' | 'negrita' | 'grande';
-export interface Linea { texto: string; estilo?: Estilo; centro?: boolean }
+export interface Linea { texto: string; estilo?: Estilo; centro?: boolean; /** En vez de texto, un código QR con esta dirección */ qr?: string }
 
 const PAGO: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Transferencia', mixto: 'Mixto' };
 
@@ -66,6 +67,13 @@ export function lineasTicket(v: Pedido, negocio: DatosNegocio): Linea[] {
   if (v.estado === 'cancelado') l.push({ texto: '*** VENTA CANCELADA ***', estilo: 'negrita', centro: true });
   l.push(raya);
   if (negocio.texto_garantia) for (const t of partir(negocio.texto_garantia, ANCHO)) l.push({ texto: t, centro: true });
+  // QR al seguimiento: el cliente ve su compra y la garantía sin guardar el papel
+  if (v.seguimiento) {
+    l.push({ texto: '', qr: `${location.origin}/seguimiento/${v.seguimiento}` });
+    l.push({ texto: 'Escanea para ver tu compra', centro: true });
+    l.push({ texto: 'y tu garantía', centro: true });
+    l.push({ texto: '' });
+  }
   l.push({ texto: '¡Gracias por tu compra!', estilo: 'negrita', centro: true });
   return l;
 }
@@ -91,10 +99,50 @@ function bytesTexto(s: string): number[] {
   return out;
 }
 
+/** Cuadritos del QR (true = negro) */
+function modulosQr(url: string): boolean[][] {
+  const q = qrcode(0, 'M');
+  q.addData(url);
+  q.make();
+  const n = q.getModuleCount();
+  return Array.from({ length: n }, (_, f) => Array.from({ length: n }, (_, c) => q.isDark(f, c)));
+}
+
+/** Tamaño de cada cuadrito en puntos: 4 en 58 mm (≈ 0,5 mm) se lee bien con la cámara y no tarda en mandarse */
+const PUNTO_QR = 4;
+/** Ancho imprimible del papel de 58 mm, en puntos */
+const ANCHO_PUNTOS = 384;
+
+/** QR como imagen de puntos (GS v 0): la entienden todas las impresoras ESC/POS, aunque no traigan QR propio */
+function qrEscPos(url: string): number[] {
+  const m = modulosQr(url);
+  const n = m.length + 4; // con 2 cuadritos de margen a cada lado
+  const lado = n * PUNTO_QR;
+  // Centrado con puntos en blanco a la izquierda (no todas las impresoras centran las imágenes)
+  const izq = Math.max(0, Math.floor((ANCHO_PUNTOS - lado) / 2));
+  const bytesFila = Math.ceil((izq + lado) / 8);
+  const out = [0x1b, 0x61, 0, 0x1d, 0x76, 0x30, 0, bytesFila & 0xff, bytesFila >> 8, lado & 0xff, lado >> 8];
+  for (let y = 0; y < lado; y++) {
+    const f = Math.floor(y / PUNTO_QR) - 2;
+    for (let xb = 0; xb < bytesFila; xb++) {
+      let byte = 0;
+      for (let bit = 0; bit < 8; bit++) {
+        const px = xb * 8 + bit - izq;
+        const c = px < 0 ? -1 : Math.floor(px / PUNTO_QR) - 2;
+        if (f >= 0 && c >= 0 && f < m.length && c < m.length && m[f][c]) byte |= 0x80 >> bit;
+      }
+      out.push(byte);
+    }
+  }
+  out.push(0x0a);
+  return out;
+}
+
 export function ticketEscPos(lineas: Linea[]): Uint8Array {
   const ESC = 0x1b, GS = 0x1d;
   const b: number[] = [ESC, 0x40, ESC, 0x74, 0x00]; // reiniciar + PC437
   for (const ln of lineas) {
+    if (ln.qr) { for (const x of qrEscPos(ln.qr)) b.push(x); continue; }
     b.push(ESC, 0x61, ln.centro ? 1 : 0);
     b.push(ESC, 0x45, ln.estilo === 'normal' || !ln.estilo ? 0 : 1);
     b.push(GS, 0x21, ln.estilo === 'grande' ? 0x11 : 0x00);
@@ -110,7 +158,8 @@ export function ticketEscPos(lineas: Linea[]): Uint8Array {
 export async function ticketPng(lineas: Linea[]): Promise<Blob> {
   const W = 384, pad = 8, alto = { normal: 26, negrita: 26, grande: 46 };
   const fuente = (e: Estilo) => (e === 'grande' ? '700 38px' : e === 'negrita' ? '700 20px' : '400 20px') + ' "DejaVu Sans Mono", Menlo, Consolas, monospace';
-  const H = pad * 2 + lineas.reduce((h, l) => h + alto[l.estilo ?? 'normal'], 0) + 24;
+  const ladoQr = (url: string) => (modulosQr(url).length + 4) * 5;
+  const H = pad * 2 + lineas.reduce((h, l) => h + (l.qr ? ladoQr(l.qr) + 6 : alto[l.estilo ?? 'normal']), 0) + 24;
   const c = document.createElement('canvas');
   c.width = W;
   c.height = H;
@@ -121,6 +170,13 @@ export async function ticketPng(lineas: Linea[]): Promise<Blob> {
   g.textBaseline = 'top';
   let y = pad;
   for (const l of lineas) {
+    if (l.qr) {
+      const m = modulosQr(l.qr);
+      const t = 5, x0 = Math.round((W - (m.length + 4) * t) / 2);
+      m.forEach((fila, f) => fila.forEach((osc, c) => osc && g.fillRect(x0 + (c + 2) * t, y + (f + 2) * t, t, t)));
+      y += ladoQr(l.qr) + 6;
+      continue;
+    }
     const e = l.estilo ?? 'normal';
     g.font = fuente(e);
     // Que los 32 caracteres (o 16 en grande) quepan justos en el ancho

@@ -1,5 +1,111 @@
 [
   {
+    "id": "2026-10-29-automatico-admin",
+    "fecha": "2026-10-29",
+    "titulo": "Nuevo: más avisos automáticos para el negocio",
+    "cuerpo": "Pedidos de la tienda sin confirmar, cierre de caja del local, lista de compras de los lunes, avisos de metas y QR de garantía en el ticket.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Pedidos de la tienda sin confirmar",
+        "texto": "Si un pedido del catálogo público lleva 15 minutos sin confirmar, a la vendedora le llega un recordatorio. Si a la hora sigue igual, te avisa a ti, con el cliente, el valor y de qué catálogo vino. De 9 p. m. a 7 a. m. no se avisa a nadie: lo pendiente llega a las 7 a. m."
+      },
+      {
+        "titulo": "Cierre de caja del local",
+        "texto": "Todos los días a las 9 p. m., si hubo ventas en el local, te llega un aviso (a ti y a quien vende en el local) con el efectivo que debe haber en caja y lo que entró por transferencia. El cierre del día de Telegram ahora trae también la sección del local, con lo de la alcancía y cuánto vendió cada vendedora."
+      },
+      {
+        "titulo": "Lista de compras (Inventario → Qué comprar)",
+        "puntos": [
+          "Calcula qué se va a acabar según lo vendido en los últimos 60 días y cuánto pedir para tener inventario de 2, 3, 4 o 6 semanas.",
+          "Los lunes a las 7:40 a. m. te llega un aviso con lo más urgente (y la lista completa por Telegram, con el costo aproximado).",
+          "\"Copiar lista\" la deja lista para pegarla en WhatsApp al proveedor, y \"Registrar esta compra\" abre la compra con todo ya puesto: solo ajustas lo que de verdad llegó.",
+          "Importante: solo cuenta los productos con \"Controlar inventario\" activado. Hoy son muy pocos; actívalo en Productos y registra el stock para que la lista salga completa."
+        ]
+      },
+      {
+        "titulo": "Metas",
+        "texto": "Las metas que pones en Ranking ahora se ven en el panel de cada vendedora y en Mi resumen de cada mensajero, con barra de avance, lo que le falta y a qué ritmo va. Les llega un aviso al pasar el 50 %, el 80 % y el 100 % de la meta del mes, y al cumplir la de la semana. Cuando alguien cumple, también te avisa a ti."
+      },
+      {
+        "titulo": "QR de garantía en el ticket",
+        "texto": "El ticket del local trae un código QR. El cliente lo escanea con la cámara y ve su compra, la fecha y el texto de garantía de Configuración, sin guardar el papel."
+      }
+    ]
+  },
+  {
+    "id": "2026-10-29-metas-equipo",
+    "fecha": "2026-10-29",
+    "titulo": "Nuevo: tu meta en tu panel",
+    "cuerpo": "Ahora ves cuánto llevas de tu meta del mes y de la semana, lo que te falta y a qué ritmo vas. Te avisamos al llegar al 50 %, 80 % y 100 %.",
+    "roles": [
+      "vendedora",
+      "mensajero"
+    ],
+    "secciones": [
+      {
+        "titulo": "Dónde la ves",
+        "puntos": [
+          "Vendedoras: arriba en Mi panel.",
+          "Mensajeros: en Más → Mi resumen.",
+          "Si no te sale, es porque todavía no tienes meta: la pone el admin en Ranking."
+        ]
+      },
+      {
+        "titulo": "Qué te muestra",
+        "texto": "Cuántas ventas o entregas llevas contra tu meta, el porcentaje, cuántas te faltan, cuántas al día necesitas para llegar y con cuántas cerrarías el mes si sigues a este ritmo."
+      },
+      {
+        "titulo": "Pedidos de la tienda (vendedoras)",
+        "texto": "Si un cliente te pide por tu catálogo y en 15 minutos no lo has confirmado, te llega un recordatorio para que lo llames antes de que se enfríe."
+      }
+    ]
+  },
+  {
+    "id": "2026-10-29-caja-local",
+    "fecha": "2026-10-29",
+    "titulo": "Nuevo: cierre de caja y QR en el ticket",
+    "cuerpo": "A las 9 p. m. te llega el cierre de caja del local con el efectivo que debe haber. Y el ticket ahora trae un QR para que el cliente vea su compra y su garantía.",
+    "roles": [
+      "venta_local"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cierre de caja",
+        "texto": "Si hubo ventas en el local, a las 9 p. m. te llega un aviso con el total del día, el efectivo que debe haber en caja y lo que entró por transferencia. Sirve para cuadrar la caja sin sacar cuentas."
+      },
+      {
+        "titulo": "QR de garantía",
+        "texto": "Al final del ticket sale un código QR. El cliente lo escanea con la cámara del celular y ve lo que compró, la fecha y la garantía. Así no depende de guardar el papel."
+      }
+    ]
+  },
+  {
+    "id": "2026-10-29-que-comprar",
+    "fecha": "2026-10-29",
+    "titulo": "Nuevo: Inventario → Qué comprar",
+    "cuerpo": "Una lista de lo que se va a acabar y cuánto pedir, según lo que se vende. Los lunes llega un aviso con lo más urgente.",
+    "roles": [
+      "alistador"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se usa",
+        "pasos": [
+          "Entra a Inventario → Qué comprar.",
+          "Elige para cuántas semanas quieres tener inventario (2, 3, 4 o 6).",
+          "Toca \"Copiar lista\" para mandarla al proveedor, o \"Registrar esta compra\" cuando llegue la mercancía: la compra se abre con todo puesto y solo ajustas lo que llegó."
+        ]
+      },
+      {
+        "titulo": "Ojo",
+        "texto": "Solo cuenta los productos con \"Controlar inventario\" activado y con su stock al día."
+      }
+    ]
+  },
+  {
     "id": "2026-10-29-ticket-local",
     "fecha": "2026-10-29",
     "titulo": "Nuevo: imprime el ticket de las ventas del local (Android)",
