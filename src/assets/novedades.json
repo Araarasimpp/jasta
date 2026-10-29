@@ -1,5 +1,34 @@
 [
   {
+    "id": "2026-10-29-enlace-producto",
+    "fecha": "2026-10-29",
+    "titulo": "Nuevo: comparte el enlace de un producto",
+    "cuerpo": "En Pedidos de la tienda busca un producto y comparte su enlace: al cliente le abre ese producto directo, listo para pedirlo. El pedido te llega a ti.",
+    "roles": [
+      "vendedora",
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se usa",
+        "pasos": [
+          "Entra a Pedidos de la tienda.",
+          "En \"Enlace a un producto\" escribe el nombre (por ejemplo, freidora).",
+          "Toca Compartir para mandarlo por WhatsApp, Instagram o donde quieras, o Copiar para pegarlo."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "puntos": [
+          "El enlace lleva tu catálogo: lo que el cliente pida por ahí te llega a tu nombre, con tu comisión.",
+          "Si el cliente quiere ver más cosas, cierra el producto y sigue en tu catálogo.",
+          "Dentro del catálogo, cada producto también tiene un botón Compartir, para que el cliente se lo mande a otra persona.",
+          "Si el producto se desactiva, el enlace abre el catálogo con un aviso de que ya no está."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-10-29-qr-pago-admin",
     "fecha": "2026-10-29",
     "titulo": "Nuevo: QR de pago para los mensajeros",

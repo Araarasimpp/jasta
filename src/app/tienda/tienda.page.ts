@@ -46,6 +46,10 @@ function normal(s: string): string {
       .marca h1 { margin: 0; font-size: 19px; line-height: 1.2; }
       .marca small { display: block; font-size: 13px; color: var(--text-soft); }
       .filtros { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 0 12px; background: var(--bg); }
+      .precio-fila { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+      .compartir-p { height: 36px; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface); color: var(--text-soft);
+        font: inherit; font-size: 13.5px; cursor: pointer; }
+      .aviso-prod { margin: 0 0 10px; padding: 10px 12px; border-radius: var(--radius); background: var(--oro-wash); color: var(--oro-texto); font-size: 14px; }
       .cats { flex: 0 0 calc(100% + 32px); box-sizing: border-box; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 -16px; padding: 0 16px; -webkit-overflow-scrolling: touch; }
       .cats::-webkit-scrollbar { display: none; }
       .cats button { flex-shrink: 0; height: 36px; padding: 0 14px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface);
@@ -132,6 +136,7 @@ function normal(s: string): string {
           <button class="b mas" (click)="hecho.set(null)">Seguir viendo productos</button>
         </section>
       } @else if (t(); as tienda) {
+        @if (avisoProducto()) { <p class="aviso-prod" role="status">{{ avisoProducto() }}</p> }
         <div class="filtros">
           <input type="search" [ngModel]="q()" (ngModelChange)="q.set($event); limite.set(40)" placeholder="Buscar producto" aria-label="Buscar producto" />
           <button type="button" class="solo" [class.on]="soloDisp()" [attr.aria-pressed]="soloDisp()" (click)="soloDisp.set(!soloDisp())">Disponibles</button>
@@ -186,7 +191,10 @@ function normal(s: string): string {
           <div class="galeria">
             @for (f of fotos(); track f) { <img [src]="f" alt="" loading="lazy" /> }
           </div>
-          <span class="precio">{{ pesos(p.precio) }}</span>
+          <div class="precio-fila">
+            <span class="precio">{{ pesos(p.precio) }}</span>
+            <button type="button" class="compartir-p" (click)="compartirProducto(p)">{{ avisoCopiado() ? '¡Enlace copiado!' : 'Compartir' }}</button>
+          </div>
           @if (descripcion()) { <p class="desc">{{ descripcion() }}</p> }
           @if (p.colores.length) {
             <div class="campo"><span class="etq">Color</span>
@@ -413,6 +421,11 @@ export class TiendaPage implements OnInit {
     this.lineas.update((ls) => ls.filter((l) => porId.has(l.producto_id) && !porId.get(l.producto_id)!.agotado)
       .map((l) => ({ ...l, precio: Number(porId.get(l.producto_id)!.precio), max: this.maximo(porId.get(l.producto_id)!) })));
     document.title = (t.vendedora ? 'Catálogo de ' + this.primerNombre(t.vendedora.nombre) : 'Catálogo') + ' · ' + (t.negocio || 'Jasta');
+    // Enlace directo a un producto (?p=<id>): se abre solo
+    const pid = Number(this.route.snapshot.queryParamMap.get('p'));
+    const directo = pid ? t.productos.find((x) => x.id === pid) : undefined;
+    if (directo) void this.abrir(directo);
+    else if (pid) this.avisoProducto.set('Ese producto ya no está disponible. Mira los demás 👇');
   }
 
   primerNombre(n: string): string {
@@ -426,6 +439,21 @@ export class TiendaPage implements OnInit {
   enCarrito(p: ProductoTienda): boolean {
     return this.lineas().some((l) => l.producto_id === p.id);
   }
+
+  /** Aviso cuando el enlace era de un producto que ya no está */
+  avisoProducto = signal('');
+
+  /** Comparte el producto abierto (con el mismo catálogo de la vendedora) */
+  async compartirProducto(p: ProductoTienda): Promise<void> {
+    const url = `${location.origin}${location.pathname}?p=${p.id}`;
+    try {
+      if (navigator.share) return void (await navigator.share({ title: p.nombre, text: `Mira este producto: ${p.nombre}`, url }));
+      await navigator.clipboard.writeText(url);
+      this.avisoCopiado.set(true);
+      setTimeout(() => this.avisoCopiado.set(false), 2000);
+    } catch { /* lo cerró */ }
+  }
+  avisoCopiado = signal(false);
 
   async abrir(p: ProductoTienda): Promise<void> {
     this.evento('ver', p.id);
