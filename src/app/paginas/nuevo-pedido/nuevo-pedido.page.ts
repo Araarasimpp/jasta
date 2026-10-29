@@ -14,6 +14,7 @@ import { pideComprobante } from '../../shared/comprobantes';
 import { ComprobantesInputComponent } from '../../shared/comprobantes/comprobantes-input.component';
 import { PAISES, bandera, errorTelefono, limpiarNombre, separarTelefono, unirTelefono } from '../../shared/paises';
 import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
+import { BotonTicketComponent } from '../../shared/ticket/boton-ticket.component';
 
 interface Linea {
   /** Para seguir la línea en la lista aunque se repita el producto */
@@ -43,9 +44,14 @@ function normal(s: string): string {
 @Component({
   selector: 'app-nuevo-pedido',
   standalone: true,
-  imports: [EsqueletoComponent, FormsModule, IonIcon, ComprobantesInputComponent],
+  imports: [EsqueletoComponent, FormsModule, IonIcon, ComprobantesInputComponent, BotonTicketComponent],
   styles: [
     `
+      .vendida { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-bottom: 16px; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--efectivo-texto) 35%, transparent);
+        border-radius: var(--radius-lg); background: var(--ok-wash); }
+      .vendida p { flex: 1 1 180px; margin: 0; font-size: 14px; }
+      .vendida .acc { display: flex; gap: 6px; align-items: center; flex: 1 1 240px; }
+      .vendida .acc app-boton-ticket { flex: 1; }
       .tel-grupo { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 6px; }
       .tel-grupo .prefijo { padding-right: 22px; text-overflow: ellipsis; }
       .tel-grupo.invalido input { border-color: var(--danger); }
@@ -136,6 +142,15 @@ function normal(s: string): string {
         }
       </div>
       <div class="vista-body">
+        @if (ultimaVenta(); as uv) {
+          <div class="vendida" role="status">
+            <p><strong>Venta #{{ uv }} registrada.</strong> ¿Le imprimes el ticket al cliente?</p>
+            <div class="acc">
+              <app-boton-ticket [pedidoId]="uv" [principal]="true"></app-boton-ticket>
+              <button class="b b-icono" aria-label="Cerrar aviso" (click)="ultimaVenta.set(null)"><ion-icon name="close-outline"></ion-icon></button>
+            </div>
+          </div>
+        }
         @if (cargandoPedido()) {
           <app-esqueleto forma="texto" [filas]="8"></app-esqueleto>
         } @else {
@@ -349,6 +364,8 @@ export class NuevoPedidoPage implements OnInit {
 
   /** 'local' = venta en el punto físico */
   local = signal(this.route.snapshot.data['modo'] === 'local');
+  /** La venta del local que se acaba de registrar (para imprimir su ticket) */
+  ultimaVenta = signal<number | null>(null);
   editId = signal<number | null>(Number(this.route.snapshot.paramMap.get('id')) || null);
   titulo = computed(() => (this.editId() ? `Editar pedido #${this.editId()}` : this.local() ? 'Venta en el local' : 'Nuevo pedido'));
 
@@ -777,8 +794,11 @@ export class NuevoPedidoPage implements OnInit {
         });
         const v = this.vendedoras().find((x) => x.id === this.vendedora);
         this.toast.ok(v ? `Venta #${id} registrada a nombre de ${v.nombre}` : `Venta #${id} registrada`);
-        // Se queda en Venta en local, lista para la siguiente venta
+        // Se queda en Venta en local, lista para la siguiente venta (con el botón del ticket arriba)
         this.nuevaVenta();
+        this.ultimaVenta.set(id);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.querySelector('.vista-body')?.scrollTo?.({ top: 0, behavior: 'smooth' });
       } else {
         const id = await this.ps.crear({
           cliente_nombre: this.nombre,

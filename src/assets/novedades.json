@@ -1,5 +1,38 @@
 [
   {
+    "id": "2026-10-29-ticket-local",
+    "fecha": "2026-10-29",
+    "titulo": "Nuevo: imprime el ticket de las ventas del local",
+    "cuerpo": "Al registrar una venta en el local aparece el botón Imprimir ticket. Sale por Bluetooth en la impresora portátil Goojprt (58 mm) directo desde el celular.",
+    "roles": [
+      "admin",
+      "venta_local"
+    ],
+    "secciones": [
+      {
+        "titulo": "¿Para qué sirve?",
+        "texto": "Para entregarle al cliente un ticket con lo que compró, el total, cómo pagó y la garantía, sin papeles a mano."
+      },
+      {
+        "titulo": "Cómo se usa",
+        "pasos": [
+          "Prende la impresora y activa el Bluetooth y la ubicación del celular.",
+          "Registra la venta como siempre. Arriba sale el aviso \"Venta registrada\" con el botón Imprimir ticket.",
+          "La primera vez se abre la lista de dispositivos: elige la impresora (sale como PT-210, MTP-II o parecido). Mientras la app siga abierta ya no vuelve a preguntar.",
+          "También puedes imprimir cualquier venta anterior: Ventas del local → toca la venta → Imprimir ticket."
+        ]
+      },
+      {
+        "titulo": "Si la impresora no aparece en la lista",
+        "puntos": [
+          "Algunas impresoras solo tienen Bluetooth clásico y Chrome no las ve. Instala la app gratis RawBT de Play Store, vincula ahí la impresora una vez, y en la app toca los tres puntos al lado de Imprimir ticket → Imprimir con la app RawBT.",
+          "En iPhone, Safari no deja usar Bluetooth desde una página. Usa \"Ver ticket\" (en los tres puntos) para imprimirlo o guardarlo en PDF, o abre la app en el navegador Bluefy, que sí tiene Bluetooth.",
+          "Los datos del encabezado (nombre, teléfonos, redes y texto de garantía) son los de Configuración."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-10-28-mi-resumen",
     "fecha": "2026-10-28",
     "titulo": "Nuevo: tu resumen de domicilios",

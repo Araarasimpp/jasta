@@ -13,6 +13,7 @@ import { formatoFechaCO, formatoHoraCO } from '../../shared/fecha-colombia';
 import { fotoDeItem, nombreConVariante, variante } from '../../shared/variante';
 import { pideComprobante, urlsComprobantes } from '../../shared/comprobantes';
 import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
+import { BotonTicketComponent } from '../../shared/ticket/boton-ticket.component';
 
 const PAGO: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Transferencia', mixto: 'Mixto (efectivo + transferencia)' };
 
@@ -25,7 +26,7 @@ const PAGO: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Tra
 @Component({
   selector: 'app-venta-local-detalle',
   standalone: true,
-  imports: [EsqueletoComponent, IonIcon],
+  imports: [EsqueletoComponent, IonIcon, BotonTicketComponent],
   styles: [
     `
       .hoja { width: min(480px, 100vw); }
@@ -139,13 +140,16 @@ const PAGO: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Tra
         }
       </div>
       <!-- Cancelar, editar y eliminar: solo el admin (también lo exige la base) -->
-      @if (esAdmin() && venta(); as v) {
-        <div class="hoja-pie">
+      @if (venta(); as v) {
+        <div class="hoja-pie" style="flex-wrap: wrap">
+          <app-boton-ticket [venta]="v" [principal]="!esAdmin()"></app-boton-ticket>
+          @if (esAdmin()) {
           @if (v.estado === 'entregado') {
             <button class="b" style="color: var(--danger)" (click)="cancelar()" [disabled]="ocupado()">Cancelar venta</button>
             <button class="b" (click)="editar()">Editar</button>
           }
           <button class="b b-peligro" (click)="eliminar()" [disabled]="ocupado()">Eliminar venta</button>
+          }
         </div>
       }
     </aside>
