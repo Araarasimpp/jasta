@@ -1,4 +1,4 @@
--- Cuentas para recibir transferencias (PENDIENTE DE APLICAR)
+-- Cuentas para recibir transferencias (YA APLICADO)
 -- El admin las pone en Configuración (banco, titular, número y la foto del QR). El equipo las ve
 -- para mostrarle el QR al cliente al entregar (Mis entregas) o en el local.
 create table if not exists public.cuentas_pago (
