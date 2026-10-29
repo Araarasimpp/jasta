@@ -59,6 +59,8 @@ export function enlaceTienda(u: { id: number; nombre: string } | null): string {
       .riesgo { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--oro-wash); color: var(--oro-texto); font-size: 13px; }
       .riesgo.alto { background: var(--danger-wash); color: var(--danger); }
       .obs { margin: 0; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--surface-2); font-size: 13.5px; }
+      .check { display: flex; gap: 8px; align-items: flex-start; font-size: 13.5px; line-height: 1.4; }
+      .check input { margin-top: 3px; }
       .vacio-txt { margin: 0; padding: 20px 0; text-align: center; color: var(--text-soft); }
     `,
   ],
@@ -141,7 +143,12 @@ export function enlaceTienda(u: { id: number; nombre: string } | null): string {
           @if (a.tipo === 'confirmar') {
             <p class="ayuda" style="margin: 0">Confírmalo solo después de hablar con el cliente. Al confirmar, el pedido pasa a Pedidos por alistar a tu nombre.</p>
             <div class="campo"><label for="pw-dom">Domicilio{{ a.w.domicilio_por_confirmar ? ' (su barrio no está en la tabla)' : '' }}</label>
-              <input id="pw-dom" type="number" inputmode="numeric" min="0" step="1000" [(ngModel)]="domicilio" /></div>
+              <input id="pw-dom" type="number" inputmode="numeric" min="0" step="1000" [(ngModel)]="domicilio" [placeholder]="a.w.domicilio_por_confirmar ? 'Escribe lo que vas a cobrar' : ''" /></div>
+            @if (a.w.domicilio_por_confirmar) {
+              <p class="ayuda" style="margin: 0">El cliente escribió el barrio <strong>{{ a.w.barrio }}</strong>, que no está en la tabla de domicilios. Pregúntale bien dónde queda y cobra lo que corresponda.</p>
+              <label class="check"><input type="checkbox" [(ngModel)]="guardarBarrio" />
+                {{ esAdmin() ? 'Guardar "' + a.w.barrio + '" en la tabla de domicilios con este valor' : 'Pedirle al admin que agregue "' + a.w.barrio + '" a la tabla con este valor' }}</label>
+            }
             <div class="campo"><label for="pw-nota">Nota para alistamiento (opcional)</label>
               <input id="pw-nota" maxlength="200" [(ngModel)]="nota" placeholder="Ej: confirmado, entregar después de las 4 pm" /></div>
           } @else {
@@ -166,6 +173,8 @@ export class PedidosWebPage implements OnInit {
   ocupado = signal(false);
   accion = signal<{ tipo: 'confirmar' | 'cancelar'; w: PedidoWeb } | null>(null);
   domicilio: number | null = null;
+  guardarBarrio = true;
+  esAdmin = computed(() => this.sb.tiene('admin'));
   nota = '';
   motivo = '';
   pesos = pesos;
@@ -213,6 +222,7 @@ export class PedidosWebPage implements OnInit {
 
   abrirConfirmar(w: PedidoWeb): void {
     this.domicilio = Number(w.valor_domicilio) || null;
+    this.guardarBarrio = true;
     this.nota = '';
     this.accion.set({ tipo: 'confirmar', w });
   }
@@ -226,9 +236,11 @@ export class PedidosWebPage implements OnInit {
     const a = this.accion();
     if (!a) return;
     if (a.tipo === 'cancelar' && !this.motivo.trim()) return this.toast.error('Escribe por qué se cancela');
+    if (a.tipo === 'confirmar' && a.w.domicilio_por_confirmar && !(Number(this.domicilio) > 0)
+        && !confirm('No escribiste el valor del domicilio. ¿Confirmar el pedido sin domicilio?')) return;
     this.ocupado.set(true);
     const r = a.tipo === 'confirmar'
-      ? await this.sb.client.rpc('confirmar_pedido_web', { p_id: a.w.id, p_domicilio: Number(this.domicilio) || 0, p_nota: this.nota.trim() })
+      ? await this.sb.client.rpc('confirmar_pedido_web', { p_id: a.w.id, p_domicilio: Number(this.domicilio) || 0, p_nota: this.nota.trim(), p_guardar_barrio: this.guardarBarrio && Number(this.domicilio) > 0 })
       : await this.sb.client.rpc('cancelar_pedido_web', { p_id: a.w.id, p_motivo: this.motivo.trim() });
     this.ocupado.set(false);
     if (r.error) return this.toast.error(mensajeError(r.error));

@@ -1,5 +1,33 @@
 [
   {
+    "id": "2026-10-29-barrios-tienda",
+    "fecha": "2026-10-29",
+    "titulo": "Catálogo: datos obligatorios y barrio con lista",
+    "cuerpo": "En el catálogo público el cliente ahora debe llenar nombre, celular, dirección y barrio, y elige el barrio de una lista con el valor del domicilio. Si su barrio no está, lo indica y tú le confirmas el valor.",
+    "roles": [
+      "admin",
+      "vendedora"
+    ],
+    "secciones": [
+      {
+        "titulo": "Qué cambió para el cliente",
+        "puntos": [
+          "Nombre, celular, dirección y barrio son obligatorios (salen con *). Si falta algo, se marca en rojo y le dice qué escribir. Observaciones sigue siendo opcional.",
+          "El barrio se busca mientras escribe y sale con el valor del domicilio. No importan tildes ni mayúsculas: \"belen\" encuentra Belén.",
+          "Si escribe un barrio que no está, la app le muestra los más parecidos por si lo escribió distinto. Si de verdad no está, toca \"Mi barrio no está en la lista\" y le avisamos que el domicilio se lo confirmas al llamarlo."
+        ]
+      },
+      {
+        "titulo": "Qué hacer con un barrio que no está",
+        "pasos": [
+          "En Pedidos de la tienda, el pedido sale con \"Domicilio: Por definir\".",
+          "Llama al cliente, pregúntale bien dónde queda y escribe lo que vas a cobrar de domicilio al confirmar.",
+          "Deja marcada la casilla del barrio: si eres admin se guarda en la tabla de domicilios con ese valor; si eres vendedora, le llega un aviso al admin para que lo agregue. Así la próxima vez sale solo."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-10-29-enlace-producto",
     "fecha": "2026-10-29",
     "titulo": "Nuevo: comparte el enlace de un producto",

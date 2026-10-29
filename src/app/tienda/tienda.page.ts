@@ -21,7 +21,17 @@ interface Linea { producto_id: number; nombre: string; precio: number; imagen_ur
 interface Hecho { id: number; total: number; domicilioPendiente: boolean }
 
 function normal(s: string): string {
-  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+/** Parecido entre dos textos (0 a 1) por pares de letras: aguanta errores de ortografía */
+function parecido(a: string, b: string): number {
+  const pares = (t: string) => { const out = new Map<string, number>(); for (let i = 0; i < t.length - 1; i++) { const k = t.slice(i, i + 2); out.set(k, (out.get(k) ?? 0) + 1); } return out; };
+  const x = pares(a.replace(/ /g, '')), y = pares(b.replace(/ /g, ''));
+  let comun = 0, total = 0;
+  for (const [k, n] of x) { comun += Math.min(n, y.get(k) ?? 0); total += n; }
+  for (const n of y.values()) total += n;
+  return total ? (2 * comun) / total : 0;
 }
 
 /**
@@ -101,6 +111,23 @@ function normal(s: string): string {
       .tel-grupo { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 6px; }
       .tel-grupo select { padding-right: 22px; text-overflow: ellipsis; }
       .error-campo { margin: 4px 0 0; font-size: 12.5px; color: var(--danger); }
+      .obl { color: var(--danger); font-weight: 700; }
+      input.mal, .tel-grupo input.mal { border-color: var(--danger) !important; }
+      input.ok { border-color: var(--efectivo-texto) !important; }
+      .barrio-campo { position: relative; }
+      .sug-barrios { position: absolute; left: 0; right: 0; top: 100%; z-index: 30; list-style: none; margin: 4px 0 0; padding: 4px; max-height: 260px; overflow-y: auto;
+        border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); box-shadow: 0 10px 28px rgba(0, 0, 0, .14); }
+      .sug-barrios button { display: flex; justify-content: space-between; gap: 10px; width: 100%; padding: 11px 10px; border: 0; border-radius: 6px; background: none;
+        color: var(--text); font: inherit; font-size: 14.5px; text-align: left; cursor: pointer; }
+      .sug-barrios button:hover, .sug-barrios button:focus-visible { background: var(--hover); }
+      .sug-barrios small { color: var(--text-muted); font-family: var(--mono-font); white-space: nowrap; }
+      .barrio-ok { margin: 4px 0 0; font-size: 13px; color: var(--efectivo-texto); font-weight: 600; }
+      .barrio-nuevo { margin: 6px 0 0; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--oro-wash); color: var(--oro-texto); font-size: 13px; line-height: 1.4; }
+      .barrio-nuevo .link { border: 0; background: none; color: inherit; text-decoration: underline; font: inherit; cursor: pointer; padding: 0 0 0 4px; }
+      .barrio-falta { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--danger-wash); color: var(--text); font-size: 13.5px; }
+      .barrio-falta strong { color: var(--danger); }
+      .chips-barrio { display: flex; flex-wrap: wrap; gap: 6px; }
+      .chips-barrio button { height: 34px; padding: 0 12px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface); color: var(--text); font: inherit; font-size: 13.5px; cursor: pointer; }
       .totales { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface-2); font-size: 14px; }
       .totales div { display: flex; justify-content: space-between; gap: 10px; }
       .totales .fin { font-size: 16px; font-weight: 700; }
@@ -257,29 +284,56 @@ function normal(s: string): string {
             }
           </ul>
 
-          <div class="campo"><label for="tn">Tu nombre</label>
-            <input id="tn" autocomplete="name" [ngModel]="nombre" (ngModelChange)="nombre = limpiar($event)" /></div>
-          <div class="campo"><label for="tt">Celular</label>
+          <p class="nota" style="margin: 4px 0 0">Los datos con <span class="obl">*</span> son obligatorios.</p>
+          <div class="campo"><label for="tn">Tu nombre <span class="obl">*</span></label>
+            <input id="tn" autocomplete="name" required [class.mal]="intentado() && errNombre()" [ngModel]="nombre" (ngModelChange)="nombre = limpiar($event)" />
+            @if (intentado() && errNombre()) { <p class="error-campo">{{ errNombre() }}</p> }</div>
+          <div class="campo"><label for="tt">Celular <span class="obl">*</span></label>
             <div class="tel-grupo">
               <select [(ngModel)]="prefijo" aria-label="Indicativo del país">
                 @for (p of paises; track p.iso) { <option [value]="p.prefijo">{{ bandera(p.iso) }} +{{ p.prefijo }} {{ p.nombre }}</option> }
               </select>
-              <input id="tt" type="tel" inputmode="numeric" autocomplete="tel-national" [ngModel]="telefono" (ngModelChange)="cambioTel($event)" />
+              <input id="tt" type="tel" inputmode="numeric" autocomplete="tel-national" required [class.mal]="intentado() && errTel()" [ngModel]="telefono" (ngModelChange)="cambioTel($event)" />
             </div>
-            @if (telefono && errorTel()) { <p class="error-campo">{{ errorTel() }}</p> }
+            @if ((telefono || intentado()) && errTel()) { <p class="error-campo">{{ errTel() }}</p> }
           </div>
-          <div class="campo"><label for="td">Dirección</label>
-            <input id="td" autocomplete="street-address" maxlength="200" [(ngModel)]="direccion" placeholder="Ej: Cra 45 # 12-30 apto 201" /></div>
-          <div class="campo"><label for="tb">Barrio</label>
-            <input id="tb" list="barrios-tienda" maxlength="120" [ngModel]="barrio()" (ngModelChange)="barrio.set($event)" placeholder="Escribe y elige tu barrio" />
-            <datalist id="barrios-tienda">@for (b of t()?.barrios ?? []; track b.barrio) { <option [value]="b.barrio"></option> }</datalist>
+          <div class="campo"><label for="td">Dirección <span class="obl">*</span></label>
+            <input id="td" autocomplete="street-address" maxlength="200" required [class.mal]="intentado() && errDir()" [(ngModel)]="direccion" placeholder="Ej: Cra 45 # 12-30 apto 201" />
+            @if (intentado() && errDir()) { <p class="error-campo">{{ errDir() }}</p> }</div>
+          <div class="campo barrio-campo"><label for="tb">Barrio <span class="obl">*</span></label>
+            <input id="tb" maxlength="120" autocomplete="off" required role="combobox" aria-autocomplete="list" [attr.aria-expanded]="sugerencias().length > 0"
+              [class.mal]="intentado() && errBarrio()" [class.ok]="!!barrioElegido()" [ngModel]="barrio()" (ngModelChange)="escribirBarrio($event)"
+              (focus)="enBarrio.set(true)" (blur)="salirBarrio()" placeholder="Escribe tu barrio y elígelo de la lista" />
+            @if (sugerencias().length) {
+              <ul class="sug-barrios" role="listbox">
+                @for (b of sugerencias(); track b.barrio) {
+                  <li role="option"><button type="button" (mousedown)="$event.preventDefault()" (click)="elegirBarrio(b.barrio)">
+                    <span>{{ b.barrio }}</span><small>{{ pesos(b.domicilio) }}</small></button></li>
+                }
+              </ul>
+            }
+            @if (barrioElegido(); as b) {
+              <p class="barrio-ok">✓ {{ b }} · domicilio {{ pesos(domicilio()!) }}</p>
+            } @else if (barrioNoEsta()) {
+              <p class="barrio-nuevo">Listo: te confirmamos el valor del domicilio a <strong>{{ barrio().trim() }}</strong> cuando te llamemos.
+                <button type="button" class="link" (click)="barrioNoEsta.set(false); enBarrio.set(true)">Cambiar</button></p>
+            } @else if (barrio().trim().length >= 3 && !enBarrio()) {
+              <div class="barrio-falta" role="alert">
+                <strong>No encontramos "{{ barrio().trim() }}" en la lista.</strong>
+                @if (parecidos().length) {
+                  <span>¿Es alguno de estos?</span>
+                  <div class="chips-barrio">@for (b of parecidos(); track b.barrio) { <button type="button" (click)="elegirBarrio(b.barrio)">{{ b.barrio }}</button> }</div>
+                }
+                <button type="button" class="b" (click)="barrioNoEsta.set(true)">Mi barrio no está en la lista</button>
+              </div>
+            } @else if (intentado() && errBarrio() && !enBarrio()) { <p class="error-campo">{{ errBarrio() }}</p> }
           </div>
-          <div class="campo"><label for="to">Indicaciones (opcional)</label>
+          <div class="campo"><label for="to">Observaciones (opcional)</label>
             <input id="to" maxlength="300" [(ngModel)]="observaciones" placeholder="Ej: llamar antes, portería, después de las 3 pm" /></div>
 
           <div class="totales">
             <div><span>Productos</span><span class="num">{{ pesos(subtotal()) }}</span></div>
-            <div><span>Domicilio</span><span class="num">{{ domicilio() === null ? 'Te lo confirmamos' : pesos(domicilio()!) }}</span></div>
+            <div><span>Domicilio</span><span class="num">{{ domicilio() !== null ? pesos(domicilio()!) : barrioNoEsta() ? 'Te lo confirmamos' : 'Elige tu barrio' }}</span></div>
             <div class="fin"><span>Total</span><span class="num">{{ pesos(subtotal() + (domicilio() ?? 0)) }}</span></div>
           </div>
           <p class="nota">Pagas al recibir. Antes de enviarlo, {{ t()?.vendedora ? primerNombre(t()!.vendedora!.nombre) : 'la tienda' }} te contacta para confirmar tu pedido.</p>
@@ -313,6 +367,12 @@ export class TiendaPage implements OnInit {
   cant = signal(1);
   errorSel = signal('');
   barrio = signal('');
+  /** El barrio tal como está en la tabla de domicilios (cuando lo eligió o lo escribió igual) */
+  barrioElegido = signal<string | null>(null);
+  /** El cliente dijo que su barrio no está: el domicilio se lo confirma la vendedora */
+  barrioNoEsta = signal(false);
+  enBarrio = signal(false);
+  intentado = signal(false);
   error = signal('');
   enviando = signal(false);
   hecho = signal<Hecho | null>(null);
@@ -372,10 +432,78 @@ export class TiendaPage implements OnInit {
   subtotal = computed(() => this.lineas().reduce((s, l) => s + l.cantidad * l.precio, 0));
   /** Domicilio de la tabla de barrios; null si el barrio no está (lo confirma la vendedora) */
   domicilio = computed(() => {
-    const b = normal(this.barrio());
-    const f = (this.t()?.barrios ?? []).find((x) => normal(x.barrio) === b);
+    const b = this.barrioElegido();
+    const f = b ? (this.t()?.barrios ?? []).find((x) => x.barrio === b) : undefined;
     return f ? Number(f.domicilio) : null;
   });
+
+  /** Barrios de la lista que empiezan o contienen lo que va escribiendo (hasta 6) */
+  sugerencias = computed(() => {
+    const q = normal(this.barrio());
+    if (!this.enBarrio() || this.barrioElegido() || q.length < 2) return [];
+    const lista = this.t()?.barrios ?? [];
+    const puntos = (b: string) => {
+      const n = normal(b);
+      const partes = n.split(/ - |, | \/ /);
+      if (n.startsWith(q) || partes.some((x) => x.startsWith(q))) return 3;
+      if (n.split(' ').some((w) => w.startsWith(q))) return 2;
+      if (n.includes(q)) return 1;
+      return 0;
+    };
+    return lista.map((b) => ({ ...b, p: puntos(b.barrio) })).filter((b) => b.p > 0)
+      .sort((a, b) => b.p - a.p || a.barrio.localeCompare(b.barrio)).slice(0, 6);
+  });
+
+  /** Si no está en la lista: los más parecidos (por si lo escribió distinto) */
+  parecidos = computed(() => {
+    const q = normal(this.barrio());
+    if (q.length < 3) return [];
+    return (this.t()?.barrios ?? [])
+      .map((b) => {
+        const n = normal(b.barrio);
+        const partes = [n, ...n.split(/ - |, | \/ /)];
+        const palabras = q.split(' ').filter((w) => w.length >= 3);
+        const porPalabra = palabras.length ? palabras.filter((w) => n.includes(w)).length / palabras.length * 0.9 : 0;
+        return { ...b, s: Math.max(porPalabra, ...partes.map((x) => parecido(q, x))) };
+      })
+      .filter((b) => b.s >= 0.45).sort((a, b) => b.s - a.s).slice(0, 4);
+  });
+
+  errNombre(): string {
+    return /\p{L}/u.test(this.nombre) ? '' : 'Escribe tu nombre.';
+  }
+  errTel(): string {
+    return !this.telefono ? 'Escribe tu celular.' : this.errorTel();
+  }
+  errDir(): string {
+    return this.direccion.trim().length < 5 ? 'Escribe tu dirección completa (calle, número y apto o casa).' : '';
+  }
+  errBarrio(): string {
+    if (this.barrio().trim().length < 2) return 'Escribe tu barrio.';
+    if (!this.barrioElegido() && !this.barrioNoEsta()) return 'Elige tu barrio de la lista o toca "Mi barrio no está en la lista".';
+    return '';
+  }
+
+  escribirBarrio(v: string): void {
+    this.barrio.set(v);
+    this.barrioNoEsta.set(false);
+    this.enBarrio.set(true);
+    // Si lo escribió igual a uno de la lista (sin importar tildes o mayúsculas), queda elegido
+    const n = normal(v);
+    this.barrioElegido.set((this.t()?.barrios ?? []).find((x) => normal(x.barrio) === n)?.barrio ?? null);
+  }
+
+  elegirBarrio(b: string): void {
+    this.barrio.set(b);
+    this.barrioElegido.set(b);
+    this.barrioNoEsta.set(false);
+    this.enBarrio.set(false);
+  }
+
+  salirBarrio(): void {
+    // Un momento, para que alcance a tocar una sugerencia
+    setTimeout(() => this.enBarrio.set(false), 150);
+  }
   fotos = computed(() => {
     const p = this.sel();
     if (!p) return [];
@@ -523,8 +651,7 @@ export class TiendaPage implements OnInit {
 
   /** El barrio como está en la tabla de domicilios (si lo escribió distinto), o tal cual */
   private barrioOficial(): string {
-    const b = normal(this.barrio());
-    return (this.t()?.barrios ?? []).find((x) => normal(x.barrio) === b)?.barrio ?? this.barrio().trim();
+    return this.barrioElegido() ?? this.barrio().trim();
   }
 
   errorTel(): string {
@@ -537,10 +664,14 @@ export class TiendaPage implements OnInit {
 
   async enviar(): Promise<void> {
     this.error.set('');
-    if (!/\p{L}/u.test(this.nombre)) return this.error.set('Escribe tu nombre.');
-    if (!this.telefono || this.errorTel()) return this.error.set(this.errorTel() || 'Escribe tu celular.');
-    if (this.direccion.trim().length < 5) return this.error.set('Escribe tu dirección completa.');
-    if (this.barrio().trim().length < 2) return this.error.set('Escribe tu barrio.');
+    this.intentado.set(true);
+    const falta = this.errNombre() || this.errTel() || this.errDir() || this.errBarrio();
+    if (falta) {
+      // Lleva al primer dato que falta
+      const id = this.errNombre() ? 'tn' : this.errTel() ? 'tt' : this.errDir() ? 'td' : 'tb';
+      document.getElementById(id)?.focus();
+      return this.error.set('Revisa los datos marcados en rojo.');
+    }
     this.enviando.set(true);
     const { data, error } = await this.sb.client.rpc('tienda_pedir', {
       p_vendedora: this.vendedoraId, p_nombre: this.nombre.trim(), p_telefono: unirTelefono(this.prefijo, this.telefono),

@@ -118,6 +118,7 @@ import { NotificacionesService, Aviso } from '../../core/services/notificaciones
       .punto[data-tipo='meta'], .punto[data-tipo='cierre_local'] { background: var(--st-entregado) !important; }
       .punto[data-tipo='compras'] { background: var(--oro) !important; }
       .punto[data-tipo='caja'] { background: var(--oro) !important; }
+      .punto[data-tipo='barrio_nuevo'] { background: var(--oro) !important; }
       .punto[data-tipo='pedido_quieto'] { background: var(--danger) !important; }
       .texto { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
       .titulo { font-size: 14px; font-weight: 550; line-height: 1.3; }
