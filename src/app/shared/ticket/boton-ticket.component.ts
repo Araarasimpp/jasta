@@ -9,7 +9,8 @@ import { Pedido } from '../modelos';
 import { DatosNegocio, cargarDatosNegocio } from '../rotulo/rotulo';
 import { mensajeError } from '../formato';
 import { ImpresoraService } from './impresora.service';
-import { lineasTicket, ticketEscPos, ticketHtml } from './ticket';
+import { lineasTicket, ticketEscPos, ticketPng } from './ticket';
+import { mostrarTicket } from './vista-ticket';
 
 let negocioCache: Promise<DatosNegocio> | null = null;
 
@@ -44,7 +45,7 @@ let negocioCache: Promise<DatosNegocio> | null = null;
       @if (menu()) {
         <div class="menu" role="menu">
           <button type="button" role="menuitem" (click)="ver()">
-            <span>Ver ticket<small>Para imprimirlo de otra forma o guardarlo en PDF</small></span>
+            <span>Ver ticket<small>Como imagen, para compartirlo (WhatsApp, AirPrint, la app de la impresora) o imprimirlo con el celular</small></span>
           </button>
           @if (imp.esAndroid) {
             <label>
@@ -97,6 +98,8 @@ export class BotonTicketComponent implements OnInit {
   }
 
   async imprimir(): Promise<void> {
+    // Sin Bluetooth en el navegador (iPhone, computador): se muestra el ticket para compartirlo o imprimirlo
+    if (!this.imp.bluetooth && !(this.imp.esAndroid && this.imp.usarRawbt())) return this.ver();
     this.menu.set(false);
     this.ocupado.set(true);
     try {
@@ -110,19 +113,17 @@ export class BotonTicketComponent implements OnInit {
     }
   }
 
+  /** El ticket como imagen dentro de la app, para compartirlo o imprimirlo con el celular */
   async ver(): Promise<void> {
     this.menu.set(false);
-    // La ventana se abre ya (en el toque) para que el navegador no la bloquee
-    const w = window.open('', '_blank');
+    this.ocupado.set(true);
     try {
-      const html = ticketHtml(await this.lineas());
-      if (!w) return this.toast.error('El navegador bloqueó la ventana del ticket.');
-      w.document.open();
-      w.document.write(html);
-      w.document.close();
+      const id = this.venta?.id ?? this.pedidoId;
+      mostrarTicket(await ticketPng(await this.lineas()), `ticket-venta-${id}.png`);
     } catch (e) {
-      w?.close();
       this.toast.error(mensajeError(e));
+    } finally {
+      this.ocupado.set(false);
     }
   }
 }

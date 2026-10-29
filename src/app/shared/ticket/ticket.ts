@@ -1,5 +1,5 @@
 // Ticket de venta para impresora térmica de 58 mm (Goojprt PT-210 y parecidas, ESC/POS).
-// El mismo contenido sale como bytes ESC/POS (Bluetooth o RawBT) y como HTML (vista previa).
+// El mismo contenido sale como bytes ESC/POS (Bluetooth o RawBT) y como imagen (ver / compartir).
 import { Pedido } from '../modelos';
 import { DatosNegocio } from '../rotulo/rotulo';
 import { nombreConVariante } from '../variante';
@@ -9,7 +9,7 @@ import { formatoFechaCO, formatoHoraCO } from '../fecha-colombia';
 export const ANCHO = 32;
 
 type Estilo = 'normal' | 'negrita' | 'grande';
-interface Linea { texto: string; estilo?: Estilo; centro?: boolean }
+export interface Linea { texto: string; estilo?: Estilo; centro?: boolean }
 
 const PAGO: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Transferencia', mixto: 'Mixto' };
 
@@ -105,17 +105,35 @@ export function ticketEscPos(lineas: Linea[]): Uint8Array {
   return new Uint8Array(b);
 }
 
-// ------------------------------------------------------------------ Vista previa / impresión normal
-function esc(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-export function ticketHtml(lineas: Linea[]): string {
-  const filas = lineas.map((l) => `<div class="${l.estilo ?? 'normal'}${l.centro ? ' c' : ''}">${esc(l.texto) || '&nbsp;'}</div>`).join('');
-  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Ticket</title>
-<style>@page { size: 58mm auto; margin: 0 }
-body { margin: 0; padding: 3mm 2mm; width: 54mm; font: 2.7mm/1.4 ui-monospace, Menlo, Consolas, monospace; color: #000; background: #fff; }
-div { white-space: pre; overflow: hidden; } .c { text-align: center; } .negrita { font-weight: 700; }
-.grande { font-weight: 700; font-size: 5.4mm; line-height: 1.25; }</style></head>
-<body>${filas}<script>addEventListener('load', () => setTimeout(() => print(), 200));</script></body></html>`;
+// ------------------------------------------------------------------ Imagen (para compartir / ver en el celular)
+/** El ticket como imagen PNG del ancho de la impresora (384 puntos = 58 mm) */
+export async function ticketPng(lineas: Linea[]): Promise<Blob> {
+  const W = 384, pad = 8, alto = { normal: 26, negrita: 26, grande: 46 };
+  const fuente = (e: Estilo) => (e === 'grande' ? '700 38px' : e === 'negrita' ? '700 20px' : '400 20px') + ' "DejaVu Sans Mono", Menlo, Consolas, monospace';
+  const H = pad * 2 + lineas.reduce((h, l) => h + alto[l.estilo ?? 'normal'], 0) + 24;
+  const c = document.createElement('canvas');
+  c.width = W;
+  c.height = H;
+  const g = c.getContext('2d')!;
+  g.fillStyle = '#fff';
+  g.fillRect(0, 0, W, H);
+  g.fillStyle = '#000';
+  g.textBaseline = 'top';
+  let y = pad;
+  for (const l of lineas) {
+    const e = l.estilo ?? 'normal';
+    g.font = fuente(e);
+    // Que los 32 caracteres (o 16 en grande) quepan justos en el ancho
+    const ancho = g.measureText(l.texto).width;
+    const max = W - pad * 2;
+    const escala = ancho > max ? max / ancho : 1;
+    const x = l.centro ? (W - ancho * escala) / 2 : pad;
+    g.save();
+    g.translate(x, y + 2);
+    g.scale(escala, 1);
+    g.fillText(l.texto, 0, 0);
+    g.restore();
+    y += alto[e];
+  }
+  return new Promise((ok, mal) => c.toBlob((b) => (b ? ok(b) : mal(new Error('No se pudo crear la imagen del ticket'))), 'image/png'));
 }

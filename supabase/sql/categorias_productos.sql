@@ -1,4 +1,4 @@
--- Categorías de productos (PENDIENTE DE APLICAR)
+-- Categorías de productos (YA APLICADO)
 -- Cada producto tiene una categoría para filtrar el catálogo público. Al crear un producto sin
 -- categoría se le sugiere una por el nombre; el admin la puede cambiar en el formulario.
 

@@ -26,7 +26,7 @@
         "titulo": "Si la impresora no aparece en la lista",
         "puntos": [
           "Algunas impresoras solo tienen Bluetooth clásico y Chrome no las ve. Instala la app gratis RawBT de Play Store, vincula ahí la impresora una vez, y en la app toca los tres puntos al lado de Imprimir ticket → Imprimir con la app RawBT.",
-          "En iPhone, Safari no deja usar Bluetooth desde una página. Usa \"Ver ticket\" (en los tres puntos) para imprimirlo o guardarlo en PDF, o abre la app en el navegador Bluefy, que sí tiene Bluetooth.",
+          "En iPhone, el navegador no deja conectar la impresora por Bluetooth. Al tocar Imprimir ticket se abre el ticket dentro de la app: toca Compartir / imprimir y elige la app de tu impresora (Goojprt), Imprimir (AirPrint) o WhatsApp.",
           "Los datos del encabezado (nombre, teléfonos, redes y texto de garantía) son los de Configuración."
         ]
       }
