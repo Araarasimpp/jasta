@@ -1,4 +1,4 @@
-import { Component, ViewChild, inject, signal } from '@angular/core';
+import { Component, OnDestroy, ViewChild, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { SupabaseService } from '../../core/services/supabase.service';
@@ -29,6 +29,10 @@ import { REGLA_CLAVE, problemaClave } from '../../shared/clave';
           <p class="ok-msg" role="status">
             Te enviamos un correo a <strong>{{ email }}</strong>. Ábrelo y confirma tu cuenta para poder entrar.
           </p>
+          <p class="hint">Suele llegar en menos de un minuto. Si no lo ves, revisa Spam o Promociones y confirma que el correo esté bien escrito. Usa siempre el enlace del último correo.</p>
+          <button type="button" class="submit-btn submit-secundario" [disabled]="espera() > 0" (click)="otraVez()">
+            {{ espera() > 0 ? 'Puedes pedir otro en ' + espera() + ' s' : '¿No llegó? Enviar de nuevo' }}
+          </button>
           <a class="submit-btn submit-secundario submit-link" routerLink="/auth/login">Ir a iniciar sesión</a>
         } @else {
           <form class="auth-form" (ngSubmit)="crear()">
@@ -61,7 +65,7 @@ import { REGLA_CLAVE, problemaClave } from '../../shared/clave';
     </div>
   `,
 })
-export class RegistroPage {
+export class RegistroPage implements OnDestroy {
   @ViewChild(CaptchaComponent) private captchaCmp?: CaptchaComponent;
   private sb = inject(SupabaseService);
   readonly captchaActivo = CAPTCHA_ACTIVO;
@@ -75,6 +79,8 @@ export class RegistroPage {
   cargando = signal(false);
   error = signal('');
   enviado = signal(false);
+  espera = signal(0);
+  private reloj?: ReturnType<typeof setInterval>;
 
   async crear(): Promise<void> {
     if (!this.nombre.trim() || !this.email.trim()) return this.error.set('Escribe tu nombre y tu correo.');
@@ -106,7 +112,7 @@ export class RegistroPage {
     }
     // Supabase no avisa si el correo ya existía (para no revelar cuentas): llega sin identidades
     if (data.user && !data.user.identities?.length) {
-      this.error.set('Ese correo ya tiene cuenta. Inicia sesión o recupera tu contraseña.');
+      this.error.set('Ese correo ya tiene cuenta, así que no te enviamos ningún correo. Inicia sesión o, si no recuerdas la contraseña, toca «¿La olvidaste?» al iniciar sesión.');
       return;
     }
     if (data.session) {
@@ -114,6 +120,27 @@ export class RegistroPage {
       this.router.navigateByUrl(this.sb.inicioSegunRoles());
     } else {
       this.enviado.set(true);
+      this.iniciarEspera();
     }
+  }
+
+  /** Vuelve al formulario con los datos escritos; registrarse otra vez reenvía la confirmación. */
+  otraVez(): void {
+    this.error.set('');
+    this.enviado.set(false);
+  }
+
+  /** Supabase solo deja reenviar un correo por minuto; bloqueamos el botón ese tiempo. */
+  private iniciarEspera(): void {
+    clearInterval(this.reloj);
+    this.espera.set(60);
+    this.reloj = setInterval(() => {
+      this.espera.update((s) => s - 1);
+      if (this.espera() <= 0) clearInterval(this.reloj);
+    }, 1000);
+  }
+
+  ngOnDestroy(): void {
+    clearInterval(this.reloj);
   }
 }
