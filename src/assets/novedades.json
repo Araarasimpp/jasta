@@ -1,5 +1,94 @@
 [
   {
+    "id": "2026-10-29-caja-duplicados-quietos",
+    "fecha": "2026-10-29",
+    "titulo": "Nuevo: cuadre de caja, pedidos repetidos y pedidos quietos",
+    "cuerpo": "Ahora se cuenta la caja del local y te avisa si falta o sobra plata. Además, la app avisa antes de crear un pedido repetido y cuando un pedido lleva más de un día sin moverse.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cuadre de caja del local",
+        "puntos": [
+          "En Ventas del local, con el día de hoy, sale la tarjeta \"Caja sin cuadrar\". Al cerrar, quien vende toca Cuadrar caja, escribe la base con la que abrió y el efectivo que contó.",
+          "La app calcula lo que debería haber (base + efectivo de las ventas) y muestra si cuadra, falta o sobra. Puede dejar una nota, por ejemplo si se pagó algo de la caja.",
+          "Te llega un aviso con el resultado: \"Caja cuadrada ✓\", \"Faltan $X\" o \"Sobran $X\", con quién contó y la nota.",
+          "Si a las 9 p. m. nadie ha contado la caja, el aviso del cierre lo recuerda."
+        ]
+      },
+      {
+        "titulo": "Pedidos repetidos",
+        "texto": "Al crear un pedido a domicilio, si ese mismo teléfono ya hizo un pedido en las últimas 24 horas, la app muestra cuál (número, estado, quién lo vendió y qué lleva) y pregunta si de verdad es otro pedido. Así no se despacha dos veces lo mismo. En el último mes pasó 2 veces."
+      },
+      {
+        "titulo": "Pedidos quietos",
+        "texto": "Cada hora, de 8 a. m. a 6 p. m., la app revisa los pedidos que llevan más de un día en el mismo estado: por alistar, alistados sin salir o en ruta sin entregar. Le avisa una vez a quien le toca (alistamiento, o el mensajero y la vendedora si va en ruta) y a ti te llega un resumen."
+      }
+    ]
+  },
+  {
+    "id": "2026-10-29-cuadrar-caja",
+    "fecha": "2026-10-29",
+    "titulo": "Nuevo: cuadra la caja al cerrar",
+    "cuerpo": "En Ventas del local toca Cuadrar caja, escribe la base y el efectivo que contaste, y la app te dice si cuadra, falta o sobra.",
+    "roles": [
+      "venta_local"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se usa",
+        "pasos": [
+          "Al cerrar, entra a Ventas del local (con el día de hoy).",
+          "Toca Cuadrar caja.",
+          "Escribe la base con la que abriste la caja (la app recuerda la del último día) y el efectivo que contaste.",
+          "Mira el resultado. Si falta o sobra, escribe en la nota qué pasó (por ejemplo, \"se pagó un domicilio de la caja\") y toca Guardar cuadre."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "Las transferencias no se cuentan: no están en la caja. Si te equivocaste, toca Volver a contar y se corrige."
+      }
+    ]
+  },
+  {
+    "id": "2026-10-29-pedido-repetido",
+    "fecha": "2026-10-29",
+    "titulo": "Nuevo: aviso de pedido repetido",
+    "cuerpo": "Si el cliente ya hizo un pedido en las últimas 24 horas, la app te lo muestra antes de crear otro, para no despachar dos veces lo mismo.",
+    "roles": [
+      "vendedora"
+    ],
+    "secciones": [
+      {
+        "titulo": "Qué hacer cuando sale",
+        "puntos": [
+          "Si es el mismo pedido repetido (por ejemplo, el cliente te escribió dos veces), toca Cancelar y no se crea.",
+          "Si de verdad es otro pedido, toca Aceptar y se crea normal."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-10-29-pedidos-quietos",
+    "fecha": "2026-10-29",
+    "titulo": "Nuevo: aviso de pedidos quietos",
+    "cuerpo": "Si un pedido lleva más de un día sin moverse (sin alistar, alistado sin salir o en ruta sin entregar), te llega un aviso para revisarlo.",
+    "roles": [
+      "alistador",
+      "mensajero"
+    ],
+    "secciones": [
+      {
+        "titulo": "Qué hacer",
+        "puntos": [
+          "Alistamiento: revisa si al pedido le falta algo para alistarlo o si falta asignarle mensajero.",
+          "Mensajeros: si ya lo entregaste, márcalo como entregado; si no se pudo, reporta la novedad."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-10-29-automatico-admin",
     "fecha": "2026-10-29",
     "titulo": "Nuevo: más avisos automáticos para el negocio",

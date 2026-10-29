@@ -571,6 +571,23 @@ export class NuevoPedidoPage implements OnInit {
     return hay.slice(0, 8);
   });
 
+  /** Avisa si el cliente ya tiene un pedido de las últimas 24 horas. Devuelve si se sigue creando. */
+  private async seguirSiHayParecido(productos: number[]): Promise<boolean> {
+    const { data, error } = await this.sb.client.rpc('pedidos_parecidos', { p_telefono: this.telefonoGuardar(), p_productos: productos });
+    const lista = (error ? [] : (data ?? [])) as { id: number; estado: string; created_at: string; vendedora: string; productos: string | null; mismos: boolean; canal: string }[];
+    if (!lista.length) return true;
+    const ESTADO: Record<string, string> = { por_alistar: 'por alistar', alistado: 'alistado', despachado: 'en ruta', entregado: 'entregado' };
+    const p = lista.find((x) => x.mismos) ?? lista[0];
+    const hace = Math.max(1, Math.round((Date.now() - new Date(p.created_at).getTime()) / 60000));
+    const cuando = hace < 60 ? `hace ${hace} min` : `hace ${Math.round(hace / 60)} h`;
+    return confirm(
+      `⚠️ ${p.mismos ? 'Este cliente ya tiene un pedido con estos mismos productos' : 'Este cliente ya hizo un pedido'} ${cuando}:\n\n`
+      + `#${p.id} (${p.canal === 'local' ? 'venta en el local' : ESTADO[p.estado] ?? p.estado}${p.vendedora ? ', de ' + p.vendedora : ''})\n${p.productos ?? ''}`
+      + (lista.length > 1 ? `\n\nY ${lista.length - 1} más en las últimas 24 horas.` : '')
+      + `\n\n¿Crear este pedido de todas formas? Toca Cancelar si es el mismo pedido repetido.`
+    );
+  }
+
   /** Deja el formulario de venta en el local en blanco para la siguiente venta */
   private nuevaVenta(): void {
     this.lineas.set([]);
@@ -767,6 +784,11 @@ export class NuevoPedidoPage implements OnInit {
     }
     const items = [...juntas.values()];
     this.guardando.set(true);
+    // Pedido nuevo a domicilio: si el mismo teléfono ya pidió en las últimas 24 horas, se pregunta antes
+    if (!local && !this.editId() && !(await this.seguirSiHayParecido(items.map((i) => i.producto_id)))) {
+      this.guardando.set(false);
+      return;
+    }
     try {
       if (this.editId()) {
         await this.ps.editar(this.editId()!, {

@@ -14,6 +14,7 @@ import { mensajeError, numero, pesos } from '../../shared/formato';
 import { finDiaColombia, formatoFechaCO, formatoHoraCO, inicioDiaColombia } from '../../shared/fecha-colombia';
 import { nombreConVariante } from '../../shared/variante';
 import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
+import { CuadreCajaComponent } from './cuadre-caja.component';
 
 type Metodo = 'todos' | 'efectivo' | 'transferencia' | 'mixto';
 
@@ -21,7 +22,7 @@ type Metodo = 'todos' | 'efectivo' | 'transferencia' | 'mixto';
 @Component({
   selector: 'app-ventas-local',
   standalone: true,
-  imports: [EsqueletoComponent, FormsModule, RouterLink, IonIcon, DiaComponent, VentaLocalDetalleComponent],
+  imports: [EsqueletoComponent, CuadreCajaComponent, FormsModule, RouterLink, IonIcon, DiaComponent, VentaLocalDetalleComponent],
   styles: [
     `
       .seccion { padding: 16px 20px 0; }
@@ -53,6 +54,7 @@ type Metodo = 'todos' | 'efectivo' | 'transferencia' | 'mixto';
           <div class="cifra-t"><small>Transferencias</small><strong class="num">{{ pesos(tot().transferencia) }}</strong></div>
           <a class="cifra-t" routerLink="/app/servicio-local" style="color: inherit; text-decoration: none"><small>Servicio local</small><strong class="num">{{ pesos(tot().alcancia) }}</strong><em>Ver servicio local ›</em></a>
         </div>
+        @if (diaCaja(); as d) { <app-cuadre-caja [fecha]="d" [version]="ventas().length + tot().efectivo"></app-cuadre-caja> }
       </div>
       <div class="tabla-wrap" style="margin-top: 16px">
         <table class="tabla tarjetas-cel">
@@ -98,6 +100,8 @@ export class VentasLocalPage implements OnInit, OnDestroy {
   cargando = signal(true);
   abierto = signal<number | null>(null);
   private rango: RangoFechas | null = null;
+  /** El cuadre de caja es de un solo día */
+  diaCaja = signal<string | null>(null);
   private dejar?: () => void;
   private timer?: ReturnType<typeof setTimeout>;
 
@@ -136,6 +140,7 @@ export class VentasLocalPage implements OnInit, OnDestroy {
 
   cambiarRango(r: RangoFechas): void {
     this.rango = r;
+    this.diaCaja.set(r.desde && r.desde === r.hasta ? r.desde : null);
     void this.cargar();
   }
 
