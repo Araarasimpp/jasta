@@ -1,5 +1,77 @@
 [
   {
+    "id": "2026-10-30-ganancia-local",
+    "fecha": "2026-10-30",
+    "titulo": "Ganancia de la tienda: ahora cuenta todo lo del local",
+    "cuerpo": "En las ventas del local sin vendedora, la ganancia completa (precio de venta − compra) ahora se suma como ganancia de la tienda. Antes se perdía la parte de encima del precio base.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Qué cambió",
+        "puntos": [
+          "Las ventas del local con vendedora siguen igual: la tienda gana precio base − compra, y lo de encima es de la vendedora.",
+          "En las ventas del local sin vendedora (\"venta de la tienda\"), lo cobrado por encima del precio base no es de nadie más, así que ahora se suma a la ganancia de la tienda. Este mes eran unos $223.000 que no aparecían.",
+          "La alcancía (servicio local) sigue aparte: sale de la ganancia de las vendedoras del local."
+        ]
+      },
+      {
+        "titulo": "Dónde se ve",
+        "puntos": [
+          "Inicio: Ganancia tienda hoy, la gráfica de ganancia, y en Este mes la Ganancia tienda y la Utilidad real.",
+          "El cierre del día por Telegram.",
+          "Reportes (ganancia de la tienda) y Rentabilidad por producto.",
+          "En la ganancia de las vendedoras ya no se cuentan esas ventas, porque no tienen vendedora."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "Rentabilidad cuenta los pedidos por el día en que se entregaron; Inicio y Reportes, por el día en que se crearon. Por eso Rentabilidad puede dar un poco distinto."
+      }
+    ]
+  },
+  {
+    "id": "2026-10-30-puente-jyb",
+    "fecha": "2026-10-30",
+    "titulo": "Cómo funciona el puente con Variedades JYB",
+    "cuerpo": "Jasta y Variedades JYB están conectadas por un puente: los pedidos de JYB se alistan desde Pedidos de Jasta y los mensajeros que reparten para los dos negocios ven todo en una sola ruta.",
+    "roles": [
+      "admin",
+      "alistador",
+      "mensajero"
+    ],
+    "secciones": [
+      {
+        "titulo": "¿Qué es el puente?",
+        "texto": "Es la conexión entre la app de Jasta y la de Variedades JYB. Cada negocio sigue teniendo sus pedidos, su plata y sus cuadres por separado; el puente solo deja ver y mover los pedidos del otro sin cambiar de app. A una persona se le reconoce en las dos apps por el correo con el que entra: debe ser el mismo en las dos."
+      },
+      {
+        "titulo": "En Pedidos (admin y alistamiento)",
+        "puntos": [
+          "Los pedidos activos de Variedades JYB salen en la misma lista que los de Jasta, con la etiqueta JYB y su propio número.",
+          "Desde aquí se pueden alistar, devolver a por alistar e imprimir sus rótulos, junto con los de Jasta y en el mismo orden.",
+          "Asignarles domiciliario, editarlos, cancelarlos o eliminarlos se hace en la app de Variedades JYB: aquí no salen esos botones.",
+          "Tocando el pedido se ve su detalle (solo para consultar).",
+          "Se actualizan solos cada 45 segundos. Si Variedades JYB no responde, la lista de Jasta sigue funcionando igual."
+        ]
+      },
+      {
+        "titulo": "En Mis entregas (mensajeros de los dos negocios)",
+        "puntos": [
+          "Los pedidos de Variedades JYB que te asignaron salen en tu misma ruta, mezclados con los de Jasta en el orden de entrega.",
+          "Los entregas desde aquí igual que los de Jasta, con su comprobante si es transferencia.",
+          "Los cuadres siguen separados: lo de Jasta se cuadra con Jasta y lo de JYB con JYB.",
+          "También funciona al revés: desde la app de Variedades JYB puedes ver y entregar tus pedidos de Jasta."
+        ]
+      },
+      {
+        "titulo": "Si algo no sale",
+        "texto": "Si no ves los pedidos de Variedades JYB, revisa que tu correo sea el mismo en las dos apps. Si sigue sin salir, avísale al admin."
+      }
+    ]
+  },
+  {
     "id": "2026-10-29-barrios-tienda",
     "fecha": "2026-10-29",
     "titulo": "Catálogo: datos obligatorios y barrio con lista",

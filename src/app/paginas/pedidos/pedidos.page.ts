@@ -51,6 +51,10 @@ function normal(s: string): string {
 }
 
 /** Un pedido de Variedades JYB con la forma de los de Jasta, para que se vea igual en la lista */
+function leerVisto(): boolean {
+  try { return localStorage.getItem('jasta-aviso-jyb') === '1'; } catch { return false; }
+}
+
 function pedidoDeJyb(f: PedidoJybLista): Pedido {
   const id = -f.numero;
   return {
@@ -134,6 +138,14 @@ export class PedidosPage implements OnInit, OnDestroy {
   private rutaJasta = signal<Map<number, number>>(new Map());
   /** Pedido de Variedades JYB abierto (hoja de solo lectura) */
   abiertoJyb = signal<PedidoJyb | null>(null);
+  /** Hay pedidos de Variedades JYB en la lista (para explicar qué son) */
+  hayJyb = computed(() => (this.jyb()?.pedidos?.length ?? 0) > 0);
+  avisoJybVisto = signal(leerVisto());
+
+  cerrarAvisoJyb(): void {
+    this.avisoJybVisto.set(true);
+    try { localStorage.setItem('jasta-aviso-jyb', '1'); } catch { /* sin almacenamiento */ }
+  }
   abierto = signal<number | null>(null);
   /** Pedido en ruta al que la oficina le reporta que no se pudo entregar */
   novedadDe = signal<Pedido | null>(null);

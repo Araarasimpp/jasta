@@ -16,6 +16,21 @@
     }
   </header>
 
+  @if (hayJyb() && !avisoJybVisto()) {
+    <div class="aviso-jyb" role="note">
+      <div>
+        <strong>¿Qué son los pedidos con la etiqueta <span class="tag-jyb">JYB</span>?</strong>
+        <p>Son de <b>Variedades JYB</b> y llegan aquí por el <b>puente</b> que conecta las dos apps, para alistar todo en un solo lugar.
+          Aquí puedes <b>alistarlos</b>, devolverlos a por alistar e <b>imprimir su rótulo</b>. Asignarles domiciliario, editarlos o cancelarlos
+          se hace en la app de Variedades JYB. Se actualizan solos cada 45 segundos.</p>
+      </div>
+      <div class="aviso-jyb-acc">
+        <a class="btn" routerLink="/app/actualizaciones">Cómo funciona</a>
+        <button class="btn" (click)="cerrarAvisoJyb()">Entendido</button>
+      </div>
+    </div>
+  }
+
   <div class="toolbar">
     <nav class="tabs" aria-label="Filtrar por estado">
       @for (f of filtros; track f.id) {
