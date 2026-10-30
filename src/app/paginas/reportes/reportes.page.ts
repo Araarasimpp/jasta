@@ -42,6 +42,12 @@ const suma = <T>(filas: T[], f: (x: T) => number) => filas.reduce((a, x) => a + 
 const PAGO: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Transferencia', mixto: 'Mixto' };
 /** Los cancelados no salen en Reportes (tampoco en "Todos los estados") */
 type EstadoFiltro = 'entregado' | 'por_alistar' | 'alistado' | 'despachado' | 'todos';
+type CanalFiltro = 'todos' | 'domicilio' | 'local';
+const CANALES: { id: CanalFiltro; label: string }[] = [
+  { id: 'todos', label: 'Domicilios y local' },
+  { id: 'domicilio', label: 'Solo domicilios' },
+  { id: 'local', label: 'Solo ventas del local' },
+];
 const ESTADOS: { id: EstadoFiltro; label: string }[] = [
   { id: 'entregado', label: 'Entregados' },
   { id: 'por_alistar', label: 'Por alistar' },
@@ -117,6 +123,13 @@ const ESTADOS: { id: EstadoFiltro; label: string }[] = [
               </select>
             </label>
           }
+          <label>Tipo de venta
+            <select class="inp inp-chico" [(ngModel)]="canalSel" (ngModelChange)="aplicar()">
+              @for (c of canales; track c.id) {
+                <option [ngValue]="c.id">{{ c.label }}</option>
+              }
+            </select>
+          </label>
           <label>Estado del pedido
             <select class="inp inp-chico" [(ngModel)]="estadoSel" (ngModelChange)="aplicar()">
               @for (e of estados; track e.id) {
@@ -444,6 +457,12 @@ export class ReportesPage implements OnInit {
   vendedoraSel: number | null = null;
   estadoSel: EstadoFiltro = 'entregado';
   readonly estados = ESTADOS;
+  canalSel: CanalFiltro = 'todos';
+  readonly canales = CANALES;
+  /** El canal solo se manda cuando se filtra (así funciona aunque la base no lo tenga todavía) */
+  private filtroCanal(): { p_canal?: string } {
+    return this.canalSel === 'todos' ? {} : { p_canal: this.canalSel };
+  }
   readonly hoy = hoyColombiaISO();
   desde = this.hoy;
   hasta = this.hoy;
@@ -501,11 +520,12 @@ export class ReportesPage implements OnInit {
     this.rango = r;
     this.etiqueta.set(r.etiqueta);
     const est = ESTADOS.find((e) => e.id === this.estadoSel)!;
-    this.etiquetaEstado.set(est.id === 'todos' ? 'todos los estados' : 'pedidos ' + est.label.toLowerCase());
+    const canal = this.canalSel === 'local' ? ' · solo ventas del local' : this.canalSel === 'domicilio' ? ' · solo domicilios' : '';
+    this.etiquetaEstado.set((est.id === 'todos' ? 'todos los estados' : 'pedidos ' + est.label.toLowerCase()) + canal);
     this.cargando.set(true);
     this.pagina.set(0);
     void this.cargarFilas();
-    const args = { p_desde: r.desde, p_hasta: r.hasta, p_estado: this.estadoSel, p_vendedora: this.vendedoraSel };
+    const args = { p_desde: r.desde, p_hasta: r.hasta, p_estado: this.estadoSel, p_vendedora: this.vendedoraSel, ...this.filtroCanal() };
     if (this.veTodo()) {
       void this.sb.client.rpc('calificaciones_resumen', { p_desde: r.desde, p_hasta: r.hasta }).then(({ data }) => {
         if (this.rango === r) this.califs.set(data ?? null);
@@ -544,6 +564,7 @@ export class ReportesPage implements OnInit {
       .lte('created_at', finDiaColombia(r.hasta).toISOString());
     q = this.estadoSel === 'todos' ? q.neq('estado', 'cancelado') : q.eq('estado', this.estadoSel);
     if (this.vendedoraSel) q = q.eq('vendedora_id', this.vendedoraSel);
+    if (this.canalSel !== 'todos') q = q.eq('canal', this.canalSel);
     const t = this.textoLimpio();
     if (t) {
       const idCol = vista === 'ventas_detalle' ? 'pedido_id' : 'id';
@@ -577,6 +598,7 @@ export class ReportesPage implements OnInit {
         p_estado: this.estadoSel,
         p_vendedora: this.vendedoraSel,
         p_texto: this.textoLimpio(),
+        ...this.filtroCanal(),
       }),
     ]);
     // Si mientras tanto cambió la pestaña o los filtros, esta respuesta ya no sirve
