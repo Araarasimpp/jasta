@@ -93,6 +93,8 @@ export interface Pedido {
   vendedora?: { nombre: string; avatar_url?: string | null } | null;
   mensajero?: { nombre: string; avatar_url?: string | null } | null;
   pedido_items?: PedidoItem[];
+  /** Pedido de Variedades JYB mostrado en la lista de Jasta (su id aquí es negativo: -número) */
+  jyb?: { id: string; numero: number };
 }
 
 export interface PedidoItem {

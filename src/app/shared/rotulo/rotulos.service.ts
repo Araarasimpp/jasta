@@ -4,6 +4,9 @@ import { ToastService } from '../toast/toast.service';
 import { Pedido } from '../modelos';
 import { mensajeError } from '../formato';
 import { DatosNegocio, PedidoRotulo, cargarDatosNegocio, documentoRotulos, imprimirHtml, rotuloHtml } from './rotulo';
+import { NEGOCIO_JYB, ROTULO_JYB_CSS, rotuloJybHtml } from './rotulo-jyb';
+import { JybService, PedidoRotuloJybFila, RotulosJyb } from '../../core/services/jyb.service';
+import { microsAsignado } from '../fecha-colombia';
 import { nombreConVariante } from '../variante';
 
 /** Imprime rótulos de 100 × 100 mm y los marca como impresos */
@@ -11,6 +14,7 @@ import { nombreConVariante } from '../variante';
 export class RotulosService {
   private sb = inject(SupabaseService);
   private toast = inject(ToastService);
+  private jyb = inject(JybService);
   private negocio: DatosNegocio | null = null;
 
   static aRotulo(p: Pedido): PedidoRotulo {
@@ -52,6 +56,42 @@ export class RotulosService {
       imprimirHtml(html);
       const { error } = await this.sb.client.rpc('marcar_rotulos', { p_ids: pedidos.map((p) => p.id) });
       if (error) throw error;
+      return true;
+    } catch (e) {
+      this.toast.error(mensajeError(e));
+      return false;
+    }
+  }
+
+  /**
+   * Rótulos de Jasta y de Variedades JYB en un mismo documento (una sola impresión),
+   * en el orden en que se alistaron. Marca los dos como impresos.
+   */
+  async imprimirConJyb(jasta: Pedido[], jyb: PedidoRotuloJybFila[], negocioJyb: RotulosJyb['negocio']): Promise<boolean> {
+    if (!jasta.length && !jyb.length) {
+      this.toast.ok('No hay rótulos por imprimir');
+      return false;
+    }
+    try {
+      if (jasta.length) this.negocio ??= await cargarDatosNegocio(this.sb.client);
+      const nJyb: DatosNegocio = {
+        nombre_negocio: negocioJyb?.nombre_negocio?.trim() || NEGOCIO_JYB.nombre_negocio,
+        telefonos: negocioJyb?.telefonos?.trim() || null,
+        redes: negocioJyb?.redes?.trim() || null,
+        texto_garantia: negocioJyb?.texto_garantia?.trim() || null,
+      };
+      const todos = [
+        ...jasta.map((p) => ({ cuando: microsAsignado(p.alistado_at ?? p.created_at), html: rotuloHtml(RotulosService.aRotulo(p), this.negocio!) })),
+        ...jyb.map((p) => ({ cuando: microsAsignado(p.alistado_at ?? p.created_at), html: rotuloJybHtml(p, nJyb) })),
+      ].sort((a, b) => a.cuando - b.cuando);
+      const titulo = todos.length === 1 ? 'Rótulo' : `${todos.length} rótulos`;
+      imprimirHtml(documentoRotulos(todos.map((x) => x.html), titulo, ROTULO_JYB_CSS));
+      // Se marcan al abrir el diálogo (el navegador no avisa si se canceló)
+      if (jasta.length) {
+        const { error } = await this.sb.client.rpc('marcar_rotulos', { p_ids: jasta.map((p) => p.id) });
+        if (error) throw error;
+      }
+      if (jyb.length) await this.jyb.marcarRotulos(jyb.map((p) => p.id));
       return true;
     } catch (e) {
       this.toast.error(mensajeError(e));

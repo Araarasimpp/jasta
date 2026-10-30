@@ -22,6 +22,8 @@ import { diaColombiaDe, formatoFechaCO, formatoHoraCO, hoyColombiaISO } from '..
 import { sumarDias } from '../../shared/rango/rango.component';
 import { fotoDeItem, nombreConVariante, variante } from '../../shared/variante';
 import { FotoCatalogo, ProductoDetalleComponent, galeriaProducto } from '../catalogo/producto-detalle.component';
+import { PedidoJybComponent } from '../../shared/pedido-jyb/pedido-jyb.component';
+import { JybService, PedidoJyb, PedidoJybLista, PedidosJyb } from '../../core/services/jyb.service';
 
 type Filtro = EstadoPedido | 'todos';
 
@@ -41,6 +43,36 @@ const ACTIVOS: EstadoPedido[] = ['por_alistar', 'alistado', 'despachado'];
 const CERRADOS: EstadoPedido[] = ['entregado', 'cancelado'];
 // Orden en que se muestran los grupos en "Todos"
 const ORDEN_GRUPOS: EstadoPedido[] = [...ACTIVOS, ...CERRADOS];
+/** Cada cuánto se vuelven a pedir los de Variedades JYB (sus cambios no llegan por el realtime de Jasta) */
+const CADA_JYB = 45_000;
+
+function normal(s: string): string {
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
+/** Un pedido de Variedades JYB con la forma de los de Jasta, para que se vea igual en la lista */
+function pedidoDeJyb(f: PedidoJybLista): Pedido {
+  const id = -f.numero;
+  return {
+    id, estado: f.estado, created_at: f.created_at, updated_at: f.created_at, entregado_at: null,
+    vendedora_id: null, mensajero_id: null, asignado_at: f.asignado_at,
+    cliente_nombre: f.cliente_nombre, cliente_telefono: f.cliente_telefono, cliente_email: null,
+    direccion: f.direccion, barrio: f.barrio, observaciones: f.observaciones,
+    valor_domicilio: Number(f.valor_domicilio) || 0, total: Number(f.total) || 0,
+    tipo_recaudo: null, valor_efectivo: null, valor_transferencia: null, evidencias: null, cuadre_id: null,
+    novedades: f.novedades, ultima_novedad: f.ultima_novedad, rotulo_impreso_at: f.rotulo_impreso_at,
+    alistado_at: f.alistado_at, canal: 'domicilio',
+    vendedora: f.vendedor ? { nombre: f.vendedor } : null,
+    mensajero: f.domiciliario ? { nombre: f.domiciliario } : null,
+    pedido_items: f.productos.map((x, i) => ({
+      id: id * 1000 - i, pedido_id: id, producto_id: null, nombre: x.nombre, cantidad: x.cantidad,
+      precio_venta: Number(x.precio) || 0, precio_base: 0, precio_compra: 0, total: (Number(x.precio) || 0) * x.cantidad,
+      color: x.color, talla: x.talla, producto: { imagen_url: x.imagen_url },
+    })),
+    jyb: { id: f.id, numero: f.numero },
+  };
+}
+
 const ETIQUETA_GRUPO: Record<EstadoPedido, string> = {
   por_alistar: 'Por alistar',
   alistado: 'Alistados',
@@ -58,7 +90,7 @@ const ETIQUETA_GRUPO: Record<EstadoPedido, string> = {
 @Component({
   selector: 'app-pedidos',
   standalone: true,
-  imports: [FormsModule, RouterLink, IonIcon, PedidoDetalleComponent, NovedadComponent, AvatarComponent, EstadoIconComponent, ProductoDetalleComponent],
+  imports: [FormsModule, RouterLink, IonIcon, PedidoDetalleComponent, NovedadComponent, AvatarComponent, EstadoIconComponent, ProductoDetalleComponent, PedidoJybComponent],
   templateUrl: './pedidos.page.html',
   styleUrls: ['./pedidos.page.scss'],
 })
@@ -70,6 +102,7 @@ export class PedidosPage implements OnInit, OnDestroy {
   private rotulos = inject(RotulosService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private jybs = inject(JybService);
   /** Avisos: para marcar los pedidos con mensajes sin leer */
   avisos = inject(NotificacionesService);
 
@@ -88,15 +121,19 @@ export class PedidosPage implements OnInit, OnDestroy {
 
   // Se abre en Pendientes: es lo que hay que atender primero
   filtro = signal<Filtro>('por_alistar');
-  filas = signal<Pedido[]>([]);
+  /** Los de Jasta, como llegan de la base con los filtros puestos */
+  private filasJasta = signal<Pedido[]>([]);
+  /** Pedidos activos de Variedades JYB (llegan por el puente; se filtran aquí) */
+  private jyb = signal<PedidosJyb | null>(null);
   totalCerrados = signal(0);
   pagina = signal(0);
   cargando = signal(true);
   error = signal('');
-  conteos = signal<Record<string, number>>({});
-  ordenAlistado = signal<Map<number, number>>(new Map());
-  /** Puesto de cada pedido en ruta dentro de los de su mensajero (orden de asignación) */
-  ordenRuta = signal<Map<number, number>>(new Map());
+  private conteosJasta = signal<Record<string, number>>({});
+  private alistadosJasta = signal<{ id: number; alistado_at: string | null }[]>([]);
+  private rutaJasta = signal<Map<number, number>>(new Map());
+  /** Pedido de Variedades JYB abierto (hoja de solo lectura) */
+  abiertoJyb = signal<PedidoJyb | null>(null);
   abierto = signal<number | null>(null);
   /** Pedido en ruta al que la oficina le reporta que no se pudo entregar */
   novedadDe = signal<Pedido | null>(null);
@@ -117,6 +154,56 @@ export class PedidosPage implements OnInit, OnDestroy {
   /** Admin y alistamiento alistan, despachan e imprimen rótulos desde aquí */
   gestiona = computed(() => this.sb.tiene('admin', 'alistador'));
   esAdmin = computed(() => this.sb.tiene('admin'));
+
+  /** Los de Variedades JYB que pasan los filtros de la lista (estado, canal, mensajero, rótulo y búsqueda) */
+  private jybFiltrados = computed(() => {
+    this.filasJasta(); // los filtros cambian junto con la carga de los de Jasta
+    if (this.filtroCanal === 'local' || this.filtroMensajero) return [];
+    const palabras = normal(this.texto.trim()).split(/\s+/).filter(Boolean);
+    return (this.jyb()?.pedidos ?? []).filter((f) => {
+      if (this.filtroRotulo === 'pendiente' && f.rotulo_impreso_at) return false;
+      if (this.filtroRotulo === 'impreso' && !f.rotulo_impreso_at) return false;
+      const donde = normal(`jyb ${f.numero} ${f.cliente_nombre} ${f.barrio ?? ''} ${f.cliente_telefono ?? ''} ${f.productos.map((x) => x.nombre).join(' ')}`);
+      return palabras.every((w) => donde.includes(w));
+    });
+  });
+
+  /** Lista completa: los de Jasta y los de Variedades JYB del estado que se está viendo */
+  filas = computed<Pedido[]>(() => {
+    const f = this.filtro();
+    const jyb = this.jybFiltrados().filter((x) => f === 'todos' || x.estado === f).map(pedidoDeJyb);
+    return [...this.filasJasta(), ...jyb];
+  });
+
+  /** Conteos de las pestañas con los de Variedades JYB sumados */
+  conteos = computed<Record<string, number>>(() => {
+    const c = { ...this.conteosJasta() };
+    for (const x of this.jybFiltrados()) c[x.estado] = (c[x.estado] ?? 0) + 1;
+    c['todos'] = ACTIVOS.concat(CERRADOS).reduce((s, e) => s + (c[e] ?? 0), 0);
+    return c;
+  });
+
+  /** Puesto de alistamiento (1°, 2°…) de los de las dos tiendas juntos, en el orden en que se alistaron */
+  ordenAlistado = computed(() => {
+    const jyb = (this.jyb()?.pedidos ?? []).filter((x) => x.estado === 'alistado').map((x) => ({ id: -x.numero, alistado_at: x.alistado_at }));
+    const todos = [...this.alistadosJasta(), ...jyb].sort((a, b) =>
+      (a.alistado_at ?? '').localeCompare(b.alistado_at ?? '') || a.id - b.id);
+    return new Map(todos.map((x, i) => [x.id, i + 1]));
+  });
+
+  /** Puesto de cada pedido en ruta dentro de los de su mensajero (orden de asignación) */
+  ordenRuta = computed(() => {
+    const m = new Map(this.rutaJasta());
+    const cuenta = new Map<string, number>();
+    [...(this.jyb()?.pedidos ?? [])].filter((x) => x.estado === 'despachado')
+      .sort((a, b) => (a.asignado_at ?? '').localeCompare(b.asignado_at ?? ''))
+      .forEach((x) => {
+        const n = (cuenta.get(x.domiciliario ?? '') ?? 0) + 1;
+        cuenta.set(x.domiciliario ?? '', n);
+        m.set(-x.numero, n);
+      });
+    return m;
+  });
 
   grupos = computed<Grupo[]>(() => {
     const filas = this.filas();
@@ -175,6 +262,7 @@ export class PedidosPage implements OnInit, OnDestroy {
   variante = variante;
 
   private timer?: ReturnType<typeof setTimeout>;
+  private relojJyb?: ReturnType<typeof setInterval>;
   private dejarDeEscuchar?: () => void;
   private subParams?: { unsubscribe(): void };
   private cargaPendiente = false;
@@ -206,12 +294,28 @@ export class PedidosPage implements OnInit, OnDestroy {
       clearTimeout(this.timer);
       this.timer = setTimeout(() => this.cargar(), 600);
     });
+    this.relojJyb = setInterval(() => void this.cargarJyb(), CADA_JYB);
   }
 
   ngOnDestroy(): void {
     this.subParams?.unsubscribe();
     this.dejarDeEscuchar?.();
     clearTimeout(this.timer);
+    clearInterval(this.relojJyb);
+  }
+
+  /**
+   * Pedidos activos de Variedades JYB (solo admin y alistamiento). Si el puente falla se
+   * dejan los últimos que llegaron: la lista de Jasta no depende de esto.
+   */
+  async cargarJyb(): Promise<void> {
+    if (!this.gestiona()) return;
+    try {
+      const r = await this.jybs.pedidos();
+      this.jyb.set(r.vinculado ? r : null);
+    } catch {
+      /* sin conexión con Variedades JYB: se reintenta en la próxima carga */
+    }
   }
 
   /** Nunca dos cargas a la vez: si llega otra mientras tanto, se repite al final */
@@ -223,6 +327,8 @@ export class PedidosPage implements OnInit, OnDestroy {
     this.enCarga = true;
     // Solo se muestra la carga la primera vez; las recargas no parpadean
     if (!this.filas().length) this.cargando.set(true);
+    // Los de Variedades JYB llegan aparte (más lento) y se suman a la lista al llegar
+    void this.cargarJyb();
     try {
       const f = this.filtro();
       const base = {
@@ -235,18 +341,18 @@ export class PedidosPage implements OnInit, OnDestroy {
       };
       const activos = f === 'todos' ? ACTIVOS : ACTIVOS.filter((e) => e === f);
       const cerrados = f === 'todos' ? CERRADOS : CERRADOS.filter((e) => e === f);
-      const [a, c, conteos, orden, ruta] = await Promise.all([
+      const [a, c, conteos, alistados, ruta] = await Promise.all([
         activos.length ? this.ps.listar({ ...base, estados: activos, estado: activos.length === 1 ? activos[0] : null, pagina: 0, porPagina: 1000 }) : null,
         cerrados.length ? this.ps.listar({ ...base, estados: cerrados, pagina: this.pagina(), porPagina: this.porPagina }) : null,
         this.ps.conteoPorEstado(base),
-        this.ps.ordenAlistados(),
+        this.ps.alistadosEnOrden(),
         this.ps.ordenEnRuta(),
       ]);
-      this.filas.set([...(a?.filas ?? []), ...(c?.filas ?? [])]);
+      this.filasJasta.set([...(a?.filas ?? []), ...(c?.filas ?? [])]);
       this.totalCerrados.set(c?.total ?? 0);
-      this.conteos.set({ ...conteos, todos: Object.values(conteos).reduce((s, n) => s + n, 0) });
-      this.ordenAlistado.set(orden);
-      this.ordenRuta.set(ruta);
+      this.conteosJasta.set(conteos);
+      this.alistadosJasta.set(alistados);
+      this.rutaJasta.set(ruta);
       // La selección solo conserva lo que sigue en pantalla
       const ids = new Set(this.filas().map((p) => p.id));
       this.sel.set(new Set([...this.sel()].filter((id) => ids.has(id))));
@@ -306,7 +412,8 @@ export class PedidosPage implements OnInit, OnDestroy {
 
   /** Mensajero: solo a los alistados (se despachan) y a los en ruta (se cambia de mensajero) */
   puedeAsignar(p: Pedido): boolean {
-    return this.gestiona() && (p.estado === 'alistado' || p.estado === 'despachado') && p.canal !== 'local';
+    // Los de Variedades JYB se despachan allá (foto del rótulo en Telegram)
+    return this.gestiona() && !p.jyb && (p.estado === 'alistado' || p.estado === 'despachado') && p.canal !== 'local';
   }
 
   /** Rótulo: solo se imprime a los alistados */
@@ -321,11 +428,16 @@ export class PedidosPage implements OnInit, OnDestroy {
 
   /** Editar y cancelar: solo el admin */
   puedeEditar(p: Pedido): boolean {
-    return this.esAdmin() && p.estado !== 'cancelado';
+    return this.esAdmin() && !p.jyb && p.estado !== 'cancelado';
   }
 
   puedeCancelar(p: Pedido): boolean {
-    return this.esAdmin() && this.editable(p);
+    return this.esAdmin() && !p.jyb && this.editable(p);
+  }
+
+  /** "#1234" o, si es de Variedades JYB, "JYB #215" */
+  numeroDe(p: Pedido): string {
+    return p.jyb ? `JYB #${p.jyb.numero}` : `#${p.id}`;
   }
 
   private puesto(p: Pedido): number {
@@ -370,12 +482,12 @@ export class PedidosPage implements OnInit, OnDestroy {
   async alistar(lista: Pedido[]): Promise<void> {
     this.menuAbierto.set(null);
     const enOrden = [...lista].sort((a, b) => a.created_at.localeCompare(b.created_at));
-    await this.enLote(enOrden, (p) => this.ps.cambiarEstado(p.id, 'alistado'), 'alistado(s)');
+    await this.enLote(enOrden, (p) => (p.jyb ? this.jybs.alistar([p.jyb.id]) : this.ps.cambiarEstado(p.id, 'alistado')), 'alistado(s)');
   }
 
   async quitarAlistado(p: Pedido): Promise<void> {
     this.menuAbierto.set(null);
-    await this.enLote([p], (x) => this.ps.cambiarEstado(x.id, 'por_alistar'), 'devuelto(s) a por alistar');
+    await this.enLote([p], (x) => (x.jyb ? this.jybs.alistar([x.jyb.id], false) : this.ps.cambiarEstado(x.id, 'por_alistar')), 'devuelto(s) a por alistar');
   }
 
   /** Elegir mensajero despacha el pedido (pasa a En ruta); quitarlo lo devuelve a Alistados */
@@ -456,22 +568,39 @@ export class PedidosPage implements OnInit, OnDestroy {
         await accion(p);
         ok++;
       } catch (e) {
-        errores.push(`#${p.id}: ${mensajeError(e)}`);
+        errores.push(`${this.numeroDe(p)}: ${mensajeError(e)}`);
       }
     }
     this.ocupado.set(false);
     if (errores.length) this.toast.error(errores.slice(0, 2).join(' · '));
-    else this.toast.ok(lista.length === 1 ? `#${lista[0].id} ${texto.replace('(s)', '')}` : `${ok} pedidos ${texto.replace('(s)', 's')}`);
+    else this.toast.ok(lista.length === 1 ? `${this.numeroDe(lista[0])} ${texto.replace('(s)', '')}` : `${ok} pedidos ${texto.replace('(s)', 's')}`);
     this.sel.set(new Set());
     await this.cargar();
   }
 
   // ---------- Rótulos ----------
-  /** Trae los pedidos alistados sin rótulo y los imprime */
+  /**
+   * Imprime los rótulos de estos pedidos de las dos tiendas en un solo documento, en el orden
+   * en que se alistaron. Los de Jasta se vuelven a leer completos de la base.
+   */
+  private async imprimirMezcla(lista: Pedido[]): Promise<boolean> {
+    const deJasta = lista.filter((p) => !p.jyb).map((p) => p.id);
+    const idsJyb = new Set(lista.filter((p) => p.jyb).map((p) => p.jyb!.id));
+    if (!idsJyb.size) return this.rotulos.imprimir(() => this.ps.conItems(deJasta));
+    const jasta = deJasta.length ? await this.ps.conItems(deJasta) : [];
+    const jyb = (this.jyb()?.pedidos ?? []).filter((f) => idsJyb.has(f.id));
+    return this.rotulos.imprimirConJyb(jasta, jyb, this.jyb()?.negocio ?? null);
+  }
+
+  /** Trae los pedidos alistados sin rótulo (de Jasta y de Variedades JYB) y los imprime */
   async imprimirAlistados(): Promise<void> {
     this.imprimiendo.set(true);
     try {
-      if (await this.rotulos.imprimir(() => this.ps.alistadosSinRotulo())) {
+      const jyb = (this.jyb()?.pedidos ?? []).filter((f) => f.estado === 'alistado' && !f.rotulo_impreso_at);
+      const ok = jyb.length
+        ? await this.rotulos.imprimirConJyb(await this.ps.alistadosSinRotulo(), jyb, this.jyb()?.negocio ?? null)
+        : await this.rotulos.imprimir(() => this.ps.alistadosSinRotulo());
+      if (ok) {
         this.toast.ok('Rótulos enviados a imprimir');
         await this.cargar();
       }
@@ -482,13 +611,11 @@ export class PedidosPage implements OnInit, OnDestroy {
 
   /** Los alistados salen primero y en el orden en que se alistaron; el resto, en el orden de la lista */
   async imprimirSeleccion(): Promise<void> {
-    const ids = this.selImprimibles()
-      .sort((a, b) => this.puesto(a) - this.puesto(b))
-      .map((p) => p.id);
-    if (!ids.length) return;
+    const lista = this.selImprimibles().sort((a, b) => this.puesto(a) - this.puesto(b));
+    if (!lista.length) return;
     this.imprimiendo.set(true);
     try {
-      if (await this.rotulos.imprimir(() => this.ps.conItems(ids))) {
+      if (await this.imprimirMezcla(lista)) {
         this.sel.set(new Set());
         await this.cargar();
       }
@@ -502,7 +629,7 @@ export class PedidosPage implements OnInit, OnDestroy {
     this.menuAbierto.set(null);
     this.imprimiendo.set(true);
     try {
-      if (await this.rotulos.imprimir(() => this.ps.conItems([p.id]))) await this.cargar();
+      if (await this.imprimirMezcla([p])) await this.cargar();
     } finally {
       this.imprimiendo.set(false);
     }
@@ -511,6 +638,12 @@ export class PedidosPage implements OnInit, OnDestroy {
   // ---------- Detalle, menú y fotos ----------
   abrir(id: number, chat = false): void {
     this.menuAbierto.set(null);
+    // Los de Variedades JYB se ven en su hoja de solo lectura (el pedido vive en la otra app)
+    if (id < 0) {
+      const f = this.jyb()?.pedidos?.find((x) => x.numero === -id);
+      if (f) this.abiertoJyb.set({ ...f, vendedor: f.vendedor, items: f.productos.map((x) => ({ nombre: nombreConVariante(x), cantidad: x.cantidad, precio: x.precio })) });
+      return;
+    }
     this.abiertoEnChat.set(chat);
     this.abierto.set(id);
     this.router.navigate([], { queryParams: { id, chat: chat ? 1 : null }, replaceUrl: true });
