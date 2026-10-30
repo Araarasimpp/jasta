@@ -148,14 +148,3 @@ body {
   }
 }
 
-
-/* Pedidos: aviso de qué son los pedidos de Variedades JYB */
-.aviso-jyb {
-  display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin: 0 0 12px; padding: 12px 14px;
-  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); border-radius: var(--radius-lg); background: var(--accent-wash);
-  > div:first-child { flex: 1 1 320px; min-width: 0; }
-  strong { font-size: 14px; }
-  p { margin: 4px 0 0; font-size: 13px; line-height: 1.5; color: var(--text-soft); }
-  .tag-jyb { padding: 1px 6px; border-radius: 4px; background: var(--surface); font-size: 11px; font-weight: 700; }
-}
-.aviso-jyb-acc { display: flex; gap: 8px; flex-shrink: 0; }
