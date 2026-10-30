@@ -35,26 +35,15 @@
     "id": "2026-10-30-puente-jyb",
     "fecha": "2026-10-30",
     "titulo": "Cómo funciona el puente con Variedades JYB",
-    "cuerpo": "Jasta y Variedades JYB están conectadas por un puente: los pedidos de JYB se alistan desde Pedidos de Jasta y los mensajeros que reparten para los dos negocios ven todo en una sola ruta.",
+    "cuerpo": "Jasta y Variedades JYB están conectadas por un puente: los mensajeros que reparten para los dos negocios ven todo en una sola ruta.",
     "roles": [
       "admin",
-      "alistador",
       "mensajero"
     ],
     "secciones": [
       {
         "titulo": "¿Qué es el puente?",
         "texto": "Es la conexión entre la app de Jasta y la de Variedades JYB. Cada negocio sigue teniendo sus pedidos, su plata y sus cuadres por separado; el puente solo deja ver y mover los pedidos del otro sin cambiar de app. A una persona se le reconoce en las dos apps por el correo con el que entra: debe ser el mismo en las dos."
-      },
-      {
-        "titulo": "En Pedidos (admin y alistamiento)",
-        "puntos": [
-          "Los pedidos activos de Variedades JYB salen en la misma lista que los de Jasta, con la etiqueta JYB y su propio número.",
-          "Desde aquí se pueden alistar, devolver a por alistar e imprimir sus rótulos, junto con los de Jasta y en el mismo orden.",
-          "Asignarles domiciliario, editarlos, cancelarlos o eliminarlos se hace en la app de Variedades JYB: aquí no salen esos botones.",
-          "Tocando el pedido se ve su detalle (solo para consultar).",
-          "Se actualizan solos cada 45 segundos. Si Variedades JYB no responde, la lista de Jasta sigue funcionando igual."
-        ]
       },
       {
         "titulo": "En Mis entregas (mensajeros de los dos negocios)",
