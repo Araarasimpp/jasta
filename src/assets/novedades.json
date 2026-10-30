@@ -1,5 +1,31 @@
 [
   {
+    "id": "2026-10-30-local-inicio-reportes",
+    "fecha": "2026-10-30",
+    "titulo": "Inicio: recuadro de ventas del local · Reportes sin cancelados",
+    "cuerpo": "En Inicio hay un recuadro con todo lo de las ventas del local (hoy o este mes). Y en Reportes ya no salen ni suman los pedidos cancelados.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Ventas del local en Inicio",
+        "puntos": [
+          "Ganancia tienda: solo lo que gana la tienda en las ventas del local (con vendedora, precio base − compra; sin vendedora, venta − compra).",
+          "Vendido: el total, con cuántas ventas y unidades.",
+          "Efectivo (lo que entró a la caja) y Transferencias (a las cuentas).",
+          "Alcancía: lo que se apartó para el servicio local.",
+          "Ticket promedio: cuánto se vende en promedio por venta.",
+          "Arriba eliges Hoy o Este mes. Tocando Ganancia o Vendido vas a Ventas del local."
+        ]
+      },
+      {
+        "titulo": "Reportes sin cancelados",
+        "texto": "Se quitó la opción \"Cancelados\" del filtro de estado, y \"Todos\" ya no incluye los pedidos cancelados. Así ninguna suma de Reportes (ventas, productos, vendedoras, mensajeros, Excel) cuenta pedidos que no se vendieron."
+      }
+    ]
+  },
+  {
     "id": "2026-10-30-ganancia-local",
     "fecha": "2026-10-30",
     "titulo": "Ganancia de la tienda: ahora cuenta todo lo del local",

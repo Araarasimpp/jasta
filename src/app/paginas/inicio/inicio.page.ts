@@ -66,6 +66,12 @@ interface Tarea {
       .variacion { margin-left: 6px; font-size: 12px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
       .variacion.sube { color: var(--efectivo-texto); }
       .variacion.baja { color: var(--danger); }
+      .titulo-local { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 4px 0 -4px; }
+      .titulo-local .titulo-mes { margin: 0; }
+      .chips-local { display: flex; gap: 6px; }
+      .chips-local button { height: 30px; padding: 0 12px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface); color: var(--text-soft);
+        font: inherit; font-size: 12.5px; cursor: pointer; }
+      .chips-local button.on { border-color: var(--accent); background: var(--accent-wash); color: var(--accent); font-weight: 650; }
       .titulo-mes { margin: 4px 0 -4px; font-size: 13px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
       .kpi-valor.neg { color: var(--danger); }
       .cols { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 16px; align-items: start; }
@@ -171,6 +177,49 @@ interface Tarea {
             <span class="kpi-valor num">{{ pesos(m.comisiones) }}</span>
             <span class="kpi-nota">{{ m.vendedoras ? m.vendedoras + (m.vendedoras === 1 ? ' vendedora' : ' vendedoras') : 'Todo pagado' }}</span>
           </a>
+        </div>
+      }
+
+      <!-- Ventas del local: lo vendido en el punto físico, cómo se pagó y lo que ganó la tienda -->
+      @if (local(); as l) {
+        <div class="titulo-local">
+          <h2 class="titulo-mes">Ventas del local</h2>
+          <div class="chips-local" role="group" aria-label="Periodo de las ventas del local">
+            <button [class.on]="periodoLocal() === 'hoy'" [attr.aria-pressed]="periodoLocal() === 'hoy'" (click)="cambiarLocal('hoy')">Hoy</button>
+            <button [class.on]="periodoLocal() === 'mes'" [attr.aria-pressed]="periodoLocal() === 'mes'" (click)="cambiarLocal('mes')">Este mes</button>
+          </div>
+        </div>
+        <div class="kpis" role="list">
+          <a class="kpi kpi-principal" role="listitem" routerLink="/app/ventas-local">
+            <span class="kpi-label">Ganancia tienda</span>
+            <span class="kpi-valor num">{{ pesos(l.ganancia_tienda) }}</span>
+            <span class="kpi-nota">Solo ventas del local</span>
+          </a>
+          <a class="kpi" role="listitem" routerLink="/app/ventas-local">
+            <span class="kpi-label">Vendido</span>
+            <span class="kpi-valor num">{{ pesos(l.total) }}</span>
+            <span class="kpi-nota">{{ l.ventas }} {{ l.ventas === 1 ? 'venta' : 'ventas' }} · {{ l.unidades }} {{ l.unidades === 1 ? 'unidad' : 'unidades' }}</span>
+          </a>
+          <div class="kpi" role="listitem">
+            <span class="kpi-label">Efectivo</span>
+            <span class="kpi-valor num">{{ pesos(l.efectivo) }}</span>
+            <span class="kpi-nota">Lo que entró a la caja</span>
+          </div>
+          <div class="kpi" role="listitem">
+            <span class="kpi-label">Transferencias</span>
+            <span class="kpi-valor num">{{ pesos(l.transferencia) }}</span>
+            <span class="kpi-nota">A las cuentas</span>
+          </div>
+          <a class="kpi" role="listitem" routerLink="/app/servicio-local">
+            <span class="kpi-label">Alcancía</span>
+            <span class="kpi-valor num">{{ pesos(l.alcancia) }}</span>
+            <span class="kpi-nota">Servicio local</span>
+          </a>
+          <div class="kpi" role="listitem">
+            <span class="kpi-label">Ticket promedio</span>
+            <span class="kpi-valor num">{{ pesos(l.ventas ? l.total / l.ventas : 0) }}</span>
+            <span class="kpi-nota">Por venta</span>
+          </div>
         </div>
       }
 
@@ -350,7 +399,7 @@ export class InicioPage implements OnInit, OnDestroy {
 
   async cargarTodo(): Promise<void> {
     try {
-      await Promise.all([this.cargarHoy(), this.cargarAtencion(), this.cargarGrafica(), this.cargarMes()]);
+      await Promise.all([this.cargarHoy(), this.cargarAtencion(), this.cargarGrafica(), this.cargarMes(), this.cargarLocal()]);
     } catch (e) {
       this.toast.error(mensajeError(e));
     } finally {
@@ -374,6 +423,26 @@ export class InicioPage implements OnInit, OnDestroy {
     this.mes.set({
       ganancia_tienda: Number(res.ganancia_tienda), gastos: Number(res.gastos), utilidad: Number(res.utilidad),
       comisiones: pend.reduce((s, x) => s + Number(x.total), 0), vendedoras: pend.length,
+    });
+  }
+
+  // ------------------------------------------------------- Ventas del local
+  local = signal<{ ventas: number; total: number; efectivo: number; transferencia: number; alcancia: number; ganancia_tienda: number; unidades: number } | null>(null);
+  periodoLocal = signal<'hoy' | 'mes'>('hoy');
+
+  cambiarLocal(p: 'hoy' | 'mes'): void {
+    this.periodoLocal.set(p);
+    void this.cargarLocal();
+  }
+
+  private async cargarLocal(): Promise<void> {
+    const hoy = hoyColombiaISO();
+    const { data, error } = await this.sb.client.rpc('resumen_local', { p_desde: this.periodoLocal() === 'mes' ? hoy.slice(0, 8) + '01' : hoy, p_hasta: hoy });
+    if (error || !data) return; // si falla, el resto del Inicio se ve igual
+    const d = data as Record<string, number>;
+    this.local.set({
+      ventas: Number(d['ventas']), total: Number(d['total']), efectivo: Number(d['efectivo']), transferencia: Number(d['transferencia']),
+      alcancia: Number(d['alcancia']), ganancia_tienda: Number(d['ganancia_tienda']), unidades: Number(d['unidades']),
     });
   }
 

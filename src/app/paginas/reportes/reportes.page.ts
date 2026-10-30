@@ -40,14 +40,14 @@ type Pestana = 'detalle' | 'pedidos' | 'vendedoras' | 'productos' | 'mensajeros'
 const POR_PAGINA = 100;
 const suma = <T>(filas: T[], f: (x: T) => number) => filas.reduce((a, x) => a + Number(f(x) || 0), 0);
 const PAGO: Record<string, string> = { efectivo: 'Efectivo', transferencia: 'Transferencia', mixto: 'Mixto' };
-type EstadoFiltro = 'entregado' | 'por_alistar' | 'alistado' | 'despachado' | 'cancelado' | 'todos';
+/** Los cancelados no salen en Reportes (tampoco en "Todos los estados") */
+type EstadoFiltro = 'entregado' | 'por_alistar' | 'alistado' | 'despachado' | 'todos';
 const ESTADOS: { id: EstadoFiltro; label: string }[] = [
   { id: 'entregado', label: 'Entregados' },
   { id: 'por_alistar', label: 'Por alistar' },
   { id: 'alistado', label: 'Alistados' },
   { id: 'despachado', label: 'En ruta' },
-  { id: 'cancelado', label: 'Cancelados' },
-  { id: 'todos', label: 'Todos los estados' },
+  { id: 'todos', label: 'Todos (sin cancelados)' },
 ];
 
 @Component({
@@ -542,7 +542,7 @@ export class ReportesPage implements OnInit {
       .select('*', conteo ? { count: 'exact' } : undefined)
       .gte('created_at', inicioDiaColombia(r.desde).toISOString())
       .lte('created_at', finDiaColombia(r.hasta).toISOString());
-    if (this.estadoSel !== 'todos') q = q.eq('estado', this.estadoSel);
+    q = this.estadoSel === 'todos' ? q.neq('estado', 'cancelado') : q.eq('estado', this.estadoSel);
     if (this.vendedoraSel) q = q.eq('vendedora_id', this.vendedoraSel);
     const t = this.textoLimpio();
     if (t) {
