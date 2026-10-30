@@ -247,15 +247,6 @@ export class PedidosService {
     return new Map(((r ?? []) as { id: number }[]).map((p, i) => [p.id, i + 1]));
   }
 
-  /** Los alistados con la hora en que se alistaron (para ordenarlos junto con los de Variedades JYB) */
-  async alistadosEnOrden(): Promise<{ id: number; alistado_at: string | null }[]> {
-    const r = this.check(
-      await this.db.from('pedidos').select('id, alistado_at').eq('estado', 'alistado')
-        .order('alistado_at', { ascending: true, nullsFirst: true }).order('id').limit(1000)
-    );
-    return (r ?? []) as { id: number; alistado_at: string | null }[];
-  }
-
   /**
    * Puesto (1°, 2°…) de cada pedido en ruta dentro de los de su mensajero, en el orden
    * en que se le fueron asignando (no por número de pedido)
