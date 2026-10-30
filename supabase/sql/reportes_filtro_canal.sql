@@ -1,4 +1,4 @@
--- Reportes: filtro por canal (domicilios / ventas del local) (PENDIENTE DE APLICAR)
+-- Reportes: filtro por canal (domicilios / ventas del local) (YA APLICADO)
 -- Además las vistas de "línea por línea" cuentan la ganancia como el resto de la app:
 -- en ventas sin vendedora, el margen completo es de la tienda.
 
