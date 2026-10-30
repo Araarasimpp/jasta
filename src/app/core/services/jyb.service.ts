@@ -70,6 +70,24 @@ export interface RotulosJyb {
   pedidos?: PedidoRotuloJybFila[];
 }
 
+/** Pedido activo de Variedades JYB para la lista de Pedidos de Jasta (se ve y se alista como uno de aquí) */
+export interface PedidoJybLista extends PedidoRotuloJybFila {
+  estado: 'por_alistar' | 'alistado' | 'despachado';
+  valor_domicilio: number;
+  asignado_at: string | null;
+  /** Domiciliario de Variedades JYB (se asigna allá, por Telegram) */
+  domiciliario: string | null;
+  novedades: number;
+  ultima_novedad: string | null;
+  productos: { nombre: string; cantidad: number; precio: number | null; color: string | null; talla: string | null; imagen_url: string | null }[];
+}
+
+export interface PedidosJyb {
+  vinculado: boolean;
+  negocio?: RotulosJyb['negocio'];
+  pedidos?: PedidoJybLista[];
+}
+
 /**
  * Pedidos de Variedades JYB para el mensajero que también reparte allá.
  * Se reconoce por el correo con el que entra a las dos apps; los cuadres siguen separados.
@@ -120,12 +138,17 @@ export class JybService {
     await this.llamar({ accion: 'cerrar_cuadre' });
   }
 
-  /** Pedidos de Variedades JYB por despachar, para imprimir sus rótulos aquí (admin o alistador) */
-  rotulos(): Promise<RotulosJyb> {
-    return this.llamar<RotulosJyb>({ accion: 'rotulos' });
-  }
-
   async marcarRotulos(ids: string[]): Promise<void> {
     await this.llamar({ accion: 'marcar_rotulos', ids });
+  }
+
+  /** Pedidos activos de Variedades JYB, para mostrarlos en Pedidos junto a los de Jasta (admin o alistador) */
+  pedidos(): Promise<PedidosJyb> {
+    return this.llamar<PedidosJyb>({ accion: 'pedidos' });
+  }
+
+  /** Alista pedidos de Variedades JYB (o los devuelve a por alistar con alistar = false) */
+  async alistar(ids: string[], alistar = true): Promise<void> {
+    await this.llamar({ accion: 'alistar', ids, alistar });
   }
 }

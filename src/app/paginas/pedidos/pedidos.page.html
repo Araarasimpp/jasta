@@ -57,11 +57,6 @@
     }
   </div>
 
-  <!-- Pedidos de Variedades JYB: sus rótulos se imprimen aquí mismo -->
-  @if (gestiona()) {
-    <app-jyb-rotulos [jastaAlistados]="traerAlistados" (impreso)="cargar()"></app-jyb-rotulos>
-  }
-
   @if (error()) {
     <p class="error-carga" role="alert">{{ error() }} <button class="btn" (click)="cargar()">Reintentar</button></p>
   }
@@ -105,7 +100,7 @@
                     @if (sel().size > 1 && numSel().get(p.id); as n) { <span class="sel-n num" [title]="'Se asigna de ' + n + '°'">{{ n }}</span> }
                   </span>
                 }
-                <a class="c-num num" (click)="abrir(p.id)">#{{ p.id }}</a>
+                <a class="c-num num" (click)="abrir(p.id)">#{{ p.jyb ? p.jyb.numero : p.id }}@if (p.jyb) {<small class="tienda">JYB</small>}</a>
                 <span class="c-st"><app-estado-icon [estado]="p.estado"></app-estado-icon></span>
 
                 <div class="c-main">
@@ -116,7 +111,7 @@
                         <ion-icon name="chatbubble-ellipses" aria-hidden="true"></ion-icon>Mensaje nuevo
                       </button>
                     }
-                    <span class="meta-mobile"><span class="num">#{{ p.id }}</span>@if (p.barrio) {, {{ p.barrio }}}</span>
+                    <span class="meta-mobile"><span class="num">{{ numeroDe(p) }}</span>@if (p.barrio) {, {{ p.barrio }}}</span>
                   </div>
                   <span class="subido" [title]="'Vendió ' + (p.vendedora?.nombre || 'desconocido')">Subido {{ fecha(p.created_at) }}</span>
                   @if (puedeAlistar(p)) {
@@ -186,7 +181,7 @@
                         <option [value]="m.id" [selected]="m.id === p.mensajero_id">{{ m.nombre }}</option>
                       }
                     </select>
-                  } @else if (p.mensajero_id) {
+                  } @else if (p.mensajero_id || p.mensajero) {
                     <app-avatar [nombre]="nombreMensajero(p)" [foto]="fotoMensajero(p.mensajero_id)" [tam]="24"></app-avatar>
                     <span class="dom-name">{{ nombreMensajero(p) }}</span>
                   } @else {
@@ -229,13 +224,13 @@
                       @if (gestiona() && puedeImprimir(p)) {
                         <button role="menuitem" (click)="imprimirUno(p)" [disabled]="imprimiendo()">{{ p.rotulo_impreso_at ? 'Reimprimir rótulo' : 'Imprimir rótulo' }}</button>
                       }
-                      @if (gestiona() && p.estado === 'despachado') {
+                      @if (gestiona() && p.estado === 'despachado' && !p.jyb) {
                         <button role="menuitem" (click)="menuAbierto.set(null); novedadDe.set(p)">No se pudo entregar…</button>
                       }
                       @if (puedeCancelar(p)) {
                         <button role="menuitem" (click)="cancelar(p)">Cancelar pedido</button>
                       }
-                      @if (esAdmin() && p.estado !== 'entregado') {
+                      @if (esAdmin() && p.estado !== 'entregado' && !p.jyb) {
                         <button role="menuitem" class="danger" (click)="eliminar(p)">Eliminar pedido</button>
                       }
                     </div>
@@ -310,6 +305,10 @@
 
   @if (novedadDe(); as p) {
     <app-novedad [pedido]="p" (cerrar)="novedadDe.set(null)" (reportado)="novedadDe.set(null); cargar()"></app-novedad>
+  }
+
+  @if (abiertoJyb(); as pj) {
+    <app-pedido-jyb [pedido]="pj" (cerrar)="abiertoJyb.set(null)"></app-pedido-jyb>
   }
 
   @if (abierto(); as id) {
