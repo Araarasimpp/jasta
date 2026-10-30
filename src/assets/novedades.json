@@ -58,35 +58,6 @@
     ]
   },
   {
-    "id": "2026-10-30-puente-jyb",
-    "fecha": "2026-10-30",
-    "titulo": "Cómo funciona el puente con Variedades JYB",
-    "cuerpo": "Jasta y Variedades JYB están conectadas por un puente: los mensajeros que reparten para los dos negocios ven todo en una sola ruta.",
-    "roles": [
-      "admin",
-      "mensajero"
-    ],
-    "secciones": [
-      {
-        "titulo": "¿Qué es el puente?",
-        "texto": "Es la conexión entre la app de Jasta y la de Variedades JYB. Cada negocio sigue teniendo sus pedidos, su plata y sus cuadres por separado; el puente solo deja ver y mover los pedidos del otro sin cambiar de app. A una persona se le reconoce en las dos apps por el correo con el que entra: debe ser el mismo en las dos."
-      },
-      {
-        "titulo": "En Mis entregas (mensajeros de los dos negocios)",
-        "puntos": [
-          "Los pedidos de Variedades JYB que te asignaron salen en tu misma ruta, mezclados con los de Jasta en el orden de entrega.",
-          "Los entregas desde aquí igual que los de Jasta, con su comprobante si es transferencia.",
-          "Los cuadres siguen separados: lo de Jasta se cuadra con Jasta y lo de JYB con JYB.",
-          "También funciona al revés: desde la app de Variedades JYB puedes ver y entregar tus pedidos de Jasta."
-        ]
-      },
-      {
-        "titulo": "Si algo no sale",
-        "texto": "Si no ves los pedidos de Variedades JYB, revisa que tu correo sea el mismo en las dos apps. Si sigue sin salir, avísale al admin."
-      }
-    ]
-  },
-  {
     "id": "2026-10-29-barrios-tienda",
     "fecha": "2026-10-29",
     "titulo": "Catálogo: datos obligatorios y barrio con lista",
