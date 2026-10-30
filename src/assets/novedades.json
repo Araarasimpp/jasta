@@ -1,5 +1,30 @@
 [
   {
+    "id": "2026-10-30-menu-buscar",
+    "fecha": "2026-10-30",
+    "titulo": "Menú más fácil: buscador y lo que más usas",
+    "cuerpo": "En el menú del celular (Más) ahora puedes buscar la página escribiendo, arriba salen las que más usas y el resto está ordenado por secciones.",
+    "roles": [
+      "admin",
+      "cuadres",
+      "vendedora",
+      "mensajero",
+      "alistador",
+      "venta_local",
+      "recolector"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo encontrar tu página rápido",
+        "puntos": [
+          "Buscador: toca Más y escribe arriba. Sirve con el nombre o con palabras relacionadas: \"caja\" muestra Venta en local, Ventas del local y Servicio local; \"QR\" muestra Configuración.",
+          "Lo que más usas: las páginas que más abres en tu celular aparecen de primeras. Se arma solo a medida que usas la app.",
+          "El resto está agrupado por secciones con su título: Ventas, Entregas, Bodega e inventario, Finanzas, Equipo y Ajustes."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-10-30-local-inicio-reportes",
     "fecha": "2026-10-30",
     "titulo": "Inicio: recuadro de ventas del local · Reportes sin cancelados",

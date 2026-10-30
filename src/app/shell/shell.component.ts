@@ -1,10 +1,12 @@
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NgTemplateOutlet } from '@angular/common';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import {
   add,
   barChartOutline,
+  searchOutline,
   chevronBackOutline,
   chevronDownOutline,
   layersOutline,
@@ -64,6 +66,16 @@ interface ItemMenu {
   sinRoles?: Rol[];
   /** Grupo desplegable del menú del computador (sin grupo = siempre a la vista, arriba) */
   grupo?: Grupo;
+  /** Otras palabras con las que alguien la buscaría en el menú */
+  buscar?: string;
+}
+
+const CLAVE_USOS = 'jasta-menu-usos';
+function leerUsos(): Record<string, number> {
+  try { return JSON.parse(localStorage.getItem(CLAVE_USOS) || '{}') as Record<string, number>; } catch { return {}; }
+}
+function normalMenu(s: string): string {
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
 type Grupo = 'Ventas' | 'Entregas' | 'Bodega' | 'Finanzas' | 'Equipo' | 'Ajustes';
@@ -83,39 +95,39 @@ const MENU: ItemMenu[] = [
   { label: 'Mi panel', path: '/app/mi-panel', icon: 'grid-outline', roles: ['vendedora'] },
   { label: 'Pedidos', path: '/app/pedidos', icon: 'receipt-outline', roles: ['admin', 'alistador', 'cuadres'] },
   { label: 'Mis entregas', path: '/app/mis-entregas', icon: 'bicycle-outline', roles: ['mensajero'] },
-  { label: 'Venta en local', path: '/app/venta-local', icon: 'storefront-outline', roles: ['admin', 'venta_local'], grupo: 'Ventas' },
-  { label: 'Ventas del local', path: '/app/ventas-local', icon: 'list-outline', roles: ['admin', 'venta_local'], grupo: 'Ventas' },
-  { label: 'Servicio local', path: '/app/servicio-local', icon: 'cash-outline', roles: ['admin', 'venta_local', 'cuadres'], grupo: 'Ventas' },
+  { label: 'Venta en local', path: '/app/venta-local', icon: 'storefront-outline', roles: ['admin', 'venta_local'], grupo: 'Ventas' , buscar: 'vender caja registrar' },
+  { label: 'Ventas del local', path: '/app/ventas-local', icon: 'list-outline', roles: ['admin', 'venta_local'], grupo: 'Ventas' , buscar: 'caja ticket cuadrar' },
+  { label: 'Servicio local', path: '/app/servicio-local', icon: 'cash-outline', roles: ['admin', 'venta_local', 'cuadres'], grupo: 'Ventas' , buscar: 'alcancia caja' },
   { label: 'Catálogo', path: '/app/catalogo', icon: 'book-outline', roles: ['admin', 'vendedora'], grupo: 'Ventas' },
-  { label: 'Pedidos de la tienda', path: '/app/pedidos-web', icon: 'globe-outline', roles: ['admin', 'vendedora'], grupo: 'Ventas' },
-  { label: 'Recontactar', path: '/app/recontactar', icon: 'chatbubbles-outline', roles: ['admin', 'vendedora'], grupo: 'Ventas' },
+  { label: 'Pedidos de la tienda', path: '/app/pedidos-web', icon: 'globe-outline', roles: ['admin', 'vendedora'], grupo: 'Ventas' , buscar: 'web catalogo publico enlace link' },
+  { label: 'Recontactar', path: '/app/recontactar', icon: 'chatbubbles-outline', roles: ['admin', 'vendedora'], grupo: 'Ventas' , buscar: 'clientes dormidos whatsapp' },
   { label: 'Clientes', path: '/app/clientes', icon: 'people-circle-outline', roles: ['admin', 'venta_local'], grupo: 'Ventas' },
-  { label: 'Cuadres', path: '/app/cuadres', icon: 'wallet-outline', roles: ['admin', 'cuadres', 'mensajero'], grupo: 'Entregas' },
+  { label: 'Cuadres', path: '/app/cuadres', icon: 'wallet-outline', roles: ['admin', 'cuadres', 'mensajero'], grupo: 'Entregas' , buscar: 'plata efectivo mensajeros' },
   { label: 'Mi resumen', path: '/app/mi-resumen', icon: 'analytics-outline', roles: ['mensajero'], grupo: 'Entregas' },
   { label: 'Resumen de mensajeros', path: '/app/mi-resumen', icon: 'analytics-outline', roles: ['admin'], sinRoles: ['mensajero'], grupo: 'Entregas' },
-  { label: 'Novedades', path: '/app/novedades', icon: 'alert-circle-outline', roles: ['admin', 'alistador', 'cuadres', 'vendedora', 'mensajero'], grupo: 'Entregas' },
-  { label: 'Recolector', path: '/app/recolector', icon: 'bag-handle-outline', roles: ['admin', 'recolector', 'cuadres'], grupo: 'Entregas' },
-  { label: 'Barrios', path: '/app/barrios', icon: 'location-outline', roles: ['admin'], grupo: 'Entregas' },
-  { label: 'Inventario', path: '/app/inventario', icon: 'layers-outline', roles: ['admin', 'alistador'], grupo: 'Bodega' },
-  { label: 'Productos', path: '/app/productos', icon: 'pricetags-outline', roles: ['admin'], grupo: 'Bodega' },
+  { label: 'Novedades', path: '/app/novedades', icon: 'alert-circle-outline', roles: ['admin', 'alistador', 'cuadres', 'vendedora', 'mensajero'], grupo: 'Entregas' , buscar: 'no se pudo entregar problema' },
+  { label: 'Recolector', path: '/app/recolector', icon: 'bag-handle-outline', roles: ['admin', 'recolector', 'cuadres'], grupo: 'Entregas' , buscar: 'base recoger' },
+  { label: 'Barrios', path: '/app/barrios', icon: 'location-outline', roles: ['admin'], grupo: 'Entregas' , buscar: 'domicilio tarifa valor' },
+  { label: 'Inventario', path: '/app/inventario', icon: 'layers-outline', roles: ['admin', 'alistador'], grupo: 'Bodega' , buscar: 'stock compras comprar bodega' },
+  { label: 'Productos', path: '/app/productos', icon: 'pricetags-outline', roles: ['admin'], grupo: 'Bodega' , buscar: 'precios fotos crear' },
   { label: 'Devoluciones', path: '/app/devoluciones', icon: 'return-down-back-outline', roles: ['admin', 'alistador', 'venta_local', 'cuadres'], grupo: 'Bodega' },
   { label: 'Reportes', path: '/app/reportes', icon: 'stats-chart-outline', roles: ['admin', 'vendedora'], grupo: 'Finanzas' },
-  { label: 'Comisiones', path: '/app/comisiones', icon: 'card-outline', roles: ['admin', 'vendedora'], grupo: 'Finanzas' },
-  { label: 'Gastos', path: '/app/gastos', icon: 'trending-down-outline', roles: ['admin'], grupo: 'Finanzas' },
-  { label: 'Rentabilidad', path: '/app/rentabilidad', icon: 'pie-chart-outline', roles: ['admin'], grupo: 'Finanzas' },
-  { label: 'Ranking', path: '/app/ranking', icon: 'trophy-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador'], grupo: 'Equipo' },
-  { label: 'Usuarios', path: '/app/usuarios', icon: 'people-outline', roles: ['admin'], grupo: 'Equipo' },
-  { label: 'Actividad', path: '/app/actividad', icon: 'time-outline', roles: ['admin'], grupo: 'Equipo' },
+  { label: 'Comisiones', path: '/app/comisiones', icon: 'card-outline', roles: ['admin', 'vendedora'], grupo: 'Finanzas' , buscar: 'liquidacion pagar vendedoras ganancia' },
+  { label: 'Gastos', path: '/app/gastos', icon: 'trending-down-outline', roles: ['admin'], grupo: 'Finanzas' , buscar: 'arriendo nomina utilidad' },
+  { label: 'Rentabilidad', path: '/app/rentabilidad', icon: 'pie-chart-outline', roles: ['admin'], grupo: 'Finanzas' , buscar: 'ganancia producto' },
+  { label: 'Ranking', path: '/app/ranking', icon: 'trophy-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador'], grupo: 'Equipo' , buscar: 'metas puesto' },
+  { label: 'Usuarios', path: '/app/usuarios', icon: 'people-outline', roles: ['admin'], grupo: 'Equipo' , buscar: 'equipo roles crear cuenta' },
+  { label: 'Actividad', path: '/app/actividad', icon: 'time-outline', roles: ['admin'], grupo: 'Equipo' , buscar: 'historial cambios' },
 
-  { label: 'Configuración', path: '/app/configuracion', icon: 'settings-outline', roles: ['admin'], grupo: 'Ajustes' },
-  { label: 'Actualizaciones', path: '/app/actualizaciones', icon: 'sparkles-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador', 'venta_local', 'recolector'], grupo: 'Ajustes' },
-  { label: 'Mi perfil', path: '/app/perfil', icon: 'person-circle-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador', 'venta_local', 'recolector'], grupo: 'Ajustes' },
+  { label: 'Configuración', path: '/app/configuracion', icon: 'settings-outline', roles: ['admin'], grupo: 'Ajustes' , buscar: 'qr cuentas telegram whatsapp rotulo' },
+  { label: 'Actualizaciones', path: '/app/actualizaciones', icon: 'sparkles-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador', 'venta_local', 'recolector'], grupo: 'Ajustes' , buscar: 'novedades nuevo ayuda' },
+  { label: 'Mi perfil', path: '/app/perfil', icon: 'person-circle-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador', 'venta_local', 'recolector'], grupo: 'Ajustes' , buscar: 'foto contraseña' },
 ];
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, IonIcon, ToastComponent, AvatarComponent, AvisosPanelComponent, RequisitosComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, NgTemplateOutlet, IonIcon, ToastComponent, AvatarComponent, AvisosPanelComponent, RequisitosComponent],
   styleUrls: ['../shared/pill-nav.scss', './shell.component.scss'],
   template: `
     <div class="shell" [class.collapsed]="colapsado()">
@@ -239,7 +251,7 @@ const MENU: ItemMenu[] = [
           </span>
           <span class="tab-label">Avisos</span>
         </button>
-        <button class="tab" [class.active]="mas()" (click)="avisos.cerrar(); mas.set(!mas())" [attr.aria-expanded]="mas()">
+        <button class="tab" [class.active]="mas()" (click)="avisos.cerrar(); buscarMenu.set(''); mas.set(!mas())" [attr.aria-expanded]="mas()">
           <ion-icon name="ellipsis-horizontal"></ion-icon>
           <span class="tab-label">Más</span>
         </button>
@@ -254,14 +266,36 @@ const MENU: ItemMenu[] = [
             <h2 id="t-mas">Menú</h2>
             <button class="more-cerrar" aria-label="Cerrar menú" (click)="mas.set(false)"><ion-icon name="close"></ion-icon></button>
           </div>
-          <div class="more-grid">
-            @for (item of masItems(); track item.path) {
-              <a [routerLink]="item.path" routerLinkActive="active" (click)="mas.set(false)" class="more-op">
-                <span class="more-ico"><ion-icon [name]="item.icon"></ion-icon></span>
-                <span class="more-label">{{ item.label }}</span>
-              </a>
+          <label class="more-buscar">
+            <ion-icon name="search-outline" aria-hidden="true"></ion-icon>
+            <input type="search" placeholder="Buscar página (ej: caja, gastos, QR)" aria-label="Buscar en el menú" autocomplete="off"
+              [value]="buscarMenu()" (input)="buscarMenu.set($any($event.target).value)" />
+          </label>
+          <ng-template #opcion let-item>
+            <a [routerLink]="item.path" routerLinkActive="active" (click)="mas.set(false)" class="more-op">
+              <span class="more-ico"><ion-icon [name]="item.icon"></ion-icon></span>
+              <span class="more-label">{{ item.label }}</span>
+            </a>
+          </ng-template>
+          @if (buscarMenu().trim()) {
+            <div class="more-grid">
+              @for (item of encontradasMenu(); track item.path + item.label) { <ng-container *ngTemplateOutlet="opcion; context: { $implicit: item }"></ng-container> }
+            </div>
+            @if (!encontradasMenu().length) { <p class="more-vacio">No encontramos esa página. Prueba con otra palabra.</p> }
+          } @else {
+            @if (frecuentes().length) {
+              <h3 class="more-titulo">Lo que más usas</h3>
+              <div class="more-grid">
+                @for (item of frecuentes(); track item.path + item.label) { <ng-container *ngTemplateOutlet="opcion; context: { $implicit: item }"></ng-container> }
+              </div>
             }
-          </div>
+            @for (sec of seccionesMas(); track sec.titulo) {
+              <h3 class="more-titulo">{{ sec.titulo }}</h3>
+              <div class="more-grid">
+                @for (item of sec.items; track item.path + item.label) { <ng-container *ngTemplateOutlet="opcion; context: { $implicit: item }"></ng-container> }
+              </div>
+            }
+          }
           <div class="more-pie">
             <button class="more-btn" (click)="theme.toggle()">
               <ion-icon [name]="theme.isDark() ? 'sunny-outline' : 'moon-outline'"></ion-icon>
@@ -343,13 +377,49 @@ export class ShellComponent implements OnInit, OnDestroy {
   /** En el celular caben 2 secciones en la barra (más Nuevo, Avisos y Más); el resto va en "Más" */
   tabs = computed(() => this.menu().slice(0, 2));
   masItems = computed(() => this.menu().slice(2));
+
+  /** Buscador del menú del celular */
+  buscarMenu = signal('');
+  encontradasMenu = computed(() => {
+    const palabras = normalMenu(this.buscarMenu()).split(' ').filter(Boolean);
+    return this.masItems().filter((m) => {
+      const donde = normalMenu(`${m.label} ${m.grupo ?? ''} ${m.buscar ?? ''}`);
+      return palabras.every((w) => donde.includes(w));
+    });
+  });
+
+  /** Veces que se ha abierto cada página en este celular (para "Lo que más usas") */
+  private usos = signal<Record<string, number>>(leerUsos());
+  frecuentes = computed(() => {
+    const u = this.usos();
+    return this.masItems().filter((m) => (u[m.path] ?? 0) >= 3).sort((a, b) => (u[b.path] ?? 0) - (u[a.path] ?? 0)).slice(0, 4);
+  });
+  /** El resto del menú por secciones (lo que ya sale en "Lo que más usas" no se repite) */
+  seccionesMas = computed(() => {
+    const ya = new Set(this.frecuentes().map((m) => m.path + m.label));
+    const resto = this.masItems().filter((m) => !ya.has(m.path + m.label));
+    const sin = resto.filter((m) => !m.grupo);
+    return [
+      ...(sin.length ? [{ titulo: 'Principal', items: sin }] : []),
+      ...GRUPOS.map((g) => ({ titulo: g.id === 'Bodega' ? 'Bodega e inventario' : g.id, items: resto.filter((m) => m.grupo === g.id) })).filter((x) => x.items.length),
+    ];
+  });
+
+  private contarUso(url: string): void {
+    const ruta = url.split(/[?#]/)[0];
+    const item = MENU.filter((m) => ruta === m.path || ruta.startsWith(m.path + '/')).sort((a, b) => b.path.length - a.path.length)[0];
+    if (!item) return;
+    const u = { ...this.usos(), [item.path]: (this.usos()[item.path] ?? 0) + 1 };
+    this.usos.set(u);
+    try { localStorage.setItem(CLAVE_USOS, JSON.stringify(u)); } catch { /* sin almacenamiento */ }
+  }
   puedeVender = computed(() => this.sb.roles().some((r) => r === 'admin' || r === 'vendedora'));
   rolesTexto = computed(() =>
     this.sb.roles().map((r) => ROLES.find((x) => x.id === r)?.label ?? r).join(' · ') || 'Sin rol asignado'
   );
 
   constructor() {
-    addIcons({
+    addIcons({ searchOutline, 
       sparklesOutline, globeOutline, chatbubblesOutline, analyticsOutline, add, close, chevronDownOutline, layersOutline, pricetagsOutline, returnDownBackOutline, pieChartOutline, alertCircleOutline, cardOutline, trendingDownOutline, barChartOutline, chevronBackOutline, chevronForwardOutline, cubeOutline, ellipsisHorizontal,
       logOutOutline, moonOutline, peopleOutline, receiptOutline, bicycleOutline, clipboardOutline, sunnyOutline, walletOutline, statsChartOutline, settingsOutline,
       storefrontOutline, listOutline, trophyOutline, bookOutline, gridOutline, cashOutline, bagHandleOutline, peopleCircleOutline, timeOutline, personCircleOutline, notificationsOutline, locationOutline,
@@ -361,6 +431,7 @@ export class ShellComponent implements OnInit, OnDestroy {
     this.subNav = this.router.events.subscribe((e) => {
       if (e instanceof NavigationEnd) {
         this.url.set(e.urlAfterRedirects);
+        this.contarUso(e.urlAfterRedirects);
         this.abrirGrupoActual();
       }
     });
