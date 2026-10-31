@@ -21,6 +21,8 @@ interface Pendiente {
   efectivo: number;
   transferencia: number;
   domicilios: number;
+  /** Propinas por transferencia (del mensajero: se le descuentan) */
+  propinas?: number;
   /** Día de entrega (YYYY-MM-DD) */
   fecha: string;
   desde: string;
@@ -105,7 +107,7 @@ interface Pendiente {
                 </div>
                 <div class="cifras">
                   <div class="cifra"><small>Pedidos</small><strong class="num">{{ c.cantidad_pedidos }}</strong></div>
-                  <div class="cifra clave"><small>{{ puedeCerrar() ? 'Efectivo a recibir' : 'Efectivo que entregas' }}</small><strong class="num">{{ pesos(c.total_efectivo - c.total_domicilios) }}</strong></div>
+                  <div class="cifra clave"><small>{{ puedeCerrar() ? 'Efectivo a recibir' : 'Efectivo que entregas' }}</small><strong class="num">{{ pesos(netoCuadre(c)) }}</strong></div>
                   <div class="cifra"><small>Transferencias</small><strong class="num">{{ pesos(c.total_transferencia) }}</strong></div>
                   <div class="cifra"><small>Domicilios</small><strong class="num">{{ pesos(c.total_domicilios) }}</strong></div>
                 </div>
@@ -126,7 +128,7 @@ interface Pendiente {
                   </button>
                   @if (puedeCerrar()) {
                     <button class="b b-ok" [disabled]="confirmando() === c.id" (click)="confirmar(c)">
-                      {{ confirmando() === c.id ? 'Confirmando…' : 'Recibí ' + pesos(c.total_efectivo - c.total_domicilios) }}</button>
+                      {{ confirmando() === c.id ? 'Confirmando…' : 'Recibí ' + pesos(netoCuadre(c)) }}</button>
                   }
                 </div>
               </article>
@@ -145,11 +147,11 @@ interface Pendiente {
               </div>
               <div class="cifras">
                 <div class="cifra"><small>Pedidos</small><strong class="num">{{ c.pedidos }}</strong></div>
-                <div class="cifra clave"><small>Efectivo a recibir</small><strong class="num">{{ pesos(c.efectivo - c.domicilios) }}</strong></div>
+                <div class="cifra clave"><small>Efectivo a recibir</small><strong class="num">{{ pesos(netoPend(c)) }}</strong></div>
                 <div class="cifra"><small>Transferencias</small><strong class="num">{{ pesos(c.transferencia) }}</strong></div>
                 <div class="cifra"><small>Domicilios (para él)</small><strong class="num">{{ pesos(c.domicilios) }}</strong></div>
               </div>
-              <p>Efectivo cobrado {{ pesos(c.efectivo) }} menos domicilios {{ pesos(c.domicilios) }}.</p>
+              <p>Efectivo cobrado {{ pesos(c.efectivo) }} menos domicilios {{ pesos(c.domicilios) }}@if (c.propinas) { y propinas por transferencia {{ pesos(c.propinas) }} (para él)}.</p>
               @if (abiertoM() === clave(c)) {
                 <table class="mini">
                   @for (p of pedidosM(); track p.id) {
@@ -183,7 +185,7 @@ interface Pendiente {
           <div class="cifras">
             <div class="cifra"><small>Cuadres</small><strong class="num">{{ historial().length }}{{ historial().length === 30 ? '+' : '' }}</strong></div>
             <div class="cifra"><small>Pedidos</small><strong class="num">{{ resumenHist().pedidos }}</strong></div>
-            <div class="cifra clave"><small>Efectivo recibido</small><strong class="num">{{ pesos(resumenHist().efectivo - resumenHist().domicilios) }}</strong></div>
+            <div class="cifra clave"><small>Efectivo recibido</small><strong class="num">{{ pesos(resumenHist().efectivo - resumenHist().domicilios - resumenHist().propinas) }}</strong></div>
             <div class="cifra"><small>Transferencias</small><strong class="num">{{ pesos(resumenHist().transferencia) }}</strong></div>
           </div>
           @if (historial().length === 30) {
@@ -202,7 +204,7 @@ interface Pendiente {
                   <td class="der num" data-etq="Efectivo">{{ pesos(c.total_efectivo) }}</td>
                   <td class="der num" data-etq="Transferencia">{{ pesos(c.total_transferencia) }}</td>
                   <td class="der num" data-etq="Domicilios">{{ pesos(c.total_domicilios) }}</td>
-                  <td class="der num recibido" data-etq="Recibido">{{ pesos(c.total_efectivo - c.total_domicilios) }}</td>
+                  <td class="der num recibido" data-etq="Recibido">{{ pesos(netoCuadre(c)) }}</td>
                   <td data-etq="Estado"><span class="estado-cuadre" [class.pendiente]="c.estado === 'pendiente'">{{ c.estado === 'pendiente' ? 'Por confirmar' : 'Confirmado' }}</span></td>
                   <td class="suave corta" data-etq="Cerró">{{ c.cerrado_por_nombre || '—' }}<small class="cuando">{{ fecha(c.cerrado_at) }}</small></td>
                   <td class="suave corta" data-etq="Recibió">{{ c.estado === 'pendiente' ? 'Falta confirmar' : c.confirmado_por_nombre || '—' }}</td>
@@ -266,12 +268,21 @@ export class CuadresPage implements OnInit {
         efectivo: a.efectivo + Number(c.total_efectivo),
         transferencia: a.transferencia + Number(c.total_transferencia),
         domicilios: a.domicilios + Number(c.total_domicilios),
+        propinas: a.propinas + Number(c.total_propinas ?? 0),
       }),
-      { pedidos: 0, efectivo: 0, transferencia: 0, domicilios: 0 }
+      { pedidos: 0, efectivo: 0, transferencia: 0, domicilios: 0, propinas: 0 }
     )
   );
 
   puedeCerrar = computed(() => this.sb.tiene('admin', 'cuadres'));
+
+  /** Lo que el mensajero entrega: efectivo − sus domicilios − sus propinas por transferencia */
+  netoCuadre(c: Cuadre): number {
+    return Number(c.total_efectivo) - Number(c.total_domicilios) - Number(c.total_propinas ?? 0);
+  }
+  netoPend(c: Pendiente): number {
+    return Number(c.efectivo) - Number(c.domicilios) - Number(c.propinas ?? 0);
+  }
   /** Admin y cuadres cierran el de cualquiera; el mensajero, el suyo (como en Home ALS) */
   puedeCerrarDe(c: Pendiente): boolean {
     return this.puedeCerrar() || (this.sb.tiene('mensajero') && this.esMio(c));
@@ -374,7 +385,7 @@ export class CuadresPage implements OnInit {
 
   /** La oficina confirma que recibió la plata del cuadre que entregó el mensajero */
   async confirmar(c: Cuadre): Promise<void> {
-    const monto = pesos(c.total_efectivo - c.total_domicilios);
+    const monto = pesos(this.netoCuadre(c));
     if (!confirm(`¿Confirmas que recibiste ${monto} en efectivo de ${c.mensajero?.nombre ?? 'el mensajero'}?`)) return;
     this.confirmando.set(c.id);
     try {
@@ -389,7 +400,7 @@ export class CuadresPage implements OnInit {
   }
 
   async cerrar(c: Pendiente): Promise<void> {
-    const recibe = pesos(c.efectivo - c.domicilios);
+    const recibe = pesos(this.netoPend(c));
     const dia = this.dia(c.fecha);
     const pregunta = this.esMio(c)
       ? `¿Entregar tu cuadre de ${dia}? ${c.pedidos} pedidos · entregas ${recibe} en efectivo. La oficina debe confirmar que recibió la plata.`

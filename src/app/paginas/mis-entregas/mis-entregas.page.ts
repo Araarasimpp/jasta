@@ -40,6 +40,8 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
     `
       .top-izq { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; cursor: pointer; }
       .top-izq .total { display: flex; align-items: baseline; gap: 8px; font-size: 19px; line-height: 1.2; }
+      .dom-tag { align-self: flex-start; padding: 2px 9px; border-radius: 999px; background: var(--ok-wash); color: var(--efectivo-texto); font-size: 12.5px; font-weight: 600; }
+      .dom-tag b { font-weight: 700; }
       .top-izq .total small { font-size: 12px; font-weight: 500; color: var(--text-muted); text-transform: capitalize; font-family: var(--font); }
       .top-der { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
       /* Chat con la vendedora: burbuja con un "?" (o "!" si hay mensaje nuevo) */
@@ -137,18 +139,19 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
           @for (pc of misPorConfirmar(); track pc.id) {
             <div class="entregado-espera">
               <span>Cuadre de {{ dia(pc.fecha_entrega) }} entregado · esperando confirmación</span>
-              <strong class="num">{{ pesos(pc.total_efectivo - pc.total_domicilios) }}</strong>
+              <strong class="num">{{ pesos(pc.total_efectivo - pc.total_domicilios - (pc.total_propinas ?? 0)) }}</strong>
               <small>{{ pc.cantidad_pedidos }} {{ pc.cantidad_pedidos === 1 ? 'pedido' : 'pedidos' }} · la oficina debe confirmar que recibió la plata</small>
             </div>
           }
           @for (c of misPendientes(); track c.fecha) {
             <div class="entregar-total" [class.atrasado]="c.fecha < hoy">
               <span>Entregas de {{ dia(c.fecha) }} · efectivo que debes entregar</span>
-              <strong class="num">{{ pesos(c.efectivo - c.domicilios) }}</strong>
+              <strong class="num">{{ pesos(c.efectivo - c.domicilios - (c.propinas ?? 0)) }}</strong>
             </div>
             <dl class="desglose">
               <dt>Efectivo cobrado</dt><dd class="num">{{ pesos(c.efectivo) }}</dd>
               <dt>Tus domicilios (se descuentan)</dt><dd class="num">− {{ pesos(c.domicilios) }}</dd>
+              @if (c.propinas) { <dt>Tus propinas por transferencia (se descuentan)</dt><dd class="num">− {{ pesos(c.propinas) }}</dd> }
               <dt>Transferencias (ya le llegaron a la tienda)</dt><dd class="num">{{ pesos(c.transferencia) }}</dd>
             </dl>
             <div class="acciones-cuadre">
@@ -226,6 +229,7 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
                 @if (conJyb()) {<span class="negocio">Jasta</span>}
                 <h3>@if (rutaOrdenada().length > 1) {<span class="parada" [attr.aria-label]="'Parada ' + (i + 1)">{{ i + 1 }}</span>}<span class="guia">#{{ p.id }}</span> {{ p.cliente_nombre }}</h3>
                 <strong class="total num">{{ pesos(p.total) }}<small>{{ p.tipo_recaudo || '' }}</small></strong>
+                <span class="dom-tag">Tu domicilio: <b class="num">{{ pesos(p.valor_domicilio) }}</b></span>
               </div>
               <div class="top-der">
                 <button type="button" class="chat-btn" [class.nuevo]="avisos.pedidosConMensajes().has(p.id)" (click)="abrir(p.id, true)"
@@ -275,6 +279,7 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
                 <span class="negocio jyb">Variedades JYB</span>
                 <h3>@if (rutaOrdenada().length > 1) {<span class="parada" [attr.aria-label]="'Parada ' + (i + 1)">{{ i + 1 }}</span>}<span class="guia">#{{ p.numero }}</span> {{ p.cliente_nombre }}</h3>
                 <strong class="total num">{{ pesos(p.total) }}</strong>
+                @if (p.valor_domicilio) { <span class="dom-tag">Tu domicilio: <b class="num">{{ pesos(p.valor_domicilio) }}</b></span> }
               </div>
             </div>
             <p>{{ p.direccion }}<br />{{ p.barrio || 'Sin barrio' }}</p>
@@ -320,6 +325,7 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
               @if (conJyb()) {<span><strong>Jasta</strong></span>}
               <span><strong class="num">{{ hechas().length }}</strong> entregas</span>
               <span>Domicilios <strong class="num">{{ pesos(totHechas().domicilios) }}</strong></span>
+              @if (totHechas().propinas) { <span>Propinas <strong class="num">{{ pesos(totHechas().propinas) }}</strong></span> }
               <span>Efectivo <strong class="num">{{ pesos(totHechas().efectivo) }}</strong></span>
               <span>Transferencias <strong class="num">{{ pesos(totHechas().transferencia) }}</strong></span>
               <span>Cuadrado <strong class="num">{{ pesos(totHechas().cuadrado) }}</strong></span>
@@ -460,7 +466,7 @@ export class MisEntregasPage implements OnInit, OnDestroy {
       .map((x) => x.p);
   });
   pendientes = signal<
-    { mensajero_id: number; fecha: string; pedidos: number; efectivo: number; transferencia: number; domicilios: number; desde: string }[]
+    { mensajero_id: number; fecha: string; pedidos: number; efectivo: number; transferencia: number; domicilios: number; desde: string; propinas?: number }[]
   >([]);
   detalle = signal<Pedido[]>([]);
   /** Día cuyos pedidos por cuadrar se están viendo */
@@ -475,15 +481,16 @@ export class MisEntregasPage implements OnInit, OnDestroy {
 
   hechas = signal<Pedido[]>([]);
   private rango: RangoFechas | null = null;
-  /** Cuadrado / por cuadrar = efectivo − domicilios, igual que en Cuadres (lo que el mensajero entrega) */
+  /** Cuadrado / por cuadrar = efectivo − domicilios − propinas por transferencia, igual que en Cuadres (lo que el mensajero entrega) */
   totHechas = computed(() => {
     const pendientesIds = new Set(this.misPorConfirmar().map((c) => c.id));
     return this.hechas().reduce(
       (a, p) => {
-        const neto = Number(p.valor_efectivo || 0) - Number(p.valor_domicilio || 0);
+        const neto = Number(p.valor_efectivo || 0) - Number(p.valor_domicilio || 0) - Number(p.propina || 0);
         const esperando = !!p.cuadre_id && pendientesIds.has(p.cuadre_id);
         return {
           domicilios: a.domicilios + Number(p.valor_domicilio || 0),
+          propinas: a.propinas + Number(p.propina || 0),
           efectivo: a.efectivo + Number(p.valor_efectivo || 0),
           transferencia: a.transferencia + Number(p.valor_transferencia || 0),
           cuadrado: a.cuadrado + (p.cuadre_id && !esperando ? neto : 0),
@@ -491,7 +498,7 @@ export class MisEntregasPage implements OnInit, OnDestroy {
           porCuadrar: a.porCuadrar + (p.cuadre_id ? 0 : neto),
         };
       },
-      { domicilios: 0, efectivo: 0, transferencia: 0, cuadrado: 0, porConfirmar: 0, porCuadrar: 0 }
+      { domicilios: 0, propinas: 0, efectivo: 0, transferencia: 0, cuadrado: 0, porConfirmar: 0, porCuadrar: 0 }
     );
   });
 

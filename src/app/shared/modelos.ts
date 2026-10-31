@@ -73,6 +73,8 @@ export interface Pedido {
   barrio: string | null;
   observaciones: string | null;
   valor_domicilio: number;
+  /** Lo que el cliente transfirió de más: propina del mensajero (se le descuenta en el cuadre) */
+  propina?: number;
   total: number;
   tipo_recaudo: TipoRecaudo | null;
   valor_efectivo: number | null;
@@ -129,6 +131,8 @@ export interface Cuadre {
   total_efectivo: number;
   total_transferencia: number;
   total_domicilios: number;
+  /** Propinas por transferencia del mensajero (se le descuentan de lo que entrega) */
+  total_propinas?: number;
   /** pendiente = el mensajero lo entregó y falta que la oficina confirme que recibió la plata */
   estado?: 'pendiente' | 'confirmado' | 'anulado';
   confirmado_at?: string | null;

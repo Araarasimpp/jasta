@@ -19,6 +19,9 @@ import { ComprobantesInputComponent } from '../comprobantes/comprobantes-input.c
       .tipo.on { border-color: var(--accent); background: var(--accent-wash); color: var(--accent); }
       .total { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; color: var(--text-soft); }
       .total strong { font-size: 22px; color: var(--text); }
+      .link-propina { align-self: flex-start; padding: 4px 0; border: 0; background: none; color: var(--accent); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+      .propina { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: var(--radius); background: var(--ok-wash); }
+      .propina .ayuda strong { color: var(--efectivo-texto); }
     `,
   ],
   template: `
@@ -53,6 +56,27 @@ import { ComprobantesInputComponent } from '../comprobantes/comprobantes-input.c
         @if (pideComprobante(tipo()) && conQr) {
           <button type="button" class="b" style="width: 100%" (click)="qr.emit(tipo() === 'mixto' ? (transferencia || 0) : pedido.total)">
             Mostrar QR para que pague {{ pesos(tipo() === 'mixto' ? (transferencia || 0) : pedido.total) }}</button>
+        }
+        @if (pideComprobante(tipo()) && !alConfirmar) {
+          @if (!conPropina()) {
+            <button type="button" class="link-propina" (click)="conPropina.set(true)">+ El cliente transfirió de más (propina)</button>
+          } @else {
+            <div class="propina">
+              <div class="campo">
+                <label for="prop">Propina: lo que transfirió de más</label>
+                <input id="prop" type="number" inputmode="numeric" min="0" step="500" [(ngModel)]="propina" placeholder="Ej: 2000" />
+              </div>
+              <p class="ayuda" style="margin: 0">
+                @if (propina > 0) {
+                  El cliente transfirió <strong class="num">{{ pesos(transferido() + propina) }}</strong>
+                  ({{ pesos(transferido()) }} del pedido + {{ pesos(propina) }} de propina). La propina es tuya: en el cuadre se te descuenta de lo que entregas.
+                } @else {
+                  Escribe solo lo que sobró. Ej: si el pedido es de $79.000 y transfirió $81.000, la propina es $2.000.
+                }
+              </p>
+              <button type="button" class="link-propina" (click)="conPropina.set(false); propina = 0">Quitar propina</button>
+            </div>
+          }
         }
         @if (pideComprobante(tipo())) {
           <app-comprobantes-input [rutas]="evidencias()" (cambio)="evidencias.set($event); error.set('')"></app-comprobantes-input>
@@ -93,6 +117,12 @@ export class EntregarComponent {
   transferencia = 0;
   guardando = signal(false);
   evidencias = signal<string[]>([]);
+  /** Lo que el cliente transfirió de más (solo con transferencia o mixto): es del mensajero */
+  conPropina = signal(false);
+  propina = 0;
+  transferido(): number {
+    return this.tipo() === 'mixto' ? Number(this.transferencia) || 0 : Number(this.pedido.total) || 0;
+  }
   pideComprobante = pideComprobante;
   error = signal('');
 
@@ -101,6 +131,11 @@ export class EntregarComponent {
     if (!tipo) return;
     if (tipo === 'mixto' && Number(this.efectivo) + Number(this.transferencia) !== Number(this.pedido.total)) {
       this.error.set(`Efectivo + transferencia debe dar ${pesos(this.pedido.total)}.`);
+      return;
+    }
+    const propina = pideComprobante(tipo) && this.conPropina() ? Math.round(Number(this.propina) || 0) : 0;
+    if (propina < 0 || propina > Number(this.pedido.total)) {
+      this.error.set('Revisa la propina.');
       return;
     }
     if (pideComprobante(tipo) && !this.evidencias().length) {
@@ -112,7 +147,7 @@ export class EntregarComponent {
     try {
       const evidencias = pideComprobante(tipo) ? this.evidencias() : [];
       if (this.alConfirmar) await this.alConfirmar(tipo, Number(this.efectivo) || 0, Number(this.transferencia) || 0, evidencias);
-      else await this.ps.entregar(this.pedido.id, tipo, Number(this.efectivo) || 0, Number(this.transferencia) || 0, evidencias);
+      else await this.ps.entregar(this.pedido.id, tipo, Number(this.efectivo) || 0, Number(this.transferencia) || 0, evidencias, propina);
       this.entregado.emit();
     } catch (e) {
       this.error.set(mensajeError(e));

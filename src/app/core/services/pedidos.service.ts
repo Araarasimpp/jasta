@@ -271,9 +271,13 @@ export class PedidosService {
     if (!r.count) throw new Error('No se pudo eliminar el pedido');
   }
 
-  async entregar(id: number, tipo: TipoRecaudo, efectivo: number, transferencia: number, evidencias: string[]): Promise<void> {
+  /** propina = lo que el cliente transfirió de más (es del mensajero; solo se manda si hay) */
+  async entregar(id: number, tipo: TipoRecaudo, efectivo: number, transferencia: number, evidencias: string[], propina = 0): Promise<void> {
     this.check(
-      await this.db.rpc('entregar_pedido', { p_pedido: id, p_tipo: tipo, p_efectivo: efectivo, p_transferencia: transferencia, p_evidencias: evidencias })
+      await this.db.rpc('entregar_pedido', {
+        p_pedido: id, p_tipo: tipo, p_efectivo: efectivo, p_transferencia: transferencia, p_evidencias: evidencias,
+        ...(propina > 0 ? { p_propina: propina } : {}),
+      })
     );
   }
 

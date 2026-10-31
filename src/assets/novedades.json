@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026-10-31-domicilio-propinas",
+    "fecha": "2026-10-31",
+    "titulo": "Mis entregas: tu domicilio en cada pedido y propinas por transferencia",
+    "cuerpo": "Cada pedido muestra cuánto te ganas de domicilio. Y si el cliente transfiere de más, ahora lo registras como propina: es tuya y se te descuenta en el cuadre.",
+    "roles": [
+      "mensajero",
+      "admin",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "Tu domicilio en cada tarjeta",
+        "texto": "Debajo del total del pedido sale en verde \"Tu domicilio: $8.000\", para que sepas cuánto te ganas con cada entrega antes de salir."
+      },
+      {
+        "titulo": "Propina por transferencia: cómo se registra",
+        "pasos": [
+          "Al entregar, elige Transferencia o Mixto como siempre.",
+          "Toca \"+ El cliente transfirió de más (propina)\".",
+          "Escribe solo lo que sobró. Ej: si el pedido es de $79.000 y el cliente transfirió $81.000, la propina es $2.000.",
+          "Sube el comprobante y confirma la entrega."
+        ]
+      },
+      {
+        "titulo": "Qué pasa con esa plata",
+        "puntos": [
+          "La propina llegó a la cuenta del negocio, pero es del mensajero: en el cuadre se le descuenta de lo que entrega en efectivo, igual que sus domicilios.",
+          "El total del pedido no cambia: ventas, reportes y ganancias siguen igual.",
+          "En Cuadres, la oficina ve las propinas en cada cuadre y el efectivo a recibir ya viene con ellas descontadas.",
+          "La propina en efectivo no se registra: esa ya te la quedas tú en la mano."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-10-31-copiar-texto-fechas-local",
     "fecha": "2026-10-31",
     "titulo": "Ya puedes seleccionar y copiar texto en el celular",
