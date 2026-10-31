@@ -82,8 +82,6 @@ export class PedidosPage implements OnInit, OnDestroy {
     { id: 'todos', label: 'Todos' },
   ];
   readonly hoy = formatoFechaCO(new Date().toISOString(), { weekday: 'long', day: 'numeric', month: 'long' });
-  /** Productos que se muestran con foto; el resto se resume como "+N más" */
-  readonly maxProductosVisibles = 3;
   readonly porPagina = 50;
 
   // Se abre en Pendientes: es lo que hay que atender primero
