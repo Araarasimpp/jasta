@@ -49,6 +49,15 @@ interface Tarea {
 }
 
 /** Inicio (admin y cuadres): lo de hoy, la ganancia de la tienda y lo que necesita atención */
+/** Primer y último día del mes en curso (hora Colombia), como YYYY-MM-DD */
+function inicioMes(): string {
+  return hoyColombiaISO().slice(0, 8) + '01';
+}
+function finMes(): string {
+  const [a, m] = hoyColombiaISO().split('-').map(Number);
+  return `${a}-${String(m).padStart(2, '0')}-${String(new Date(a, m, 0).getDate()).padStart(2, '0')}`;
+}
+
 @Component({
   selector: 'app-inicio',
   standalone: true,
@@ -66,12 +75,12 @@ interface Tarea {
       .variacion { margin-left: 6px; font-size: 12px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
       .variacion.sube { color: var(--efectivo-texto); }
       .variacion.baja { color: var(--danger); }
-      .titulo-local { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 4px 0 -4px; }
-      .titulo-local .titulo-mes { margin: 0; }
-      .chips-local { display: flex; gap: 6px; }
-      .chips-local button { height: 30px; padding: 0 12px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface); color: var(--text-soft);
-        font: inherit; font-size: 12.5px; cursor: pointer; }
-      .chips-local button.on { border-color: var(--accent); background: var(--accent-wash); color: var(--accent); font-weight: 650; }
+      .titulo-local { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px; margin: 4px 0 -4px; }
+      .titulo-local .titulo-mes { margin: 0 0 8px; }
+      .fechas-local { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; }
+      .fechas-local label { display: flex; flex-direction: column; gap: 3px; font-size: 11.5px; font-weight: 600; color: var(--text-muted); }
+      .fechas-local .inp { height: 38px; min-width: 140px; font-size: 14px; }
+      .fechas-local .este-mes { height: 38px; font-size: 13px; }
       .titulo-mes { margin: 4px 0 -4px; font-size: 13px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
       .kpi-valor.neg { color: var(--danger); }
       .cols { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 16px; align-items: start; }
@@ -184,9 +193,10 @@ interface Tarea {
       @if (local(); as l) {
         <div class="titulo-local">
           <h2 class="titulo-mes">Ventas del local</h2>
-          <div class="chips-local" role="group" aria-label="Periodo de las ventas del local">
-            <button [class.on]="periodoLocal() === 'hoy'" [attr.aria-pressed]="periodoLocal() === 'hoy'" (click)="cambiarLocal('hoy')">Hoy</button>
-            <button [class.on]="periodoLocal() === 'mes'" [attr.aria-pressed]="periodoLocal() === 'mes'" (click)="cambiarLocal('mes')">Este mes</button>
+          <div class="fechas-local" role="group" aria-label="Periodo de las ventas del local">
+            <label>Desde<input type="date" class="inp" [value]="desdeLocal()" [max]="hastaLocal()" (change)="cambiarLocal('desde', $any($event.target).value)" /></label>
+            <label>Hasta<input type="date" class="inp" [value]="hastaLocal()" [min]="desdeLocal()" (change)="cambiarLocal('hasta', $any($event.target).value)" /></label>
+            @if (!esMesActual()) { <button type="button" class="b este-mes" (click)="mesActualLocal()">Este mes</button> }
           </div>
         </div>
         <div class="kpis" role="list">
@@ -428,16 +438,31 @@ export class InicioPage implements OnInit, OnDestroy {
 
   // ------------------------------------------------------- Ventas del local
   local = signal<{ ventas: number; total: number; efectivo: number; transferencia: number; alcancia: number; ganancia_tienda: number; unidades: number } | null>(null);
-  periodoLocal = signal<'hoy' | 'mes'>('hoy');
+  /** Siempre arranca en el mes en curso, del día 1 al último día (30 o 31) */
+  desdeLocal = signal(inicioMes());
+  hastaLocal = signal(finMes());
+  esMesActual = computed(() => this.desdeLocal() === inicioMes() && this.hastaLocal() === finMes());
 
-  cambiarLocal(p: 'hoy' | 'mes'): void {
-    this.periodoLocal.set(p);
+  cambiarLocal(campo: 'desde' | 'hasta', valor: string): void {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(valor)) return;
+    if (campo === 'desde') {
+      this.desdeLocal.set(valor);
+      if (valor > this.hastaLocal()) this.hastaLocal.set(valor);
+    } else {
+      this.hastaLocal.set(valor);
+      if (valor < this.desdeLocal()) this.desdeLocal.set(valor);
+    }
+    void this.cargarLocal();
+  }
+
+  mesActualLocal(): void {
+    this.desdeLocal.set(inicioMes());
+    this.hastaLocal.set(finMes());
     void this.cargarLocal();
   }
 
   private async cargarLocal(): Promise<void> {
-    const hoy = hoyColombiaISO();
-    const { data, error } = await this.sb.client.rpc('resumen_local', { p_desde: this.periodoLocal() === 'mes' ? hoy.slice(0, 8) + '01' : hoy, p_hasta: hoy });
+    const { data, error } = await this.sb.client.rpc('resumen_local', { p_desde: this.desdeLocal(), p_hasta: this.hastaLocal() });
     if (error || !data) return; // si falla, el resto del Inicio se ve igual
     const d = data as Record<string, number>;
     this.local.set({

@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026-10-31-copiar-texto-fechas-local",
+    "fecha": "2026-10-31",
+    "titulo": "Ya puedes seleccionar y copiar texto en el celular",
+    "cuerpo": "En toda la app puedes dejar presionado un texto (un nombre, un teléfono, una dirección, un valor) para seleccionarlo y copiarlo.",
+    "roles": [
+      "admin",
+      "cuadres",
+      "vendedora",
+      "mensajero",
+      "alistador",
+      "venta_local",
+      "recolector"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se copia",
+        "pasos": [
+          "Deja presionado el texto que quieres copiar.",
+          "Ajusta la selección con los puntos de los extremos si hace falta.",
+          "Toca Copiar y pégalo donde lo necesites (WhatsApp, notas…)."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "puntos": [
+          "Los botones no se seleccionan, para que al tocarlos no se marque el texto por error.",
+          "En Mis entregas, las tarjetas de los pedidos no se seleccionan porque al dejarlas presionadas se arrastran para ordenar la ruta. Para copiar un dato de ahí, abre el pedido."
+        ]
+      },
+      {
+        "titulo": "Admins: ventas del local en Inicio",
+        "texto": "El recuadro de Ventas del local ahora tiene Desde y Hasta. Siempre arranca en el mes en curso, del día 1 al último día (30 o 31), y puedes cambiar las fechas. Si las cambias, sale el botón Este mes para volver."
+      }
+    ]
+  },
+  {
     "id": "2026-10-30-menu-buscar",
     "fecha": "2026-10-30",
     "titulo": "Menú más fácil: buscador y lo que más usas",
