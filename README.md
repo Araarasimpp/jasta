@@ -1,7 +1,7 @@
 # Jasta
 
 App de pedidos de Jasta: ventas, alistamiento, despacho a mensajeros, entregas con recaudo y cuadres.
-Hecha con Ionic + Angular sobre Supabase, con el estilo de Home ALS.
+Hecha con Ionic + Angular sobre Supabase.
 
 ## Roles
 
