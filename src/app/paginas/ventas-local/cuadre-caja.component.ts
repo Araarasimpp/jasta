@@ -7,6 +7,7 @@ import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { mensajeError, pesos } from '../../shared/formato';
 import { formatoHoraCO } from '../../shared/fecha-colombia';
+import { PesosDirective } from '../../shared/pesos/pesos.directive';
 
 interface Caja {
   fecha: string; ventas: number; total: number; efectivo: number; transferencia: number; base_sugerida: number;
@@ -20,7 +21,7 @@ interface Caja {
 @Component({
   selector: 'app-cuadre-caja',
   standalone: true,
-  imports: [FormsModule, IonIcon],
+  imports: [FormsModule, IonIcon, PesosDirective],
   styles: [
     `
       .caja { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-top: 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
@@ -71,11 +72,11 @@ interface Caja {
         <div class="hoja-body">
           <div class="campo">
             <label for="cj-base">Base con la que abrió la caja</label>
-            <input id="cj-base" class="num" type="text" inputmode="numeric" [ngModel]="base()" (ngModelChange)="base.set(aNumero($event))" placeholder="0" />
+            <input id="cj-base" pesos [ngModel]="base()" (ngModelChange)="base.set($event)" placeholder="$ 0" />
           </div>
           <div class="campo">
             <label for="cj-cont">Efectivo que contaste ahora</label>
-            <input id="cj-cont" class="num num-grande" type="text" inputmode="numeric" [ngModel]="contado()" (ngModelChange)="contado.set(aNumero($event))" placeholder="Cuenta billetes y monedas" />
+            <input id="cj-cont" pesos class="num-grande" [ngModel]="contado()" (ngModelChange)="contado.set($event)" placeholder="Cuenta billetes y monedas" />
           </div>
           <div class="cuenta">
             <span>Base</span><span>{{ pesos(base() || 0) }}</span>
@@ -163,11 +164,6 @@ export class CuadreCajaComponent implements OnChanges {
 
   estadoDe(d: number): string {
     return d === 0 ? 'ok' : d < 0 ? 'falta' : 'sobra';
-  }
-
-  aNumero(v: string): number | null {
-    const n = String(v ?? '').replace(/\D/g, '');
-    return n ? Number(n) : null;
   }
 
   hora(iso: string): string {

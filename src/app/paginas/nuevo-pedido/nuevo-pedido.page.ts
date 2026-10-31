@@ -15,6 +15,7 @@ import { ComprobantesInputComponent } from '../../shared/comprobantes/comprobant
 import { PAISES, bandera, errorTelefono, limpiarNombre, separarTelefono, unirTelefono } from '../../shared/paises';
 import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 import { BotonTicketComponent } from '../../shared/ticket/boton-ticket.component';
+import { PesosDirective } from '../../shared/pesos/pesos.directive';
 
 interface Linea {
   /** Para seguir la línea en la lista aunque se repita el producto */
@@ -44,7 +45,7 @@ function normal(s: string): string {
 @Component({
   selector: 'app-nuevo-pedido',
   standalone: true,
-  imports: [EsqueletoComponent, FormsModule, IonIcon, ComprobantesInputComponent, BotonTicketComponent],
+  imports: [PesosDirective, EsqueletoComponent, FormsModule, IonIcon, ComprobantesInputComponent, BotonTicketComponent],
   styles: [
     `
       .vendida { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-bottom: 16px; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--efectivo-texto) 35%, transparent);
@@ -207,7 +208,7 @@ function normal(s: string): string {
                 </div>
                 <div class="campo">
                   <label for="dom">Domicilio</label>
-                  <input id="dom" type="number" inputmode="numeric" min="0" step="1000" [(ngModel)]="domicilio" (ngModelChange)="domicilioS.set(+$event || 0)" />
+                  <input pesos id="dom" [(ngModel)]="domicilio" (ngModelChange)="domicilioS.set(+$event || 0)" />
                 </div>
               </div>
             }
@@ -244,9 +245,9 @@ function normal(s: string): string {
               @if (tipo() === 'mixto') {
                 <div class="fila-campos">
                   <div class="campo"><label for="ef">Efectivo</label>
-                    <input id="ef" type="number" inputmode="numeric" [(ngModel)]="efectivo" (ngModelChange)="transferencia = subtotal() - (+$event || 0)" /></div>
+                    <input pesos id="ef" [(ngModel)]="efectivo" (ngModelChange)="transferencia = subtotal() - (+$event || 0)" /></div>
                   <div class="campo"><label for="tr">Transferencia</label>
-                    <input id="tr" type="number" inputmode="numeric" [(ngModel)]="transferencia" /></div>
+                    <input pesos id="tr" [(ngModel)]="transferencia" /></div>
                 </div>
               }
               @if (!editId() && pideComprobante(tipo())) {
@@ -294,7 +295,7 @@ function normal(s: string): string {
                   <span class="num">{{ l.cantidad }}</span>
                   <button (click)="cambiarCantidad(i, 1)" aria-label="Más"><ion-icon name="add"></ion-icon></button>
                 </span>
-                <input class="inp precio num" type="number" inputmode="numeric" step="1000" [ngModel]="l.precio" (ngModelChange)="cambiarPrecio(i, $event)" aria-label="Precio unitario" />
+                <input pesos class="inp precio num" [ngModel]="l.precio" (ngModelChange)="cambiarPrecio(i, $event)" aria-label="Precio unitario" />
                 <button class="b b-icono" (click)="quitar(i)" aria-label="Quitar"><ion-icon name="close-outline"></ion-icon></button>
                 @if (tieneVariantes(l.producto)) {
                   @if (preguntar() === l.key) {

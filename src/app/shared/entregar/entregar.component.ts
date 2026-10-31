@@ -5,12 +5,13 @@ import { Pedido, TipoRecaudo } from '../modelos';
 import { mensajeError, pesos } from '../formato';
 import { pideComprobante } from '../comprobantes';
 import { ComprobantesInputComponent } from '../comprobantes/comprobantes-input.component';
+import { PesosDirective } from '../../shared/pesos/pesos.directive';
 
 /** Hoja para registrar la entrega y cómo pagó el cliente */
 @Component({
   selector: 'app-entregar',
   standalone: true,
-  imports: [FormsModule, ComprobantesInputComponent],
+  imports: [PesosDirective, FormsModule, ComprobantesInputComponent],
   styles: [
     `
       .tipos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -44,11 +45,11 @@ import { ComprobantesInputComponent } from '../comprobantes/comprobantes-input.c
           <div class="fila-campos">
             <div class="campo">
               <label for="ef">Efectivo</label>
-              <input id="ef" type="number" inputmode="numeric" min="0" [(ngModel)]="efectivo" (ngModelChange)="transferencia = pedido.total - (efectivo || 0)" />
+              <input pesos id="ef" [(ngModel)]="efectivo" (ngModelChange)="transferencia = pedido.total - (efectivo || 0)" />
             </div>
             <div class="campo">
               <label for="tr">Transferencia</label>
-              <input id="tr" type="number" inputmode="numeric" min="0" [(ngModel)]="transferencia" />
+              <input pesos id="tr" [(ngModel)]="transferencia" />
             </div>
           </div>
           <p class="ayuda">Deben sumar {{ pesos(pedido.total) }}.</p>
@@ -64,7 +65,7 @@ import { ComprobantesInputComponent } from '../comprobantes/comprobantes-input.c
             <div class="propina">
               <div class="campo">
                 <label for="prop">Propina: lo que transfirió de más</label>
-                <input id="prop" type="number" inputmode="numeric" min="0" step="500" [(ngModel)]="propina" placeholder="Ej: 2000" />
+                <input pesos id="prop" [(ngModel)]="propina" placeholder="Ej: 2000" />
               </div>
               <p class="ayuda" style="margin: 0">
                 @if (propina > 0) {

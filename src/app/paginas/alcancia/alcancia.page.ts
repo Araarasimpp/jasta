@@ -12,6 +12,7 @@ import { mensajeError, numero, pesos } from '../../shared/formato';
 import { diaColombiaDe, formatoFechaCO, formatoHoraCO, hoyColombiaISO } from '../../shared/fecha-colombia';
 import { diaLargo, sumarDias } from '../../shared/rango/rango.component';
 import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
+import { PesosDirective } from '../../shared/pesos/pesos.directive';
 
 interface Movimiento {
   tipo: 'entrada' | 'salida';
@@ -43,7 +44,7 @@ type Atajo = 'hoy' | '7' | 'mes' | 'mes_pasado' | null;
 @Component({
   selector: 'app-alcancia',
   standalone: true,
-  imports: [EsqueletoComponent, FormsModule, IonIcon, AvatarComponent, VentaLocalDetalleComponent],
+  imports: [PesosDirective, EsqueletoComponent, FormsModule, IonIcon, AvatarComponent, VentaLocalDetalleComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -211,7 +212,7 @@ type Atajo = 'hoy' | '7' | 'mes' | 'mes_pasado' | null;
           <button class="b b-icono" aria-label="Cerrar" (click)="retiro.set(false)"><ion-icon name="close-outline"></ion-icon></button></div>
         <div class="hoja-body">
           <p class="ayuda" style="margin: 0">Hay {{ pesos(d()?.saldo) }} en el servicio local.</p>
-          <div class="campo"><label for="rm">Valor</label><input id="rm" class="inp num" type="number" inputmode="numeric" min="0" step="1000" [(ngModel)]="monto" /></div>
+          <div class="campo"><label for="rm">Valor</label><input pesos id="rm" class="inp num" [(ngModel)]="monto" /></div>
           <div class="campo"><label for="rc">¿En qué se usó?</label><input id="rc" class="inp" maxlength="200" [(ngModel)]="concepto" placeholder="Ej: bombillos, aseo, arreglo de la vitrina" /></div>
           @if (errorForm()) { <p class="error" role="alert">{{ errorForm() }}</p> }
         </div>
@@ -229,7 +230,7 @@ type Atajo = 'hoy' | '7' | 'mes' | 'mes_pasado' | null;
           <button class="b b-icono" aria-label="Cerrar" (click)="editAporte.set(false)"><ion-icon name="close-outline"></ion-icon></button></div>
         <div class="hoja-body">
           <p class="ayuda" style="margin: 0">Lo que se le descuenta a la vendedora de su ganancia en cada venta del local, para el servicio local. Aplica a las ventas nuevas.</p>
-          <div class="campo"><label for="ap">Valor</label><input id="ap" class="inp num" type="number" inputmode="numeric" min="0" step="500" [(ngModel)]="nuevoAporte" /></div>
+          <div class="campo"><label for="ap">Valor</label><input pesos id="ap" class="inp num" [(ngModel)]="nuevoAporte" /></div>
           @if (errorForm()) { <p class="error" role="alert">{{ errorForm() }}</p> }
         </div>
         <div class="hoja-pie">

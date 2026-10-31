@@ -1,4 +1,4 @@
--- Propinas por transferencia (PENDIENTE DE APLICAR)
+-- Propinas por transferencia (YA APLICADO)
 -- Si el cliente transfiere más del total (ej. paga $81.000 por un pedido de $79.000), lo que sobra
 -- es propina del mensajero. Esa plata queda en la cuenta del negocio, así que en el cuadre se le
 -- descuenta de lo que entrega, igual que sus domicilios. El total del pedido no cambia: ventas,

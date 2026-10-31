@@ -17,6 +17,7 @@ import { TallasProductoComponent } from '../../shared/tallas-producto/tallas-pro
 import { VideosProductoComponent } from '../../shared/videos-producto/videos-producto.component';
 import { CargaMasivaComponent } from './carga-masiva.component';
 import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
+import { PesosDirective } from '../../shared/pesos/pesos.directive';
 
 type Filtro = 'activos' | 'agotados' | 'bajo' | 'inactivos' | 'todos';
 
@@ -32,7 +33,7 @@ const VACIO: Omit<Producto, 'id'> = {
 @Component({
   selector: 'app-productos',
   standalone: true,
-  imports: [EsqueletoComponent, FormsModule, IonIcon, ColoresProductoComponent, ElegirFotoComponent, FotosProductoComponent, TallasProductoComponent, VideosProductoComponent, CargaMasivaComponent],
+  imports: [PesosDirective, EsqueletoComponent, FormsModule, IonIcon, ColoresProductoComponent, ElegirFotoComponent, FotosProductoComponent, TallasProductoComponent, VideosProductoComponent, CargaMasivaComponent],
   styles: [
     `
       .tonos { display: inline-flex; gap: 3px; margin-left: 8px; vertical-align: middle; }
@@ -136,9 +137,9 @@ const VACIO: Omit<Producto, 'id'> = {
             <div class="campo"><label for="pc">Código de barras</label><input id="pc" [(ngModel)]="f.codigo_barras" /></div>
           </div>
           <div class="fila-campos">
-            <div class="campo"><label for="pv">Precio de venta</label><input id="pv" type="number" inputmode="numeric" [(ngModel)]="f.precio_venta" /></div>
-            <div class="campo"><label for="pb">Precio base</label><input id="pb" type="number" inputmode="numeric" [(ngModel)]="f.precio_base" /></div>
-            <div class="campo"><label for="pco">Precio de compra</label><input id="pco" type="number" inputmode="numeric" [(ngModel)]="f.precio_compra" /></div>
+            <div class="campo"><label for="pv">Precio de venta</label><input pesos id="pv" [(ngModel)]="f.precio_venta" /></div>
+            <div class="campo"><label for="pb">Precio base</label><input pesos id="pb" [(ngModel)]="f.precio_base" /></div>
+            <div class="campo"><label for="pco">Precio de compra</label><input pesos id="pco" [(ngModel)]="f.precio_compra" /></div>
           </div>
           <p class="margen">
             Precio base: lo mínimo que puede cobrar una vendedora. Ganancia por unidad a precio de venta:

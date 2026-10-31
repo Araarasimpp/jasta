@@ -1,5 +1,30 @@
 [
   {
+    "id": "2026-10-31-formato-pesos",
+    "fecha": "2026-10-31",
+    "titulo": "Los valores se escriben con formato de pesos",
+    "cuerpo": "Cuando escribes un valor de plata, la app pone sola el signo y los puntos de miles: escribes 85000 y ves $ 85.000.",
+    "roles": [
+      "admin",
+      "cuadres",
+      "vendedora",
+      "mensajero",
+      "alistador",
+      "venta_local",
+      "recolector"
+    ],
+    "secciones": [
+      {
+        "titulo": "Dónde",
+        "puntos": [
+          "Precios de productos, domicilios, precios en el pedido, efectivo y transferencia en pagos mixtos, propinas, gastos, devoluciones, costos de compras, recolector, alcancía y el cuadre de caja.",
+          "Solo escribe los números: los puntos y el $ salen solos. Se abre el teclado numérico.",
+          "Las cantidades y el stock siguen como números normales."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-10-31-domicilio-propinas",
     "fecha": "2026-10-31",
     "titulo": "Mis entregas: tu domicilio en cada pedido y propinas por transferencia",

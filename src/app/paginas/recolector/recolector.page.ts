@@ -13,6 +13,7 @@ import { urlsComprobantes } from '../../shared/comprobantes';
 import { mensajeError, numero, pesos } from '../../shared/formato';
 import { formatoFechaCO, formatoHoraCO } from '../../shared/fecha-colombia';
 import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
+import { PesosDirective } from '../../shared/pesos/pesos.directive';
 
 interface Pendiente { id: number; monto: number; nombre: string; de: string | null; recolector: string; fecha: string }
 interface Movimiento {
@@ -47,7 +48,7 @@ interface Resumen {
 @Component({
   selector: 'app-recolector',
   standalone: true,
-  imports: [EsqueletoComponent, FormsModule, IonIcon, DiaComponent, ComprobantesInputComponent],
+  imports: [PesosDirective, EsqueletoComponent, FormsModule, IonIcon, DiaComponent, ComprobantesInputComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -225,7 +226,7 @@ interface Resumen {
               @if (!(r()?.recolectores?.length)) { <p class="ayuda">No hay usuarios con el rol Recolector. Asígnalo en Usuarios.</p> }
             </div>
           }
-          <div class="campo"><label for="bm">Valor</label><input id="bm" class="inp num" type="number" inputmode="numeric" min="0" step="1000" [(ngModel)]="baseMonto" /></div>
+          <div class="campo"><label for="bm">Valor</label><input pesos id="bm" class="inp num" [(ngModel)]="baseMonto" /></div>
           <div class="campo"><label for="bn">Nombre de la base</label>
             <input id="bn" class="inp" maxlength="120" [(ngModel)]="baseNombre" placeholder="¿De dónde viene? Ej: caja del local, ventas de la mañana" /></div>
           @if (admin() && !esRecolector()) { <p class="ayuda" style="margin: 0">Le llega un aviso al recolector; se suma cuando la acepte.</p> }
@@ -245,7 +246,7 @@ interface Resumen {
         <div class="hoja-head"><h2 id="t-compra">Registrar compra</h2>
           <button class="b b-icono" aria-label="Cerrar" (click)="formCompra.set(false)"><ion-icon name="close-outline"></ion-icon></button></div>
         <div class="hoja-body">
-          <div class="campo"><label for="cv">Valor</label><input id="cv" class="inp num" type="number" inputmode="numeric" min="0" step="100" [(ngModel)]="compraValor" /></div>
+          <div class="campo"><label for="cv">Valor</label><input pesos id="cv" class="inp num" [(ngModel)]="compraValor" /></div>
           @if ((compraValor || 0) > cuadre() && cuadre() >= 0) { <p class="aviso-neg">Es más de lo que queda de base ({{ pesos(cuadre()) }}).</p> }
           <div class="campo"><label for="cp">Proveedor</label><input id="cp" class="inp" maxlength="120" [(ngModel)]="compraProveedor" placeholder="Ej: Distribuidora El Centro" /></div>
           <div class="campo"><label for="cd">Producto</label><input id="cd" class="inp" maxlength="200" [(ngModel)]="compraProducto" placeholder="Ej: 20 cables USB-C" /></div>

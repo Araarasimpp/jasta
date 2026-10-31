@@ -5,6 +5,7 @@ import { Pedido, PedidoItem } from '../modelos';
 import { mensajeError, pesos } from '../formato';
 import { ComprobantesInputComponent } from '../comprobantes/comprobantes-input.component';
 import { nombreConVariante } from '../variante';
+import { PesosDirective } from '../../shared/pesos/pesos.directive';
 
 type Tipo = 'devolucion' | 'cambio' | 'garantia';
 
@@ -25,7 +26,7 @@ const MOTIVOS = [
 @Component({
   selector: 'app-devolucion',
   standalone: true,
-  imports: [FormsModule, ComprobantesInputComponent],
+  imports: [PesosDirective, FormsModule, ComprobantesInputComponent],
   styles: [
     `
       .tipos, .estados { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
@@ -96,7 +97,7 @@ const MOTIVOS = [
 
         @if (tipo() === 'devolucion') {
           <div class="fila-campos">
-            <div class="campo"><label for="dv-re">Se le devuelve</label><input id="dv-re" class="num" type="number" inputmode="numeric" min="0" [(ngModel)]="reembolso" /></div>
+            <div class="campo"><label for="dv-re">Se le devuelve</label><input pesos id="dv-re" class="num" [(ngModel)]="reembolso" /></div>
             <div class="campo"><label for="dv-me">¿Cómo?</label>
               <select id="dv-me" [(ngModel)]="metodo"><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="otro">Otro</option></select></div>
           </div>

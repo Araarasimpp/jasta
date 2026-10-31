@@ -8,6 +8,7 @@ import { ToastService } from '../../shared/toast/toast.service';
 import { TarifaDomicilio } from '../../shared/modelos';
 import { mensajeError, numero, pesos } from '../../shared/formato';
 import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
+import { PesosDirective } from '../../shared/pesos/pesos.directive';
 
 /** Quita tildes y pasa a minúsculas para buscar sin importar cómo se escriba */
 function normal(s: string): string {
@@ -23,7 +24,7 @@ type Filtro = 'activos' | 'inactivos' | 'todos';
 @Component({
   selector: 'app-barrios',
   standalone: true,
-  imports: [EsqueletoComponent, FormsModule, IonIcon],
+  imports: [PesosDirective, EsqueletoComponent, FormsModule, IonIcon],
   styles: [
     `
       .tabla td { white-space: normal; }
@@ -100,7 +101,7 @@ type Filtro = 'activos' | 'inactivos' | 'todos';
             </div>
             <div class="campo">
               <label for="b-val">Valor del domicilio</label>
-              <input id="b-val" name="domicilio" type="number" inputmode="numeric" min="0" step="1000" required [(ngModel)]="f.domicilio" />
+              <input pesos id="b-val" name="domicilio" required [(ngModel)]="f.domicilio" />
             </div>
             <div class="rapidos" aria-label="Valores frecuentes">
               @for (v of frecuentes(); track v) {

@@ -10,6 +10,7 @@ import { enlaceWhatsapp } from '../../shared/whatsapp';
 import { EstadisticasTiendaComponent } from './estadisticas-tienda.component';
 import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 import { EnlacesProductosComponent } from './enlaces-productos.component';
+import { PesosDirective } from '../../shared/pesos/pesos.directive';
 
 interface ItemWeb { producto_id: number; nombre: string; cantidad: number; precio: number; color: string | null; talla: string | null }
 interface PedidoWeb {
@@ -33,7 +34,7 @@ export function enlaceTienda(u: { id: number; nombre: string } | null): string {
 @Component({
   selector: 'app-pedidos-web',
   standalone: true,
-  imports: [EnlacesProductosComponent, EsqueletoComponent, FormsModule, RouterLink, EstadisticasTiendaComponent],
+  imports: [PesosDirective, EnlacesProductosComponent, EsqueletoComponent, FormsModule, RouterLink, EstadisticasTiendaComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -143,7 +144,7 @@ export function enlaceTienda(u: { id: number; nombre: string } | null): string {
           @if (a.tipo === 'confirmar') {
             <p class="ayuda" style="margin: 0">Confírmalo solo después de hablar con el cliente. Al confirmar, el pedido pasa a Pedidos por alistar a tu nombre.</p>
             <div class="campo"><label for="pw-dom">Domicilio{{ a.w.domicilio_por_confirmar ? ' (su barrio no está en la tabla)' : '' }}</label>
-              <input id="pw-dom" type="number" inputmode="numeric" min="0" step="1000" [(ngModel)]="domicilio" [placeholder]="a.w.domicilio_por_confirmar ? 'Escribe lo que vas a cobrar' : ''" /></div>
+              <input pesos id="pw-dom" [(ngModel)]="domicilio" [placeholder]="a.w.domicilio_por_confirmar ? 'Escribe lo que vas a cobrar' : ''" /></div>
             @if (a.w.domicilio_por_confirmar) {
               <p class="ayuda" style="margin: 0">El cliente escribió el barrio <strong>{{ a.w.barrio }}</strong>, que no está en la tabla de domicilios. Pregúntale bien dónde queda y cobra lo que corresponda.</p>
               <label class="check"><input type="checkbox" [(ngModel)]="guardarBarrio" />

@@ -13,6 +13,7 @@ import { urlsComprobantes } from '../../shared/comprobantes';
 import { mensajeError, numero, pesos, urlMini } from '../../shared/formato';
 import { diaCorto, formatoFechaCO, formatoHoraCO, hoyColombiaISO } from '../../shared/fecha-colombia';
 import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
+import { PesosDirective } from '../../shared/pesos/pesos.directive';
 
 interface Prod {
   id: number;
@@ -49,7 +50,7 @@ type Filtro = 'con' | 'bajos' | 'agotados' | 'sin' | 'todos';
 @Component({
   selector: 'app-inventario',
   standalone: true,
-  imports: [EsqueletoComponent, FormsModule, IonIcon, ComprobantesInputComponent, RangoComponent],
+  imports: [PesosDirective, EsqueletoComponent, FormsModule, IonIcon, ComprobantesInputComponent, RangoComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -337,7 +338,7 @@ type Filtro = 'con' | 'bajos' | 'agotados' | 'sin' | 'todos';
                 <div class="linea" [class.sin-costo]="!esAdmin()">
                   <span class="nom">{{ l.producto.nombre }}</span>
                   <input class="num" type="number" inputmode="numeric" min="1" [(ngModel)]="l.cantidad" (ngModelChange)="tocar()" aria-label="Cantidad" placeholder="Cant." />
-                  @if (esAdmin()) { <input class="num" type="number" inputmode="numeric" min="0" [(ngModel)]="l.costo" (ngModelChange)="tocar()" aria-label="Costo por unidad" placeholder="Costo c/u" /> }
+                  @if (esAdmin()) { <input pesos class="num" [(ngModel)]="l.costo" (ngModelChange)="tocar()" aria-label="Costo por unidad" placeholder="Costo c/u" /> }
                   <button type="button" class="quitar" (click)="quitarLinea(i)" aria-label="Quitar"><ion-icon name="trash-outline"></ion-icon></button>
                 </div>
               }
