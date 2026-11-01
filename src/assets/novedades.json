@@ -1,5 +1,44 @@
 [
   {
+    "id": "2026-11-01-comprobante-egreso",
+    "fecha": "2026-11-01",
+    "titulo": "Comprobante de egreso de cada pago de comisiones (para la DIAN)",
+    "cuerpo": "Cada pago a una vendedora ahora se descarga como comprobante de egreso en PDF, numerado, con NIT, cédula, detalle, valor en letras, firmas y el soporte.",
+    "roles": [
+      "admin",
+      "vendedora"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se descarga",
+        "pasos": [
+          "Entra a Comisiones → Pagos hechos.",
+          "En cada pago toca el botón CE-000123 · PDF.",
+          "Se descarga el comprobante. Guárdalo o imprímelo para la contabilidad."
+        ]
+      },
+      {
+        "titulo": "Qué lleva",
+        "puntos": [
+          "Número consecutivo (CE-000123) y fecha del pago.",
+          "Nombre, NIT y dirección del negocio.",
+          "A quién se le pagó, con su cédula, y el concepto: comisiones de las entregas de esa semana.",
+          "Valor en números y en letras (ej. CUATROCIENTOS VEINTINUEVE MIL PESOS M/CTE).",
+          "Detalle de cada pedido con su comisión, y las devoluciones que se descontaron.",
+          "Firmas de quien pagó y de quien recibe, y en hojas aparte las fotos del soporte (transferencia o recibo)."
+        ]
+      },
+      {
+        "titulo": "Antes de empezar (admin)",
+        "puntos": [
+          "Pon el NIT y la dirección del negocio en Configuración → Datos para la DIAN.",
+          "La primera vez que descargues el comprobante de una vendedora, la app te pide su cédula y la guarda para los próximos.",
+          "Si un pago quedó sin soporte, en Pagos hechos sale el botón Subir soporte para agregarlo después."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-11-01-comisiones-semana",
     "fecha": "2026-11-01",
     "titulo": "Comisiones por semana, de sábado a viernes",

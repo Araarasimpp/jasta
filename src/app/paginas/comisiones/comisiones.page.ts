@@ -13,6 +13,7 @@ import { urlsComprobantes } from '../../shared/comprobantes';
 import { mensajeError, pesos } from '../../shared/formato';
 import { diaCorto, finDiaColombia, formatoFechaCO, formatoHoraCO, hoyColombiaISO, inicioDiaColombia } from '../../shared/fecha-colombia';
 import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
+import { DatosComprobante, generarComprobanteEgreso, numeroComprobante } from '../../shared/comprobante-egreso';
 
 interface Pendiente { vendedora_id: number; nombre: string; pedidos: number; total: number; desde: string | null; hasta: string | null; anteriores: number }
 
@@ -72,6 +73,8 @@ const METODOS = [
       .periodo-com .inp { height: 40px; width: 100%; min-width: 0; padding: 0 8px; font-size: 14px; }
       .periodo-com .b { height: 40px; }
       .periodo-com .b:not(.b-icono) { grid-column: 1 / -1; justify-self: start; }
+      .soporte-acc { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+      .b.chico { height: 32px; padding: 0 10px; font-size: 12.5px; }
       .antes { margin: 0; padding: 6px 10px; border-radius: var(--radius-sm); background: var(--oro-wash); color: var(--oro-texto); font-size: 12.5px; }
       .por-cobrar { display: flex; flex-direction: column; gap: 4px; padding: 18px 20px; border-radius: var(--radius-lg); background: var(--ok-wash); }
       .por-cobrar span { font-size: 12.5px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--efectivo-texto); }
@@ -187,11 +190,17 @@ const METODOS = [
                 <td class="der num" data-etq="Total"><strong>{{ pesos(l.total) }}</strong>@if (l.anulada) {<span class="t2">Anulado</span>}</td>
                 <td data-etq="Forma">{{ metodo(l.metodo) }}</td>
                 <td data-etq="Soporte">
-                  @if (l.comprobantes.length) {
-                    <button type="button" class="foto" (click)="verSoporte(l)" aria-label="Ver comprobante">
-                      @if (fotos()[l.comprobantes[0]]; as u) { <img [src]="u" alt="" loading="lazy" /> }
-                    </button>
-                  } @else { <span class="suave">—</span> }
+                  <div class="soporte-acc">
+                    @if (l.comprobantes.length) {
+                      <button type="button" class="foto" (click)="verSoporte(l)" aria-label="Ver soporte del pago">
+                        @if (fotos()[l.comprobantes[0]]; as u) { <img [src]="u" alt="" loading="lazy" /> }
+                      </button>
+                    } @else if (esAdmin() && !l.anulada) {
+                      <button type="button" class="b chico" (click)="abrirSoporte(l)">Subir soporte</button>
+                    } @else { <span class="suave">—</span> }
+                    <button type="button" class="b chico" [disabled]="generando() === l.id" (click)="descargarComprobante(l)"
+                      [attr.aria-label]="'Descargar comprobante de egreso ' + numero(l.id)">{{ generando() === l.id ? 'Generando…' : numero(l.id) + ' · PDF' }}</button>
+                  </div>
                 </td>
                 @if (esAdmin()) {
                   <td data-etq="">@if (!l.anulada) {<button class="b" style="height: 32px; font-size: 12.5px" (click)="anular(l)">Anular</button>}</td>
@@ -204,6 +213,22 @@ const METODOS = [
         </table>
       </div>
     </div>
+
+    @if (soporteDe(); as l) {
+      <button class="velo" aria-label="Cerrar" (click)="soporteDe.set(null)"></button>
+      <div class="hoja hoja-centro" role="dialog" aria-labelledby="t-sop">
+        <div class="hoja-head"><h2 id="t-sop">Soporte del pago {{ numero(l.id) }}</h2>
+          <button class="b b-icono" aria-label="Cerrar" (click)="soporteDe.set(null)"><ion-icon name="close-outline"></ion-icon></button></div>
+        <div class="hoja-body">
+          <p class="ayuda" style="margin: 0">{{ l.vendedora?.nombre }} · {{ pesos(l.total) }} · {{ metodo(l.metodo) }}. Sube el pantallazo de la transferencia o la foto del recibo firmado.</p>
+          <app-comprobantes-input [obligatorio]="true" titulo="Soporte del pago" [rutas]="soporteFotos()" (cambio)="soporteFotos.set($event)"></app-comprobantes-input>
+        </div>
+        <div class="hoja-pie">
+          <button class="b" (click)="soporteDe.set(null)">Cancelar</button>
+          <button class="b b-pri" (click)="guardarSoporte()" [disabled]="ocupado() || !soporteFotos().length">{{ ocupado() ? 'Guardando…' : 'Guardar soporte' }}</button>
+        </div>
+      </div>
+    }
 
     @if (pagando(); as c) {
       <button class="velo" aria-label="Cerrar" (click)="pagando.set(null)"></button>
@@ -422,6 +447,61 @@ export class ComisionesPage implements OnInit {
     if (error) return this.toast.error(mensajeError(error));
     this.toast.ok('Pago anulado');
     await this.cargar();
+  }
+
+  /** Comprobante de egreso en PDF (para la contabilidad y la DIAN) */
+  generando = signal<number | null>(null);
+  soporteDe = signal<Liquidacion | null>(null);
+  soporteFotos = signal<string[]>([]);
+  numero = numeroComprobante;
+
+  async descargarComprobante(l: Liquidacion): Promise<void> {
+    this.generando.set(l.id);
+    try {
+      const { data, error } = await this.sb.client.rpc('comprobante_liquidacion', { p_id: l.id });
+      if (error) throw error;
+      const d = data as DatosComprobante & { comprobantes: string[] };
+      // Sin cédula el comprobante no sirve ante la DIAN: el admin la puede poner ahí mismo
+      if (this.esAdmin() && d.vendedora && !d.vendedora.documento) {
+        const doc = prompt(`Cédula de ${d.vendedora.nombre} (sale en el comprobante; se guarda para los próximos):`)?.trim();
+        if (doc) {
+          const r = await this.sb.client.rpc('guardar_documento', { p_usuario: l.vendedora_id, p_documento: doc });
+          if (!r.error) d.vendedora.documento = doc;
+        }
+      }
+      const soportes = d.comprobantes?.length ? (await urlsComprobantes(this.sb.client, d.comprobantes)).filter(Boolean) : [];
+      const archivo = await generarComprobanteEgreso(d, soportes);
+      const url = URL.createObjectURL(archivo);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = archivo.name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      if (!d.negocio?.nit) this.toast.error('Falta el NIT del negocio: ponlo en Configuración para que salga en el comprobante.');
+    } catch (e) {
+      this.toast.error(mensajeError(e));
+    } finally {
+      this.generando.set(null);
+    }
+  }
+
+  abrirSoporte(l: Liquidacion): void {
+    this.soporteFotos.set([]);
+    this.soporteDe.set(l);
+  }
+
+  async guardarSoporte(): Promise<void> {
+    const l = this.soporteDe();
+    if (!l) return;
+    this.ocupado.set(true);
+    const { error } = await this.sb.client.rpc('agregar_soporte_liquidacion', { p_id: l.id, p_comprobantes: this.soporteFotos() });
+    this.ocupado.set(false);
+    if (error) return this.toast.error(mensajeError(error));
+    this.toast.ok('Soporte guardado');
+    this.soporteDe.set(null);
+    await this.cargarHistorial();
   }
 
   verSoporte(l: Liquidacion): void {
