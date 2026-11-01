@@ -21,7 +21,8 @@ returns void language plpgsql security definer set search_path to '' as $functio
 begin
   if not public.tiene_rol('admin') then raise exception 'Sin permiso'; end if;
   update public.configuracion set nit = nullif(left(trim(coalesce(p_nit, '')), 30), ''),
-    direccion = nullif(left(trim(coalesce(p_direccion, '')), 160), ''), updated_at = now();
+    direccion = nullif(left(trim(coalesce(p_direccion, '')), 160), ''), updated_at = now()
+  where id = true;
 end $function$;
 
 -- Todo lo del comprobante de un pago: el admin o la vendedora a la que se le pagó
