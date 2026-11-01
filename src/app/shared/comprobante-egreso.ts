@@ -156,7 +156,7 @@ export async function generarComprobanteEgreso(d: DatosComprobante, soportes: st
   fila('Pagado a:', ven.nombre);
   fila('Cédula / NIT:', ven.documento || '(sin registrar)');
   if (ven.telefono) fila('Teléfono:', ven.telefono);
-  fila('Concepto:', `Pago de comisiones por ventas, entregas del ${fecha(d.desde, false)} al ${fecha(d.hasta)} (${d.pedidos} ${d.pedidos === 1 ? 'pedido' : 'pedidos'}).`);
+  fila('Concepto:', `Pago de comisiones por ventas, pedidos del ${fecha(d.desde, false)} al ${fecha(d.hasta)} (${d.pedidos} ${d.pedidos === 1 ? 'pedido' : 'pedidos'}).`);
   fila('Forma de pago:', METODO[d.metodo] ?? d.metodo);
   if (d.nota) fila('Nota:', d.nota);
   y += 2;

@@ -53,7 +53,7 @@
         "puntos": [
           "Arriba están Desde y Hasta. Al entrar, siempre sale la última semana completa de sábado a viernes (por ejemplo, del sábado 24 al viernes 30 de octubre).",
           "Con las flechas ◀ ▶ pasas a la semana anterior o a la siguiente. También puedes poner cualquier rango de fechas.",
-          "Cada vendedora muestra la suma de su comisión por las entregas de esas fechas.",
+          "Cada vendedora muestra la suma de su comisión por los pedidos CREADOS en esas fechas que ya se entregaron. Un pedido creado el viernes y entregado el sábado es de la semana del viernes.",
           "Si alguna tiene comisiones sin pagar de semanas anteriores, sale un aviso amarillo con el valor."
         ]
       },

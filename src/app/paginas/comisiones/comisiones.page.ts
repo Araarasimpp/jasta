@@ -113,11 +113,11 @@ const METODOS = [
         <button class="b b-icono" aria-label="Semana siguiente" (click)="moverSemana(7)"><ion-icon name="chevron-forward-outline"></ion-icon></button>
         @if (!esSemanaPasada()) { <button class="b" (click)="irSemanaPasada()">Semana pasada</button> }
       </div>
-      <p class="ayuda" style="margin: -4px 0 0">Las comisiones se pagan por semana, de sábado a viernes. Aquí ves lo que se le debe a cada una por las entregas de {{ periodo(desdeP(), hastaP()) }}.</p>
+      <p class="ayuda" style="margin: -4px 0 0">Las comisiones se pagan por semana, de sábado a viernes. Aquí ves lo que se le debe a cada una por los pedidos <strong>creados</strong> del {{ periodo(desdeP(), hastaP()) }} que ya se entregaron.</p>
 
       @if (esAdmin()) {
         <div class="desde">
-          <span>Se cuentan las entregas desde</span>
+          <span>Se cuentan los pedidos creados desde</span>
           <input class="inp inp-chico" type="date" [(ngModel)]="desde" aria-label="Contar comisiones desde" />
           @if (desde !== desdeGuardado()) {
             <button class="b" (click)="guardarDesde()" [disabled]="ocupado()">Guardar</button>
@@ -133,7 +133,7 @@ const METODOS = [
                 <span class="suave" style="font-size: 12px">{{ periodo(c.desde, c.hasta) }}</span>
               </div>
               <span class="monto">{{ pesos(c.total) }}</span>
-              <p class="suave" style="margin: 0; font-size: 13px">{{ c.pedidos }} {{ c.pedidos === 1 ? 'pedido entregado' : 'pedidos entregados' }} en estas fechas</p>
+              <p class="suave" style="margin: 0; font-size: 13px">{{ c.pedidos }} {{ c.pedidos === 1 ? 'pedido creado' : 'pedidos creados' }} en estas fechas y ya entregados</p>
               @if (c.anteriores) { <p class="antes">Además tiene {{ pesos(c.anteriores) }} sin pagar de antes del {{ periodo(desdeP(), null) }}. Muévete a semanas anteriores con ◀ para pagarlas.</p> }
               @if (abiertaV() === c.vendedora_id) {
                 <table class="mini">
