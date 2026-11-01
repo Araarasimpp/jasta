@@ -1,4 +1,4 @@
--- Comprobante de egreso de las comisiones (para la DIAN) (PENDIENTE DE APLICAR)
+-- Comprobante de egreso de las comisiones (para la DIAN) (YA APLICADO)
 -- Cada pago a una vendedora sale como comprobante de egreso numerado (CE-000123) con los datos
 -- del negocio (NIT), de quien recibe (cédula), el detalle de las comisiones, el total, la forma
 -- de pago y el soporte. Se puede agregar el soporte después si el pago se registró sin él.

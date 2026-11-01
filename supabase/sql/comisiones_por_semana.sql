@@ -1,4 +1,4 @@
--- Comisiones por periodo (sábado a viernes) (PENDIENTE DE APLICAR)
+-- Comisiones por periodo (sábado a viernes) (YA APLICADO)
 -- La página de Comisiones filtra por Desde/Hasta (por defecto la última semana de sábado a viernes)
 -- y el pago cubre exactamente ese rango.
 
