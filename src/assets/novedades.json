@@ -1,5 +1,30 @@
 [
   {
+    "id": "2026-11-01-comisiones-semana",
+    "fecha": "2026-11-01",
+    "titulo": "Comisiones por semana, de sábado a viernes",
+    "cuerpo": "La página de Comisiones ahora muestra lo de cada semana de sábado a viernes, con fechas Desde y Hasta. Siempre arranca en la última semana completa.",
+    "roles": [
+      "admin",
+      "vendedora"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo funciona",
+        "puntos": [
+          "Arriba están Desde y Hasta. Al entrar, siempre sale la última semana completa de sábado a viernes (por ejemplo, del sábado 24 al viernes 30 de octubre).",
+          "Con las flechas ◀ ▶ pasas a la semana anterior o a la siguiente. También puedes poner cualquier rango de fechas.",
+          "Cada vendedora muestra la suma de su comisión por las entregas de esas fechas.",
+          "Si alguna tiene comisiones sin pagar de semanas anteriores, sale un aviso amarillo con el valor."
+        ]
+      },
+      {
+        "titulo": "Pagar (admin)",
+        "texto": "\"Registrar pago\" paga exactamente las entregas de las fechas que estás viendo, y la nota queda como \"Semana del 24 de octubre al 30 de octubre\". Lo de otras semanas queda pendiente hasta que lo pagues en su semana."
+      }
+    ]
+  },
+  {
     "id": "2026-10-31-formato-pesos",
     "fecha": "2026-10-31",
     "titulo": "Los valores se escriben con formato de pesos",

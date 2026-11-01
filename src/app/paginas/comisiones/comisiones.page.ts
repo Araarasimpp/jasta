@@ -2,7 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { chevronDownOutline, chevronUpOutline, closeOutline, refreshOutline } from 'ionicons/icons';
+import { chevronBackOutline, chevronDownOutline, chevronForwardOutline, chevronUpOutline, closeOutline, refreshOutline } from 'ionicons/icons';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { VisorService } from '../../shared/visor/visor.service';
@@ -11,10 +11,24 @@ import { ComprobantesInputComponent } from '../../shared/comprobantes/comprobant
 import { RangoComponent, RangoFechas } from '../../shared/rango/rango.component';
 import { urlsComprobantes } from '../../shared/comprobantes';
 import { mensajeError, pesos } from '../../shared/formato';
-import { diaCorto, finDiaColombia, formatoFechaCO, formatoHoraCO, inicioDiaColombia } from '../../shared/fecha-colombia';
+import { diaCorto, finDiaColombia, formatoFechaCO, formatoHoraCO, hoyColombiaISO, inicioDiaColombia } from '../../shared/fecha-colombia';
 import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
-interface Pendiente { vendedora_id: number; nombre: string; pedidos: number; total: number; desde: string; hasta: string }
+interface Pendiente { vendedora_id: number; nombre: string; pedidos: number; total: number; desde: string | null; hasta: string | null; anteriores: number }
+
+/** Suma días a una fecha YYYY-MM-DD */
+function sumarDias(d: string, n: number): string {
+  const f = new Date(d + 'T12:00:00Z');
+  f.setUTCDate(f.getUTCDate() + n);
+  return f.toISOString().slice(0, 10);
+}
+/** La última semana completa de sábado a viernes (las comisiones se pagan así): termina el último viernes antes de hoy */
+function semanaPasada(): { desde: string; hasta: string } {
+  const hoy = hoyColombiaISO();
+  const dow = new Date(hoy + 'T12:00:00Z').getUTCDay(); // 0 domingo … 5 viernes, 6 sábado
+  const hasta = sumarDias(hoy, -(((dow - 5 + 7) % 7) || 7));
+  return { desde: sumarDias(hasta, -6), hasta };
+}
 interface PedidoComision { id: number; dia: string; cliente_nombre: string; total: number; comision: number }
 interface Liquidacion {
   id: number;
@@ -53,6 +67,12 @@ const METODOS = [
       .page { max-width: 1000px; }
       .desde { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13.5px; color: var(--text-soft); }
       .desde input { width: auto; }
+      .periodo-com { display: grid; grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr) auto; align-items: end; gap: 8px; max-width: 560px; }
+      .periodo-com label { display: flex; flex-direction: column; gap: 3px; min-width: 0; font-size: 11.5px; font-weight: 600; color: var(--text-muted); }
+      .periodo-com .inp { height: 40px; width: 100%; min-width: 0; padding: 0 8px; font-size: 14px; }
+      .periodo-com .b { height: 40px; }
+      .periodo-com .b:not(.b-icono) { grid-column: 1 / -1; justify-self: start; }
+      .antes { margin: 0; padding: 6px 10px; border-radius: var(--radius-sm); background: var(--oro-wash); color: var(--oro-texto); font-size: 12.5px; }
       .por-cobrar { display: flex; flex-direction: column; gap: 4px; padding: 18px 20px; border-radius: var(--radius-lg); background: var(--ok-wash); }
       .por-cobrar span { font-size: 12.5px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--efectivo-texto); }
       .por-cobrar strong { font-family: var(--mono-font); font-size: 30px; }
@@ -83,6 +103,15 @@ const METODOS = [
         <button class="b b-icono" aria-label="Actualizar" (click)="cargar()"><ion-icon name="refresh-outline"></ion-icon></button>
       </div>
 
+      <div class="periodo-com">
+        <button class="b b-icono" aria-label="Semana anterior" (click)="moverSemana(-7)"><ion-icon name="chevron-back-outline"></ion-icon></button>
+        <label>Desde<input class="inp" type="date" [value]="desdeP()" [max]="hastaP()" (change)="cambiarPeriodo('desde', $any($event.target).value)" /></label>
+        <label>Hasta<input class="inp" type="date" [value]="hastaP()" [min]="desdeP()" (change)="cambiarPeriodo('hasta', $any($event.target).value)" /></label>
+        <button class="b b-icono" aria-label="Semana siguiente" (click)="moverSemana(7)"><ion-icon name="chevron-forward-outline"></ion-icon></button>
+        @if (!esSemanaPasada()) { <button class="b" (click)="irSemanaPasada()">Semana pasada</button> }
+      </div>
+      <p class="ayuda" style="margin: -4px 0 0">Las comisiones se pagan por semana, de sábado a viernes. Aquí ves lo que se le debe a cada una por las entregas de {{ periodo(desdeP(), hastaP()) }}.</p>
+
       @if (esAdmin()) {
         <div class="desde">
           <span>Se cuentan las entregas desde</span>
@@ -101,7 +130,8 @@ const METODOS = [
                 <span class="suave" style="font-size: 12px">{{ periodo(c.desde, c.hasta) }}</span>
               </div>
               <span class="monto">{{ pesos(c.total) }}</span>
-              <p class="suave" style="margin: 0; font-size: 13px">{{ c.pedidos }} {{ c.pedidos === 1 ? 'pedido entregado' : 'pedidos entregados' }}</p>
+              <p class="suave" style="margin: 0; font-size: 13px">{{ c.pedidos }} {{ c.pedidos === 1 ? 'pedido entregado' : 'pedidos entregados' }} en estas fechas</p>
+              @if (c.anteriores) { <p class="antes">Además tiene {{ pesos(c.anteriores) }} sin pagar de antes del {{ periodo(desdeP(), null) }}. Muévete a semanas anteriores con ◀ para pagarlas.</p> }
               @if (abiertaV() === c.vendedora_id) {
                 <table class="mini">
                   @for (p of pedidosV(); track p.id) {
@@ -114,7 +144,7 @@ const METODOS = [
                   <ion-icon [name]="abiertaV() === c.vendedora_id ? 'chevron-up-outline' : 'chevron-down-outline'"></ion-icon>
                   {{ abiertaV() === c.vendedora_id ? 'Ocultar pedidos' : 'Ver pedidos' }}
                 </button>
-                <button class="b b-ok" (click)="abrirPago(c)">Registrar pago</button>
+                @if (c.total) { <button class="b b-ok" (click)="abrirPago(c)">Registrar pago</button> }
               </div>
             </article>
           } @empty {
@@ -125,7 +155,8 @@ const METODOS = [
         <div class="por-cobrar">
           <span>Por cobrar</span>
           <strong>{{ pesos(mio()?.total ?? 0) }}</strong>
-          <small>{{ mio() ? mio()!.pedidos + (mio()!.pedidos === 1 ? ' pedido entregado' : ' pedidos entregados') + ' · ' + periodo(mio()!.desde, mio()!.hasta) : 'No tienes comisiones pendientes' }}</small>
+          <small>{{ mio() ? mio()!.pedidos + (mio()!.pedidos === 1 ? ' pedido entregado' : ' pedidos entregados') + ' · ' + periodo(desdeP(), hastaP()) : 'No tienes comisiones pendientes en estas fechas' }}</small>
+          @if (mio()?.anteriores) { <small>Además tienes {{ pesos(mio()!.anteriores) }} sin cobrar de antes del {{ periodo(desdeP(), null) }}.</small> }
         </div>
         @if (mio()) {
           <section class="panel">
@@ -180,8 +211,7 @@ const METODOS = [
         <div class="hoja-head"><h2 id="t-pago">Pagar a {{ c.nombre }}</h2>
           <button class="b b-icono" aria-label="Cerrar" (click)="pagando.set(null)"><ion-icon name="close-outline"></ion-icon></button></div>
         <div class="hoja-body">
-          <div class="campo"><label for="ph">Pagar las entregas hasta el</label>
-            <input id="ph" type="date" [min]="c.desde" [max]="c.hasta" [(ngModel)]="pagoHasta" (ngModelChange)="hastaSel.set($event); error.set('')" /></div>
+          <p class="ayuda" style="margin: 0">Se pagan las entregas del <strong>{{ periodo(desdeP(), hastaP()) }}</strong>.</p>
           <div class="a-pagar"><span>{{ aPagar().n }} {{ aPagar().n === 1 ? 'pedido' : 'pedidos' }}</span><strong>{{ pesos(aPagar().total) }}</strong></div>
           <div class="campo"><span class="etq">¿Cómo le pagaste?</span>
             <div class="metodos">
@@ -234,9 +264,14 @@ export class ComisionesPage implements OnInit {
 
   esAdmin = computed(() => this.sb.tiene('admin'));
   mio = computed(() => this.pendientes().find((p) => p.vendedora_id === this.sb.usuario()?.id) ?? null);
+  /** Periodo de las comisiones: arranca en la última semana de sábado a viernes */
+  desdeP = signal(semanaPasada().desde);
+  hastaP = signal(semanaPasada().hasta);
+  esSemanaPasada = computed(() => this.desdeP() === semanaPasada().desde && this.hastaP() === semanaPasada().hasta);
+  private enPeriodo = (dia: string) => dia >= this.desdeP() && dia <= this.hastaP();
+
   aPagar = computed(() => {
-    const h = this.hastaSel();
-    const lista = this.pedidosPago().filter((p) => !h || p.dia <= h);
+    const lista = this.pedidosPago().filter((p) => this.enPeriodo(p.dia));
     return { n: lista.length, total: lista.reduce((s, p) => s + Number(p.comision), 0) };
   });
   metodos = METODOS;
@@ -244,7 +279,7 @@ export class ComisionesPage implements OnInit {
   private rango: RangoFechas | null = null;
 
   constructor() {
-    addIcons({ chevronDownOutline, chevronUpOutline, closeOutline, refreshOutline });
+    addIcons({ chevronBackOutline, chevronDownOutline, chevronForwardOutline, chevronUpOutline, closeOutline, refreshOutline });
   }
 
   ngOnInit(): void {
@@ -261,8 +296,32 @@ export class ComisionesPage implements OnInit {
     await Promise.all([this.cargarPendientes(), this.cargarHistorial()]);
   }
 
+  cambiarPeriodo(campo: 'desde' | 'hasta', v: string): void {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return;
+    if (campo === 'desde') {
+      this.desdeP.set(v);
+      if (v > this.hastaP()) this.hastaP.set(v);
+    } else {
+      this.hastaP.set(v);
+      if (v < this.desdeP()) this.desdeP.set(v);
+    }
+    void this.cargarPendientes();
+  }
+
+  moverSemana(dias: number): void {
+    this.desdeP.set(sumarDias(this.desdeP(), dias));
+    this.hastaP.set(sumarDias(this.hastaP(), dias));
+    void this.cargarPendientes();
+  }
+
+  irSemanaPasada(): void {
+    this.desdeP.set(semanaPasada().desde);
+    this.hastaP.set(semanaPasada().hasta);
+    void this.cargarPendientes();
+  }
+
   private async cargarPendientes(): Promise<void> {
-    const { data, error } = await this.sb.client.rpc('liquidaciones_pendientes');
+    const { data, error } = await this.sb.client.rpc('comisiones_periodo', { p_desde: this.desdeP(), p_hasta: this.hastaP() });
     this.cargando.set(false);
     if (error) return this.toast.error(mensajeError(error));
     this.pendientes.set((data ?? []) as Pendiente[]);
@@ -300,7 +359,9 @@ export class ComisionesPage implements OnInit {
       this.toast.error(mensajeError(error));
       return [];
     }
-    return (data ?? []) as PedidoComision[];
+    // Los pendientes se muestran solo los del periodo elegido
+    const lista = (data ?? []) as PedidoComision[];
+    return liquidacion === null ? lista.filter((p) => this.enPeriodo(p.dia)) : lista;
   }
 
   async verPedidos(id: number): Promise<void> {
@@ -323,11 +384,12 @@ export class ComisionesPage implements OnInit {
   }
 
   async abrirPago(c: Pendiente): Promise<void> {
-    this.pagoHasta = c.hasta;
-    this.hastaSel.set(c.hasta);
+    this.pagoHasta = this.hastaP();
+    this.hastaSel.set(this.hastaP());
     this.pagoMetodo.set('transferencia');
     this.pagoSoportes.set([]);
-    this.pagoNota = '';
+    const f = (d: string) => formatoFechaCO(d + 'T12:00:00-05:00', { day: 'numeric', month: 'long' });
+    this.pagoNota = `Semana del ${f(this.desdeP())} al ${f(this.hastaP())}`;
     this.error.set('');
     this.pedidosPago.set([]);
     this.pagando.set(c);
@@ -339,12 +401,12 @@ export class ComisionesPage implements OnInit {
     if (!c) return;
     this.hastaSel.set(this.pagoHasta);
     const { n, total } = this.aPagar();
-    if (!n) return this.error.set('No hay pedidos hasta ese día.');
+    if (!n) return this.error.set('No hay pedidos por pagar en estas fechas.');
     if (this.pagoMetodo() === 'transferencia' && !this.pagoSoportes().length) return this.error.set('Sube el comprobante de la transferencia.');
     if (!confirm(`¿Registrar el pago de ${pesos(total)} a ${c.nombre}? (${n} ${n === 1 ? 'pedido' : 'pedidos'})`)) return;
     this.ocupado.set(true);
     const { error } = await this.sb.client.rpc('pagar_liquidacion', {
-      p_vendedora: c.vendedora_id, p_hasta: this.pagoHasta, p_metodo: this.pagoMetodo(), p_comprobantes: this.pagoSoportes(), p_nota: this.pagoNota.trim(),
+      p_vendedora: c.vendedora_id, p_desde: this.desdeP(), p_hasta: this.hastaP(), p_metodo: this.pagoMetodo(), p_comprobantes: this.pagoSoportes(), p_nota: this.pagoNota.trim(),
     });
     this.ocupado.set(false);
     if (error) return this.error.set(mensajeError(error));
@@ -368,9 +430,11 @@ export class ComisionesPage implements OnInit {
     );
   }
 
+  /** Fechas exactas (sin "hoy" ni "ayer"): ej. "sáb 24 oct – vie 30 oct" */
   periodo(desde: string | null, hasta: string | null): string {
     if (!desde) return '—';
-    return !hasta || hasta === desde ? diaCorto(desde) : `${diaCorto(desde)} – ${diaCorto(hasta)}`;
+    const f = (d: string) => formatoFechaCO(d + 'T12:00:00-05:00', { weekday: 'short', day: 'numeric', month: 'short' }).replace(',', '');
+    return !hasta || hasta === desde ? f(desde) : `${f(desde)} – ${f(hasta)}`;
   }
 
   dia(d: string): string {
