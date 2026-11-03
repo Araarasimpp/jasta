@@ -104,6 +104,10 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/gastos/gastos.page').then((m) => m.GastosPage),
       },
       {
+        path: 'deudas', canActivate: [rolGuard], data: { roles: ['admin'] },
+        loadComponent: () => import('./paginas/deudas/deudas.page').then((m) => m.DeudasPage),
+      },
+      {
         path: 'actividad', canActivate: [rolGuard], data: { roles: ['admin'] },
         loadComponent: () => import('./paginas/actividad/actividad.page').then((m) => m.ActividadPage),
       },

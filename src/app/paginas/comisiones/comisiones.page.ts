@@ -14,6 +14,7 @@ import { mensajeError, pesos } from '../../shared/formato';
 import { diaCorto, finDiaColombia, formatoFechaCO, formatoHoraCO, hoyColombiaISO, inicioDiaColombia } from '../../shared/fecha-colombia';
 import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 import { DatosComprobante, generarComprobanteEgreso, numeroComprobante } from '../../shared/comprobante-egreso';
+import { DatosPago, resumenCuenta } from '../../shared/datos-pago/datos-pago';
 
 interface Pendiente { vendedora_id: number; nombre: string; pedidos: number; total: number; desde: string | null; hasta: string | null; anteriores: number }
 
@@ -73,6 +74,10 @@ const METODOS = [
       .periodo-com .inp { height: 40px; width: 100%; min-width: 0; padding: 0 8px; font-size: 14px; }
       .periodo-com .b { height: 40px; }
       .periodo-com .b:not(.b-icono) { grid-column: 1 / -1; justify-self: start; }
+      .cuenta-v { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; border-radius: var(--radius); background: var(--surface-2); font-size: 13.5px; }
+      .cv-tit { font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted); }
+      .cv-num { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-weight: 650; }
+      .cv-falta { color: var(--oro-texto); }
       .soporte-acc { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
       .b.chico { height: 32px; padding: 0 10px; font-size: 12.5px; }
       .antes { margin: 0; padding: 6px 10px; border-radius: var(--radius-sm); background: var(--oro-wash); color: var(--oro-texto); font-size: 12.5px; }
@@ -236,7 +241,19 @@ const METODOS = [
         <div class="hoja-head"><h2 id="t-pago">Pagar a {{ c.nombre }}</h2>
           <button class="b b-icono" aria-label="Cerrar" (click)="pagando.set(null)"><ion-icon name="close-outline"></ion-icon></button></div>
         <div class="hoja-body">
-          <p class="ayuda" style="margin: 0">Se pagan las entregas del <strong>{{ periodo(desdeP(), hastaP()) }}</strong>.</p>
+          <p class="ayuda" style="margin: 0">Se pagan los pedidos del <strong>{{ periodo(desdeP(), hastaP()) }}</strong>.</p>
+          <div class="cuenta-v">
+            @if (cuentaV(); as dp) {
+              @if (dp.numero_cuenta) {
+                <span class="cv-tit">Cuenta de {{ c.nombre.split(' ')[0] }}</span>
+                <span class="cv-num">{{ resumenCuenta(dp) }} <button type="button" class="b chico" (click)="copiar(dp.numero_cuenta!)">Copiar</button></span>
+                @if (dp.titular) { <small>A nombre de {{ dp.titular }}</small> }
+                @if (dp.documento) { <small>C.C. {{ dp.documento }}</small> }
+              } @else {
+                <span class="cv-falta">{{ c.nombre.split(' ')[0] }} no ha puesto su cuenta. Pídele que la agregue en Mi perfil → Datos para tus pagos.</span>
+              }
+            } @else { <small class="suave">Cargando la cuenta…</small> }
+          </div>
           <div class="a-pagar"><span>{{ aPagar().n }} {{ aPagar().n === 1 ? 'pedido' : 'pedidos' }}</span><strong>{{ pesos(aPagar().total) }}</strong></div>
           <div class="campo"><span class="etq">¿Cómo le pagaste?</span>
             <div class="metodos">
@@ -417,7 +434,9 @@ export class ComisionesPage implements OnInit {
     this.pagoNota = `Semana del ${f(this.desdeP())} al ${f(this.hastaP())}`;
     this.error.set('');
     this.pedidosPago.set([]);
+    this.cuentaV.set(null);
     this.pagando.set(c);
+    void this.sb.client.rpc('datos_pago_de', { p_usuario: c.vendedora_id }).then(({ data }) => this.cuentaV.set((data ?? {}) as DatosPago));
     this.pedidosPago.set(await this.pedidosDe(c.vendedora_id));
   }
 
@@ -484,6 +503,19 @@ export class ComisionesPage implements OnInit {
       this.toast.error(mensajeError(e));
     } finally {
       this.generando.set(null);
+    }
+  }
+
+  /** Cuenta de la vendedora a la que se le está pagando */
+  cuentaV = signal<DatosPago | null>(null);
+  resumenCuenta = resumenCuenta;
+
+  async copiar(t: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(t.replace(/[\s-]/g, ''));
+      this.toast.ok('Número copiado');
+    } catch {
+      this.toast.error('No se pudo copiar');
     }
   }
 

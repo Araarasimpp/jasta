@@ -1,5 +1,90 @@
 [
   {
+    "id": "2026-11-03-datos-pago",
+    "fecha": "2026-11-03",
+    "titulo": "Pon tu cédula y tu cuenta para que te paguen",
+    "cuerpo": "En Mi perfil hay una sección nueva, Datos para tus pagos: pon tu cédula y la cuenta (banco, Nequi o Daviplata) donde quieres recibir tus pagos.",
+    "roles": [
+      "vendedora",
+      "mensajero",
+      "venta_local",
+      "alistador",
+      "recolector",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se hace",
+        "pasos": [
+          "Toca Más → Mi perfil.",
+          "En Datos para tus pagos escribe tu cédula.",
+          "Elige el tipo de cuenta (ahorros, corriente, Nequi o Daviplata) y escribe el número. Si la cuenta está a nombre de otra persona, escríbelo en \"A nombre de\".",
+          "Toca Guardar datos."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "Estos datos son privados: solo los ves tú y el admin. Tu cédula sale en el comprobante de cada pago de comisiones."
+      }
+    ]
+  },
+  {
+    "id": "2026-11-03-deudas",
+    "fecha": "2026-11-03",
+    "titulo": "Nuevo: Deudas con proveedores",
+    "cuerpo": "Una página para llevar lo que se le debe a proveedores: mercancía fiada, préstamos y demás. De la mercancía fiada ves cuánto ya se vendió y cuánto conviene abonar.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Registrar mercancía fiada",
+        "pasos": [
+          "Al registrar la compra en Inventario → Registrar compra, marca \"Fiado\" y, si quieres, la fecha en que hay que pagarla.",
+          "La compra queda en Más → Deudas con el valor total.",
+          "También puedes tocar Nueva deuda en Deudas y elegir una compra ya registrada, o registrar otra deuda (un préstamo, un arriendo atrasado)."
+        ]
+      },
+      {
+        "titulo": "Qué te muestra cada deuda",
+        "puntos": [
+          "Cuánto se debe, cuánto se ha abonado y una barra de avance.",
+          "De la mercancía fiada: cuántas unidades ya se vendieron (ej. 34 de 60), producto por producto, y el costo de lo vendido.",
+          "\"Aparta y abona\": el costo de lo que ya se vendió y todavía no le has abonado al proveedor. Esa plata ya entró por esa mercancía.",
+          "Si tiene fecha, avisa cuándo vence; las vencidas salen en rojo. Te llega un aviso cuando falten 3 días."
+        ]
+      },
+      {
+        "titulo": "Botones",
+        "puntos": [
+          "Abonar: el valor que quieras, con forma de pago, fecha, foto del soporte y nota.",
+          "Abonar lo vendido: abona justo el costo de lo que ya se vendió.",
+          "Pagar todo: abona el saldo y la deuda queda pagada.",
+          "Cada abono se puede anular si se registró mal; también se puede anular una deuda registrada por error."
+        ]
+      },
+      {
+        "titulo": "Cómo se calcula lo vendido",
+        "texto": "Se cuentan las unidades de cada producto entregadas después de la compra, descontando el stock que ya había antes (se vende primero lo viejo). Para que sea exacto, los productos deben tener \"Controlar inventario\" activado."
+      }
+    ]
+  },
+  {
+    "id": "2026-11-03-cuenta-al-pagar",
+    "fecha": "2026-11-03",
+    "titulo": "Comisiones: la cuenta de cada vendedora al pagar",
+    "cuerpo": "Al registrar el pago de comisiones ves la cuenta de la vendedora (banco, tipo y número) con un botón para copiar el número.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Bueno saber",
+        "texto": "Si una vendedora no ha puesto su cuenta, la app te avisa para que se la pidas: la agrega ella misma en Mi perfil → Datos para tus pagos. Su cédula también sale sola en el comprobante de egreso."
+      }
+    ]
+  },
+  {
     "id": "2026-11-01-comprobante-egreso",
     "fecha": "2026-11-01",
     "titulo": "Comprobante de egreso de cada pago de comisiones (para la DIAN)",

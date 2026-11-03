@@ -9,12 +9,13 @@ import { RecortarFotoComponent } from '../../shared/recortar-foto/recortar-foto.
 import { TelegramPanelComponent } from '../../shared/telegram/telegram-panel.component';
 import { ROLES } from '../../shared/modelos';
 import { mensajeError } from '../../shared/formato';
+import { MisDatosPagoComponent } from './mis-datos-pago.component';
 
 /** Mi perfil y mi seguridad: nombre, teléfono, foto, contraseña y sesiones */
 @Component({
   selector: 'app-perfil',
   standalone: true,
-  imports: [FormsModule, AvatarComponent, RecortarFotoComponent, TelegramPanelComponent],
+  imports: [FormsModule, AvatarComponent, RecortarFotoComponent, TelegramPanelComponent, MisDatosPagoComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -87,6 +88,10 @@ import { mensajeError } from '../../shared/formato';
           <app-telegram-panel modo="perfil"></app-telegram-panel>
         </section>
       }
+
+      <section class="panel">
+        <app-mis-datos-pago></app-mis-datos-pago>
+      </section>
 
       <section class="panel">
         <h2>Contraseña</h2>

@@ -6,6 +6,7 @@ import { addIcons } from 'ionicons';
 import {
   add,
   barChartOutline,
+  hourglassOutline,
   searchOutline,
   chevronBackOutline,
   chevronDownOutline,
@@ -114,6 +115,7 @@ const MENU: ItemMenu[] = [
   { label: 'Reportes', path: '/app/reportes', icon: 'stats-chart-outline', roles: ['admin', 'vendedora'], grupo: 'Finanzas' },
   { label: 'Comisiones', path: '/app/comisiones', icon: 'card-outline', roles: ['admin', 'vendedora'], grupo: 'Finanzas' , buscar: 'liquidacion pagar vendedoras ganancia' },
   { label: 'Gastos', path: '/app/gastos', icon: 'trending-down-outline', roles: ['admin'], grupo: 'Finanzas' , buscar: 'arriendo nomina utilidad' },
+  { label: 'Deudas', path: '/app/deudas', icon: 'hourglass-outline', roles: ['admin'], grupo: 'Finanzas', buscar: 'fiado proveedor abono credito pagar' },
   { label: 'Rentabilidad', path: '/app/rentabilidad', icon: 'pie-chart-outline', roles: ['admin'], grupo: 'Finanzas' , buscar: 'ganancia producto' },
   { label: 'Ranking', path: '/app/ranking', icon: 'trophy-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador'], grupo: 'Equipo' , buscar: 'metas puesto' },
   { label: 'Usuarios', path: '/app/usuarios', icon: 'people-outline', roles: ['admin'], grupo: 'Equipo' , buscar: 'equipo roles crear cuenta' },
@@ -419,7 +421,7 @@ export class ShellComponent implements OnInit, OnDestroy {
   );
 
   constructor() {
-    addIcons({ searchOutline, 
+    addIcons({ hourglassOutline, searchOutline, 
       sparklesOutline, globeOutline, chatbubblesOutline, analyticsOutline, add, close, chevronDownOutline, layersOutline, pricetagsOutline, returnDownBackOutline, pieChartOutline, alertCircleOutline, cardOutline, trendingDownOutline, barChartOutline, chevronBackOutline, chevronForwardOutline, cubeOutline, ellipsisHorizontal,
       logOutOutline, moonOutline, peopleOutline, receiptOutline, bicycleOutline, clipboardOutline, sunnyOutline, walletOutline, statsChartOutline, settingsOutline,
       storefrontOutline, listOutline, trophyOutline, bookOutline, gridOutline, cashOutline, bagHandleOutline, peopleCircleOutline, timeOutline, personCircleOutline, notificationsOutline, locationOutline,

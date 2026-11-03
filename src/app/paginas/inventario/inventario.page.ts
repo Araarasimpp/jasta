@@ -353,6 +353,12 @@ type Filtro = 'con' | 'bajos' | 'agotados' | 'sin' | 'todos';
               (cambio)="facturas.set($event)"></app-comprobantes-input>
           }
           <div class="campo"><label for="cn">Nota (opcional)</label><input id="cn" maxlength="200" [(ngModel)]="nota" /></div>
+          @if (esAdmin()) {
+            <label class="check"><input type="checkbox" [(ngModel)]="fiado" />Fiado: queda como deuda con el proveedor (en Deudas)</label>
+            @if (fiado) {
+              <div class="campo"><label for="cvence">¿Para cuándo hay que pagarla? (opcional)</label><input id="cvence" type="date" [min]="hoy" [(ngModel)]="venceFiado" /></div>
+            }
+          }
           @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
         </div>
         <div class="hoja-pie">
@@ -613,7 +619,12 @@ export class InventarioPage implements OnInit {
     }
   }
 
+  fiado = false;
+  venceFiado = '';
+
   abrirCompra(): void {
+    this.fiado = false;
+    this.venceFiado = '';
     this.proveedor = '';
     this.fechaCompra = this.hoy;
     this.nota = '';
@@ -644,7 +655,7 @@ export class InventarioPage implements OnInit {
     if (!lineas.length) return this.error.set('Agrega al menos un producto.');
     if (lineas.some((l) => !l.cantidad || l.cantidad <= 0)) return this.error.set('Escribe la cantidad de cada producto.');
     this.ocupado.set(true);
-    const { error } = await this.sb.client.rpc('registrar_compra', {
+    const { data: idCompra, error } = await this.sb.client.rpc('registrar_compra', {
       p_fecha: this.fechaCompra || this.hoy,
       p_proveedor: this.proveedor.trim(),
       p_nota: this.nota.trim(),
@@ -652,9 +663,20 @@ export class InventarioPage implements OnInit {
       p_comprobantes: this.facturas(),
       p_actualizar_costo: this.actualizarCosto,
     });
+    if (error) {
+      this.ocupado.set(false);
+      return this.error.set(mensajeError(error));
+    }
+    // Mercancía fiada: la compra queda también como deuda con el proveedor
+    if (this.fiado && idCompra) {
+      const d = await this.sb.client.rpc('crear_deuda', {
+        p_proveedor: this.proveedor.trim(), p_concepto: 'Mercancía fiada', p_total: 0, p_fecha: this.fechaCompra || this.hoy,
+        p_vence: this.venceFiado || null, p_compra: idCompra,
+      });
+      if (d.error) this.toast.error('La compra quedó registrada, pero no se pudo crear la deuda: ' + mensajeError(d.error) + '. Créala en Deudas.');
+    }
     this.ocupado.set(false);
-    if (error) return this.error.set(mensajeError(error));
-    this.toast.ok(`Compra registrada: +${this.unidades()} unidades`);
+    this.toast.ok(`Compra registrada: +${this.unidades()} unidades${this.fiado ? ' · quedó en Deudas' : ''}`);
     this.formCompra.set(false);
     await Promise.all([this.cargar(), this.cargarCompras()]);
   }
