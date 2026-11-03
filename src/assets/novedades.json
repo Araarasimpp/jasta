@@ -1,5 +1,29 @@
 [
   {
+    "id": "2026-11-03-comisiones-vendedora",
+    "fecha": "2026-11-03",
+    "titulo": "Mira cuánto te deben y el comprobante de cada pago",
+    "cuerpo": "En Comisiones ahora ves arriba cuánto te deben en total, y en cada pago que te hicieron puedes ver el comprobante que subió el admin y los pedidos que cubre.",
+    "roles": [
+      "vendedora"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se hace",
+        "pasos": [
+          "Toca Más → Comisiones.",
+          "Arriba ves \"En total te deben\": todo lo entregado que no te han pagado, de cualquier semana. Abajo, lo de la semana que elijas.",
+          "En \"Pagos que te han hecho\" toca \"Ver pago\": ves cuánto te pagaron, cómo, quién pagó, la foto del comprobante (tócala para verla grande) y los pedidos de ese pago.",
+          "Toca \"Descargar PDF\" si quieres guardar el comprobante."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "Cuando te paguen te llega un aviso que abre ese pago directo. Si el admin sube el comprobante después, te llega otro aviso."
+      }
+    ]
+  },
+  {
     "id": "2026-11-03-datos-pago",
     "fecha": "2026-11-03",
     "titulo": "Pon tu cédula y tu cuenta para que te paguen",

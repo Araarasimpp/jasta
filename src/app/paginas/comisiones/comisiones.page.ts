@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import { chevronBackOutline, chevronDownOutline, chevronForwardOutline, chevronUpOutline, closeOutline, refreshOutline } from 'ionicons/icons';
@@ -101,6 +102,17 @@ const METODOS = [
       .foto { width: 38px; height: 38px; padding: 0; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: var(--surface-2); cursor: zoom-in; }
       .foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
       td .t2 { display: block; font-size: 12px; color: var(--text-muted); text-decoration: none; }
+      .total-v { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 16px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); }
+      .total-v span { font-size: 13px; color: var(--text-soft); }
+      .total-v strong { font-family: var(--mono-font); font-size: 20px; }
+      .det-monto { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 12px 14px; border-radius: var(--radius); background: var(--ok-wash); }
+      .det-monto strong { font-family: var(--mono-font); font-size: 24px; }
+      .det-datos { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; font-size: 13.5px; }
+      .det-datos dt { color: var(--text-muted); }
+      .det-datos dd { margin: 0; }
+      .det-fotos { display: flex; gap: 8px; flex-wrap: wrap; }
+      .det-fotos .foto { width: 72px; height: 72px; }
+      .sin-sop { margin: 0; padding: 8px 12px; border-radius: var(--radius-sm); background: var(--oro-wash); color: var(--oro-texto); font-size: 13px; }
       .vacio-txt { margin: 0; padding: 14px 0 6px; text-align: center; font-size: 13.5px; color: var(--text-soft); }
     `,
   ],
@@ -118,7 +130,7 @@ const METODOS = [
         <button class="b b-icono" aria-label="Semana siguiente" (click)="moverSemana(7)"><ion-icon name="chevron-forward-outline"></ion-icon></button>
         @if (!esSemanaPasada()) { <button class="b" (click)="irSemanaPasada()">Semana pasada</button> }
       </div>
-      <p class="ayuda" style="margin: -4px 0 0">Las comisiones se pagan por semana, de sábado a viernes. Aquí ves lo que se le debe a cada una por los pedidos <strong>creados</strong> del {{ periodo(desdeP(), hastaP()) }} que ya se entregaron.</p>
+      <p class="ayuda" style="margin: -4px 0 0">Las comisiones se pagan por semana, de sábado a viernes. Aquí ves {{ esAdmin() ? 'lo que se le debe a cada una' : 'lo que te deben' }} por los pedidos <strong>creados</strong> del {{ periodo(desdeP(), hastaP()) }} que ya se entregaron.</p>
 
       @if (esAdmin()) {
         <div class="desde">
@@ -160,6 +172,12 @@ const METODOS = [
           }
         </div>
       } @else {
+        @if (totalMio() !== null) {
+          <div class="total-v">
+            <span>En total te deben<br /><small>Todo lo entregado que aún no te han pagado, de cualquier semana</small></span>
+            <strong>{{ pesos(totalMio()!) }}</strong>
+          </div>
+        }
         <div class="por-cobrar">
           <span>Por cobrar</span>
           <strong>{{ pesos(mio()?.total ?? 0) }}</strong>
@@ -203,6 +221,7 @@ const METODOS = [
                     } @else if (esAdmin() && !l.anulada) {
                       <button type="button" class="b chico" (click)="abrirSoporte(l)">Subir soporte</button>
                     } @else { <span class="suave">—</span> }
+                    <button type="button" class="b chico" (click)="verDetalle(l)">Ver pago</button>
                     <button type="button" class="b chico" [disabled]="generando() === l.id" (click)="descargarComprobante(l)"
                       [attr.aria-label]="'Descargar comprobante de egreso ' + numero(l.id)">{{ generando() === l.id ? 'Generando…' : numero(l.id) + ' · PDF' }}</button>
                   </div>
@@ -218,6 +237,50 @@ const METODOS = [
         </table>
       </div>
     </div>
+
+    @if (detalle(); as l) {
+      <button class="velo" aria-label="Cerrar" (click)="cerrarDetalle()"></button>
+      <div class="hoja hoja-centro" role="dialog" aria-labelledby="t-det">
+        <div class="hoja-head"><h2 id="t-det">Pago {{ numero(l.id) }}</h2>
+          <button class="b b-icono" aria-label="Cerrar" (click)="cerrarDetalle()"><ion-icon name="close-outline"></ion-icon></button></div>
+        <div class="hoja-body">
+          <div class="det-monto"><span>{{ l.anulada ? 'Pago anulado' : (esAdmin() ? 'Pagado a ' + (l.vendedora?.nombre ?? '') : 'Te pagaron') }}</span><strong>{{ pesos(l.total) }}</strong></div>
+          <dl class="det-datos">
+            <dt>Fecha</dt><dd>{{ cuando(l.pagado_at) }}</dd>
+            <dt>Pedidos del</dt><dd>{{ periodo(l.desde, l.hasta) }}</dd>
+            <dt>Forma</dt><dd>{{ metodo(l.metodo) }}</dd>
+            @if (l.pagado_por_nombre) { <dt>Pagó</dt><dd>{{ l.pagado_por_nombre }}</dd> }
+            @if (l.nota) { <dt>Nota</dt><dd>{{ l.nota }}</dd> }
+          </dl>
+          <div class="campo"><span class="etq">Comprobante del pago</span>
+            @if (l.comprobantes.length) {
+              <div class="det-fotos">
+                @for (f of l.comprobantes; track f; let i = $index) {
+                  <button type="button" class="foto" (click)="verSoporte(l, i)" [attr.aria-label]="'Ver comprobante ' + (i + 1)">
+                    @if (fotos()[f]; as u) { <img [src]="u" alt="" loading="lazy" /> }
+                  </button>
+                }
+              </div>
+            } @else {
+              <p class="sin-sop">{{ esAdmin() ? 'Este pago no tiene soporte todavía.' : 'Todavía no han subido el comprobante. Te llega un aviso cuando lo suban.' }}</p>
+            }
+          </div>
+          <div class="campo"><span class="etq">{{ l.cantidad_pedidos }} {{ l.cantidad_pedidos === 1 ? 'pedido pagado' : 'pedidos pagados' }}</span>
+            @if (pedidosDet().length) {
+              <table class="mini">
+                @for (p of pedidosDet(); track p.id) {
+                  <tr (click)="abierto.set(p.id)"><td class="suave">{{ dia(p.dia) }}</td><td>#{{ p.id }} {{ p.cliente_nombre }}</td><td>{{ pesos(p.comision) }}</td></tr>
+                }
+              </table>
+            } @else { <small class="suave">Cargando…</small> }
+          </div>
+        </div>
+        <div class="hoja-pie">
+          @if (esAdmin() && !l.anulada && !l.comprobantes.length) { <button class="b" (click)="cerrarDetalle(); abrirSoporte(l)">Subir soporte</button> }
+          <button class="b b-pri" [disabled]="generando() === l.id" (click)="descargarComprobante(l)">{{ generando() === l.id ? 'Generando…' : 'Descargar PDF' }}</button>
+        </div>
+      </div>
+    }
 
     @if (soporteDe(); as l) {
       <button class="velo" aria-label="Cerrar" (click)="soporteDe.set(null)"></button>
@@ -283,6 +346,8 @@ export class ComisionesPage implements OnInit {
   private sb = inject(SupabaseService);
   private toast = inject(ToastService);
   private visor = inject(VisorService);
+  private ruta = inject(ActivatedRoute);
+  private router = inject(Router);
 
   pendientes = signal<Pendiente[]>([]);
   historial = signal<Liquidacion[]>([]);
@@ -326,6 +391,9 @@ export class ComisionesPage implements OnInit {
 
   ngOnInit(): void {
     void this.cargarPendientes();
+    // Desde el aviso "Te pagaron…" se abre ese pago con su comprobante
+    const pago = Number(this.ruta.snapshot.queryParamMap.get('pago'));
+    if (pago) void this.abrirPagoPorId(pago);
     if (this.esAdmin()) {
       void this.sb.client.rpc('liquidar_desde').then(({ data }) => {
         this.desde = (data as string) ?? '';
@@ -369,6 +437,7 @@ export class ComisionesPage implements OnInit {
     this.pendientes.set((data ?? []) as Pendiente[]);
     // La vendedora ve de una vez sus pedidos por cobrar
     const yo = this.sb.usuario()?.id;
+    if (!this.esAdmin() && yo) void this.cargarTotalMio();
     if (!this.esAdmin() && yo && this.mio()) this.pedidosV.set(await this.pedidosDe(yo));
     if (this.esAdmin() && this.abiertaV()) this.pedidosV.set(await this.pedidosDe(this.abiertaV()!));
   }
@@ -388,11 +457,44 @@ export class ComisionesPage implements OnInit {
     if (error) return this.toast.error(mensajeError(error));
     const lista = (data ?? []) as unknown as Liquidacion[];
     this.historial.set(lista);
-    const faltan = lista.flatMap((l) => l.comprobantes.slice(0, 1)).filter((f) => !this.fotos()[f]);
-    if (faltan.length) {
-      const urls = await urlsComprobantes(this.sb.client, faltan);
-      this.fotos.update((m) => ({ ...m, ...Object.fromEntries(faltan.map((f, i) => [f, urls[i]])) }));
-    }
+    await this.cargarFotos(lista.flatMap((l) => l.comprobantes.slice(0, 1)));
+  }
+
+  private async cargarFotos(rutas: string[]): Promise<void> {
+    const faltan = rutas.filter((f) => !this.fotos()[f]);
+    if (!faltan.length) return;
+    const urls = await urlsComprobantes(this.sb.client, faltan);
+    this.fotos.update((m) => ({ ...m, ...Object.fromEntries(faltan.map((f, i) => [f, urls[i]])) }));
+  }
+
+  /** Lo que se le debe a la vendedora sumando todas las semanas, hasta hoy */
+  totalMio = signal<number | null>(null);
+  private async cargarTotalMio(): Promise<void> {
+    const { data } = await this.sb.client.rpc('comisiones_periodo', { p_desde: '2000-01-01', p_hasta: hoyColombiaISO() });
+    const yo = ((data ?? []) as Pendiente[])[0];
+    this.totalMio.set(yo ? Number(yo.total) + Number(yo.anteriores) : 0);
+  }
+
+  /** Detalle de un pago: comprobante adjunto y los pedidos que cubrió */
+  detalle = signal<Liquidacion | null>(null);
+  pedidosDet = signal<PedidoComision[]>([]);
+
+  async verDetalle(l: Liquidacion): Promise<void> {
+    this.pedidosDet.set([]);
+    this.detalle.set(l);
+    void this.cargarFotos(l.comprobantes);
+    this.pedidosDet.set(await this.pedidosDe(l.vendedora_id, l.id));
+  }
+
+  cerrarDetalle(): void {
+    this.detalle.set(null);
+    if (this.ruta.snapshot.queryParamMap.has('pago')) void this.router.navigate([], { queryParams: {}, replaceUrl: true });
+  }
+
+  private async abrirPagoPorId(id: number): Promise<void> {
+    const { data, error } = await this.sb.client.from('liquidaciones').select('*, vendedora:usuarios!liquidaciones_vendedora_id_fkey(nombre)').eq('id', id).maybeSingle();
+    if (error) return this.toast.error(mensajeError(error));
+    if (data) await this.verDetalle(data as unknown as Liquidacion);
   }
 
   private async pedidosDe(vendedora: number, liquidacion: number | null = null): Promise<PedidoComision[]> {
@@ -534,11 +636,13 @@ export class ComisionesPage implements OnInit {
     this.toast.ok('Soporte guardado');
     this.soporteDe.set(null);
     await this.cargarHistorial();
+    const d = this.detalle();
+    if (d?.id === l.id) this.detalle.set(this.historial().find((x) => x.id === l.id) ?? d);
   }
 
-  verSoporte(l: Liquidacion): void {
+  verSoporte(l: Liquidacion, inicio = 0): void {
     void urlsComprobantes(this.sb.client, l.comprobantes).then((urls) =>
-      this.visor.abrir(urls.map((url, i) => ({ url, titulo: `Pago a ${l.vendedora?.nombre ?? ''} · ${pesos(l.total)}${urls.length > 1 ? ' · ' + (i + 1) : ''}` })), 0)
+      this.visor.abrir(urls.map((url, i) => ({ url, titulo: `Pago a ${l.vendedora?.nombre ?? ''} · ${pesos(l.total)}${urls.length > 1 ? ' · ' + (i + 1) : ''}` })), inicio)
     );
   }
 
