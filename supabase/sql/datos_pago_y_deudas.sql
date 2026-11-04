@@ -1,4 +1,4 @@
--- Datos de pago del equipo y deudas con proveedores (PENDIENTE DE APLICAR)
+-- Datos de pago del equipo y deudas con proveedores (YA APLICADO 2026-11-04)
 
 -- ================================================================ 1. Datos de pago (cédula y cuenta)
 -- Privados: los ve y cambia la propia persona; el admin los ve para pagar. No van en usuarios
