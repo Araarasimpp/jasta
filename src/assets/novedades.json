@@ -1,5 +1,28 @@
 [
   {
+    "id": "2026-11-04-costo-pago-linea",
+    "fecha": "2026-11-04",
+    "titulo": "El pago en línea ahora cubre exacto la comisión de Wompi",
+    "cuerpo": "Antes al cliente se le sumaba un 5%, pero en pedidos pequeños no alcanzaba para la comisión de Wompi (2,65% + $700 fijos, más IVA). Ahora se le cobra lo justo para que a ti te llegue completo el valor del pedido.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Ejemplos",
+        "pasos": [
+          "Pedido de $14.000: el cliente paga $15.400 y te quedan $14.081.",
+          "Pedido de $50.000: el cliente paga $52.500.",
+          "Pedido de $164.000: el cliente paga $170.300 (antes con el 5% pagaba $172.200)."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "El valor se redondea a $100 hacia arriba. En el catálogo aparece como \"Costo del pago en línea\"."
+      }
+    ]
+  },
+  {
     "id": "2026-11-04-envios-nacionales",
     "fecha": "2026-11-04",
     "titulo": "Envíos a otras ciudades por transportadora",
@@ -170,7 +193,7 @@
     "id": "2026-11-04-pagos-en-linea",
     "fecha": "2026-11-04",
     "titulo": "Los clientes ya pueden pagar en línea desde el catálogo",
-    "cuerpo": "En el catálogo público el cliente ahora elige: pagar al recibir, como siempre, o pagar ya con tarjeta débito o crédito, PSE, Nequi o Daviplata a través de Wompi. El pago en línea tiene un 5% adicional que paga el cliente.",
+    "cuerpo": "En el catálogo público el cliente ahora elige: pagar al recibir, como siempre, o pagar ya con tarjeta débito o crédito, PSE, Nequi o Daviplata a través de Wompi. El cliente paga además la comisión de Wompi, así que a ti te llega completo el pedido.",
     "roles": [
       "admin",
       "vendedora",
@@ -180,7 +203,7 @@
       {
         "titulo": "Cómo funciona",
         "pasos": [
-          "El cliente arma su pedido y en \"¿Cómo quieres pagar?\" elige \"Pagar ahora\". Ve el 5% y el total antes de pagar.",
+          "El cliente arma su pedido y en \"¿Cómo quieres pagar?\" elige \"Pagar ahora\". Ve el costo del pago en línea y el total antes de pagar.",
           "Lo llevamos a Wompi (de Bancolombia) y paga ahí. Nosotros nunca vemos los datos de su tarjeta.",
           "Apenas se aprueba el pago te llega el aviso \"💳 Pedido PAGADO de la tienda\". En Pedidos de la tienda sale con la marca \"Ya pagó en línea\".",
           "Llámalo para coordinar la entrega y confírmalo como siempre. El pedido sale marcado como pagado.",

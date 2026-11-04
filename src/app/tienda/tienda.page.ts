@@ -20,6 +20,15 @@ interface Tienda {
 interface Linea { producto_id: number; nombre: string; precio: number; imagen_url: string | null; cantidad: number; color: string | null; talla: string | null; max: number }
 interface Hecho { id: number; total: number; domicilioPendiente: boolean }
 
+/**
+ * Comisión de Wompi (2,65 % + $700, más IVA del 19 % sobre la comisión): se le cobra al cliente lo justo
+ * para que al negocio le llegue completo el pedido. Igual que privado.recargo_wompi en la base de datos.
+ */
+function recargoWompi(base: number): number {
+  if (!(base > 0)) return 0;
+  return Math.ceil(((base + 700 * 1.19) / (1 - 0.0265 * 1.19) - base) / 100) * 100;
+}
+
 function normal(s: string): string {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
 }
@@ -349,11 +358,11 @@ function parecido(a: string, b: string): number {
           <div class="totales">
             <div><span>Productos</span><span class="num">{{ pesos(subtotal()) }}</span></div>
             <div><span>Domicilio</span><span class="num">{{ domicilio() !== null ? pesos(domicilio()!) : 'Elige tu barrio' }}</span></div>
-            @if (enLinea()) { <div><span>Pago en línea (5%)</span><span class="num">{{ domicilio() !== null ? pesos(recargo()) : '5%' }}</span></div> }
+            @if (enLinea()) { <div><span>Costo del pago en línea</span><span class="num">{{ domicilio() !== null ? pesos(recargo()) : '—' }}</span></div> }
             <div class="fin"><span>Total</span><span class="num">{{ pesos(subtotal() + (domicilio() ?? 0) + recargo()) }}</span></div>
           </div>
           @if (enLinea()) {
-            <p class="nota">Te llevamos a <strong>Wompi</strong> (de Bancolombia) para pagar de forma segura. Cuando se apruebe el pago, {{ t()?.vendedora ? primerNombre(t()!.vendedora!.nombre) : 'la tienda' }} te contacta para coordinar el envío. El 5% es el costo del pago en línea.</p>
+            <p class="nota">Te llevamos a <strong>Wompi</strong> (de Bancolombia) para pagar de forma segura. Cuando se apruebe el pago, {{ t()?.vendedora ? primerNombre(t()!.vendedora!.nombre) : 'la tienda' }} te contacta para coordinar el envío. El costo del pago en línea es lo que cobra Wompi por la transacción.</p>
           } @else {
             <p class="nota">Pagas al recibir. Antes de enviarlo, {{ t()?.vendedora ? primerNombre(t()!.vendedora!.nombre) : 'la tienda' }} te contacta para confirmar tu pedido.</p>
           }
@@ -394,10 +403,10 @@ export class TiendaPage implements OnInit {
   error = signal('');
   enviando = signal(false);
   hecho = signal<Hecho | null>(null);
-  /** Pagar al recibir o pagar ya en línea con Wompi (con 5% más) */
+  /** Pagar al recibir o pagar ya en línea con Wompi (el cliente paga la comisión de Wompi) */
   formaPago = signal<'contra_entrega' | 'en_linea'>('contra_entrega');
   enLinea = computed(() => this.formaPago() === 'en_linea');
-  recargo = computed(() => (this.enLinea() && this.domicilio() !== null ? Math.round((this.subtotal() + this.domicilio()!) * 0.05) : 0));
+  recargo = computed(() => (this.enLinea() && this.domicilio() !== null ? recargoWompi(this.subtotal() + this.domicilio()!) : 0));
 
   nombre = '';
   telefono = '';

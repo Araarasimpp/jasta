@@ -1,7 +1,7 @@
 // Edge Function wompi-pagar: pagos en línea del catálogo público con Wompi.
 //
 //  POST { codigo, origen }      → crea (o reutiliza) un link de pago de un solo uso por el total
-//                                  del pedido web (productos + domicilio + 5%) y devuelve { url }.
+//                                  del pedido web (productos + domicilio + comisión de Wompi) y devuelve { url }.
 //  POST { codigo, tx }          → al volver de Wompi: consulta esa transacción en Wompi y, si es
 //                                  de este pedido, registra el resultado (por si el evento tarda).
 //
@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
       headers: { Authorization: `Bearer ${await secreto('wompi_private_key')}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: `Pedido #${w.id}`,
-        description: (productos + ' · incluye domicilio y 5% de pago en línea').slice(0, 250),
+        description: (productos + ' · incluye domicilio y costo del pago en línea').slice(0, 250),
         single_use: true,
         collect_shipping: false,
         currency: 'COP',

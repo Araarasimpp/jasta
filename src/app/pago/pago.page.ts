@@ -100,7 +100,7 @@ const METODOS: Record<string, string> = {
           <ul class="items">
             @for (i of w.items; track $index) { <li><span>{{ i.cantidad }} × {{ i.nombre }}{{ i.color ? ' · ' + i.color : '' }}{{ i.talla ? ' · ' + i.talla : '' }}</span><span>{{ pesos(i.precio * i.cantidad) }}</span></li> }
             <li><span>Domicilio</span><span>{{ pesos(w.domicilio) }}</span></li>
-            @if (+w.recargo) { <li><span>Pago en línea (5%)</span><span>{{ pesos(w.recargo) }}</span></li> }
+            @if (+w.recargo) { <li><span>Costo del pago en línea</span><span>{{ pesos(w.recargo) }}</span></li> }
             <li class="fin"><span>Total</span><span>{{ pesos(w.pago === 'en_linea' ? w.total : +w.subtotal + +w.domicilio) }}</span></li>
           </ul>
         </div>
