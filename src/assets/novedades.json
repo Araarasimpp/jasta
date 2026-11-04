@@ -15,7 +15,8 @@
           "La primera vez toca \"Nueva cuenta\" y escribe el nombre (y el celular, si quieres mandarle el estado de cuenta).",
           "Cuando le pases mercancía toca \"Entregar mercancía\" y agrega los productos: cada uno sale a tu precio de compra.",
           "Cuando te pague toca \"Registrar abono\": escribe cuánto, cómo te pagó y, si quieres, sube el comprobante. \"Pagó todo\" pone el saldo completo.",
-          "Arriba ves en grande cuánto te debe. En \"Ver movimientos\" está todo lo que le has entregado y lo que te ha abonado."
+          "Arriba ves en grande cuánto te debe. En \"Ver movimientos\" está todo lo que le has entregado y lo que te ha abonado.",
+          "Todo se puede editar: el nombre y el celular de la cuenta (Editar, arriba), y cada entrega (productos, cantidades, costos, fecha y nota) o abono (valor, forma de pago, fecha y nota) con Editar en Ver movimientos."
         ]
       },
       {

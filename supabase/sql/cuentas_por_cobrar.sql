@@ -1,4 +1,4 @@
--- Cuentas por cobrar (PENDIENTE DE APLICAR)
+-- Cuentas por cobrar (YA APLICADO 2026-11-04)
 -- Mercancía que se le entrega al costo a una persona de confianza (ej: el hermano del dueño) y lo
 -- que esa persona va abonando. No es una venta: no entra a Ventas del local, caja, reportes ni
 -- ganancias. Sí descuenta inventario y cuenta como vendido en Deudas (para apartar al proveedor).

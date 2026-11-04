@@ -121,7 +121,8 @@ const normal = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLower
                         <div class="mov-top"><span>{{ fecha(m.fecha) }} · <b>Le entregaste</b></span><strong>+ {{ pesos(m.e.total) }}</strong></div>
                         <ul>@for (i of m.e.items; track $index) { <li>{{ i.cantidad }} × {{ i.nombre }} · {{ pesos(i.costo) }} c/u</li> }</ul>
                         @if (m.e.nota) { <small>{{ m.e.nota }}</small> }
-                        <div><button class="link peligro" (click)="eliminarEntrega(m.e)">Eliminar entrega</button></div>
+                        <div class="pie-mov"><button class="link" (click)="abrirEntrega(c, m.e)">Editar</button>
+                          <button class="link peligro" (click)="eliminarEntrega(m.e)">Eliminar entrega</button></div>
                       </li>
                     } @else {
                       <li class="mov abono">
@@ -129,6 +130,7 @@ const normal = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLower
                         @if (m.a.nota) { <small>{{ m.a.nota }}</small> }
                         <div class="pie-mov">
                           @if (m.a.comprobantes.length) { <button class="link" (click)="verSoporte(m.a)">Ver comprobante</button> }
+                          <button class="link" (click)="abrirAbono(c, m.a)">Editar</button>
                           <button class="link peligro" (click)="eliminarAbono(m.a)">Eliminar abono</button>
                         </div>
                       </li>
@@ -167,7 +169,7 @@ const normal = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLower
     @if (entregaDe(); as c) {
       <button class="velo" aria-label="Cerrar" (click)="entregaDe.set(null)"></button>
       <div class="hoja" role="dialog" aria-labelledby="t-ent">
-        <div class="hoja-head"><h2 id="t-ent">Entregar mercancía a {{ c.nombre }}</h2>
+        <div class="hoja-head"><h2 id="t-ent">{{ entregaEdit() ? 'Editar entrega' : 'Entregar mercancía a ' + c.nombre }}</h2>
           <button class="b b-icono" aria-label="Cerrar" (click)="entregaDe.set(null)"><ion-icon name="close-outline"></ion-icon></button></div>
         <div class="hoja-body">
           <p class="ayuda" style="margin: 0">Cada producto queda a tu precio de compra. Si el precio de compra está desactualizado, cámbialo aquí.</p>
@@ -203,7 +205,7 @@ const normal = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLower
         </div>
         <div class="hoja-pie">
           <button class="b" (click)="entregaDe.set(null)">Cancelar</button>
-          <button class="b b-pri" [disabled]="ocupado() || !lineas().length" (click)="guardarEntrega()">{{ ocupado() ? 'Guardando…' : 'Registrar entrega · ' + pesos(totalEntrega()) }}</button>
+          <button class="b b-pri" [disabled]="ocupado() || !lineas().length" (click)="guardarEntrega()">{{ ocupado() ? 'Guardando…' : (entregaEdit() ? 'Guardar cambios · ' : 'Registrar entrega · ') + pesos(totalEntrega()) }}</button>
         </div>
       </div>
     }
@@ -211,23 +213,25 @@ const normal = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLower
     @if (abonoDe(); as c) {
       <button class="velo" aria-label="Cerrar" (click)="abonoDe.set(null)"></button>
       <div class="hoja hoja-centro" role="dialog" aria-labelledby="t-ab">
-        <div class="hoja-head"><h2 id="t-ab">Abono de {{ c.nombre }}</h2>
+        <div class="hoja-head"><h2 id="t-ab">{{ abonoEdit() ? 'Editar abono' : 'Abono de ' + c.nombre }}</h2>
           <button class="b b-icono" aria-label="Cerrar" (click)="abonoDe.set(null)"><ion-icon name="close-outline"></ion-icon></button></div>
         <div class="hoja-body">
-          <p class="ayuda" style="margin: 0">Debe {{ pesos(c.saldo) }}.</p>
+          <p class="ayuda" style="margin: 0">Debe {{ pesos(c.saldo) }}{{ abonoEdit() ? ' sin contar este abono: ' + pesos(maxAbono()) : '' }}.</p>
           <div class="campo"><label for="ab-v">¿Cuánto te pasó?</label><input id="ab-v" pesos [(ngModel)]="valor" placeholder="$ 0" />
-            <div class="rapidos"><button type="button" (click)="valor = +c.saldo">Pagó todo · {{ pesos(c.saldo) }}</button></div></div>
+            <div class="rapidos"><button type="button" (click)="valor = maxAbono()">Pagó todo · {{ pesos(maxAbono()) }}</button></div></div>
           <div class="campo"><span class="etq">¿Cómo te pagó?</span>
             <div class="metodos">@for (m of metodos; track m.id) { <button type="button" class="metodo" [class.on]="metodoSel() === m.id" (click)="metodoSel.set(m.id)">{{ m.label }}</button> }</div>
           </div>
           <div class="campo"><label for="ab-f">Fecha</label><input id="ab-f" type="date" [max]="hoy" [(ngModel)]="fechaMov" /></div>
-          <app-comprobantes-input [obligatorio]="false" titulo="Comprobante (opcional)" [rutas]="soportes()" (cambio)="soportes.set($event)"></app-comprobantes-input>
+          @if (!abonoEdit()) {
+            <app-comprobantes-input [obligatorio]="false" titulo="Comprobante (opcional)" [rutas]="soportes()" (cambio)="soportes.set($event)"></app-comprobantes-input>
+          }
           <div class="campo"><label for="ab-n">Nota (opcional)</label><input id="ab-n" maxlength="300" [(ngModel)]="nota" /></div>
           @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
         </div>
         <div class="hoja-pie">
           <button class="b" (click)="abonoDe.set(null)">Cancelar</button>
-          <button class="b b-ok" [disabled]="ocupado()" (click)="guardarAbono()">{{ ocupado() ? 'Guardando…' : 'Registrar abono' }}</button>
+          <button class="b b-ok" [disabled]="ocupado()" (click)="guardarAbono()">{{ ocupado() ? 'Guardando…' : abonoEdit() ? 'Guardar cambios' : 'Registrar abono' }}</button>
         </div>
       </div>
     }
@@ -279,6 +283,9 @@ export class CuentasPage implements OnInit {
     this.version();
     return this.lineas().reduce((s, l) => s + (Number(l.cantidad) || 0), 0);
   });
+  /** Entrega o abono que se está editando (null = nuevo) */
+  entregaEdit = signal<Entrega | null>(null);
+  abonoEdit = signal<Abono | null>(null);
   // Abono
   abonoDe = signal<Cuenta | null>(null);
   valor: number | null = null;
@@ -334,12 +341,13 @@ export class CuentasPage implements OnInit {
     await this.cargar();
   }
 
-  async abrirEntrega(c: Cuenta): Promise<void> {
+  async abrirEntrega(c: Cuenta, e: Entrega | null = null): Promise<void> {
     this.error.set('');
     this.busca.set('');
-    this.lineas.set([]);
-    this.fechaMov = this.hoy;
-    this.nota = '';
+    this.entregaEdit.set(e);
+    this.lineas.set(e ? e.items.map((i) => ({ id: i.producto_id, nombre: i.nombre, cantidad: i.cantidad, costo: Number(i.costo) })) : []);
+    this.fechaMov = e?.fecha ?? this.hoy;
+    this.nota = e?.nota ?? '';
     this.entregaDe.set(c);
     if (!this.prods().length) {
       const { data } = await this.sb.client.rpc('inventario');
@@ -368,25 +376,32 @@ export class CuentasPage implements OnInit {
     if (ls.some((l) => !(Number(l.cantidad) > 0))) return this.error.set('Escribe la cantidad de cada producto.');
     if (ls.some((l) => !(Number(l.costo) > 0))) return this.error.set('Escribe el costo de cada producto.');
     this.ocupado.set(true);
-    const { error } = await this.sb.client.rpc('entregar_al_costo', {
-      p_cuenta: c.id, p_items: ls.map((l) => ({ producto_id: l.id, cantidad: Math.round(Number(l.cantidad)), costo: Number(l.costo) })),
-      p_fecha: this.fechaMov || this.hoy, p_nota: this.nota.trim(),
-    });
+    const items = ls.map((l) => ({ producto_id: l.id, cantidad: Math.round(Number(l.cantidad)), costo: Number(l.costo) }));
+    const ed = this.entregaEdit();
+    const { error } = ed
+      ? await this.sb.client.rpc('editar_entrega_costo', { p_entrega: ed.id, p_items: items, p_fecha: this.fechaMov || this.hoy, p_nota: this.nota.trim() })
+      : await this.sb.client.rpc('entregar_al_costo', { p_cuenta: c.id, p_items: items, p_fecha: this.fechaMov || this.hoy, p_nota: this.nota.trim() });
     this.ocupado.set(false);
     if (error) return this.error.set(mensajeError(error));
-    this.toast.ok(`Entrega de ${pesos(this.totalEntrega())} a ${c.nombre} registrada`);
+    this.toast.ok(ed ? 'Entrega actualizada' : `Entrega de ${pesos(this.totalEntrega())} a ${c.nombre} registrada`);
     this.entregaDe.set(null);
     await this.cargar();
   }
 
-  abrirAbono(c: Cuenta): void {
+  abrirAbono(c: Cuenta, a: Abono | null = null): void {
     this.error.set('');
-    this.valor = null;
-    this.metodoSel.set('efectivo');
+    this.abonoEdit.set(a);
+    this.valor = a ? Number(a.valor) : null;
+    this.metodoSel.set((a?.metodo as 'efectivo' | 'transferencia' | 'otro') ?? 'efectivo');
     this.soportes.set([]);
-    this.fechaMov = this.hoy;
-    this.nota = '';
+    this.fechaMov = a?.fecha ?? this.hoy;
+    this.nota = a?.nota ?? '';
     this.abonoDe.set(c);
+  }
+
+  /** Lo máximo que puede abonar: el saldo (más el valor del abono que se está editando) */
+  maxAbono(): number {
+    return Number(this.abonoDe()?.saldo ?? 0) + Number(this.abonoEdit()?.valor ?? 0);
   }
 
   async guardarAbono(): Promise<void> {
@@ -394,14 +409,17 @@ export class CuentasPage implements OnInit {
     if (!c) return;
     const v = Number(this.valor);
     if (!(v > 0)) return this.error.set('Escribe cuánto te pasó.');
-    if (v > Number(c.saldo)) return this.error.set(`Es más de lo que debe (${pesos(c.saldo)}).`);
+    if (v > this.maxAbono()) return this.error.set(`Es más de lo que debe (${pesos(this.maxAbono())}).`);
     this.ocupado.set(true);
-    const { error } = await this.sb.client.rpc('abonar_cuenta', {
-      p_cuenta: c.id, p_valor: v, p_metodo: this.metodoSel(), p_comprobantes: this.soportes(), p_nota: this.nota.trim(), p_fecha: this.fechaMov || this.hoy,
-    });
+    const ed = this.abonoEdit();
+    const { error } = ed
+      ? await this.sb.client.rpc('editar_abono_cuenta', { p_abono: ed.id, p_valor: v, p_metodo: this.metodoSel(), p_fecha: this.fechaMov || this.hoy, p_nota: this.nota.trim() })
+      : await this.sb.client.rpc('abonar_cuenta', {
+          p_cuenta: c.id, p_valor: v, p_metodo: this.metodoSel(), p_comprobantes: this.soportes(), p_nota: this.nota.trim(), p_fecha: this.fechaMov || this.hoy,
+        });
     this.ocupado.set(false);
     if (error) return this.error.set(mensajeError(error));
-    this.toast.ok(`Abono de ${pesos(v)} registrado`);
+    this.toast.ok(ed ? 'Abono actualizado' : `Abono de ${pesos(v)} registrado`);
     this.abonoDe.set(null);
     await this.cargar();
   }

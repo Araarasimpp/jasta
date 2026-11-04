@@ -1,4 +1,4 @@
--- PENDIENTE DE APLICAR (después de cuentas_por_cobrar.sql)
+-- YA APLICADO (2026-11-04)
 -- Las ventas del local marcadas "Venta al costo" (#100714 y #100715) pasan a Cuentas por cobrar, en la
 -- cuenta "Mi hermano", con los mismos productos y precios. Se borran de las ventas del local sin tocar el
 -- inventario (las unidades ya salieron y siguen fuera).
