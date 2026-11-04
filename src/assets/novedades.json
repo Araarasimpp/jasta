@@ -1,5 +1,33 @@
 [
   {
+    "id": "2026-11-04-deudas-factura",
+    "fecha": "2026-11-04",
+    "titulo": "Deudas: factura con varios productos y fechas editables",
+    "cuerpo": "Ahora en Deudas puedes registrar una factura fiada con todos sus productos, escoger la fecha de la deuda y cambiarla después.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Factura con varios productos",
+        "pasos": [
+          "En Deudas toca Nueva deuda → Factura nueva.",
+          "Busca y agrega cada producto de la factura, con su cantidad y su costo por unidad. Se van sumando y ves el total.",
+          "Escribe a quién se le debe, la fecha de la factura y, si quieres, cuándo vence. También puedes subir la foto de la factura.",
+          "Toca Registrar deuda: la compra entra a Inventario (suma las unidades) y queda la deuda, con el conteo de lo vendido producto por producto."
+        ]
+      },
+      {
+        "titulo": "Cambiar la fecha",
+        "texto": "Al crear cualquier deuda ya puedes escoger la fecha (por ejemplo, una factura de la semana pasada). Si ya la creaste, toca \"Editar (fecha, valor, proveedor)\" en la tarjeta de la deuda. El valor total no puede quedar por debajo de lo que ya abonaste."
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "Si la compra ya la registraste en Inventario, usa \"Compra ya registrada\" para no sumar las unidades dos veces."
+      }
+    ]
+  },
+  {
     "id": "2026-11-04-transferencias",
     "fecha": "2026-11-04",
     "titulo": "Confirma en el banco cada transferencia presencial",

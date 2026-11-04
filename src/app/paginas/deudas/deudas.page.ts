@@ -24,6 +24,9 @@ interface Deuda {
 }
 interface CompraLibre { id: number; fecha: string; proveedor: string; total: number; productos: string | null }
 type Filtro = 'abiertas' | 'pagadas' | 'todas';
+interface ProdF { id: number; nombre: string; sku: string | null; costo: number | null }
+interface LineaF { id: number; nombre: string; cantidad: number | null; costo: number | null }
+const normalF = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 type Metodo = 'efectivo' | 'transferencia' | 'otro';
 
 const METODOS: { id: Metodo; label: string }[] = [
@@ -98,7 +101,20 @@ const METODOS: { id: Metodo; label: string }[] = [
       .atajos { display: flex; gap: 6px; flex-wrap: wrap; }
       .atajos button { height: 32px; padding: 0 12px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface); color: var(--text-soft); font: inherit; font-size: 12.5px; cursor: pointer; }
       .tipo-deuda { display: flex; gap: 6px; }
-      .tipo-deuda button { flex: 1; height: 40px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font: inherit; font-size: 14px; cursor: pointer; }
+      .tipo-deuda button { flex: 1; min-height: 40px; padding: 4px 6px; line-height: 1.2; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font: inherit; font-size: 14px; cursor: pointer; }
+      .f-buscar { position: relative; }
+      .f-sug { position: absolute; left: 0; right: 0; top: 100%; z-index: 5; margin: 4px 0 0; padding: 4px; list-style: none; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); box-shadow: var(--sombra, 0 6px 20px rgba(0,0,0,.12)); max-height: 240px; overflow-y: auto; }
+      .f-sug button { width: 100%; display: flex; justify-content: space-between; gap: 8px; padding: 9px 10px; border: 0; border-radius: var(--radius-sm); background: none; color: var(--text); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+      .f-sug button:hover { background: var(--surface-2); }
+      .f-sug small { color: var(--text-muted); white-space: nowrap; }
+      .f-lineas { display: flex; flex-direction: column; gap: 6px; }
+      .f-linea { display: grid; grid-template-columns: minmax(0, 1fr) 64px 104px 32px; gap: 6px; align-items: center; }
+      .f-linea .nom { font-size: 13.5px; line-height: 1.25; overflow-wrap: anywhere; }
+      .f-linea input { height: 38px; padding: 0 8px; font-size: 14px; min-width: 0; }
+      .f-linea .quitar { height: 32px; border: 0; border-radius: var(--radius-sm); background: var(--danger-wash); color: var(--danger); cursor: pointer; }
+      .f-total { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface-2); font-size: 13.5px; }
+      .f-total strong { font-family: var(--mono-font); font-size: 18px; }
+      .pie-deuda { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
       .tipo-deuda button.on { border-color: var(--accent); background: var(--accent-wash); color: var(--accent); font-weight: 650; }
       .compras { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 280px; overflow-y: auto; }
       .compras button { width: 100%; display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
@@ -185,7 +201,10 @@ const METODOS: { id: Metodo; label: string }[] = [
               </ul>
             }
             @if (d.estado !== 'anulada') {
-              <button type="button" class="link peligro" style="align-self: flex-start" (click)="anularDeuda(d)">Anular esta deuda</button>
+              <div class="pie-deuda">
+                <button type="button" class="link" (click)="abrirEditar(d)">Editar (fecha, valor, proveedor)</button>
+                <button type="button" class="link peligro" (click)="anularDeuda(d)">Anular esta deuda</button>
+              </div>
             }
           </article>
         } @empty {
@@ -224,6 +243,29 @@ const METODOS: { id: Metodo; label: string }[] = [
       </div>
     }
 
+    @if (editando(); as d) {
+      <button class="velo" aria-label="Cerrar" (click)="editando.set(null)"></button>
+      <div class="hoja hoja-centro" role="dialog" aria-labelledby="t-edit">
+        <div class="hoja-head"><h2 id="t-edit">Editar deuda</h2>
+          <button class="b b-icono" aria-label="Cerrar" (click)="editando.set(null)"><ion-icon name="close-outline"></ion-icon></button></div>
+        <div class="hoja-body">
+          <div class="campo"><label for="ed-p">¿A quién se le debe?</label><input id="ed-p" maxlength="120" [(ngModel)]="eProveedor" /></div>
+          <div class="campo"><label for="ed-c">Concepto</label><input id="ed-c" maxlength="300" [(ngModel)]="eConcepto" /></div>
+          <div class="campo"><label for="ed-t">Valor total</label><input id="ed-t" pesos [(ngModel)]="eTotal" />
+            @if (+d.abonado) { <small class="suave">Ya le has abonado {{ pesos(d.abonado) }}: no puede ser menos que eso.</small> }</div>
+          <div class="fila-campos">
+            <div class="campo"><label for="ed-f">Fecha</label><input id="ed-f" type="date" [max]="hoy" [(ngModel)]="eFecha" /></div>
+            <div class="campo"><label for="ed-v">Vence (opcional)</label><input id="ed-v" type="date" [(ngModel)]="eVence" /></div>
+          </div>
+          @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+        </div>
+        <div class="hoja-pie">
+          <button class="b" (click)="editando.set(null)">Cancelar</button>
+          <button class="b b-pri" (click)="guardarEdicion()" [disabled]="ocupado()">{{ ocupado() ? 'Guardando…' : 'Guardar cambios' }}</button>
+        </div>
+      </div>
+    }
+
     @if (nueva()) {
       <button class="velo" aria-label="Cerrar" (click)="nueva.set(false)"></button>
       <div class="hoja" role="dialog" aria-labelledby="t-nueva">
@@ -231,10 +273,41 @@ const METODOS: { id: Metodo; label: string }[] = [
           <button class="b b-icono" aria-label="Cerrar" (click)="nueva.set(false)"><ion-icon name="close-outline"></ion-icon></button></div>
         <div class="hoja-body">
           <div class="tipo-deuda" role="group" aria-label="Tipo de deuda">
-            <button type="button" [class.on]="deCompra()" (click)="deCompra.set(true)">Mercancía fiada</button>
-            <button type="button" [class.on]="!deCompra()" (click)="deCompra.set(false); compraSel.set(null)">Otra deuda</button>
+            <button type="button" [class.on]="tipoNueva() === 'factura'" (click)="cambiarTipo('factura')">Factura nueva</button>
+            <button type="button" [class.on]="tipoNueva() === 'compra'" (click)="cambiarTipo('compra')">Compra ya registrada</button>
+            <button type="button" [class.on]="tipoNueva() === 'otra'" (click)="cambiarTipo('otra')">Otra deuda</button>
           </div>
-          @if (deCompra()) {
+          @if (tipoNueva() === 'factura') {
+            <p class="ayuda" style="margin: 0">Agrega todos los productos de la factura con su cantidad y costo. Se registra la compra en Inventario (suma las unidades) y queda la deuda, para saber cuánto se ha vendido.</p>
+            <div class="campo f-buscar">
+              <label for="nd-b">Agregar producto</label>
+              <input id="nd-b" [ngModel]="buscaF()" (ngModelChange)="buscaF.set($event)" placeholder="Escribe el nombre o el SKU" autocomplete="off" />
+              @if (sugerenciasF().length) {
+                <ul class="f-sug">
+                  @for (p of sugerenciasF(); track p.id) {
+                    <li><button type="button" (click)="agregarF(p)"><span>{{ p.nombre }}</span><small>{{ p.costo ? 'costo ' + pesos(p.costo) : '' }}</small></button></li>
+                  }
+                </ul>
+              }
+            </div>
+            @if (lineasF().length) {
+              <div class="f-lineas">
+                @for (l of lineasF(); track l.id; let i = $index) {
+                  <div class="f-linea">
+                    <span class="nom">{{ l.nombre }}</span>
+                    <input class="num" type="number" inputmode="numeric" min="1" [(ngModel)]="l.cantidad" (ngModelChange)="tocarF()" aria-label="Cantidad" placeholder="Cant." />
+                    <input pesos class="num" [(ngModel)]="l.costo" (ngModelChange)="tocarF()" aria-label="Costo por unidad" placeholder="Costo c/u" />
+                    <button type="button" class="quitar" (click)="quitarF(i)" aria-label="Quitar">✕</button>
+                  </div>
+                }
+              </div>
+              <div class="f-total"><span>{{ lineasF().length }} {{ lineasF().length === 1 ? 'producto' : 'productos' }} · {{ unidadesF() }} unidades</span><strong>{{ pesos(totalF()) }}</strong></div>
+            } @else {
+              <p class="vacio-txt" style="padding: 6px 0">Todavía no has agregado productos.</p>
+            }
+            <app-comprobantes-input [obligatorio]="false" titulo="Foto de la factura (opcional)" [rutas]="facturaF()" (cambio)="facturaF.set($event)"></app-comprobantes-input>
+          }
+          @if (tipoNueva() === 'compra') {
             <p class="ayuda" style="margin: 0">Elige la compra que registraste en Inventario. Así la app cuenta cuánto de esa mercancía ya se vendió.</p>
             <ul class="compras">
               @for (c of comprasLibres(); track c.id) {
@@ -246,16 +319,19 @@ const METODOS: { id: Metodo; label: string }[] = [
             </ul>
           }
           <div class="campo"><label for="nd-p">¿A quién se le debe?</label><input id="nd-p" maxlength="120" [(ngModel)]="nProveedor" placeholder="Ej: Importadora XYZ" /></div>
-          <div class="campo"><label for="nd-c">Concepto</label><input id="nd-c" maxlength="300" [(ngModel)]="nConcepto" [placeholder]="deCompra() ? 'Mercancía fiada' : 'Ej: préstamo, arriendo atrasado'" /></div>
+          <div class="campo"><label for="nd-c">Concepto</label><input id="nd-c" maxlength="300" [(ngModel)]="nConcepto" [placeholder]="tipoNueva() === 'otra' ? 'Ej: préstamo, arriendo atrasado' : 'Mercancía fiada'" /></div>
           <div class="fila-campos">
-            <div class="campo"><label for="nd-t">Valor total</label><input id="nd-t" pesos [(ngModel)]="nTotal" placeholder="$ 0" /></div>
+            @if (tipoNueva() !== 'factura') {
+              <div class="campo"><label for="nd-t">Valor total</label><input id="nd-t" pesos [(ngModel)]="nTotal" placeholder="$ 0" /></div>
+            }
+            <div class="campo"><label for="nd-f">Fecha {{ tipoNueva() === 'otra' ? 'de la deuda' : 'de la factura' }}</label><input id="nd-f" type="date" [max]="hoy" [(ngModel)]="nFecha" /></div>
             <div class="campo"><label for="nd-v">Vence (opcional)</label><input id="nd-v" type="date" [(ngModel)]="nVence" /></div>
           </div>
           @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
         </div>
         <div class="hoja-pie">
           <button class="b" (click)="nueva.set(false)">Cancelar</button>
-          <button class="b b-pri" (click)="crear()" [disabled]="ocupado() || (deCompra() && !compraSel())">{{ ocupado() ? 'Guardando…' : 'Registrar deuda' }}</button>
+          <button class="b b-pri" (click)="crear()" [disabled]="ocupado() || (tipoNueva() === 'compra' && !compraSel()) || (tipoNueva() === 'factura' && !lineasF().length)">{{ ocupado() ? 'Guardando…' : 'Registrar deuda' }}</button>
         </div>
       </div>
     }
@@ -291,7 +367,35 @@ export class DeudasPage implements OnInit {
 
   // Nueva deuda
   nueva = signal(false);
-  deCompra = signal(true);
+  tipoNueva = signal<'factura' | 'compra' | 'otra'>('factura');
+  nFecha = this.hoy;
+  // Factura nueva con varios productos
+  private prodsF = signal<ProdF[]>([]);
+  buscaF = signal('');
+  lineasF = signal<LineaF[]>([]);
+  facturaF = signal<string[]>([]);
+  private versionF = signal(0);
+  sugerenciasF = computed(() => {
+    const t = normalF(this.buscaF());
+    if (t.length < 2) return [];
+    const ya = new Set(this.lineasF().map((l) => l.id));
+    return this.prodsF().filter((p) => !ya.has(p.id) && (normalF(p.nombre).includes(t) || normalF(p.sku ?? '').includes(t))).slice(0, 8);
+  });
+  totalF = computed(() => {
+    this.versionF();
+    return this.lineasF().reduce((s, l) => s + (Number(l.cantidad) || 0) * (Number(l.costo) || 0), 0);
+  });
+  unidadesF = computed(() => {
+    this.versionF();
+    return this.lineasF().reduce((s, l) => s + (Number(l.cantidad) || 0), 0);
+  });
+  // Editar
+  editando = signal<Deuda | null>(null);
+  eProveedor = '';
+  eConcepto = '';
+  eTotal: number | null = null;
+  eFecha = '';
+  eVence = '';
   comprasLibres = signal<CompraLibre[]>([]);
   compraSel = signal<CompraLibre | null>(null);
   nProveedor = '';
@@ -420,8 +524,12 @@ export class DeudasPage implements OnInit {
 
   async abrirNueva(): Promise<void> {
     this.error.set('');
-    this.deCompra.set(true);
+    this.tipoNueva.set('factura');
     this.compraSel.set(null);
+    this.nFecha = this.hoy;
+    this.buscaF.set('');
+    this.lineasF.set([]);
+    this.facturaF.set([]);
     this.nProveedor = '';
     this.nConcepto = '';
     this.nTotal = null;
@@ -429,26 +537,112 @@ export class DeudasPage implements OnInit {
     this.nueva.set(true);
     const { data } = await this.sb.client.rpc('compras_sin_deuda');
     this.comprasLibres.set((data ?? []) as CompraLibre[]);
-    if (!this.comprasLibres().length) this.deCompra.set(false);
+    if (!this.prodsF().length) {
+      const r = await this.sb.client.rpc('inventario');
+      this.prodsF.set((r.data ?? []) as ProdF[]);
+    }
+  }
+
+  cambiarTipo(t: 'factura' | 'compra' | 'otra'): void {
+    this.tipoNueva.set(t);
+    this.error.set('');
+    if (t !== 'compra') this.compraSel.set(null);
+  }
+
+  agregarF(p: ProdF): void {
+    this.lineasF.update((l) => [...l, { id: p.id, nombre: p.nombre, cantidad: null, costo: p.costo ?? null }]);
+    this.buscaF.set('');
+    setTimeout(() => document.getElementById('nd-b')?.focus(), 0);
+  }
+
+  quitarF(i: number): void {
+    this.lineasF.update((l) => l.filter((_, j) => j !== i));
+  }
+
+  tocarF(): void {
+    this.versionF.update((v) => v + 1);
+  }
+
+  abrirEditar(d: Deuda): void {
+    this.error.set('');
+    this.eProveedor = d.proveedor;
+    this.eConcepto = d.concepto ?? '';
+    this.eTotal = Number(d.total);
+    this.eFecha = d.fecha;
+    this.eVence = d.vence ?? '';
+    this.editando.set(d);
+  }
+
+  async guardarEdicion(): Promise<void> {
+    const d = this.editando();
+    if (!d) return;
+    if (!this.eProveedor.trim()) return this.error.set('Escribe a quién se le debe.');
+    if (!(Number(this.eTotal) > 0)) return this.error.set('Escribe el valor de la deuda.');
+    if (!this.eFecha) return this.error.set('Escribe la fecha.');
+    this.ocupado.set(true);
+    const { error } = await this.sb.client.rpc('editar_deuda', {
+      p_deuda: d.id, p_proveedor: this.eProveedor.trim(), p_concepto: this.eConcepto.trim(), p_total: Number(this.eTotal),
+      p_fecha: this.eFecha, p_vence: this.eVence || null,
+    });
+    this.ocupado.set(false);
+    if (error) return this.error.set(mensajeError(error));
+    this.toast.ok('Deuda actualizada');
+    this.editando.set(null);
+    await this.cargar();
   }
 
   elegirCompra(c: CompraLibre): void {
     this.compraSel.set(c);
     this.nProveedor = c.proveedor;
+    this.nFecha = c.fecha;
     this.nTotal = Number(c.total);
     if (!this.nConcepto) this.nConcepto = 'Mercancía fiada';
   }
 
   async crear(): Promise<void> {
     if (!this.nProveedor.trim()) return this.error.set('Escribe a quién se le debe.');
-    if (!(Number(this.nTotal) > 0)) return this.error.set('Escribe el valor de la deuda.');
+    const fecha = this.nFecha || this.hoy;
+    let compra: number | null = this.tipoNueva() === 'compra' ? this.compraSel()?.id ?? null : null;
+    let total = Number(this.nTotal);
+    if (this.tipoNueva() === 'factura') {
+      const lineas = this.lineasF();
+      if (!lineas.length) return this.error.set('Agrega los productos de la factura.');
+      if (lineas.some((l) => !(Number(l.cantidad) > 0))) return this.error.set('Escribe la cantidad de cada producto.');
+      if (lineas.some((l) => !(Number(l.costo) > 0))) return this.error.set('Escribe el costo de cada producto.');
+      total = this.totalF();
+      this.ocupado.set(true);
+      const r = await this.sb.client.rpc('registrar_compra', {
+        p_fecha: fecha, p_proveedor: this.nProveedor.trim(), p_nota: this.nConcepto.trim() || 'Mercancía fiada',
+        p_items: lineas.map((l) => ({ producto_id: l.id, cantidad: Math.round(Number(l.cantidad)), costo: Number(l.costo) })),
+        p_comprobantes: this.facturaF(), p_actualizar_costo: true,
+      });
+      if (r.error) {
+        this.ocupado.set(false);
+        return this.error.set(mensajeError(r.error));
+      }
+      compra = r.data as number;
+      if (!compra) {
+        this.ocupado.set(false);
+        return this.error.set('No se pudo registrar la compra. Intenta otra vez.');
+      }
+    } else if (!(total > 0)) {
+      return this.error.set('Escribe el valor de la deuda.');
+    }
     this.ocupado.set(true);
     const { error } = await this.sb.client.rpc('crear_deuda', {
-      p_proveedor: this.nProveedor.trim(), p_concepto: this.nConcepto.trim(), p_total: Number(this.nTotal), p_fecha: this.compraSel()?.fecha ?? this.hoy,
-      p_vence: this.nVence || null, p_compra: this.deCompra() ? this.compraSel()?.id ?? null : null,
+      p_proveedor: this.nProveedor.trim(), p_concepto: this.nConcepto.trim() || (compra ? 'Mercancía fiada' : ''), p_total: total, p_fecha: fecha,
+      p_vence: this.nVence || null, p_compra: compra,
     });
     this.ocupado.set(false);
-    if (error) return this.error.set(mensajeError(error));
+    if (error) {
+      if (this.tipoNueva() === 'factura') {
+        // La compra ya entró: no se debe repetir la factura, solo crear la deuda desde esa compra
+        this.toast.error('La compra quedó registrada en Inventario, pero no se pudo crear la deuda: ' + mensajeError(error) + '. Créala con "Compra ya registrada".');
+        this.nueva.set(false);
+        return;
+      }
+      return this.error.set(mensajeError(error));
+    }
     this.toast.ok(`Deuda con ${this.nProveedor.trim()} registrada`);
     this.nueva.set(false);
     if (this.filtro() !== 'abiertas') this.filtro.set('abiertas');
