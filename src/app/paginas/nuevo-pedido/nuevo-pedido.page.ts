@@ -102,6 +102,9 @@ function normal(s: string): string {
       .totales .fin { color: var(--text); font-size: 18px; font-weight: 600; margin-top: 4px; }
       .comision { margin: 0; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--oro-wash); font-size: 13px; color: var(--text-soft); }
       .comision strong { color: var(--oro-texto); }
+      .al-costo { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; line-height: 1.35; cursor: pointer; }
+      .al-costo input { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; }
+      .al-costo small { display: block; margin-top: 3px; font-size: 12.5px; color: var(--text-muted); }
       .cliente-previo { margin: 0; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--accent-wash); font-size: 13px; }
       .riesgo { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--oro-wash); color: var(--oro-texto); font-size: 13px; }
       .riesgo.alto { background: var(--danger-wash); color: var(--danger); }
@@ -216,7 +219,17 @@ function normal(s: string): string {
               <label for="obs">Observaciones</label>
               <textarea id="obs" [(ngModel)]="observaciones" [placeholder]="local() ? '' : 'Ej: llamar antes, entregar antes de las 3 pm'"></textarea>
             </div>
-            @if (local() && !editId()) {
+            @if (local() && !editId() && esAdmin()) {
+              <label class="al-costo">
+                <input type="checkbox" [ngModel]="alCosto()" (ngModelChange)="cambiarAlCosto($event)" />
+                <span><strong>Venta al costo</strong> (le vendo a mi precio de compra, sin ganancia)
+                  @if (alCosto()) { <small>Cada producto queda a su precio de compra. Pon en "Nombre" a quién se lo vendes. Cuenta como vendido en Deudas y no da comisión.</small> }</span>
+              </label>
+              @if (alCosto() && sinCosto().length) {
+                <p class="error" style="margin: 0">Sin precio de compra: {{ sinCosto().join(', ') }}. Escribe a mano el precio de esos productos.</p>
+              }
+            }
+            @if (local() && !editId() && !alCosto()) {
               <div class="campo">
                 <label for="vend">Vendedora</label>
                 <select id="vend" [(ngModel)]="vendedora" class="inp">
@@ -387,6 +400,18 @@ export class NuevoPedidoPage implements OnInit {
   /** Venta en el local: a qué vendedora se le suma */
   vendedoras = signal<Usuario[]>([]);
   vendedora: number | null = null;
+  /** Venta del local al costo (a alguien a quien se le vende al precio de compra, sin ganancia) */
+  alCosto = signal(false);
+  esAdmin = computed(() => this.sb.tiene('admin'));
+  sinCosto = computed(() => this.lineas().filter((l) => !(Number(l.producto.precio_compra) > 0)).map((l) => l.producto.nombre));
+
+  cambiarAlCosto(v: boolean): void {
+    this.alCosto.set(v);
+    if (v) this.vendedora = null;
+    this.lineas.update((ls) => ls.map((l) => ({
+      ...l, precio: v && Number(l.producto.precio_compra) > 0 ? Number(l.producto.precio_compra) : Number(l.producto.precio_venta),
+    })));
+  }
   /** Comprobantes de la transferencia (venta en el local) */
   evidencias = signal<string[]>([]);
   /** Lo que se le aparta a la vendedora de cada venta del local para la alcancía */
@@ -602,6 +627,7 @@ export class NuevoPedidoPage implements OnInit {
     this.efectivo = 0;
     this.transferencia = 0;
     this.vendedora = null;
+    this.alCosto.set(false);
     this.tipo.set(null);
     this.evidencias.set([]);
     this.clientePrevio.set(0);
@@ -653,7 +679,8 @@ export class NuevoPedidoPage implements OnInit {
     // Si solo hay un color o una talla, ya queda elegida
     const color = p.colores?.length === 1 ? p.colores[0].nombre : null;
     const talla = p.tallas?.length === 1 ? p.tallas[0] : null;
-    return { key: ++claves, producto: p, cantidad: 1, precio: Number(p.precio_venta), color, talla, iguales: false, ...base };
+    const precio = this.alCosto() && Number(p.precio_compra) > 0 ? Number(p.precio_compra) : Number(p.precio_venta);
+    return { key: ++claves, producto: p, cantidad: 1, precio, color, talla, iguales: false, ...base };
   }
 
   cambiarCantidad(i: number, d: number): void {
@@ -807,12 +834,12 @@ export class NuevoPedidoPage implements OnInit {
         const id = await this.ps.crearVentaLocal({
           cliente_nombre: this.nombre,
           cliente_telefono: this.telefonoGuardar(),
-          observaciones: this.observaciones,
+          observaciones: this.alCosto() ? ['Venta al costo', this.observaciones.trim()].filter(Boolean).join(' · ') : this.observaciones,
           items,
           tipo: this.tipo()!,
           efectivo: Number(this.efectivo) || 0,
           transferencia: Number(this.transferencia) || 0,
-          vendedora: this.vendedora,
+          vendedora: this.alCosto() ? null : this.vendedora,
           evidencias: pideComprobante(this.tipo()) ? this.evidencias() : [],
         });
         const v = this.vendedoras().find((x) => x.id === this.vendedora);

@@ -1,5 +1,57 @@
 [
   {
+    "id": "2026-11-04-compras-viejas-al-costo",
+    "fecha": "2026-11-04",
+    "titulo": "Compras de otras fechas y ventas al costo",
+    "cuerpo": "Ahora puedes registrar en Deudas las compras que no habías subido, con su fecha real, y la app cuenta lo vendido desde ese día. Además, en Venta del local hay una opción para vender al costo.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Compras de otras fechas",
+        "pasos": [
+          "En Deudas toca Nueva deuda → Factura nueva y agrega los productos con su cantidad y costo.",
+          "En \"Fecha de la factura\" pon el día en que compraste. Al poner una fecha pasada se desmarca \"Sumar estas unidades al inventario\", porque esa mercancía ya está en el local.",
+          "La app cuenta como vendidas todas las unidades de esos productos entregadas desde esa fecha, hasta la cantidad que compraste. Así sabes cuánto apartar para abonar.",
+          "Si quieres cambiar desde cuándo se cuenta, toca Editar en la deuda y cambia \"Contar lo vendido desde\"."
+        ]
+      },
+      {
+        "titulo": "Venta al costo",
+        "pasos": [
+          "Ve a Venta del local y marca \"Venta al costo\".",
+          "Cada producto queda a su precio de compra (si alguno no tiene precio de compra, escríbelo a mano). No se le asigna vendedora ni da comisión.",
+          "En Nombre escribe a quién se lo vendes. La venta queda con la nota \"Venta al costo\".",
+          "Cuenta como vendida en Deudas y entra a la caja como cualquier venta, con ganancia $0."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-11-04-eliminar-registros",
+    "fecha": "2026-11-04",
+    "titulo": "Ya puedes eliminar deudas, compras y conteos subidos por error",
+    "cuerpo": "Si algo se registró mal, ahora lo puedes borrar del todo en vez de solo anularlo.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Dónde",
+        "pasos": [
+          "Deudas: en la tarjeta de la deuda toca Eliminar. Se borra con sus abonos. Si venía de una compra de Inventario, la compra no se toca.",
+          "Inventario → Compras: toca Eliminar en la compra. Se restan del inventario las unidades que sumó (si no estaba anulada) y, si tenía una deuda, también se borra.",
+          "Inventario → historial de un producto: en los conteos toca Eliminar. Se deshace esa diferencia en el stock."
+        ]
+      },
+      {
+        "titulo": "Ojo",
+        "texto": "Eliminar no se puede deshacer. Si solo quieres dejar constancia de que algo no va, usa Anular en las compras."
+      }
+    ]
+  },
+  {
     "id": "2026-11-04-deudas-factura",
     "fecha": "2026-11-04",
     "titulo": "Deudas: factura con varios productos y fechas editables",

@@ -18,7 +18,7 @@ interface Item { producto_id: number; nombre: string; cantidad: number; costo: n
 interface Abono { id: number; fecha: string; valor: number; metodo: string; comprobantes: string[]; nota: string | null; anulado: boolean; quien: string | null }
 interface Deuda {
   id: number; proveedor: string; concepto: string | null; total: number; fecha: string; vence: string | null;
-  estado: 'abierta' | 'pagada' | 'anulada'; compra_id: number | null; creado_por: string | null;
+  estado: 'abierta' | 'pagada' | 'anulada'; compra_id: number | null; creado_por: string | null; contar_desde: string | null;
   abonado: number; saldo: number; costo_vendido: number | null; unidades: number | null; vendidas: number | null; por_apartar: number;
   items: Item[] | null; abonos: Abono[];
 }
@@ -114,6 +114,8 @@ const METODOS: { id: Metodo; label: string }[] = [
       .f-linea .quitar { height: 32px; border: 0; border-radius: var(--radius-sm); background: var(--danger-wash); color: var(--danger); cursor: pointer; }
       .f-total { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface-2); font-size: 13.5px; }
       .f-total strong { font-family: var(--mono-font); font-size: 18px; }
+      .check { display: flex; align-items: flex-start; gap: 8px; font-size: 14px; line-height: 1.35; cursor: pointer; }
+      .check input { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; }
       .pie-deuda { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
       .tipo-deuda button.on { border-color: var(--accent); background: var(--accent-wash); color: var(--accent); font-weight: 650; }
       .compras { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 280px; overflow-y: auto; }
@@ -145,7 +147,8 @@ const METODOS: { id: Metodo; label: string }[] = [
             <div class="top">
               <div>
                 <h3>{{ d.proveedor }}</h3>
-                <p>{{ d.concepto || (d.compra_id ? 'Mercancía fiada' : 'Deuda') }} · desde el {{ fecha(d.fecha) }}{{ d.compra_id ? ' · compra #' + d.compra_id : '' }}</p>
+                <p>{{ d.concepto || (d.compra_id || d.unidades ? 'Mercancía fiada' : 'Deuda') }} · desde el {{ fecha(d.fecha) }}{{ d.compra_id ? ' · compra #' + d.compra_id : '' }}</p>
+                @if (d.unidades && (d.contar_desde || !d.compra_id)) { <p>Ventas contadas desde el {{ fecha(d.contar_desde || d.fecha) }}</p> }
               </div>
               <span class="estado" [class]="'estado ' + estadoClase(d)">{{ estadoTexto(d) }}</span>
             </div>
@@ -157,7 +160,7 @@ const METODOS: { id: Metodo; label: string }[] = [
             <div class="barra" role="progressbar" [attr.aria-valuenow]="pct(d.abonado, d.total)" aria-valuemin="0" aria-valuemax="100" aria-label="Lo abonado">
               <i [style.width.%]="pct(d.abonado, d.total)"></i></div>
 
-            @if (d.compra_id && d.unidades) {
+            @if (d.unidades) {
               <div class="vendido">
                 <div class="fila"><span>Mercancía vendida</span><span class="num">{{ d.vendidas }} de {{ d.unidades }} unidades</span></div>
                 <div class="barra venta"><i [style.width.%]="pct(d.vendidas ?? 0, d.unidades)"></i></div>
@@ -203,7 +206,7 @@ const METODOS: { id: Metodo; label: string }[] = [
             @if (d.estado !== 'anulada') {
               <div class="pie-deuda">
                 <button type="button" class="link" (click)="abrirEditar(d)">Editar (fecha, valor, proveedor)</button>
-                <button type="button" class="link peligro" (click)="anularDeuda(d)">Anular esta deuda</button>
+                <button type="button" class="link peligro" (click)="eliminarDeuda(d)">Eliminar</button>
               </div>
             }
           </article>
@@ -257,6 +260,10 @@ const METODOS: { id: Metodo; label: string }[] = [
             <div class="campo"><label for="ed-f">Fecha</label><input id="ed-f" type="date" [max]="hoy" [(ngModel)]="eFecha" /></div>
             <div class="campo"><label for="ed-v">Vence (opcional)</label><input id="ed-v" type="date" [(ngModel)]="eVence" /></div>
           </div>
+          @if (d.unidades) {
+            <div class="campo"><label for="ed-cd">Contar lo vendido desde</label><input id="ed-cd" type="date" [max]="hoy" [(ngModel)]="eContar" />
+              <small class="suave">{{ d.compra_id ? 'Vacío: desde que se registró la compra en Inventario.' : 'Vacío: desde la fecha de la deuda.' }} Se cuentan las unidades entregadas desde ese día, hasta la cantidad comprada.</small></div>
+          }
           @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
         </div>
         <div class="hoja-pie">
@@ -278,7 +285,7 @@ const METODOS: { id: Metodo; label: string }[] = [
             <button type="button" [class.on]="tipoNueva() === 'otra'" (click)="cambiarTipo('otra')">Otra deuda</button>
           </div>
           @if (tipoNueva() === 'factura') {
-            <p class="ayuda" style="margin: 0">Agrega todos los productos de la factura con su cantidad y costo. Se registra la compra en Inventario (suma las unidades) y queda la deuda, para saber cuánto se ha vendido.</p>
+            <p class="ayuda" style="margin: 0">Agrega todos los productos de la factura con su cantidad y costo. Sirve también para compras de otras fechas: pon abajo la fecha de la factura y la app cuenta lo vendido desde ese día.</p>
             <div class="campo f-buscar">
               <label for="nd-b">Agregar producto</label>
               <input id="nd-b" [ngModel]="buscaF()" (ngModelChange)="buscaF.set($event)" placeholder="Escribe el nombre o el SKU" autocomplete="off" />
@@ -305,6 +312,11 @@ const METODOS: { id: Metodo; label: string }[] = [
             } @else {
               <p class="vacio-txt" style="padding: 6px 0">Todavía no has agregado productos.</p>
             }
+            <label class="check"><input type="checkbox" [ngModel]="sumarInv()" (ngModelChange)="sumarInv.set($event)" />
+              Sumar estas unidades al inventario (mercancía que acaba de llegar)</label>
+            @if (!sumarInv()) {
+              <p class="ayuda" style="margin: 0">No se toca el inventario. Lo vendido se cuenta desde la fecha de la factura: todas las unidades de esos productos entregadas desde ese día, hasta la cantidad que compraste.</p>
+            }
             <app-comprobantes-input [obligatorio]="false" titulo="Foto de la factura (opcional)" [rutas]="facturaF()" (cambio)="facturaF.set($event)"></app-comprobantes-input>
           }
           @if (tipoNueva() === 'compra') {
@@ -324,7 +336,7 @@ const METODOS: { id: Metodo; label: string }[] = [
             @if (tipoNueva() !== 'factura') {
               <div class="campo"><label for="nd-t">Valor total</label><input id="nd-t" pesos [(ngModel)]="nTotal" placeholder="$ 0" /></div>
             }
-            <div class="campo"><label for="nd-f">Fecha {{ tipoNueva() === 'otra' ? 'de la deuda' : 'de la factura' }}</label><input id="nd-f" type="date" [max]="hoy" [(ngModel)]="nFecha" /></div>
+            <div class="campo"><label for="nd-f">Fecha {{ tipoNueva() === 'otra' ? 'de la deuda' : 'de la factura' }}</label><input id="nd-f" type="date" [max]="hoy" [ngModel]="nFecha" (ngModelChange)="cambiarFechaN($event)" /></div>
             <div class="campo"><label for="nd-v">Vence (opcional)</label><input id="nd-v" type="date" [(ngModel)]="nVence" /></div>
           </div>
           @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
@@ -396,6 +408,8 @@ export class DeudasPage implements OnInit {
   eTotal: number | null = null;
   eFecha = '';
   eVence = '';
+  eContar = '';
+  sumarInv = signal(true);
   comprasLibres = signal<CompraLibre[]>([]);
   compraSel = signal<CompraLibre | null>(null);
   nProveedor = '';
@@ -514,11 +528,13 @@ export class DeudasPage implements OnInit {
     await this.cargar();
   }
 
-  async anularDeuda(d: Deuda): Promise<void> {
-    if (!confirm(`¿Anular la deuda con ${d.proveedor} (${pesos(d.total)})? Úsalo solo si se registró por error.`)) return;
-    const { error } = await this.sb.client.rpc('anular_deuda', { p_deuda: d.id });
+  /** Para deudas subidas por error: se borra del todo con sus abonos (la compra de Inventario queda) */
+  async eliminarDeuda(d: Deuda): Promise<void> {
+    const abonos = d.abonos.filter((a) => !a.anulado).length;
+    if (!confirm(`¿Eliminar la deuda con ${d.proveedor} (${pesos(d.total)})?${abonos ? ` También se borran sus ${abonos} abonos.` : ''}${d.compra_id ? ' La compra de Inventario no se toca.' : ''} No se puede deshacer.`)) return;
+    const { error } = await this.sb.client.rpc('eliminar_deuda', { p_deuda: d.id });
     if (error) return this.toast.error(mensajeError(error));
-    this.toast.ok('Deuda anulada');
+    this.toast.ok('Deuda eliminada');
     await this.cargar();
   }
 
@@ -527,6 +543,7 @@ export class DeudasPage implements OnInit {
     this.tipoNueva.set('factura');
     this.compraSel.set(null);
     this.nFecha = this.hoy;
+    this.sumarInv.set(true);
     this.buscaF.set('');
     this.lineasF.set([]);
     this.facturaF.set([]);
@@ -541,6 +558,12 @@ export class DeudasPage implements OnInit {
       const r = await this.sb.client.rpc('inventario');
       this.prodsF.set((r.data ?? []) as ProdF[]);
     }
+  }
+
+  /** Una factura de otro día casi siempre ya está en el local: por defecto no se suma al inventario */
+  cambiarFechaN(v: string): void {
+    this.nFecha = v;
+    if (v && v < this.hoy) this.sumarInv.set(false);
   }
 
   cambiarTipo(t: 'factura' | 'compra' | 'otra'): void {
@@ -570,6 +593,7 @@ export class DeudasPage implements OnInit {
     this.eTotal = Number(d.total);
     this.eFecha = d.fecha;
     this.eVence = d.vence ?? '';
+    this.eContar = d.contar_desde ?? '';
     this.editando.set(d);
   }
 
@@ -582,7 +606,7 @@ export class DeudasPage implements OnInit {
     this.ocupado.set(true);
     const { error } = await this.sb.client.rpc('editar_deuda', {
       p_deuda: d.id, p_proveedor: this.eProveedor.trim(), p_concepto: this.eConcepto.trim(), p_total: Number(this.eTotal),
-      p_fecha: this.eFecha, p_vence: this.eVence || null,
+      p_fecha: this.eFecha, p_vence: this.eVence || null, p_contar_desde: this.eContar || null,
     });
     this.ocupado.set(false);
     if (error) return this.error.set(mensajeError(error));
@@ -610,6 +634,22 @@ export class DeudasPage implements OnInit {
       if (lineas.some((l) => !(Number(l.cantidad) > 0))) return this.error.set('Escribe la cantidad de cada producto.');
       if (lineas.some((l) => !(Number(l.costo) > 0))) return this.error.set('Escribe el costo de cada producto.');
       total = this.totalF();
+      if (!this.sumarInv()) {
+        // Compra de otra fecha: la deuda lleva sus productos y cuenta lo vendido desde la fecha de la factura
+        this.ocupado.set(true);
+        const r0 = await this.sb.client.rpc('crear_deuda', {
+          p_proveedor: this.nProveedor.trim(), p_concepto: this.nConcepto.trim() || 'Mercancía fiada', p_total: total, p_fecha: fecha,
+          p_vence: this.nVence || null, p_items: lineas.map((l) => ({ producto_id: l.id, cantidad: Math.round(Number(l.cantidad)), costo: Number(l.costo) })),
+          p_contar_desde: fecha,
+        });
+        this.ocupado.set(false);
+        if (r0.error) return this.error.set(mensajeError(r0.error));
+        this.toast.ok(`Deuda con ${this.nProveedor.trim()} registrada`);
+        this.nueva.set(false);
+        if (this.filtro() !== 'abiertas') this.filtro.set('abiertas');
+        await this.cargar();
+        return;
+      }
       this.ocupado.set(true);
       const r = await this.sb.client.rpc('registrar_compra', {
         p_fecha: fecha, p_proveedor: this.nProveedor.trim(), p_nota: this.nConcepto.trim() || 'Mercancía fiada',
@@ -632,6 +672,7 @@ export class DeudasPage implements OnInit {
     const { error } = await this.sb.client.rpc('crear_deuda', {
       p_proveedor: this.nProveedor.trim(), p_concepto: this.nConcepto.trim() || (compra ? 'Mercancía fiada' : ''), p_total: total, p_fecha: fecha,
       p_vence: this.nVence || null, p_compra: compra,
+      ...(this.tipoNueva() === 'factura' && fecha < this.hoy ? { p_contar_desde: fecha } : {}),
     });
     this.ocupado.set(false);
     if (error) {

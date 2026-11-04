@@ -26,7 +26,7 @@ interface Prod {
   costo: number | null;
   vendidos_30: number;
 }
-interface Movimiento { fecha: string; tipo: 'compra' | 'ajuste' | 'anulacion' | 'venta'; cantidad: number; detalle: string | null; autor: string | null; stock_despues: number | null }
+interface Movimiento { id?: number; fecha: string; tipo: 'compra' | 'ajuste' | 'anulacion' | 'venta'; cantidad: number; detalle: string | null; autor: string | null; stock_despues: number | null }
 interface Compra {
   id: number;
   fecha: string;
@@ -90,6 +90,9 @@ type Filtro = 'con' | 'bajos' | 'agotados' | 'sin' | 'todos';
       .compra p { margin: 3px 0 0; font-size: 13px; color: var(--text-soft); }
       .compra .pie { display: flex; gap: 8px; align-items: center; margin-top: 6px; font-size: 12px; color: var(--text-muted); }
       .compra .pie .b { height: 30px; font-size: 12.5px; margin-left: auto; }
+      .compra .pie .b + .b { margin-left: 0; }
+      .b-peligro-txt { color: var(--danger); }
+      .borrar-mov { margin-left: 8px; border: 0; background: none; padding: 0; color: var(--danger); font: inherit; font-size: 12px; font-weight: 600; text-decoration: underline; cursor: pointer; }
       .mini-foto { width: 34px; height: 34px; padding: 0; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: var(--surface-2); cursor: zoom-in; }
       .mini-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
       .lineas { display: flex; flex-direction: column; gap: 8px; }
@@ -254,6 +257,7 @@ type Filtro = 'con' | 'bajos' | 'agotados' | 'sin' | 'todos';
                   </button>
                 }
                 @if (esAdmin() && !c.anulada) { <button class="b" (click)="anular(c)">Anular</button> }
+                @if (esAdmin()) { <button class="b b-peligro-txt" (click)="eliminarCompra(c)">Eliminar</button> }
               </div>
             </div>
           } @empty {
@@ -300,7 +304,8 @@ type Filtro = 'con' | 'bajos' | 'agotados' | 'sin' | 'todos';
             @for (m of movimientos(); track $index) {
               <li>
                 <span>{{ tipoMov(m.tipo) }}@if (m.detalle) { · {{ m.detalle }} }<small>{{ cuando(m.fecha) }}{{ m.autor ? ' · ' + m.autor : '' }}{{ m.stock_despues !== null ? ' · quedaron ' + m.stock_despues : '' }}</small></span>
-                <span class="cant" [class.mas]="m.cantidad > 0" [class.menos]="m.cantidad < 0">{{ m.cantidad > 0 ? '+' : '' }}{{ m.cantidad }}</span>
+                <span class="cant" [class.mas]="m.cantidad > 0" [class.menos]="m.cantidad < 0">{{ m.cantidad > 0 ? '+' : '' }}{{ m.cantidad }}
+                  @if (esAdmin() && m.tipo === 'ajuste' && m.id) { <button type="button" class="borrar-mov" (click)="eliminarAjuste(p, m)" aria-label="Eliminar este conteo">Eliminar</button> }</span>
               </li>
             } @empty {
               <li>@if (cargandoMov()) { <app-esqueleto forma="texto" [filas]="3"></app-esqueleto> } @else { <span class="suave">Sin movimientos todavía.</span> }</li>
@@ -679,6 +684,27 @@ export class InventarioPage implements OnInit {
     this.toast.ok(`Compra registrada: +${this.unidades()} unidades${this.fiado ? ' · quedó en Deudas' : ''}`);
     this.formCompra.set(false);
     await Promise.all([this.cargar(), this.cargarCompras()]);
+  }
+
+  /** Para compras subidas por error: se borra del todo (con su deuda) y se restan las unidades que sumó */
+  async eliminarCompra(c: Compra): Promise<void> {
+    const aviso = c.anulada ? '' : ' Se le restan al inventario las unidades que sumó.';
+    if (!confirm(`¿Eliminar del todo la compra a ${c.proveedor}?${aviso} Si tiene una deuda en Deudas, también se borra con sus abonos. No se puede deshacer.`)) return;
+    const { data, error } = await this.sb.client.rpc('eliminar_compra', { p_id: c.id });
+    if (error) return this.toast.error(mensajeError(error));
+    const n = Number((data as { deudas?: number } | null)?.deudas) || 0;
+    this.toast.ok(n ? 'Compra eliminada (y su deuda)' : 'Compra eliminada');
+    await Promise.all([this.cargar(), this.cargarCompras()]);
+  }
+
+  async eliminarAjuste(p: Prod, m: Movimiento): Promise<void> {
+    if (!confirm(`¿Eliminar este conteo (${m.cantidad > 0 ? '+' : ''}${m.cantidad})? Se deshace esa diferencia en el inventario de ${p.nombre}.`)) return;
+    const { error } = await this.sb.client.rpc('eliminar_ajuste', { p_mov: m.id });
+    if (error) return this.toast.error(mensajeError(error));
+    this.toast.ok('Conteo eliminado');
+    await this.cargar();
+    const act = this.productos().find((x) => x.id === p.id);
+    if (act) await this.abrirHistorial(act);
   }
 
   async anular(c: Compra): Promise<void> {
