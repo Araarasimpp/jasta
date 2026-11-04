@@ -1,5 +1,30 @@
 [
   {
+    "id": "2026-11-04-cuentas-por-cobrar",
+    "fecha": "2026-11-04",
+    "titulo": "Cuentas por cobrar: lo que entregas al costo y sus abonos",
+    "cuerpo": "Lo que le entregas a tu precio de compra a alguien de confianza (por ejemplo, tu hermano) ya no se registra como venta del local. Ahora tiene su propio apartado, donde ves cuánto te debe y lo que te va abonando.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se hace",
+        "pasos": [
+          "Ve a Más → Finanzas → Cuentas por cobrar.",
+          "La primera vez toca \"Nueva cuenta\" y escribe el nombre (y el celular, si quieres mandarle el estado de cuenta).",
+          "Cuando le pases mercancía toca \"Entregar mercancía\" y agrega los productos: cada uno sale a tu precio de compra.",
+          "Cuando te pague toca \"Registrar abono\": escribe cuánto, cómo te pagó y, si quieres, sube el comprobante. \"Pagó todo\" pone el saldo completo.",
+          "Arriba ves en grande cuánto te debe. En \"Ver movimientos\" está todo lo que le has entregado y lo que te ha abonado."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "Estas entregas no suman en Ventas del local, caja, reportes ni ganancias. Sí descuentan del inventario y cuentan como vendido en Deudas, para que sepas cuánto apartar para el proveedor. La casilla \"Venta al costo\" de Venta del local se quitó y las ventas al costo que ya habías subido se pasaron a la cuenta \"Mi hermano\" (le puedes cambiar el nombre con Editar)."
+      }
+    ]
+  },
+  {
     "id": "2026-11-04-costo-pago-linea",
     "fecha": "2026-11-04",
     "titulo": "El pago en línea ahora cubre exacto la comisión de Wompi",
@@ -60,8 +85,8 @@
   {
     "id": "2026-11-04-compras-viejas-al-costo",
     "fecha": "2026-11-04",
-    "titulo": "Compras de otras fechas y ventas al costo",
-    "cuerpo": "Ahora puedes registrar en Deudas las compras que no habías subido, con su fecha real, y la app cuenta lo vendido desde ese día. Además, en Venta del local hay una opción para vender al costo.",
+    "titulo": "Compras de otras fechas en Deudas",
+    "cuerpo": "Ahora puedes registrar en Deudas las compras que no habías subido, con su fecha real, y la app cuenta lo vendido desde ese día.",
     "roles": [
       "admin"
     ],
@@ -73,15 +98,6 @@
           "En \"Fecha de la factura\" pon el día en que compraste. Al poner una fecha pasada se desmarca \"Sumar estas unidades al inventario\", porque esa mercancía ya está en el local.",
           "La app cuenta como vendidas todas las unidades de esos productos entregadas desde esa fecha, hasta la cantidad que compraste. Así sabes cuánto apartar para abonar.",
           "Si quieres cambiar desde cuándo se cuenta, toca Editar en la deuda y cambia \"Contar lo vendido desde\"."
-        ]
-      },
-      {
-        "titulo": "Venta al costo",
-        "pasos": [
-          "Ve a Venta del local y marca \"Venta al costo\".",
-          "Cada producto queda a su precio de compra (si alguno no tiene precio de compra, escríbelo a mano). No se le asigna vendedora ni da comisión.",
-          "En Nombre escribe a quién se lo vendes. La venta queda con la nota \"Venta al costo\".",
-          "Cuenta como vendida en Deudas y entra a la caja como cualquier venta, con ganancia $0."
         ]
       }
     ]

@@ -118,6 +118,7 @@ const MENU: ItemMenu[] = [
   { label: 'Comisiones', path: '/app/comisiones', icon: 'card-outline', roles: ['admin', 'vendedora'], grupo: 'Finanzas' , buscar: 'liquidacion pagar vendedoras ganancia' },
   { label: 'Gastos', path: '/app/gastos', icon: 'trending-down-outline', roles: ['admin'], grupo: 'Finanzas' , buscar: 'arriendo nomina utilidad' },
   { label: 'Transferencias', path: '/app/transferencias', icon: 'swap-horizontal-outline', roles: ['admin'], grupo: 'Finanzas', buscar: 'confirmar banco transferencia nequi pagos verificar' },
+  { label: 'Cuentas por cobrar', path: '/app/cuentas', icon: 'wallet-outline', roles: ['admin'], grupo: 'Finanzas', buscar: 'hermano costo fiado abono me debe prestamo' },
   { label: 'Deudas', path: '/app/deudas', icon: 'hourglass-outline', roles: ['admin'], grupo: 'Finanzas', buscar: 'fiado proveedor abono credito pagar' },
   { label: 'Rentabilidad', path: '/app/rentabilidad', icon: 'pie-chart-outline', roles: ['admin'], grupo: 'Finanzas' , buscar: 'ganancia producto' },
   { label: 'Ranking', path: '/app/ranking', icon: 'trophy-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador'], grupo: 'Equipo' , buscar: 'metas puesto' },

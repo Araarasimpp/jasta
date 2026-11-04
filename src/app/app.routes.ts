@@ -111,6 +111,11 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/transferencias/transferencias.page').then((m) => m.TransferenciasPage),
       },
       {
+        // Mercancía entregada al costo a alguien de confianza y sus abonos (no es venta)
+        path: 'cuentas', canActivate: [rolGuard], data: { roles: ['admin'] },
+        loadComponent: () => import('./paginas/cuentas/cuentas.page').then((m) => m.CuentasPage),
+      },
+      {
         path: 'deudas', canActivate: [rolGuard], data: { roles: ['admin'] },
         loadComponent: () => import('./paginas/deudas/deudas.page').then((m) => m.DeudasPage),
       },
