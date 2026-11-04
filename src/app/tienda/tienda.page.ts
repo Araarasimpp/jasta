@@ -122,8 +122,9 @@ function parecido(a: string, b: string): number {
       .sug-barrios button:hover, .sug-barrios button:focus-visible { background: var(--hover); }
       .sug-barrios small { color: var(--text-muted); font-family: var(--mono-font); white-space: nowrap; }
       .barrio-ok { margin: 4px 0 0; font-size: 13px; color: var(--efectivo-texto); font-weight: 600; }
-      .barrio-nuevo { margin: 6px 0 0; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--oro-wash); color: var(--oro-texto); font-size: 13px; line-height: 1.4; }
-      .barrio-nuevo .link { border: 0; background: none; color: inherit; text-decoration: underline; font: inherit; cursor: pointer; padding: 0 0 0 4px; }
+      .pista-barrio { display: block; margin: -2px 0 2px; font-size: 12.5px; line-height: 1.4; color: var(--text-muted); }
+      .pista-barrio strong { color: var(--text-soft); }
+      .link-wa { font-weight: 650; color: var(--efectivo-texto); }
       .barrio-falta { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--danger-wash); color: var(--text); font-size: 13.5px; }
       .barrio-falta strong { color: var(--danger); }
       .chips-barrio { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -307,9 +308,10 @@ function parecido(a: string, b: string): number {
             <input id="td" autocomplete="street-address" maxlength="200" required [class.mal]="intentado() && errDir()" [(ngModel)]="direccion" placeholder="Ej: Cra 45 # 12-30 apto 201" />
             @if (intentado() && errDir()) { <p class="error-campo">{{ errDir() }}</p> }</div>
           <div class="campo barrio-campo"><label for="tb">Barrio <span class="obl">*</span></label>
+            <small class="pista-barrio">Escribe tu barrio y elígelo de la lista. <strong>Si no eres de Cali, escribe solo el nombre de tu ciudad</strong> (ej: Jamundí, Palmira, Yumbo), no el barrio.</small>
             <input id="tb" maxlength="120" autocomplete="off" required role="combobox" aria-autocomplete="list" [attr.aria-expanded]="sugerencias().length > 0"
               [class.mal]="intentado() && errBarrio()" [class.ok]="!!barrioElegido()" [ngModel]="barrio()" (ngModelChange)="escribirBarrio($event)"
-              (focus)="enBarrio.set(true)" (blur)="salirBarrio()" placeholder="Escribe tu barrio y elígelo de la lista" />
+              (focus)="enBarrio.set(true)" (blur)="salirBarrio()" placeholder="Ej: San Fernando, o Jamundí si no eres de Cali" />
             @if (sugerencias().length) {
               <ul class="sug-barrios" role="listbox">
                 @for (b of sugerencias(); track b.barrio) {
@@ -320,19 +322,17 @@ function parecido(a: string, b: string): number {
             }
             @if (barrioElegido(); as b) {
               <p class="barrio-ok">✓ {{ b }} · domicilio {{ pesos(domicilio()!) }}</p>
-            } @else if (barrioNoEsta()) {
-              <p class="barrio-nuevo">Listo: te confirmamos el valor del domicilio a <strong>{{ barrio().trim() }}</strong> cuando te llamemos.
-                <button type="button" class="link" (click)="barrioNoEsta.set(false); enBarrio.set(true)">Cambiar</button></p>
-            } @else if (barrio().trim().length >= 3 && !enBarrio()) {
+            } @else if (barrio().trim().length >= 3 && (!enBarrio() || !sugerencias().length)) {
               <div class="barrio-falta" role="alert">
                 <strong>No encontramos "{{ barrio().trim() }}" en la lista.</strong>
                 @if (parecidos().length) {
                   <span>¿Es alguno de estos?</span>
                   <div class="chips-barrio">@for (b of parecidos(); track b.barrio) { <button type="button" (click)="elegirBarrio(b.barrio)">{{ b.barrio }}</button> }</div>
                 }
-                <button type="button" class="b" (click)="barrioNoEsta.set(true)">Mi barrio no está en la lista</button>
+                <span>Revisa cómo lo escribiste. Si no vives en Cali, escribe solo el nombre de tu ciudad o municipio, no el barrio.</span>
+                @if (whatsappAyuda(); as w) { <a class="link-wa" [href]="w" target="_blank" rel="noopener">¿No aparece? Escríbenos por WhatsApp</a> }
               </div>
-            } @else if (intentado() && errBarrio() && !enBarrio()) { <p class="error-campo">{{ errBarrio() }}</p> }
+            } @else if (intentado() && errBarrio() && (!enBarrio() || !sugerencias().length)) { <p class="error-campo">{{ errBarrio() }}</p> }
           </div>
           <div class="campo"><label for="to">Observaciones (opcional)</label>
             <input id="to" maxlength="300" [(ngModel)]="observaciones" placeholder="Ej: llamar antes, portería, después de las 3 pm" /></div>
@@ -341,15 +341,14 @@ function parecido(a: string, b: string): number {
             <div class="formas-pago" role="radiogroup" aria-label="Forma de pago">
               <button type="button" role="radio" [attr.aria-checked]="formaPago() === 'contra_entrega'" [class.on]="formaPago() === 'contra_entrega'" (click)="formaPago.set('contra_entrega')">
                 <strong>Al recibir</strong><small>Efectivo o transferencia</small></button>
-              <button type="button" role="radio" [attr.aria-checked]="formaPago() === 'en_linea'" [class.on]="formaPago() === 'en_linea'" [disabled]="barrioNoEsta()" (click)="formaPago.set('en_linea')">
+              <button type="button" role="radio" [attr.aria-checked]="formaPago() === 'en_linea'" [class.on]="formaPago() === 'en_linea'" (click)="formaPago.set('en_linea')">
                 <strong>Pagar ahora</strong><small>Tarjeta débito o crédito, PSE, Nequi, Daviplata</small></button>
             </div>
-            @if (barrioNoEsta()) { <small class="nota">Para pagar en línea tu barrio debe estar en la lista (así sabemos el valor del domicilio).</small> }
           </div>
 
           <div class="totales">
             <div><span>Productos</span><span class="num">{{ pesos(subtotal()) }}</span></div>
-            <div><span>Domicilio</span><span class="num">{{ domicilio() !== null ? pesos(domicilio()!) : barrioNoEsta() ? 'Te lo confirmamos' : 'Elige tu barrio' }}</span></div>
+            <div><span>Domicilio</span><span class="num">{{ domicilio() !== null ? pesos(domicilio()!) : 'Elige tu barrio' }}</span></div>
             @if (enLinea()) { <div><span>Pago en línea (5%)</span><span class="num">{{ domicilio() !== null ? pesos(recargo()) : '5%' }}</span></div> }
             <div class="fin"><span>Total</span><span class="num">{{ pesos(subtotal() + (domicilio() ?? 0) + recargo()) }}</span></div>
           </div>
@@ -390,8 +389,6 @@ export class TiendaPage implements OnInit {
   barrio = signal('');
   /** El barrio tal como está en la tabla de domicilios (cuando lo eligió o lo escribió igual) */
   barrioElegido = signal<string | null>(null);
-  /** El cliente dijo que su barrio no está: el domicilio se lo confirma la vendedora */
-  barrioNoEsta = signal(false);
   enBarrio = signal(false);
   intentado = signal(false);
   error = signal('');
@@ -399,7 +396,7 @@ export class TiendaPage implements OnInit {
   hecho = signal<Hecho | null>(null);
   /** Pagar al recibir o pagar ya en línea con Wompi (con 5% más) */
   formaPago = signal<'contra_entrega' | 'en_linea'>('contra_entrega');
-  enLinea = computed(() => this.formaPago() === 'en_linea' && !this.barrioNoEsta());
+  enLinea = computed(() => this.formaPago() === 'en_linea');
   recargo = computed(() => (this.enLinea() && this.domicilio() !== null ? Math.round((this.subtotal() + this.domicilio()!) * 0.05) : 0));
 
   nombre = '';
@@ -505,13 +502,12 @@ export class TiendaPage implements OnInit {
   }
   errBarrio(): string {
     if (this.barrio().trim().length < 2) return 'Escribe tu barrio.';
-    if (!this.barrioElegido() && !this.barrioNoEsta()) return 'Elige tu barrio de la lista o toca "Mi barrio no está en la lista".';
+    if (!this.barrioElegido()) return 'Elige tu barrio de la lista. Si no eres de Cali, escribe solo el nombre de tu ciudad.';
     return '';
   }
 
   escribirBarrio(v: string): void {
     this.barrio.set(v);
-    this.barrioNoEsta.set(false);
     this.enBarrio.set(true);
     // Si lo escribió igual a uno de la lista (sin importar tildes o mayúsculas), queda elegido
     const n = normal(v);
@@ -521,7 +517,6 @@ export class TiendaPage implements OnInit {
   elegirBarrio(b: string): void {
     this.barrio.set(b);
     this.barrioElegido.set(b);
-    this.barrioNoEsta.set(false);
     this.enBarrio.set(false);
   }
 
@@ -722,6 +717,15 @@ export class TiendaPage implements OnInit {
     this.lineas.set([]);
     this.verCarrito.set(false);
     this.scroll?.nativeElement.scrollTo({ top: 0 });
+  }
+
+  /** WhatsApp de la tienda para que el cliente pida ayuda con su barrio */
+  whatsappAyuda(): string | null {
+    const t = this.t();
+    const tel = (t?.vendedora?.telefono ?? t?.telefonos?.split(/[-,/]/)[0] ?? '').replace(/\D/g, '');
+    if (tel.length < 7) return null;
+    const num = tel.length === 10 ? '57' + tel : tel;
+    return `https://wa.me/${num}?text=${encodeURIComponent(`Hola, quiero hacer un pedido del catálogo pero no encuentro mi barrio: ${this.barrio().trim()}.`)}`;
   }
 
   whatsapp(): string | null {

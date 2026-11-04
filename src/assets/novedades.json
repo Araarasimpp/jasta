@@ -1,5 +1,29 @@
 [
   {
+    "id": "2026-11-04-barrio-obligatorio",
+    "fecha": "2026-11-04",
+    "titulo": "En el catálogo el barrio tiene que estar en la lista",
+    "cuerpo": "Ahora el cliente solo puede hacer el pedido si elige un barrio de la tabla de domicilios. Así cada pedido llega con el valor del domicilio exacto y ya no hay que definirlo por teléfono.",
+    "roles": [
+      "admin",
+      "vendedora"
+    ],
+    "secciones": [
+      {
+        "titulo": "Qué ve el cliente",
+        "pasos": [
+          "Debajo de \"Barrio\" le decimos: si no eres de Cali, escribe solo el nombre de tu ciudad (Jamundí, Palmira, Yumbo…), no el barrio.",
+          "Si escribe algo que no está, le mostramos barrios parecidos y un botón para escribirle por WhatsApp a la tienda o a la vendedora.",
+          "Ya no existe la opción \"Mi barrio no está en la lista\"."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "Si un cliente te escribe porque no encuentra su barrio, pídele al admin que lo agregue en Más → Barrios con su valor de domicilio. Desde ese momento ya le sale en el catálogo."
+      }
+    ]
+  },
+  {
     "id": "2026-11-04-pagos-en-linea",
     "fecha": "2026-11-04",
     "titulo": "Los clientes ya pueden pagar en línea desde el catálogo",
