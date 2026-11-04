@@ -1,5 +1,33 @@
 [
   {
+    "id": "2026-11-04-transferencias",
+    "fecha": "2026-11-04",
+    "titulo": "Confirma en el banco cada transferencia presencial",
+    "cuerpo": "Cada pago por transferencia que registran al entregar un domicilio o en una venta del local queda \"por revisar\" hasta que confirmas en el banco que sí llegó. Así no se cuela ningún comprobante falso.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se hace",
+        "pasos": [
+          "Cuando registran un pago por transferencia te llega al instante el aviso \"💸 Revisa una transferencia de $…\".",
+          "Entra a Más → Finanzas → Transferencias, o toca la franja roja de arriba.",
+          "Cada tarjeta muestra el valor que debió llegar (con la propina, si hubo), quién la registró, hace cuánto y la foto del comprobante.",
+          "Abre tu banco, búscala por valor y hora, y toca \"✓ Sí llegó\". Si no aparece, toca \"✗ No llegó\" y escribe qué pasó: le avisamos a quien la registró."
+        ]
+      },
+      {
+        "titulo": "Avisos insistentes",
+        "texto": "Mientras quede alguna sin revisar: arriba de todas las páginas sale una franja roja; cada 30 minutos (de 7 a. m. a 10 p. m.) te llega un aviso al celular con cuántas faltan y hace cuánto esperan; y la app vibra y pita cuando entra una nueva. Las tarjetas que llevan más de 2 horas parpadean."
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "Los pagos en línea con Wompi no entran aquí porque esos los confirma Wompi solo. Los pagos en efectivo tampoco."
+      }
+    ]
+  },
+  {
     "id": "2026-11-04-barrio-obligatorio",
     "fecha": "2026-11-04",
     "titulo": "En el catálogo el barrio tiene que estar en la lista",

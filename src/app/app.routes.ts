@@ -106,6 +106,11 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/gastos/gastos.page').then((m) => m.GastosPage),
       },
       {
+        // Pagos presenciales por transferencia que el admin confirma en el banco
+        path: 'transferencias', canActivate: [rolGuard], data: { roles: ['admin'] },
+        loadComponent: () => import('./paginas/transferencias/transferencias.page').then((m) => m.TransferenciasPage),
+      },
+      {
         path: 'deudas', canActivate: [rolGuard], data: { roles: ['admin'] },
         loadComponent: () => import('./paginas/deudas/deudas.page').then((m) => m.DeudasPage),
       },

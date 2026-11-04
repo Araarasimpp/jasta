@@ -7,6 +7,7 @@ import {
   add,
   barChartOutline,
   hourglassOutline,
+  swapHorizontalOutline,
   searchOutline,
   chevronBackOutline,
   chevronDownOutline,
@@ -50,6 +51,7 @@ import {
 } from 'ionicons/icons';
 import { SupabaseService } from '../core/services/supabase.service';
 import { RequisitosComponent } from '../shared/requisitos/requisitos.component';
+import { TransferenciasAlertaComponent } from '../shared/transferencias-alerta/transferencias-alerta.component';
 import { ThemeService } from '../core/services/theme.service';
 import { ROLES, Rol } from '../shared/modelos';
 import { ToastComponent } from '../shared/toast/toast.component';
@@ -115,6 +117,7 @@ const MENU: ItemMenu[] = [
   { label: 'Reportes', path: '/app/reportes', icon: 'stats-chart-outline', roles: ['admin', 'vendedora'], grupo: 'Finanzas' },
   { label: 'Comisiones', path: '/app/comisiones', icon: 'card-outline', roles: ['admin', 'vendedora'], grupo: 'Finanzas' , buscar: 'liquidacion pagar vendedoras ganancia' },
   { label: 'Gastos', path: '/app/gastos', icon: 'trending-down-outline', roles: ['admin'], grupo: 'Finanzas' , buscar: 'arriendo nomina utilidad' },
+  { label: 'Transferencias', path: '/app/transferencias', icon: 'swap-horizontal-outline', roles: ['admin'], grupo: 'Finanzas', buscar: 'confirmar banco transferencia nequi pagos verificar' },
   { label: 'Deudas', path: '/app/deudas', icon: 'hourglass-outline', roles: ['admin'], grupo: 'Finanzas', buscar: 'fiado proveedor abono credito pagar' },
   { label: 'Rentabilidad', path: '/app/rentabilidad', icon: 'pie-chart-outline', roles: ['admin'], grupo: 'Finanzas' , buscar: 'ganancia producto' },
   { label: 'Ranking', path: '/app/ranking', icon: 'trophy-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador'], grupo: 'Equipo' , buscar: 'metas puesto' },
@@ -129,7 +132,7 @@ const MENU: ItemMenu[] = [
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, NgTemplateOutlet, IonIcon, ToastComponent, AvatarComponent, AvisosPanelComponent, RequisitosComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, NgTemplateOutlet, IonIcon, ToastComponent, AvatarComponent, AvisosPanelComponent, RequisitosComponent, TransferenciasAlertaComponent],
   styleUrls: ['../shared/pill-nav.scss', './shell.component.scss'],
   template: `
     <div class="shell" [class.collapsed]="colapsado()">
@@ -226,6 +229,7 @@ const MENU: ItemMenu[] = [
       </aside>
 
       <main class="content">
+        <app-transferencias-alerta></app-transferencias-alerta>
         <router-outlet></router-outlet>
       </main>
 
@@ -421,7 +425,7 @@ export class ShellComponent implements OnInit, OnDestroy {
   );
 
   constructor() {
-    addIcons({ hourglassOutline, searchOutline, 
+    addIcons({ hourglassOutline, swapHorizontalOutline, searchOutline, 
       sparklesOutline, globeOutline, chatbubblesOutline, analyticsOutline, add, close, chevronDownOutline, layersOutline, pricetagsOutline, returnDownBackOutline, pieChartOutline, alertCircleOutline, cardOutline, trendingDownOutline, barChartOutline, chevronBackOutline, chevronForwardOutline, cubeOutline, ellipsisHorizontal,
       logOutOutline, moonOutline, peopleOutline, receiptOutline, bicycleOutline, clipboardOutline, sunnyOutline, walletOutline, statsChartOutline, settingsOutline,
       storefrontOutline, listOutline, trophyOutline, bookOutline, gridOutline, cashOutline, bagHandleOutline, peopleCircleOutline, timeOutline, personCircleOutline, notificationsOutline, locationOutline,
