@@ -24,6 +24,7 @@ export class RotulosService {
       total: Number(p.total),
       created_at: p.created_at,
       productos: (p.pedido_items ?? []).map((i) => `${nombreConVariante(i)}${i.cantidad > 1 ? ' x' + i.cantidad : ''}`),
+      nacional: p.envio_nacional ? { ciudad: p.destino_ciudad ?? null, departamento: p.destino_departamento ?? null, cedula: p.destinatario_cedula ?? null } : null,
     };
   }
 

@@ -111,7 +111,7 @@
                         <ion-icon name="chatbubble-ellipses" aria-hidden="true"></ion-icon>Mensaje nuevo
                       </button>
                     }
-                    <span class="meta-mobile"><span class="num">#{{ p.id }}</span>@if (p.barrio) {, {{ p.barrio }}}</span>
+                    <span class="meta-mobile"><span class="num">#{{ p.id }}</span>@if (p.envio_nacional) {, 📦 envío a {{ p.destino_ciudad }}} @else if (p.barrio) {, {{ p.barrio }}}</span>
                   </div>
                   <span class="subido" [title]="'Vendió ' + (p.vendedora?.nombre || 'desconocido')">Subido {{ fecha(p.created_at) }}</span>
                   @if (puedeAlistar(p)) {
@@ -163,6 +163,8 @@
                 <span class="c-barrio">
                   @if (p.canal === 'local') {
                     <span class="chip-local">En local</span>
+                  } @else if (p.envio_nacional) {
+                    <span class="chip-local">📦 {{ p.destino_ciudad }}</span>
                   } @else {
                     {{ p.barrio || '—' }}
                   }

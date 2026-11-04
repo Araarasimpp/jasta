@@ -77,6 +77,15 @@ export interface Pedido {
   propina?: number;
   /** Lo que el cliente ya pagó en línea (Wompi) desde el catálogo: no se le cobra al entregar */
   pagado_linea?: number | null;
+  /** Envío a otra ciudad por transportadora (pago anticipado) */
+  envio_nacional?: boolean;
+  destino_ciudad?: string | null;
+  destino_departamento?: string | null;
+  destinatario_cedula?: string | null;
+  transportadora?: string | null;
+  guia?: string | null;
+  costo_envio?: number | null;
+  enviado_at?: string | null;
   total: number;
   tipo_recaudo: TipoRecaudo | null;
   valor_efectivo: number | null;

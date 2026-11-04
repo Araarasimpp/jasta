@@ -304,7 +304,7 @@ export class PedidosPage implements OnInit, OnDestroy {
 
   /** Mensajero: solo a los alistados (se despachan) y a los en ruta (se cambia de mensajero) */
   puedeAsignar(p: Pedido): boolean {
-    return this.gestiona() && (p.estado === 'alistado' || p.estado === 'despachado') && p.canal !== 'local';
+    return this.gestiona() && (p.estado === 'alistado' || p.estado === 'despachado') && p.canal !== 'local' && !p.envio_nacional;
   }
 
   /** Rótulo: solo se imprime a los alistados */
