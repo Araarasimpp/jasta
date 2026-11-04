@@ -133,6 +133,12 @@ function parecido(a: string, b: string): number {
       .totales .fin { font-size: 16px; font-weight: 700; }
       .totales .num { font-family: var(--mono-font); }
       .nota { margin: 0; font-size: 12.5px; color: var(--text-muted); }
+      .formas-pago { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .formas-pago button { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); text-align: left; cursor: pointer; font: inherit; }
+      .formas-pago button strong { font-size: 14.5px; }
+      .formas-pago button small { font-size: 12px; color: var(--text-muted); line-height: 1.3; }
+      .formas-pago button.on { border-color: var(--accent); background: var(--accent-wash); box-shadow: inset 0 0 0 1px var(--accent); }
+      .formas-pago button:disabled { opacity: .45; cursor: not-allowed; }
       .error { margin: 0; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--danger-wash); color: var(--danger); font-size: 13.5px; }
       .listo { max-width: 520px; margin: 30px auto 0; padding: 26px 20px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); text-align: center; }
       .listo .ok { width: 56px; height: 56px; margin: 0 auto 10px; display: grid; place-items: center; border-radius: 50%; background: var(--ok-wash); color: var(--efectivo-texto); font-size: 28px; }
@@ -331,17 +337,32 @@ function parecido(a: string, b: string): number {
           <div class="campo"><label for="to">Observaciones (opcional)</label>
             <input id="to" maxlength="300" [(ngModel)]="observaciones" placeholder="Ej: llamar antes, portería, después de las 3 pm" /></div>
 
+          <div class="campo"><span class="etq">¿Cómo quieres pagar?</span>
+            <div class="formas-pago" role="radiogroup" aria-label="Forma de pago">
+              <button type="button" role="radio" [attr.aria-checked]="formaPago() === 'contra_entrega'" [class.on]="formaPago() === 'contra_entrega'" (click)="formaPago.set('contra_entrega')">
+                <strong>Al recibir</strong><small>Efectivo o transferencia</small></button>
+              <button type="button" role="radio" [attr.aria-checked]="formaPago() === 'en_linea'" [class.on]="formaPago() === 'en_linea'" [disabled]="barrioNoEsta()" (click)="formaPago.set('en_linea')">
+                <strong>Pagar ahora</strong><small>Tarjeta débito o crédito, PSE, Nequi, Daviplata</small></button>
+            </div>
+            @if (barrioNoEsta()) { <small class="nota">Para pagar en línea tu barrio debe estar en la lista (así sabemos el valor del domicilio).</small> }
+          </div>
+
           <div class="totales">
             <div><span>Productos</span><span class="num">{{ pesos(subtotal()) }}</span></div>
             <div><span>Domicilio</span><span class="num">{{ domicilio() !== null ? pesos(domicilio()!) : barrioNoEsta() ? 'Te lo confirmamos' : 'Elige tu barrio' }}</span></div>
-            <div class="fin"><span>Total</span><span class="num">{{ pesos(subtotal() + (domicilio() ?? 0)) }}</span></div>
+            @if (enLinea()) { <div><span>Pago en línea (5%)</span><span class="num">{{ domicilio() !== null ? pesos(recargo()) : '5%' }}</span></div> }
+            <div class="fin"><span>Total</span><span class="num">{{ pesos(subtotal() + (domicilio() ?? 0) + recargo()) }}</span></div>
           </div>
-          <p class="nota">Pagas al recibir. Antes de enviarlo, {{ t()?.vendedora ? primerNombre(t()!.vendedora!.nombre) : 'la tienda' }} te contacta para confirmar tu pedido.</p>
+          @if (enLinea()) {
+            <p class="nota">Te llevamos a <strong>Wompi</strong> (de Bancolombia) para pagar de forma segura. Cuando se apruebe el pago, {{ t()?.vendedora ? primerNombre(t()!.vendedora!.nombre) : 'la tienda' }} te contacta para coordinar el envío. El 5% es el costo del pago en línea.</p>
+          } @else {
+            <p class="nota">Pagas al recibir. Antes de enviarlo, {{ t()?.vendedora ? primerNombre(t()!.vendedora!.nombre) : 'la tienda' }} te contacta para confirmar tu pedido.</p>
+          }
           @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
         </div>
         <div class="hoja-pie">
           <button class="b" (click)="verCarrito.set(false)">Seguir comprando</button>
-          <button class="b b-pri" (click)="enviar()" [disabled]="enviando() || !lineas().length">{{ enviando() ? 'Enviando…' : 'Hacer pedido' }}</button>
+          <button class="b b-pri" (click)="enviar()" [disabled]="enviando() || !lineas().length">{{ enviando() ? (enLinea() ? 'Abriendo el pago…' : 'Enviando…') : enLinea() ? 'Ir a pagar ' + pesos(subtotal() + (domicilio() ?? 0) + recargo()) : 'Hacer pedido' }}</button>
         </div>
       </div>
     }
@@ -376,6 +397,10 @@ export class TiendaPage implements OnInit {
   error = signal('');
   enviando = signal(false);
   hecho = signal<Hecho | null>(null);
+  /** Pagar al recibir o pagar ya en línea con Wompi (con 5% más) */
+  formaPago = signal<'contra_entrega' | 'en_linea'>('contra_entrega');
+  enLinea = computed(() => this.formaPago() === 'en_linea' && !this.barrioNoEsta());
+  recargo = computed(() => (this.enLinea() && this.domicilio() !== null ? Math.round((this.subtotal() + this.domicilio()!) * 0.05) : 0));
 
   nombre = '';
   telefono = '';
@@ -677,10 +702,22 @@ export class TiendaPage implements OnInit {
       p_vendedora: this.vendedoraId, p_nombre: this.nombre.trim(), p_telefono: unirTelefono(this.prefijo, this.telefono),
       p_direccion: this.direccion.trim(), p_barrio: this.barrioOficial(), p_observaciones: this.observaciones.trim(),
       p_items: this.lineas().map((l) => ({ producto_id: l.producto_id, cantidad: l.cantidad, color: l.color, talla: l.talla })),
+      p_pago: this.enLinea() ? 'en_linea' : 'contra_entrega',
     });
+    if (error) {
+      this.enviando.set(false);
+      return this.error.set(mensajeError(error));
+    }
+    const r = data as { id: number; codigo: string; subtotal: number; domicilio: number; domicilio_por_confirmar: boolean; pago: string };
+    if (r.pago === 'en_linea') {
+      // El pedido ya quedó guardado: se va a Wompi a pagar (y si algo falla, la página del pago deja reintentar)
+      this.lineas.set([]);
+      const pago = await this.sb.client.functions.invoke('wompi-pagar', { body: { codigo: r.codigo, origen: location.origin } });
+      const url = (pago.data as { url?: string } | null)?.url;
+      location.assign(url && url.startsWith('https://checkout.wompi.co/') ? url : `/pago/${r.codigo}`);
+      return;
+    }
     this.enviando.set(false);
-    if (error) return this.error.set(mensajeError(error));
-    const r = data as { id: number; subtotal: number; domicilio: number; domicilio_por_confirmar: boolean };
     this.hecho.set({ id: r.id, total: Number(r.subtotal) + Number(r.domicilio), domicilioPendiente: r.domicilio_por_confirmar });
     this.lineas.set([]);
     this.verCarrito.set(false);

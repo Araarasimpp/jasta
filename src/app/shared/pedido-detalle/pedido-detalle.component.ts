@@ -231,7 +231,10 @@ import { EsqueletoComponent } from '../esqueleto/esqueleto.component';
               @if (p.entregado_at) {
                 <dt>Entregado</dt><dd>{{ fecha(p.entregado_at) }}</dd>
               }
-              @if (p.tipo_recaudo) {
+              @if (p.pagado_linea) {
+                <dt>Pago en línea</dt><dd>💳 {{ pesos(p.pagado_linea) }} con Wompi desde el catálogo{{ +p.pagado_linea >= +p.total ? ': no se cobra al entregar' : '' }}</dd>
+              }
+              @if (p.tipo_recaudo && !p.pagado_linea) {
                 <dt>Pago</dt>
                 <dd>
                   {{ p.tipo_recaudo === 'mixto' ? 'Mixto' : p.tipo_recaudo === 'efectivo' ? 'Efectivo' : 'Transferencia' }}

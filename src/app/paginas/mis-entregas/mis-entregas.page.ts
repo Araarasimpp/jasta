@@ -42,6 +42,7 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
       .top-izq .total { display: flex; align-items: baseline; gap: 8px; font-size: 19px; line-height: 1.2; }
       .dom-tag { align-self: flex-start; padding: 2px 9px; border-radius: 999px; background: var(--ok-wash); color: var(--efectivo-texto); font-size: 12.5px; font-weight: 600; }
       .dom-tag b { font-weight: 700; }
+      .dom-tag.ya-pago { background: var(--accent-wash); color: var(--accent); font-weight: 700; }
       .top-izq .total small { font-size: 12px; font-weight: 500; color: var(--text-muted); text-transform: capitalize; font-family: var(--font); }
       .top-der { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
       /* Chat con la vendedora: burbuja con un "?" (o "!" si hay mensaje nuevo) */
@@ -230,6 +231,7 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
                 <h3>@if (rutaOrdenada().length > 1) {<span class="parada" [attr.aria-label]="'Parada ' + (i + 1)">{{ i + 1 }}</span>}<span class="guia">#{{ p.id }}</span> {{ p.cliente_nombre }}</h3>
                 <strong class="total num">{{ pesos(p.total) }}<small>{{ p.tipo_recaudo || '' }}</small></strong>
                 <span class="dom-tag">Tu domicilio: <b class="num">{{ pesos(p.valor_domicilio) }}</b></span>
+                @if (p.pagado_linea) { <span class="dom-tag ya-pago">💳 {{ +p.pagado_linea >= +p.total ? 'Ya pagó en línea: no le cobres' : 'Pagó ' + pesos(p.pagado_linea) + ' en línea: cobra ' + pesos(p.total - p.pagado_linea) }}</span> }
               </div>
               <div class="top-der">
                 <button type="button" class="chat-btn" [class.nuevo]="avisos.pedidosConMensajes().has(p.id)" (click)="abrir(p.id, true)"

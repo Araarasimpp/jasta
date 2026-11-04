@@ -75,6 +75,8 @@ export interface Pedido {
   valor_domicilio: number;
   /** Lo que el cliente transfirió de más: propina del mensajero (se le descuenta en el cuadre) */
   propina?: number;
+  /** Lo que el cliente ya pagó en línea (Wompi) desde el catálogo: no se le cobra al entregar */
+  pagado_linea?: number | null;
   total: number;
   tipo_recaudo: TipoRecaudo | null;
   valor_efectivo: number | null;

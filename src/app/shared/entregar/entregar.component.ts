@@ -23,6 +23,7 @@ import { PesosDirective } from '../../shared/pesos/pesos.directive';
       .link-propina { align-self: flex-start; padding: 4px 0; border: 0; background: none; color: var(--accent); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
       .propina { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: var(--radius); background: var(--ok-wash); }
       .propina .ayuda strong { color: var(--efectivo-texto); }
+      .ya-pago { margin: 0; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--ok-wash); color: var(--efectivo-texto); font-size: 14px; line-height: 1.4; }
     `,
   ],
   template: `
@@ -33,6 +34,12 @@ import { PesosDirective } from '../../shared/pesos/pesos.directive';
       </div>
       <div class="hoja-body">
         <div class="total"><span>{{ pedido.cliente_nombre }}</span><strong class="num">{{ pesos(pedido.total) }}</strong></div>
+        @if (pagadoLinea()) {
+          <p class="ya-pago">💳 <strong>Ya pagó en línea</strong> {{ pesos(pedido.pagado_linea!) }}. <strong>No le cobres nada</strong>: solo entrégalo y confirma.</p>
+        } @else {
+        @if (pedido.pagado_linea) {
+          <p class="ya-pago">💳 Ya pagó {{ pesos(pedido.pagado_linea) }} en línea. Cóbrale solo la diferencia: <strong>{{ pesos(pedido.total - pedido.pagado_linea) }}</strong>.</p>
+        }
         <div class="campo">
           <span class="etq">¿Cómo pagó?</span>
           <div class="tipos">
@@ -82,13 +89,14 @@ import { PesosDirective } from '../../shared/pesos/pesos.directive';
         @if (pideComprobante(tipo())) {
           <app-comprobantes-input [rutas]="evidencias()" (cambio)="evidencias.set($event); error.set('')"></app-comprobantes-input>
         }
+        }
         @if (error()) {
           <p class="error" role="alert">{{ error() }}</p>
         }
       </div>
       <div class="hoja-pie">
         <button class="b" (click)="cerrar.emit()">Cancelar</button>
-        <button class="b b-ok" [disabled]="!tipo() || guardando() || (pideComprobante(tipo()) && !evidencias().length)" (click)="confirmar()">
+        <button class="b b-ok" [disabled]="!pagadoLinea() && (!tipo() || guardando() || (pideComprobante(tipo()) && !evidencias().length))" (click)="confirmar()">
           {{ guardando() ? 'Guardando…' : 'Confirmar entrega' }}
         </button>
       </div>
@@ -96,7 +104,7 @@ import { PesosDirective } from '../../shared/pesos/pesos.directive';
   `,
 })
 export class EntregarComponent {
-  @Input({ required: true }) pedido!: Pick<Pedido, 'id' | 'cliente_nombre' | 'total'>;
+  @Input({ required: true }) pedido!: Pick<Pedido, 'id' | 'cliente_nombre' | 'total' | 'pagado_linea'>;
   /** Para pedidos de otro negocio (Variedades JYB): guarda la entrega allá en vez de en Jasta */
   @Input() alConfirmar?: (tipo: TipoRecaudo, efectivo: number, transferencia: number, evidencias: string[]) => Promise<void>;
   @Output() cerrar = new EventEmitter<void>();
@@ -127,7 +135,24 @@ export class EntregarComponent {
   pideComprobante = pideComprobante;
   error = signal('');
 
+  /** El cliente pagó todo en línea desde el catálogo: no hay nada que cobrar */
+  pagadoLinea(): boolean {
+    return this.pedido.pagado_linea != null && Number(this.pedido.pagado_linea) >= Number(this.pedido.total);
+  }
+
   async confirmar(): Promise<void> {
+    if (this.pagadoLinea() && !this.alConfirmar) {
+      this.guardando.set(true);
+      try {
+        await this.ps.entregar(this.pedido.id, 'transferencia', 0, Number(this.pedido.total), [], 0);
+        this.entregado.emit();
+      } catch (e) {
+        this.error.set(mensajeError(e));
+      } finally {
+        this.guardando.set(false);
+      }
+      return;
+    }
     const tipo = this.tipo();
     if (!tipo) return;
     if (tipo === 'mixto' && Number(this.efectivo) + Number(this.transferencia) !== Number(this.pedido.total)) {

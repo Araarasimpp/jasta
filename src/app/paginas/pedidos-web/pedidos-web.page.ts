@@ -18,6 +18,7 @@ interface PedidoWeb {
   cliente_nombre: string; cliente_telefono: string; direccion: string; barrio: string; observaciones: string | null;
   valor_domicilio: number; domicilio_por_confirmar: boolean; items: ItemWeb[]; subtotal: number; pedido_id: number | null;
   motivo: string | null; atendido_por: string | null; atendido_at: string | null; created_at: string; riesgo: Riesgo | null;
+  pago?: 'contra_entrega' | 'en_linea'; pago_estado?: 'pendiente' | 'aprobado' | 'rechazado' | null; pago_metodo?: string | null; recargo?: number;
 }
 
 /** Enlace de la tienda: /tienda/<primer nombre>-<id> */
@@ -58,6 +59,7 @@ export function enlaceTienda(u: { id: number; nombre: string } | null): string {
       .tot { display: flex; justify-content: space-between; padding-top: 6px; border-top: var(--perfora); font-weight: 700; }
       .tot .num { font-family: var(--mono-font); }
       .riesgo { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--oro-wash); color: var(--oro-texto); font-size: 13px; }
+      .pagado-linea { margin: 0; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--ok-wash); color: var(--efectivo-texto); font-size: 13.5px; }
       .riesgo.alto { background: var(--danger-wash); color: var(--danger); }
       .obs { margin: 0; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--surface-2); font-size: 13.5px; }
       .check { display: flex; gap: 8px; align-items: flex-start; font-size: 13.5px; line-height: 1.4; }
@@ -116,6 +118,9 @@ export function enlaceTienda(u: { id: number; nombre: string } | null): string {
               <li><span>Domicilio</span><span class="num">{{ w.domicilio_por_confirmar && w.estado === 'por_confirmar' ? 'Por definir' : pesos(w.valor_domicilio) }}</span></li>
             </ul>
             <div class="tot"><span>Total</span><span class="num">{{ pesos(+w.subtotal + +w.valor_domicilio) }}</span></div>
+            @if (w.pago_estado === 'aprobado') {
+              <p class="pagado-linea">💳 <strong>Ya pagó en línea</strong>{{ w.pago_metodo ? ' con ' + metodoPago(w.pago_metodo) : '' }} (Wompi). Al entregar no se le cobra nada.</p>
+            }
 
             @if (w.estado === 'por_confirmar') {
               <div class="acciones">
@@ -143,8 +148,12 @@ export function enlaceTienda(u: { id: number; nombre: string } | null): string {
         <div class="hoja-body">
           @if (a.tipo === 'confirmar') {
             <p class="ayuda" style="margin: 0">Confírmalo solo después de hablar con el cliente. Al confirmar, el pedido pasa a Pedidos por alistar a tu nombre.</p>
+            @if (a.w.pago_estado === 'aprobado') {
+              <p class="pagado-linea">💳 Ya pagó en línea {{ pesos(+a.w.subtotal + +a.w.valor_domicilio) }} con domicilio incluido. El pedido sale marcado como pagado y el domiciliario no le cobra.</p>
+            } @else {
             <div class="campo"><label for="pw-dom">Domicilio{{ a.w.domicilio_por_confirmar ? ' (su barrio no está en la tabla)' : '' }}</label>
               <input pesos id="pw-dom" [(ngModel)]="domicilio" [placeholder]="a.w.domicilio_por_confirmar ? 'Escribe lo que vas a cobrar' : ''" /></div>
+            }
             @if (a.w.domicilio_por_confirmar) {
               <p class="ayuda" style="margin: 0">El cliente escribió el barrio <strong>{{ a.w.barrio }}</strong>, que no está en la tabla de domicilios. Pregúntale bien dónde queda y cobra lo que corresponda.</p>
               <label class="check"><input type="checkbox" [(ngModel)]="guardarBarrio" />
@@ -153,6 +162,9 @@ export function enlaceTienda(u: { id: number; nombre: string } | null): string {
             <div class="campo"><label for="pw-nota">Nota para alistamiento (opcional)</label>
               <input id="pw-nota" maxlength="200" [(ngModel)]="nota" placeholder="Ej: confirmado, entregar después de las 4 pm" /></div>
           } @else {
+            @if (a.w.pago_estado === 'aprobado') {
+              <p class="riesgo alto">Este cliente <strong>ya pagó en línea</strong>. Si lo cancelas, devuélvele la plata desde el panel de Wompi (Transacciones → Reembolsar).</p>
+            }
             <div class="campo"><label for="pw-mot">¿Por qué se cancela?</label>
               <input id="pw-mot" maxlength="200" [(ngModel)]="motivo" placeholder="Ej: no contestó, pedido de broma, ya no lo quiere" /></div>
           }
@@ -255,11 +267,17 @@ export class PedidosWebPage implements OnInit {
     const prods = w.items.map((i) => `${i.cantidad} ${i.nombre}`).join(', ');
     const total = pesos(Number(w.subtotal) + Number(w.valor_domicilio));
     return enlaceWhatsapp(w.cliente_telefono,
-      `Hola ${nombre}, recibimos tu pedido del catálogo: ${prods}. Total ${total}${w.domicilio_por_confirmar ? ' más el domicilio' : ' con domicilio'}, para entregar en ${w.direccion} (${w.barrio}). ¿Te lo confirmo?`);
+      w.pago_estado === 'aprobado'
+        ? `Hola ${nombre}, recibimos tu pedido del catálogo y tu pago en línea de ${total}: ${prods}. Te lo llevamos a ${w.direccion} (${w.barrio}). ¿A qué hora te queda bien recibirlo?`
+        : `Hola ${nombre}, recibimos tu pedido del catálogo: ${prods}. Total ${total}${w.domicilio_por_confirmar ? ' más el domicilio' : ' con domicilio'}, para entregar en ${w.direccion} (${w.barrio}). ¿Te lo confirmo?`);
   }
 
   variante(i: ItemWeb): string {
     return [i.color, i.talla].filter((x) => !!x).join(' · ');
+  }
+
+  metodoPago(m: string): string {
+    return ({ CARD: 'tarjeta', NEQUI: 'Nequi', PSE: 'PSE', BANCOLOMBIA_TRANSFER: 'botón Bancolombia', BANCOLOMBIA_QR: 'QR Bancolombia', DAVIPLATA: 'Daviplata' } as Record<string, string>)[m] ?? m.toLowerCase();
   }
 
   estadoTxt(e: string): string {

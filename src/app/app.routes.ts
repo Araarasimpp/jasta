@@ -20,6 +20,8 @@ export const routes: Routes = [
   { path: 'tienda', loadComponent: () => import('./tienda/tienda.page').then((m) => m.TiendaPage) },
   { path: 'tienda/:codigo', loadComponent: () => import('./tienda/tienda.page').then((m) => m.TiendaPage) },
   // Público (sin sesión): el cliente ve en qué va su pedido con el enlace que le mandaron
+  // Público: a donde vuelve el cliente después de pagar en línea (Wompi)
+  { path: 'pago/:codigo', loadComponent: () => import('./pago/pago.page').then((m) => m.PagoPage) },
   { path: 'seguimiento/:codigo', loadComponent: () => import('./seguimiento/seguimiento.page').then((m) => m.SeguimientoPage) },
   { path: 'auth/nueva-clave', loadComponent: () => import('./auth/nueva-clave/nueva-clave.page').then((m) => m.NuevaClavePage) },
   {

@@ -1,5 +1,36 @@
 [
   {
+    "id": "2026-11-04-pagos-en-linea",
+    "fecha": "2026-11-04",
+    "titulo": "Los clientes ya pueden pagar en línea desde el catálogo",
+    "cuerpo": "En el catálogo público el cliente ahora elige: pagar al recibir, como siempre, o pagar ya con tarjeta débito o crédito, PSE, Nequi o Daviplata a través de Wompi. El pago en línea tiene un 5% adicional que paga el cliente.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "mensajero"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo funciona",
+        "pasos": [
+          "El cliente arma su pedido y en \"¿Cómo quieres pagar?\" elige \"Pagar ahora\". Ve el 5% y el total antes de pagar.",
+          "Lo llevamos a Wompi (de Bancolombia) y paga ahí. Nosotros nunca vemos los datos de su tarjeta.",
+          "Apenas se aprueba el pago te llega el aviso \"💳 Pedido PAGADO de la tienda\". En Pedidos de la tienda sale con la marca \"Ya pagó en línea\".",
+          "Llámalo para coordinar la entrega y confírmalo como siempre. El pedido sale marcado como pagado.",
+          "Si no termina de pagar, el pedido no te aparece y se cancela solo a los 90 minutos. Si el pago falla, el cliente puede intentarlo otra vez o cambiar a pagar al recibir."
+        ]
+      },
+      {
+        "titulo": "Domiciliarios",
+        "texto": "Si la tarjeta del pedido dice \"💳 Ya pagó en línea: no le cobres\", no le cobras nada al cliente. Solo entrégalo y toca Confirmar entrega: no hay que escoger forma de pago ni subir comprobante."
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "El pago en línea solo sale cuando el barrio del cliente está en la tabla de domicilios (así se sabe el total exacto). La plata llega a la cuenta de Wompi del negocio. Si cancelas un pedido que ya se pagó, devuélvele la plata desde el panel de Wompi (Transacciones → Reembolsar)."
+      }
+    ]
+  },
+  {
     "id": "2026-11-03-comisiones-vendedora",
     "fecha": "2026-11-03",
     "titulo": "Mira cuánto te deben y el comprobante de cada pago",
