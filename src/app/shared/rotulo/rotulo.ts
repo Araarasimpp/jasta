@@ -8,6 +8,8 @@ export interface DatosNegocio {
   telefonos: string | null;
   redes: string | null;
   texto_garantia: string | null;
+  /** Dirección del negocio (remitente en los envíos a otras ciudades) */
+  direccion?: string | null;
 }
 
 export interface PedidoRotulo {
@@ -21,6 +23,8 @@ export interface PedidoRotulo {
   created_at: string;
   /** Líneas ya armadas, ej. "Termo 1 L x2" */
   productos: string[];
+  /** Envío a otra ciudad por transportadora (pago anticipado: no se cobra al entregar) */
+  nacional?: { ciudad: string | null; departamento: string | null; cedula: string | null } | null;
 }
 
 /** Se usan solo si la tabla configuracion está vacía o no se puede leer. */
@@ -40,7 +44,7 @@ function urlLogo(): string {
 export async function cargarDatosNegocio(client: SupabaseClient): Promise<DatosNegocio> {
   const { data, error } = await client
     .from('configuracion')
-    .select('nombre_negocio, telefonos, redes, texto_garantia')
+    .select('nombre_negocio, telefonos, redes, texto_garantia, direccion')
     .eq('id', true)
     .single();
 
@@ -51,6 +55,7 @@ export async function cargarDatosNegocio(client: SupabaseClient): Promise<DatosN
     telefonos: data.telefonos?.trim() || null,
     redes: data.redes?.trim() || null,
     texto_garantia: data.texto_garantia?.trim() || null,
+    direccion: (data as { direccion?: string | null }).direccion?.trim() || null,
   };
 }
 
@@ -136,6 +141,24 @@ export function rotuloHtml(p: PedidoRotulo, n: DatosNegocio): string {
       </div>
     </header>
 
+    ${p.nacional ? `
+    <div class="cobro">
+      <span class="cobro-label">Envío nacional</span>
+      <strong class="cobro-valor">PAGADO · NO COBRAR</strong>
+    </div>
+
+    <div class="cuerpo">
+    <table class="datos">
+      ${fila('Pedido', '#' + esc(p.numero), 'pedido')}
+      ${fila('Para', esc(p.cliente_nombre), 'destacado')}
+      ${fila('C.C.', esc(p.nacional.cedula), 'fuerte')}
+      ${fila('Dirección', esc(mayus(p.direccion)), 'destacado')}
+      ${fila('Ciudad', esc(mayus([p.nacional.ciudad, p.nacional.departamento].filter(Boolean).join(' - '))), 'destacado')}
+      ${fila('Celular', esc(mayus(p.cliente_telefono)), 'fuerte')}
+      ${fila('Contenido', productos, 'productos')}
+      ${fila('Remite', esc([n.nombre_negocio, n.direccion, lineasTelefono(n.telefonos)[0]].filter(Boolean).join(' · ')))}
+    </table>
+    </div>` : `
     <div class="cobro">
       <span class="cobro-label">Valor a cobrar</span>
       <strong class="cobro-valor">${moneda(p.total)}</strong>
@@ -151,7 +174,7 @@ export function rotuloHtml(p: PedidoRotulo, n: DatosNegocio): string {
       ${fila('Producto', productos, 'productos')}
       ${fila('Observación', esc(mayus(p.observaciones)), 'fuerte')}
     </table>
-    </div>
+    </div>`}
 
     ${n.texto_garantia ? `<p class="garantia">${esc(n.texto_garantia)}</p>` : ''}
   </section>`;

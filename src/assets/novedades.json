@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026-11-04-envios-nacionales",
+    "fecha": "2026-11-04",
+    "titulo": "Envíos a otras ciudades por transportadora",
+    "cuerpo": "Ahora puedes hacer pedidos para otras ciudades que se mandan por Servientrega, Interrapidísimo u otra transportadora, siempre con pago anticipado.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "alistador"
+    ],
+    "secciones": [
+      {
+        "titulo": "Crear el pedido",
+        "pasos": [
+          "En Nuevo pedido marca \"Envío a otra ciudad\".",
+          "Escribe la dirección completa, la ciudad, el departamento, la cédula de quien recibe (la pide la transportadora) y el valor del envío que paga el cliente.",
+          "El cliente paga antes: pídele el pantallazo de la transferencia o mándale a pagar en línea."
+        ]
+      },
+      {
+        "titulo": "Despacharlo",
+        "pasos": [
+          "Imprime el rótulo: sale \"ENVÍO NACIONAL · PAGADO · NO COBRAR\" con los datos de quien recibe, la ciudad y el remitente. Pégalo en el paquete y llévalo al punto de la transportadora.",
+          "En el punto te dan el tiquete con el número de guía.",
+          "En el pedido toca \"Despachar por transportadora\": elige la transportadora, escribe el número de guía y lo que pagaste del envío, y sube el comprobante del pago del cliente.",
+          "El pedido queda entregado, a la vendedora le llega el aviso y el pago entra a Transferencias por revisar.",
+          "Toca \"Mandar la guía por WhatsApp\" para que el cliente tenga su número de guía y el enlace para rastrearlo."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "En la página de seguimiento el cliente ve su número de guía con un botón para rastrear el paquete. Para que el rótulo muestre la dirección del negocio como remitente, ponla en Configuración → Datos fiscales."
+      }
+    ]
+  },
+  {
     "id": "2026-11-04-compras-viejas-al-costo",
     "fecha": "2026-11-04",
     "titulo": "Compras de otras fechas y ventas al costo",

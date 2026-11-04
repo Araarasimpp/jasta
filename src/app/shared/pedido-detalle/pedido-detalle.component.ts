@@ -22,12 +22,14 @@ import { VisorService } from '../visor/visor.service';
 import { fotoDeItem, nombreConVariante, variante } from '../variante';
 import { urlsComprobantes } from '../comprobantes';
 import { EsqueletoComponent } from '../esqueleto/esqueleto.component';
+import { DespacharNacionalComponent } from '../envio-nacional/despachar-nacional.component';
+import { mensajeGuia } from '../envio-nacional/envio-nacional';
 
 /** Hoja lateral con todo el pedido y las acciones que le tocan a cada rol */
 @Component({
   selector: 'app-pedido-detalle',
   standalone: true,
-  imports: [EsqueletoComponent, FormsModule, IonIcon, EntregarComponent, ChatPedidoComponent, AvatarComponent, DevolucionComponent],
+  imports: [EsqueletoComponent, FormsModule, IonIcon, EntregarComponent, ChatPedidoComponent, AvatarComponent, DevolucionComponent, DespacharNacionalComponent],
   styles: [
     `
       .resumen { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -199,7 +201,15 @@ import { EsqueletoComponent } from '../esqueleto/esqueleto.component';
                 </dd>
               }
               <dt>Dirección</dt><dd>{{ p.direccion || '—' }}</dd>
-              <dt>Barrio</dt><dd>{{ p.barrio || '—' }}</dd>
+              @if (p.envio_nacional) {
+                <dt>Envío a</dt><dd><strong>{{ p.destino_ciudad }}</strong>{{ p.destino_departamento ? ', ' + p.destino_departamento : '' }} · por transportadora</dd>
+                <dt>Cédula</dt><dd>{{ p.destinatario_cedula || '—' }}</dd>
+                @if (p.guia) {
+                  <dt>Guía</dt><dd><strong>{{ p.guia }}</strong> · {{ p.transportadora }}{{ p.costo_envio ? ' · el envío costó ' + pesos(p.costo_envio) : '' }}</dd>
+                }
+              } @else {
+                <dt>Barrio</dt><dd>{{ p.barrio || '—' }}</dd>
+              }
               @if (p.observaciones) {
                 <dt>Observaciones</dt><dd>{{ p.observaciones }}</dd>
               }
@@ -259,6 +269,16 @@ import { EsqueletoComponent } from '../esqueleto/esqueleto.component';
             </section>
           }
 
+          @if (p.envio_nacional && p.guia && !soloMensajero()) {
+            <section>
+              <h3 class="seccion-titulo">Avisarle al cliente</h3>
+              <div class="despachar">
+                @if (p.cliente_telefono) { <a class="b b-pri" [href]="whatsappGuia(p)" target="_blank" rel="noopener">Mandar la guía por WhatsApp</a> }
+                <button class="b" (click)="copiarGuia(p)">Copiar mensaje</button>
+              </div>
+            </section>
+          }
+
           @if (puedeAsignar()) {
             <section>
               <h3 class="seccion-titulo">{{ p.estado === 'alistado' ? 'Despachar' : 'Mensajero' }}</h3>
@@ -308,6 +328,9 @@ import { EsqueletoComponent } from '../esqueleto/esqueleto.component';
     @if (devolviendo() && pedido()) {
       <app-devolucion [pedido]="pedido()!" (cerrar)="devolviendo.set(false)" (registrado)="alDevolver()"></app-devolucion>
     }
+    @if (despachandoNac() && pedido()) {
+      <app-despachar-nacional [pedido]="pedido()!" (cerrar)="despachandoNac.set(false)" (despachado)="alDespacharNac()"></app-despachar-nacional>
+    }
     @if (entregando() && pedido()) {
       <app-entregar [pedido]="pedido()!" (cerrar)="entregando.set(false)" (entregado)="alEntregar()"></app-entregar>
     }
@@ -335,6 +358,7 @@ export class PedidoDetalleComponent implements OnChanges {
   error = signal('');
   ocupado = signal(false);
   entregando = signal(false);
+  despachandoNac = signal(false);
   mensajeroSel: number | null = null;
   /** 'chat' = ventana de la conversación, aparte de la información del pedido */
   vista = signal<'pedido' | 'chat'>('pedido');
@@ -368,7 +392,7 @@ export class PedidoDetalleComponent implements OnChanges {
 
   puedeAsignar = computed(() => {
     const p = this.pedido();
-    return !!p && this.sb.tiene('admin', 'alistador') && ['por_alistar', 'alistado', 'despachado'].includes(p.estado);
+    return !!p && !p.envio_nacional && this.sb.tiene('admin', 'alistador') && ['por_alistar', 'alistado', 'despachado'].includes(p.estado);
   });
 
   acciones = computed(() => {
@@ -379,7 +403,9 @@ export class PedidoDetalleComponent implements OnChanges {
     const out: { id: string; label: string; principal?: boolean; peligro?: boolean }[] = [];
     if (p.estado === 'por_alistar' && this.sb.tiene('admin', 'alistador'))
       out.push({ id: 'alistado', label: 'Marcar alistado', principal: true });
-    if (p.estado === 'despachado' && (admin || p.mensajero_id === yo))
+    if (p.envio_nacional && ['por_alistar', 'alistado', 'despachado'].includes(p.estado) && this.sb.tiene('admin', 'alistador'))
+      out.push({ id: 'nacional', label: 'Despachar por transportadora', principal: true });
+    if (p.estado === 'despachado' && !p.envio_nacional && (admin || p.mensajero_id === yo))
       out.push({ id: 'entregar', label: 'Entregar', principal: true });
     // Cancelar y editar: solo el admin (la vendedora solo ve el pedido y su conversación)
     if (p.estado !== 'cancelado' && admin) out.push({ id: 'cancelado', label: 'Cancelar pedido', peligro: true });
@@ -419,6 +445,7 @@ export class PedidoDetalleComponent implements OnChanges {
 
   async ejecutar(id: string): Promise<void> {
     if (id === 'entregar') return this.entregando.set(true);
+    if (id === 'nacional') return this.despachandoNac.set(true);
     if (id === 'devolucion') return this.devolviendo.set(true);
     if (id === 'editar') {
       void this.router.navigate(['/app/pedidos', this.pedidoId, 'editar']);
@@ -471,6 +498,26 @@ export class PedidoDetalleComponent implements OnChanges {
     this.toast.ok(`Devolución del pedido #${this.pedidoId} registrada`);
     await this.cargar();
     this.cambiado.emit();
+  }
+
+  async alDespacharNac(): Promise<void> {
+    this.despachandoNac.set(false);
+    this.toast.ok(`Pedido #${this.pedidoId} enviado. Mándale la guía al cliente.`);
+    await this.cargar();
+    this.cambiado.emit();
+  }
+
+  whatsappGuia(p: Pedido): string {
+    return enlaceWhatsapp(p.cliente_telefono, mensajeGuia(p));
+  }
+
+  async copiarGuia(p: Pedido): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(mensajeGuia(p));
+      this.toast.ok('Mensaje copiado');
+    } catch {
+      this.toast.error('No se pudo copiar');
+    }
   }
 
   async alEntregar(): Promise<void> {

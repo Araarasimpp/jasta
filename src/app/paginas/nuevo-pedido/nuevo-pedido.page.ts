@@ -8,6 +8,7 @@ import { PedidosService } from '../../core/services/pedidos.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { Producto, Riesgo, TipoRecaudo, Usuario } from '../../shared/modelos';
+import { DEPARTAMENTOS } from '../../shared/envio-nacional/envio-nacional';
 import { mensajeError, pesos, urlImagen, urlMini } from '../../shared/formato';
 import { VisorService } from '../../shared/visor/visor.service';
 import { pideComprobante } from '../../shared/comprobantes';
@@ -188,10 +189,30 @@ function normal(s: string): string {
               <input id="nom" autocomplete="off" [ngModel]="nombre" (ngModelChange)="cambioNombre($event)" [placeholder]="local() ? 'Cliente del local' : ''" />
             </div>
             @if (!local()) {
+              <label class="al-costo">
+                <input type="checkbox" [ngModel]="nacional()" (ngModelChange)="nacional.set($event)" />
+                <span><strong>Envío a otra ciudad</strong> (Servientrega u otra transportadora)
+                  @if (nacional()) { <small>Pago anticipado: el cliente paga antes de enviar. Al despachar subes el comprobante de su pago y el número de guía.</small> }</span>
+              </label>
               <div class="campo">
                 <label for="dir">Dirección</label>
-                <input id="dir" autocomplete="off" [(ngModel)]="direccion" />
+                <input id="dir" autocomplete="off" [(ngModel)]="direccion" [placeholder]="nacional() ? 'Dirección completa con barrio' : ''" />
               </div>
+              @if (nacional()) {
+                <div class="fila-campos">
+                  <div class="campo"><label for="nac-c">Ciudad o municipio</label><input id="nac-c" maxlength="80" [(ngModel)]="ciudad" placeholder="Ej: Pasto" /></div>
+                  <div class="campo"><label for="nac-d">Departamento</label>
+                    <select id="nac-d" class="inp" [(ngModel)]="departamento">
+                      <option value="">Elige…</option>
+                      @for (d of departamentos; track d) { <option [value]="d">{{ d }}</option> }
+                    </select></div>
+                </div>
+                <div class="fila-campos">
+                  <div class="campo"><label for="nac-cc">Cédula de quien recibe</label><input id="nac-cc" inputmode="numeric" maxlength="15" [(ngModel)]="cedula" placeholder="La pide la transportadora" /></div>
+                  <div class="campo"><label for="dom">Valor del envío (lo paga el cliente)</label>
+                    <input pesos id="dom" [(ngModel)]="domicilio" (ngModelChange)="domicilioS.set(+$event || 0)" /></div>
+                </div>
+              } @else {
               <div class="fila-campos">
                 <div class="campo barrio-campo">
                   <label for="barrio">Barrio</label>
@@ -214,6 +235,7 @@ function normal(s: string): string {
                   <input pesos id="dom" [(ngModel)]="domicilio" (ngModelChange)="domicilioS.set(+$event || 0)" />
                 </div>
               </div>
+              }
             }
             <div class="campo">
               <label for="obs">Observaciones</label>
@@ -458,6 +480,12 @@ export class NuevoPedidoPage implements OnInit {
   nombre = '';
   direccion = '';
   barrio = '';
+  /** Envío a otra ciudad por transportadora (pago anticipado) */
+  nacional = signal(false);
+  ciudad = '';
+  departamento = '';
+  cedula = '';
+  departamentos = DEPARTAMENTOS;
   domicilio = 0;
   observaciones = '';
   efectivo = 0;
@@ -515,6 +543,10 @@ export class NuevoPedidoPage implements OnInit {
       this.nombre = p.cliente_nombre;
       this.direccion = p.direccion ?? '';
       this.barrio = p.barrio ?? '';
+      this.nacional.set(!!p.envio_nacional);
+      this.ciudad = p.destino_ciudad ?? '';
+      this.departamento = p.destino_departamento ?? '';
+      this.cedula = p.destinatario_cedula ?? '';
       this.domicilio = Number(p.valor_domicilio) || 0;
       this.domicilioS.set(this.domicilio);
       this.observaciones = p.observaciones ?? '';
@@ -775,6 +807,13 @@ export class NuevoPedidoPage implements OnInit {
     this.lineas.set(ls);
   }
 
+  private async marcarNacional(id: number): Promise<void> {
+    const { error } = await this.sb.client.rpc('marcar_envio_nacional', {
+      p_pedido: id, p_ciudad: this.ciudad.trim(), p_departamento: this.departamento, p_cedula: this.cedula.trim(),
+    });
+    if (error) this.toast.error(`El pedido #${id} quedó creado, pero no se guardó el envío a otra ciudad: ${mensajeError(error)}`);
+  }
+
   volver(): void {
     this.router.navigate([this.sb.rutaPedidos()], { queryParams: { id: this.editId() } });
   }
@@ -787,6 +826,12 @@ export class NuevoPedidoPage implements OnInit {
     if (!local && !this.telefono) return this.error.set('Escribe el teléfono del cliente.');
     if (errorTelefono(this.prefijo, this.telefono)) return this.error.set(errorTelefono(this.prefijo, this.telefono));
     if (!local && !this.direccion.trim()) return this.error.set('Escribe la dirección.');
+    const nacional = !local && this.nacional();
+    if (nacional) {
+      if (this.ciudad.trim().length < 3) return this.error.set('Escribe la ciudad de destino.');
+      if (!this.departamento) return this.error.set('Elige el departamento.');
+      if (this.cedula.replace(/\D/g, '').length < 5) return this.error.set('Escribe la cédula de quien recibe (la pide la transportadora).');
+    }
     if (!this.lineas().length) return this.error.set('Agrega al menos un producto.');
     const bajo = this.lineas().find((l) => l.precio < Number(l.producto.precio_base));
     if (bajo && !this.sb.tiene('admin')) return this.error.set(`${bajo.producto.nombre}: el precio no puede ser menor a ${pesos(bajo.producto.precio_base)}.`);
@@ -823,11 +868,12 @@ export class NuevoPedidoPage implements OnInit {
           cliente_nombre: this.nombre || 'Cliente del local',
           cliente_telefono: this.telefonoGuardar(),
           direccion: this.direccion,
-          barrio: this.barrio,
+          barrio: nacional ? this.ciudad.trim() : this.barrio,
           observaciones: this.observaciones,
           valor_domicilio: local ? 0 : Number(this.domicilio) || 0,
           items,
         });
+        if (nacional) await this.marcarNacional(this.editId()!);
         this.toast.ok(`Pedido #${this.editId()} actualizado`);
         this.volver();
       } else if (local) {
@@ -854,12 +900,13 @@ export class NuevoPedidoPage implements OnInit {
           cliente_nombre: this.nombre,
           cliente_telefono: this.telefonoGuardar(),
           direccion: this.direccion,
-          barrio: this.barrio,
+          barrio: nacional ? this.ciudad.trim() : this.barrio,
           observaciones: this.observaciones,
           valor_domicilio: Number(this.domicilio) || 0,
           items,
         });
-        this.toast.ok(`Pedido #${id} creado`);
+        if (nacional) await this.marcarNacional(id);
+        this.toast.ok(nacional ? `Pedido #${id} creado · envío a ${this.ciudad.trim()}` : `Pedido #${id} creado`);
         this.router.navigate([this.sb.rutaPedidos()], { queryParams: { id } });
       }
     } catch (e) {
