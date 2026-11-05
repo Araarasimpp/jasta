@@ -2,6 +2,7 @@
   {
     "id": "2026-11-05-borrar-cuentas",
     "fecha": "2026-11-05",
+    "hora": "01:33",
     "titulo": "Ya se pueden borrar cuentas",
     "cuerpo": "Cualquier persona puede borrar su propia cuenta desde Mi perfil, y el admin puede borrar las cuentas que ya no se usan.",
     "roles": [
@@ -31,6 +32,7 @@
   {
     "id": "2026-11-05-face-id",
     "fecha": "2026-11-05",
+    "hora": "01:21",
     "titulo": "Entra a la app con Face ID o huella",
     "cuerpo": "Ya no tienes que escribir la contraseña cada vez: activa Face ID (iPhone) o la huella (Android) en tu celular y entra con un toque.",
     "roles": [
@@ -60,7 +62,8 @@
   },
   {
     "id": "2026-11-05-colores-tallas-agotados",
-    "fecha": "2026-11-05",
+    "fecha": "2026-11-04",
+    "hora": "23:30",
     "titulo": "Marca colores y tallas agotados",
     "cuerpo": "Cuando se acaba un color o una talla de un producto, ahora lo puedes marcar como agotado. Deja de salir en el catálogo y nadie lo puede pedir, pero el producto sigue a la venta con lo que sí hay.",
     "roles": [
@@ -87,7 +90,8 @@
   },
   {
     "id": "2026-11-05-cobro-link",
-    "fecha": "2026-11-05",
+    "fecha": "2026-11-04",
+    "hora": "23:20",
     "titulo": "Cobra cualquier pedido con un link de pago",
     "cuerpo": "Ahora puedes mandarle al cliente un link para que pague su pedido con tarjeta, PSE, Nequi o Daviplata. Cuando paga, el pedido queda pagado solo: no hay que revisar pantallazos y el domiciliario no le cobra.",
     "roles": [
@@ -112,7 +116,8 @@
   },
   {
     "id": "2026-11-05-recolector-costo",
-    "fecha": "2026-11-05",
+    "fecha": "2026-11-04",
+    "hora": "23:09",
     "titulo": "Al registrar una compra, el costo del producto se actualiza solo",
     "cuerpo": "En Recolector → Registrar compra ahora eliges el producto del inventario que compraste y cuánto te costó cada uno. El precio de compra de ese producto queda actualizado con ese valor.",
     "roles": [
@@ -139,6 +144,7 @@
   {
     "id": "2026-11-04-cuentas-por-cobrar",
     "fecha": "2026-11-04",
+    "hora": "13:02",
     "titulo": "Cuentas por cobrar: lo que entregas al costo y sus abonos",
     "cuerpo": "Lo que le entregas a tu precio de compra a alguien de confianza (por ejemplo, tu hermano) ya no se registra como venta del local. Ahora tiene su propio apartado, donde ves cuánto te debe y lo que te va abonando.",
     "roles": [
@@ -165,6 +171,7 @@
   {
     "id": "2026-11-04-costo-pago-linea",
     "fecha": "2026-11-04",
+    "hora": "12:25",
     "titulo": "El pago en línea ahora cubre exacto la comisión de Wompi",
     "cuerpo": "Antes al cliente se le sumaba un 5%, pero en pedidos pequeños no alcanzaba para la comisión de Wompi (2,65% + $700 fijos, más IVA). Ahora se le cobra lo justo para que a ti te llegue completo el valor del pedido.",
     "roles": [
@@ -188,6 +195,7 @@
   {
     "id": "2026-11-04-envios-nacionales",
     "fecha": "2026-11-04",
+    "hora": "10:00",
     "titulo": "Envíos a otras ciudades por transportadora",
     "cuerpo": "Ahora puedes hacer pedidos para otras ciudades que se mandan por Servientrega, Interrapidísimo u otra transportadora, siempre con pago anticipado.",
     "roles": [
@@ -223,6 +231,7 @@
   {
     "id": "2026-11-04-compras-viejas-al-costo",
     "fecha": "2026-11-04",
+    "hora": "00:53",
     "titulo": "Compras de otras fechas en Deudas",
     "cuerpo": "Ahora puedes registrar en Deudas las compras que no habías subido, con su fecha real, y la app cuenta lo vendido desde ese día.",
     "roles": [
@@ -243,6 +252,7 @@
   {
     "id": "2026-11-04-eliminar-registros",
     "fecha": "2026-11-04",
+    "hora": "00:53",
     "titulo": "Ya puedes eliminar deudas, compras y conteos subidos por error",
     "cuerpo": "Si algo se registró mal, ahora lo puedes borrar del todo en vez de solo anularlo.",
     "roles": [
@@ -266,6 +276,7 @@
   {
     "id": "2026-11-04-deudas-factura",
     "fecha": "2026-11-04",
+    "hora": "00:34",
     "titulo": "Deudas: factura con varios productos y fechas editables",
     "cuerpo": "Ahora en Deudas puedes registrar una factura fiada con todos sus productos, escoger la fecha de la deuda y cambiarla después.",
     "roles": [
@@ -294,6 +305,7 @@
   {
     "id": "2026-11-04-transferencias",
     "fecha": "2026-11-04",
+    "hora": "00:27",
     "titulo": "Confirma en el banco cada transferencia presencial",
     "cuerpo": "Cada pago por transferencia que registran al entregar un domicilio o en una venta del local queda \"por revisar\" hasta que confirmas en el banco que sí llegó. Así no se cuela ningún comprobante falso.",
     "roles": [
@@ -322,6 +334,7 @@
   {
     "id": "2026-11-04-barrio-obligatorio",
     "fecha": "2026-11-04",
+    "hora": "00:14",
     "titulo": "En el catálogo el barrio tiene que estar en la lista",
     "cuerpo": "Ahora el cliente solo puede hacer el pedido si elige un barrio de la tabla de domicilios. Así cada pedido llega con el valor del domicilio exacto y ya no hay que definirlo por teléfono.",
     "roles": [
@@ -346,6 +359,7 @@
   {
     "id": "2026-11-04-pagos-en-linea",
     "fecha": "2026-11-04",
+    "hora": "00:05",
     "titulo": "Los clientes ya pueden pagar en línea desde el catálogo",
     "cuerpo": "En el catálogo público el cliente ahora elige: pagar al recibir, como siempre, o pagar ya con tarjeta débito o crédito, PSE, Nequi o Daviplata a través de Wompi. El cliente paga además la comisión de Wompi, así que a ti te llega completo el pedido.",
     "roles": [
@@ -377,6 +391,7 @@
   {
     "id": "2026-11-03-comisiones-vendedora",
     "fecha": "2026-11-03",
+    "hora": "17:49",
     "titulo": "Mira cuánto te deben y el comprobante de cada pago",
     "cuerpo": "En Comisiones ahora ves arriba cuánto te deben en total, y en cada pago que te hicieron puedes ver el comprobante que subió el admin y los pedidos que cubre.",
     "roles": [
@@ -401,6 +416,7 @@
   {
     "id": "2026-11-03-datos-pago",
     "fecha": "2026-11-03",
+    "hora": "17:37",
     "titulo": "Pon tu cédula y tu cuenta para que te paguen",
     "cuerpo": "En Mi perfil hay una sección nueva, Datos para tus pagos: pon tu cédula y la cuenta (banco, Nequi o Daviplata) donde quieres recibir tus pagos.",
     "roles": [
@@ -430,6 +446,7 @@
   {
     "id": "2026-11-03-deudas",
     "fecha": "2026-11-03",
+    "hora": "17:37",
     "titulo": "Nuevo: Deudas con proveedores",
     "cuerpo": "Una página para llevar lo que se le debe a proveedores: mercancía fiada, préstamos y demás. De la mercancía fiada ves cuánto ya se vendió y cuánto conviene abonar.",
     "roles": [
@@ -471,6 +488,7 @@
   {
     "id": "2026-11-03-cuenta-al-pagar",
     "fecha": "2026-11-03",
+    "hora": "17:37",
     "titulo": "Comisiones: la cuenta de cada vendedora al pagar",
     "cuerpo": "Al registrar el pago de comisiones ves la cuenta de la vendedora (banco, tipo y número) con un botón para copiar el número.",
     "roles": [
@@ -485,7 +503,8 @@
   },
   {
     "id": "2026-11-01-comprobante-egreso",
-    "fecha": "2026-11-01",
+    "fecha": "2026-10-31",
+    "hora": "20:04",
     "titulo": "Comprobante de egreso de cada pago de comisiones (para la DIAN)",
     "cuerpo": "Cada pago a una vendedora ahora se descarga como comprobante de egreso en PDF, numerado, con NIT, cédula, detalle, valor en letras, firmas y el soporte.",
     "roles": [
@@ -524,7 +543,8 @@
   },
   {
     "id": "2026-11-01-comisiones-semana",
-    "fecha": "2026-11-01",
+    "fecha": "2026-10-31",
+    "hora": "19:50",
     "titulo": "Comisiones por semana, de sábado a viernes",
     "cuerpo": "La página de Comisiones ahora muestra lo de cada semana de sábado a viernes, con fechas Desde y Hasta. Siempre arranca en la última semana completa.",
     "roles": [
@@ -550,6 +570,7 @@
   {
     "id": "2026-10-31-formato-pesos",
     "fecha": "2026-10-31",
+    "hora": "00:57",
     "titulo": "Los valores se escriben con formato de pesos",
     "cuerpo": "Cuando escribes un valor de plata, la app pone sola el signo y los puntos de miles: escribes 85000 y ves $ 85.000.",
     "roles": [
@@ -575,6 +596,7 @@
   {
     "id": "2026-10-31-domicilio-propinas",
     "fecha": "2026-10-31",
+    "hora": "00:27",
     "titulo": "Mis entregas: tu domicilio en cada pedido y propinas por transferencia",
     "cuerpo": "Cada pedido muestra cuánto te ganas de domicilio. Y si el cliente transfiere de más, ahora lo registras como propina: es tuya y se te descuenta en el cuadre.",
     "roles": [
@@ -610,6 +632,7 @@
   {
     "id": "2026-10-31-copiar-texto-fechas-local",
     "fecha": "2026-10-31",
+    "hora": "00:16",
     "titulo": "Ya puedes seleccionar y copiar texto en el celular",
     "cuerpo": "En toda la app puedes dejar presionado un texto (un nombre, un teléfono, una dirección, un valor) para seleccionarlo y copiarlo.",
     "roles": [
@@ -646,6 +669,7 @@
   {
     "id": "2026-10-30-menu-buscar",
     "fecha": "2026-10-30",
+    "hora": "12:32",
     "titulo": "Menú más fácil: buscador y lo que más usas",
     "cuerpo": "En el menú del celular (Más) ahora puedes buscar la página escribiendo, arriba salen las que más usas y el resto está ordenado por secciones.",
     "roles": [
@@ -671,6 +695,7 @@
   {
     "id": "2026-10-30-local-inicio-reportes",
     "fecha": "2026-10-30",
+    "hora": "10:27",
     "titulo": "Inicio: recuadro de ventas del local · Reportes sin cancelados",
     "cuerpo": "En Inicio hay un recuadro con todo lo de las ventas del local (hoy o este mes). Y en Reportes ya no salen ni suman los pedidos cancelados.",
     "roles": [
@@ -696,7 +721,8 @@
   },
   {
     "id": "2026-10-30-ganancia-local",
-    "fecha": "2026-10-30",
+    "fecha": "2026-10-29",
+    "hora": "21:37",
     "titulo": "Ganancia de la tienda: ahora cuenta todo lo del local",
     "cuerpo": "En las ventas del local sin vendedora, la ganancia completa (precio de venta − compra) ahora se suma como ganancia de la tienda. Antes se perdía la parte de encima del precio base.",
     "roles": [
@@ -729,6 +755,7 @@
   {
     "id": "2026-10-29-barrios-tienda",
     "fecha": "2026-10-29",
+    "hora": "16:36",
     "titulo": "Catálogo: datos obligatorios y barrio con lista",
     "cuerpo": "En el catálogo público el cliente ahora debe llenar nombre, celular, dirección y barrio, y elige el barrio de una lista con el valor del domicilio. Si su barrio no está, lo indica y tú le confirmas el valor.",
     "roles": [
@@ -757,6 +784,7 @@
   {
     "id": "2026-10-29-enlace-producto",
     "fecha": "2026-10-29",
+    "hora": "16:20",
     "titulo": "Nuevo: comparte el enlace de un producto",
     "cuerpo": "En Pedidos de la tienda busca un producto y comparte su enlace: al cliente le abre ese producto directo, listo para pedirlo. El pedido te llega a ti.",
     "roles": [
@@ -786,6 +814,7 @@
   {
     "id": "2026-10-29-qr-pago-admin",
     "fecha": "2026-10-29",
+    "hora": "15:23",
     "titulo": "Nuevo: QR de pago para los mensajeros",
     "cuerpo": "Pon el QR de tus cuentas en Configuración y los mensajeros se lo muestran al cliente en Mis entregas, con el valor a pagar en grande.",
     "roles": [
@@ -815,6 +844,7 @@
   {
     "id": "2026-10-29-qr-pago-mensajero",
     "fecha": "2026-10-29",
+    "hora": "15:23",
     "titulo": "Nuevo: muéstrale el QR al cliente para que pague",
     "cuerpo": "Si el cliente paga por transferencia, toca QR en el pedido: sale el QR de la cuenta y el valor a pagar en grande, para que lo escanee.",
     "roles": [
@@ -839,6 +869,7 @@
   {
     "id": "2026-10-29-caja-duplicados-quietos",
     "fecha": "2026-10-29",
+    "hora": "15:17",
     "titulo": "Nuevo: cuadre de caja, pedidos repetidos y pedidos quietos",
     "cuerpo": "Ahora se cuenta la caja del local y te avisa si falta o sobra plata. Además, la app avisa antes de crear un pedido repetido y cuando un pedido lleva más de un día sin moverse.",
     "roles": [
@@ -867,6 +898,7 @@
   {
     "id": "2026-10-29-cuadrar-caja",
     "fecha": "2026-10-29",
+    "hora": "15:17",
     "titulo": "Nuevo: cuadra la caja al cerrar",
     "cuerpo": "En Ventas del local toca Cuadrar caja, escribe la base y el efectivo que contaste, y la app te dice si cuadra, falta o sobra.",
     "roles": [
@@ -891,6 +923,7 @@
   {
     "id": "2026-10-29-pedido-repetido",
     "fecha": "2026-10-29",
+    "hora": "15:17",
     "titulo": "Nuevo: aviso de pedido repetido",
     "cuerpo": "Si el cliente ya hizo un pedido en las últimas 24 horas, la app te lo muestra antes de crear otro, para no despachar dos veces lo mismo.",
     "roles": [
@@ -909,6 +942,7 @@
   {
     "id": "2026-10-29-pedidos-quietos",
     "fecha": "2026-10-29",
+    "hora": "15:17",
     "titulo": "Nuevo: aviso de pedidos quietos",
     "cuerpo": "Si un pedido lleva más de un día sin moverse (sin alistar, alistado sin salir o en ruta sin entregar), te llega un aviso para revisarlo.",
     "roles": [
@@ -928,6 +962,7 @@
   {
     "id": "2026-10-29-automatico-admin",
     "fecha": "2026-10-29",
+    "hora": "14:25",
     "titulo": "Nuevo: más avisos automáticos para el negocio",
     "cuerpo": "Pedidos de la tienda sin confirmar, cierre de caja del local, lista de compras de los lunes, avisos de metas y QR de garantía en el ticket.",
     "roles": [
@@ -964,6 +999,7 @@
   {
     "id": "2026-10-29-metas-equipo",
     "fecha": "2026-10-29",
+    "hora": "14:25",
     "titulo": "Nuevo: tu meta en tu panel",
     "cuerpo": "Ahora ves cuánto llevas de tu meta del mes y de la semana, lo que te falta y a qué ritmo vas. Te avisamos al llegar al 50 %, 80 % y 100 %.",
     "roles": [
@@ -992,6 +1028,7 @@
   {
     "id": "2026-10-29-caja-local",
     "fecha": "2026-10-29",
+    "hora": "14:25",
     "titulo": "Nuevo: cierre de caja y QR en el ticket",
     "cuerpo": "A las 9 p. m. te llega el cierre de caja del local con el efectivo que debe haber. Y el ticket ahora trae un QR para que el cliente vea su compra y su garantía.",
     "roles": [
@@ -1011,6 +1048,7 @@
   {
     "id": "2026-10-29-que-comprar",
     "fecha": "2026-10-29",
+    "hora": "14:25",
     "titulo": "Nuevo: Inventario → Qué comprar",
     "cuerpo": "Una lista de lo que se va a acabar y cuánto pedir, según lo que se vende. Los lunes llega un aviso con lo más urgente.",
     "roles": [
@@ -1034,6 +1072,7 @@
   {
     "id": "2026-10-29-ticket-local",
     "fecha": "2026-10-29",
+    "hora": "13:23",
     "titulo": "Nuevo: imprime el ticket de las ventas del local (Android)",
     "cuerpo": "Al registrar una venta en el local aparece el botón Imprimir ticket. En Android sale por Bluetooth en la impresora portátil Goojprt (58 mm), directo desde el celular. En iPhone la impresión por Bluetooth no funciona: abajo están las alternativas.",
     "roles": [
@@ -1081,6 +1120,7 @@
   {
     "id": "2026-10-28-mi-resumen",
     "fecha": "2026-10-28",
+    "hora": "09:40",
     "titulo": "Nuevo: tu resumen de domicilios",
     "cuerpo": "En Más → Mi resumen ves cuánto has ganado en domicilios (hoy, esta semana, este mes o el mes pasado), tus entregas por día, los barrios a los que más vas y cómo te califican los clientes.",
     "roles": [
@@ -1126,6 +1166,7 @@
   {
     "id": "2026-10-28-calificaciones",
     "fecha": "2026-10-28",
+    "hora": "09:32",
     "titulo": "Nuevo: los clientes califican la entrega",
     "cuerpo": "Cuando el pedido se entrega, el cliente puede calificar de 1 a 5 estrellas desde su enlace de seguimiento y dejar un comentario. Así sabemos cómo nos ven y dónde mejorar.",
     "roles": [
@@ -1170,6 +1211,7 @@
   {
     "id": "2026-10-28-recordatorio-cuadres",
     "fecha": "2026-10-28",
+    "hora": "09:32",
     "titulo": "Nuevo: recordatorio de cuadres sin cerrar",
     "cuerpo": "Todos los días a las 8:10 a. m., si quedaron pedidos entregados de días anteriores sin cuadrar, al mensajero le llega un aviso con los días, los pedidos y el efectivo pendiente. A los admins y a cuadres, el resumen.",
     "roles": [
@@ -1206,6 +1248,7 @@
   {
     "id": "2026-10-28-recontactar",
     "fecha": "2026-10-28",
+    "hora": "08:46",
     "titulo": "Nuevo: clientes para recontactar, con tu catálogo en el mensaje",
     "cuerpo": "En Más → Recontactar están tus clientes que ya compraron y llevan un tiempo sin volver. Con un toque les escribes por WhatsApp con un mensaje listo que lleva el enlace de tu catálogo.",
     "roles": [
@@ -1245,6 +1288,7 @@
   {
     "id": "2026-10-28-estadisticas-tienda",
     "fecha": "2026-10-28",
+    "hora": "08:46",
     "titulo": "Nuevo: mira cómo le va a tu catálogo",
     "cuerpo": "En Pedidos de la tienda ahora ves cuántas personas abrieron tu catálogo, cuántas agregaron algo, cuántas pidieron y cuánto vendiste, además de los productos que más miran.",
     "roles": [
@@ -1284,6 +1328,7 @@
   {
     "id": "2026-10-27-avisos-obligatorios",
     "fecha": "2026-10-27",
+    "hora": "14:02",
     "titulo": "Importante: Jasta ahora se usa instalada y con los avisos activos",
     "cuerpo": "Para que a todos nos lleguen los pedidos y los mensajes del domiciliario aunque el celular esté bloqueado, ahora la app pide estar instalada en el celular y con los avisos activados. Si te sale la pantalla de instalar, sigue los pasos: toma un minuto.",
     "roles": [],
@@ -1326,6 +1371,7 @@
   {
     "id": "2026-10-27-whatsapp-seguimiento",
     "fecha": "2026-10-27",
+    "hora": "14:13",
     "titulo": "WhatsApp automático: el cliente recibe el enlace de su pedido cuando sale en ruta",
     "cuerpo": "Jasta puede mandarle al cliente, por WhatsApp y sin que nadie lo escriba, el enlace para ver en qué va su pedido apenas sale con el domiciliario. Usa la API oficial de WhatsApp (Meta) y cuesta unos 3 a 4 pesos por mensaje. Aquí está cómo configurarlo paso a paso.",
     "roles": [
@@ -1423,6 +1469,7 @@
   {
     "id": "2026-10-27-tienda-web",
     "fecha": "2026-10-27",
+    "hora": "13:38",
     "titulo": "Nuevo: tu propio catálogo para que los clientes pidan solos",
     "cuerpo": "Ahora tienes un enlace de catálogo con todos los productos y sus precios. Lo compartes en tus estados, Instagram o grupos, el cliente arma su pedido desde el celular y te llega aquí para que lo confirmes. Queda a tu nombre, con tu comisión normal.",
     "roles": [
@@ -1480,6 +1527,7 @@
   {
     "id": "2026-10-27-respaldo-semanal",
     "fecha": "2026-10-27",
+    "hora": "13:38",
     "titulo": "Nuevo: respaldo de la semana en Excel por Telegram",
     "cuerpo": "Cada domingo a las 9:15 p. m. te llega al chat del bot de Telegram un Excel con toda la semana: pedidos, lo vendido con sus ganancias, cuadres, gastos, comisiones, devoluciones e inventario. Así tienes una copia de todo fuera de la app.",
     "roles": [
@@ -1523,6 +1571,7 @@
   {
     "id": "2026-10-27-alertas-inventario",
     "fecha": "2026-10-27",
+    "hora": "13:12",
     "titulo": "Nuevo: te avisamos cuando un producto se esté acabando",
     "cuerpo": "Ya no tienes que revisar el inventario a cada rato: cuando un producto llegue a su cantidad mínima o se agote, te llega una notificación con cuántas unidades quedan.",
     "roles": [
@@ -1567,6 +1616,7 @@
   {
     "id": "2026-10-27-clientes-alerta",
     "fecha": "2026-10-27",
+    "hora": "13:12",
     "titulo": "Nuevo: la app te avisa si un cliente ha tenido problemas",
     "cuerpo": "Cuando escribas el teléfono en Nuevo pedido, si ese cliente ya canceló pedidos que habían salido, hizo devoluciones o tuvo varias novedades de entrega, te sale un aviso en amarillo o rojo para que confirmes con él antes de despachar.",
     "roles": [],
@@ -1608,6 +1658,7 @@
   {
     "id": "2026-10-27-telefono-y-avisos",
     "fecha": "2026-10-27",
+    "hora": "12:59",
     "titulo": "Nuevo en Jasta: indicativo de país",
     "cuerpo": "Al crear un pedido ya puedes elegir el indicativo del país (+57 por defecto). El nombre solo acepta letras y el teléfono solo números. Además, desde ahora te avisamos aquí cada vez que la app tenga algo nuevo.",
     "roles": [],
