@@ -20,6 +20,8 @@ export interface Usuario {
   activo: boolean;
   created_at: string;
   avatar_url?: string | null;
+  /** Cuenta borrada: queda solo el nombre para el historial */
+  eliminado_at?: string | null;
 }
 
 export interface Producto {

@@ -11,7 +11,7 @@ import { ROLES, Rol, Usuario } from '../../shared/modelos';
 import { mensajeError } from '../../shared/formato';
 import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 
-type Filtro = 'activos' | 'sin_rol' | 'inactivos' | 'todos';
+type Filtro = 'activos' | 'sin_rol' | 'inactivos' | 'sin_usar' | 'todos';
 
 @Component({
   selector: 'app-usuarios',
@@ -97,6 +97,7 @@ type Filtro = 'activos' | 'sin_rol' | 'inactivos' | 'todos';
             <dl class="datos">
               <dt>Correo</dt><dd>{{ u.email || '—' }}</dd>
               <dt>Cuenta</dt><dd>Ya entra a la app</dd>
+              <dt>Último ingreso</dt><dd>{{ ultimoTexto(u) }}</dd>
             </dl>
           } @else {
             <div class="campo">
@@ -119,6 +120,13 @@ type Filtro = 'activos' | 'sin_rol' | 'inactivos' | 'todos';
             </label>
           </div>
         </div>
+        @if (u.id !== sb.usuario()?.id) {
+          <div class="vista-body" style="padding-top: 0">
+            <span class="seccion-titulo">Borrar cuenta</span>
+            <p class="ayuda" style="margin: 4px 0 8px">Para cuentas que ya no se usan. Se borra su acceso y sus datos personales; si tiene pedidos, comisiones o cuadres, su nombre queda en esos registros. Si solo quieres que no entre por un tiempo, mejor desmarca "Activo".</p>
+            <button class="b b-peligro" [disabled]="guardando()" (click)="borrar(u)">Borrar la cuenta de {{ u.nombre.split(' ')[0] }}</button>
+          </div>
+        }
         <div class="hoja-pie">
           <button class="b" (click)="sel.set(null)">Cancelar</button>
           <button class="b b-pri" [disabled]="guardando()" (click)="guardar(u)">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button>
@@ -162,7 +170,7 @@ type Filtro = 'activos' | 'sin_rol' | 'inactivos' | 'todos';
 })
 export class UsuariosPage implements OnInit {
   private ps = inject(PedidosService);
-  private sb = inject(SupabaseService);
+  sb = inject(SupabaseService);
   presencia = inject(PresenciaService);
   private toast = inject(ToastService);
 
@@ -192,6 +200,7 @@ export class UsuariosPage implements OnInit {
     { id: 'activos', label: 'Activos' },
     { id: 'sin_rol', label: 'Sin rol' },
     { id: 'inactivos', label: 'Inactivos' },
+    { id: 'sin_usar', label: 'Sin usar (+60 días)' },
     { id: 'todos', label: 'Todos' },
   ];
 
@@ -199,6 +208,8 @@ export class UsuariosPage implements OnInit {
     const t = this.q().trim().toLowerCase();
     const f = this.filtro();
     return this.usuarios().filter((u) => {
+      if (u.eliminado_at) return false;
+      if (f === 'sin_usar' && !this.sinUsar(u)) return false;
       if (f === 'activos' && !u.activo) return false;
       if (f === 'inactivos' && u.activo) return false;
       if (f === 'sin_rol' && (u.roles.length || !u.activo)) return false;
@@ -214,7 +225,38 @@ export class UsuariosPage implements OnInit {
     await this.cargar();
   }
 
+  /** Último ingreso de cada cuenta (id → fecha) */
+  private ultimo = signal<Record<string, string | null>>({});
+
+  /** No ha entrado en 60 días, o lleva más de 60 días autorizada sin crear la cuenta */
+  sinUsar(u: Usuario): boolean {
+    const limite = Date.now() - 60 * 86_400_000;
+    if (!u.auth_id) return new Date(u.created_at).getTime() < limite;
+    const f = this.ultimo()[u.id];
+    return !f || new Date(f).getTime() < limite;
+  }
+
+  ultimoTexto(u: Usuario): string {
+    const f = this.ultimo()[u.id];
+    if (!f) return 'Nunca';
+    const dias = Math.floor((Date.now() - new Date(f).getTime()) / 86_400_000);
+    return dias <= 0 ? 'Hoy' : dias === 1 ? 'Ayer' : `Hace ${dias} días`;
+  }
+
+  async borrar(u: Usuario): Promise<void> {
+    const t = prompt(`¿Borrar la cuenta de ${u.nombre}? Pierde el acceso a la app y se borran sus datos personales. No se puede deshacer.\n\nPara confirmar escribe BORRAR:`);
+    if (t?.trim().toUpperCase() !== 'BORRAR') return;
+    this.guardando.set(true);
+    const { data, error } = await this.sb.client.rpc('eliminar_cuenta', { p_usuario: u.id });
+    this.guardando.set(false);
+    if (error) return this.toast.error(mensajeError(error));
+    this.toast.ok(data === 'borrada' ? `Cuenta de ${u.nombre} borrada` : `Cuenta de ${u.nombre} borrada. Su nombre queda en sus pedidos y cuadres viejos.`);
+    this.sel.set(null);
+    await this.cargar();
+  }
+
   async cargar(): Promise<void> {
+    void this.sb.client.rpc('usuarios_ultimo_ingreso').then(({ data }) => data && this.ultimo.set(data as Record<string, string | null>));
     try {
       this.usuarios.set(await this.ps.usuarios());
       void this.presencia.cargarVistos(this.usuarios().map((u) => u.id));

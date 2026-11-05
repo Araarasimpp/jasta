@@ -1,5 +1,34 @@
 [
   {
+    "id": "2026-11-05-borrar-cuentas",
+    "fecha": "2026-11-05",
+    "titulo": "Ya se pueden borrar cuentas",
+    "cuerpo": "Cualquier persona puede borrar su propia cuenta desde Mi perfil, y el admin puede borrar las cuentas que ya no se usan.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "mensajero",
+      "alistador",
+      "venta_local",
+      "recolector",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "Borrar tu cuenta",
+        "pasos": [
+          "Ve a Más → Mi perfil → \"Borrar mi cuenta\".",
+          "Escribe BORRAR para confirmar.",
+          "Se borra tu acceso (correo, contraseña y Face ID) y tus datos personales: celular, foto, cédula y cuenta bancaria. Los pedidos, comisiones y cuadres en los que participaste quedan con tu nombre, porque son registros del negocio."
+        ]
+      },
+      {
+        "titulo": "Para el admin",
+        "texto": "En Usuarios hay un filtro nuevo, \"Sin usar (+60 días)\": muestra las cuentas que no entran hace más de 60 días y las autorizaciones que nunca se usaron. Al abrir una cuenta ves su último ingreso y el botón \"Borrar la cuenta\". Si solo quieres que alguien no entre por un tiempo, mejor desmarca \"Activo\". No se puede borrar al único admin."
+      }
+    ]
+  },
+  {
     "id": "2026-11-05-face-id",
     "fecha": "2026-11-05",
     "titulo": "Entra a la app con Face ID o huella",

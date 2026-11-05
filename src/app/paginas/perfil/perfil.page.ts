@@ -113,6 +113,12 @@ import { FaceIdComponent } from './face-id.component';
         <p class="ayuda">Si perdiste el celular o entraste en un computador ajeno, cierra la sesión en todos los dispositivos. Tendrás que volver a entrar.</p>
         <div><button class="b b-peligro" (click)="cerrarTodas()">Cerrar sesión en todos los dispositivos</button></div>
       </section>
+
+      <section class="panel">
+        <h2>Borrar mi cuenta</h2>
+        <p class="ayuda">Se borra tu acceso a la app (correo, contraseña y Face ID) y tus datos personales: celular, foto, cédula y cuenta bancaria. Los pedidos, comisiones y cuadres en los que participaste quedan con tu nombre, porque son registros del negocio. No se puede deshacer: para volver a entrar, el admin tendría que autorizarte de nuevo.</p>
+        <div><button class="b b-peligro" [disabled]="borrando()" (click)="borrarCuenta()">{{ borrando() ? 'Borrando…' : 'Borrar mi cuenta' }}</button></div>
+      </section>
     </div>
   `,
 })
@@ -211,6 +217,20 @@ export class PerfilPage implements OnInit {
     if (error) return this.toast.error(mensajeError(error));
     this.clave1 = this.clave2 = '';
     this.toast.ok('Contraseña cambiada');
+  }
+
+  borrando = signal(false);
+
+  async borrarCuenta(): Promise<void> {
+    const t = prompt('Esto borra tu cuenta para siempre. Para confirmar escribe BORRAR:');
+    if (t?.trim().toUpperCase() !== 'BORRAR') return;
+    this.borrando.set(true);
+    const { error } = await this.sb.client.rpc('eliminar_mi_cuenta');
+    this.borrando.set(false);
+    if (error) return this.toast.error(mensajeError(error));
+    await this.sb.client.auth.signOut({ scope: 'local' }).catch(() => undefined);
+    this.toast.ok('Tu cuenta fue borrada');
+    this.router.navigateByUrl('/auth/login');
   }
 
   async cerrarTodas(): Promise<void> {
