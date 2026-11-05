@@ -11,7 +11,10 @@ interface Color { nombre: string; hex: string | null; imagen_url: string | null 
 interface ProductoTienda {
   id: number; nombre: string; precio: number; imagen_url: string | null; tallas: string[]; colores: Color[];
   agotado: boolean; disponibles: number | null; categoria?: string | null;
+  /** Puesto entre los 10 más vendidos de los últimos 30 días */
+  top?: number | null;
 }
+interface Cupon { codigo: string; tipo: 'porcentaje' | 'valor'; valor: number; minimo: number; descripcion: string | null }
 interface Tienda {
   negocio: string | null; telefonos: string | null;
   vendedora: { id: number; nombre: string; telefono: string | null } | null;
@@ -184,6 +187,20 @@ function parecido(a: string, b: string): number {
             </div>
           }
         </div>
+        @if (!q().trim() && !categoria() && masVendidos().length >= 3) {
+          <section class="tienda-top" aria-labelledby="t-top">
+            <h2 id="t-top">🔥 Lo más vendido</h2>
+            <div class="tienda-carrusel">
+              @for (p of masVendidos(); track p.id) {
+                <button type="button" class="tienda-mini" (click)="abrir(p)">
+                  @if (urlMini(p.imagen_url); as u) { <img [src]="u" alt="" loading="lazy" /> } @else { <span class="ini">{{ p.nombre.charAt(0) }}</span> }
+                  <span class="puesto">#{{ p.top }}</span>
+                  <span class="nom">{{ p.nombre }}</span><strong>{{ pesos(p.precio) }}</strong>
+                </button>
+              }
+            </div>
+          </section>
+        }
         <div class="rejilla">
           @for (p of filtrados().slice(0, limite()); track p.id) {
             <article class="prod" [class.agot]="p.agotado">
@@ -258,6 +275,19 @@ function parecido(a: string, b: string): number {
             </div>
           }
           @if (errorSel()) { <p class="error" role="alert">{{ errorSel() }}</p> }
+          @if (relacionados().length) {
+            <section class="tienda-relac" aria-labelledby="t-rel">
+              <h3 id="t-rel">Te puede gustar</h3>
+              <div class="tienda-carrusel">
+                @for (r of relacionados(); track r.id) {
+                  <button type="button" class="tienda-mini" (click)="abrir(r)">
+                    @if (urlMini(r.imagen_url); as u) { <img [src]="u" alt="" loading="lazy" /> } @else { <span class="ini">{{ r.nombre.charAt(0) }}</span> }
+                    <span class="nom">{{ r.nombre }}</span><strong>{{ pesos(r.precio) }}</strong>
+                  </button>
+                }
+              </div>
+            </section>
+          }
         </div>
         <div class="hoja-pie">
           <button class="b" (click)="sel.set(null)">Cerrar</button>
@@ -347,11 +377,30 @@ function parecido(a: string, b: string): number {
             </div>
           </div>
 
+          <div class="tienda-cupon">
+            @if (cupon(); as c) {
+              <div class="cupon-ok">
+                <span>🎟️ Cupón <strong>{{ c.codigo }}</strong>{{ c.descripcion ? ' · ' + c.descripcion : '' }}
+                  @if (descuento()) { <small>Te ahorras {{ pesos(descuento()) }}</small> } @else { <small class="falta">Es para compras desde {{ pesos(c.minimo) }}</small> }</span>
+                <button type="button" class="link" (click)="quitarCupon()">Quitar</button>
+              </div>
+            } @else if (verCupon()) {
+              <div class="cupon-form">
+                <input [ngModel]="cuponTexto()" (ngModelChange)="cuponTexto.set($event.toUpperCase())" placeholder="Código del cupón" aria-label="Código del cupón" autocapitalize="characters" maxlength="30" />
+                <button type="button" class="b" [disabled]="aplicando() || !cuponTexto().trim()" (click)="aplicarCupon()">{{ aplicando() ? '…' : 'Aplicar' }}</button>
+              </div>
+              @if (errorCupon()) { <p class="error-campo">{{ errorCupon() }}</p> }
+            } @else {
+              <button type="button" class="link" (click)="verCupon.set(true)">¿Tienes un cupón de descuento?</button>
+            }
+          </div>
+
           <div class="totales">
             <div><span>Productos</span><span class="num">{{ pesos(subtotal()) }}</span></div>
+            @if (descuento()) { <div class="desc-linea"><span>Cupón {{ cupon()!.codigo }}</span><span class="num">− {{ pesos(descuento()) }}</span></div> }
             <div><span>Domicilio</span><span class="num">{{ domicilio() !== null ? pesos(domicilio()!) : 'Elige tu barrio' }}</span></div>
             @if (enLinea()) { <div><span>Costo del pago en línea</span><span class="num">{{ domicilio() !== null ? pesos(recargo()) : '—' }}</span></div> }
-            <div class="fin"><span>Total</span><span class="num">{{ pesos(subtotal() + (domicilio() ?? 0) + recargo()) }}</span></div>
+            <div class="fin"><span>Total</span><span class="num">{{ pesos(subtotal() - descuento() + (domicilio() ?? 0) + recargo()) }}</span></div>
           </div>
           @if (enLinea()) {
             <p class="nota">Te llevamos a <strong>Wompi</strong> (de Bancolombia) para pagar de forma segura. Cuando se apruebe el pago, {{ t()?.vendedora ? primerNombre(t()!.vendedora!.nombre) : 'la tienda' }} te contacta para coordinar el envío. El costo del pago en línea es lo que cobra Wompi por la transacción.</p>
@@ -362,7 +411,7 @@ function parecido(a: string, b: string): number {
         </div>
         <div class="hoja-pie">
           <button class="b" (click)="verCarrito.set(false)">Seguir comprando</button>
-          <button class="b b-pri" (click)="enviar()" [disabled]="enviando() || !lineas().length">{{ enviando() ? (enLinea() ? 'Abriendo el pago…' : 'Enviando…') : enLinea() ? 'Ir a pagar ' + pesos(subtotal() + (domicilio() ?? 0) + recargo()) : 'Hacer pedido' }}</button>
+          <button class="b b-pri" (click)="enviar()" [disabled]="enviando() || !lineas().length">{{ enviando() ? (enLinea() ? 'Abriendo el pago…' : 'Enviando…') : enLinea() ? 'Ir a pagar ' + pesos(subtotal() - descuento() + (domicilio() ?? 0) + recargo()) : 'Hacer pedido' }}</button>
         </div>
       </div>
     }
@@ -398,7 +447,49 @@ export class TiendaPage implements OnInit {
   /** Pagar al recibir o pagar ya en línea con Wompi (el cliente paga la comisión de Wompi) */
   formaPago = signal<'contra_entrega' | 'en_linea'>('contra_entrega');
   enLinea = computed(() => this.formaPago() === 'en_linea');
-  recargo = computed(() => (this.enLinea() && this.domicilio() !== null ? recargoWompi(this.subtotal() + this.domicilio()!) : 0));
+  recargo = computed(() => (this.enLinea() && this.domicilio() !== null ? recargoWompi(this.subtotal() - this.descuento() + this.domicilio()!) : 0));
+  /** Cupón de descuento (el valor final lo calcula el servidor al pedir) */
+  cupon = signal<Cupon | null>(null);
+  cuponTexto = signal('');
+  verCupon = signal(false);
+  aplicando = signal(false);
+  errorCupon = signal('');
+  descuento = computed(() => {
+    const c = this.cupon();
+    const sub = this.subtotal();
+    if (!c || sub < Number(c.minimo)) return 0;
+    return c.tipo === 'porcentaje' ? Math.round((sub * Math.min(Number(c.valor), 90)) / 100) : Math.min(Number(c.valor), sub);
+  });
+  /** Los 10 más vendidos (de los últimos 30 días) que hay disponibles */
+  masVendidos = computed(() => (this.t()?.productos ?? []).filter((p) => p.top && !p.agotado).sort((a, b) => a.top! - b.top!).slice(0, 10));
+  /** Productos de la misma categoría (los más vendidos primero) */
+  relacionados = computed(() => {
+    const p = this.sel();
+    if (!p) return [];
+    const todos = (this.t()?.productos ?? []).filter((x) => x.id !== p.id && !x.agotado);
+    const orden = (a: ProductoTienda, b: ProductoTienda) => (a.top ?? 99) - (b.top ?? 99);
+    const misma = todos.filter((x) => (x.categoria ?? 'Otros') === (p.categoria ?? 'Otros')).sort(orden);
+    const extra = misma.length < 4 ? todos.filter((x) => x.top && !misma.includes(x)).sort(orden) : [];
+    return [...misma, ...extra].slice(0, 8);
+  });
+
+  async aplicarCupon(): Promise<void> {
+    this.errorCupon.set('');
+    this.aplicando.set(true);
+    const { data, error } = await this.sb.client.rpc('tienda_cupon', { p_codigo: this.cuponTexto().trim(), p_subtotal: this.subtotal() });
+    this.aplicando.set(false);
+    if (error) {
+      const m = mensajeError(error);
+      return this.errorCupon.set(/cup[oó]n|compras desde/i.test(m) ? m : 'No pudimos revisar ese cupón. Intenta otra vez.');
+    }
+    this.cupon.set(data as Cupon);
+    this.verCupon.set(false);
+  }
+
+  quitarCupon(): void {
+    this.cupon.set(null);
+    this.cuponTexto.set('');
+  }
 
   nombre = '';
   telefono = '';
@@ -699,6 +790,7 @@ export class TiendaPage implements OnInit {
       p_direccion: this.direccion.trim(), p_barrio: this.barrioOficial(), p_observaciones: this.observaciones.trim(),
       p_items: this.lineas().map((l) => ({ producto_id: l.producto_id, cantidad: l.cantidad, color: l.color, talla: l.talla })),
       p_pago: this.enLinea() ? 'en_linea' : 'contra_entrega',
+      ...(this.cupon() ? { p_cupon: this.cupon()!.codigo } : {}),
     });
     if (error) {
       this.enviando.set(false);
@@ -708,6 +800,7 @@ export class TiendaPage implements OnInit {
     if (r.pago === 'en_linea') {
       // El pedido ya quedó guardado: se va a Wompi a pagar (y si algo falla, la página del pago deja reintentar)
       this.lineas.set([]);
+      this.cupon.set(null);
       const pago = await this.sb.client.functions.invoke('wompi-pagar', { body: { codigo: r.codigo, origen: location.origin } });
       const url = (pago.data as { url?: string } | null)?.url;
       location.assign(url && url.startsWith('https://checkout.wompi.co/') ? url : `/pago/${r.codigo}`);
@@ -716,6 +809,7 @@ export class TiendaPage implements OnInit {
     this.enviando.set(false);
     this.hecho.set({ id: r.id, total: Number(r.subtotal) + Number(r.domicilio), domicilioPendiente: r.domicilio_por_confirmar });
     this.lineas.set([]);
+    this.cupon.set(null);
     this.verCarrito.set(false);
     this.scroll?.nativeElement.scrollTo({ top: 0 });
   }

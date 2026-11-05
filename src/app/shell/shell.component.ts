@@ -30,6 +30,7 @@ import {
   clipboardOutline,
   sunnyOutline,
   walletOutline,
+  ticketOutline,
   statsChartOutline,
   settingsOutline,
   storefrontOutline,
@@ -102,6 +103,7 @@ const MENU: ItemMenu[] = [
   { label: 'Ventas del local', path: '/app/ventas-local', icon: 'list-outline', roles: ['admin', 'venta_local'], grupo: 'Ventas' , buscar: 'caja ticket cuadrar' },
   { label: 'Servicio local', path: '/app/servicio-local', icon: 'cash-outline', roles: ['admin', 'venta_local', 'cuadres'], grupo: 'Ventas' , buscar: 'alcancia caja' },
   { label: 'Catálogo', path: '/app/catalogo', icon: 'book-outline', roles: ['admin', 'vendedora'], grupo: 'Ventas' },
+  { label: 'Cupones', path: '/app/cupones', icon: 'ticket-outline', roles: ['admin'], grupo: 'Ventas', buscar: 'descuento promocion codigo oferta' },
   { label: 'Pedidos de la tienda', path: '/app/pedidos-web', icon: 'globe-outline', roles: ['admin', 'vendedora'], grupo: 'Ventas' , buscar: 'web catalogo publico enlace link' },
   { label: 'Recontactar', path: '/app/recontactar', icon: 'chatbubbles-outline', roles: ['admin', 'vendedora'], grupo: 'Ventas' , buscar: 'clientes dormidos whatsapp' },
   { label: 'Clientes', path: '/app/clientes', icon: 'people-circle-outline', roles: ['admin', 'venta_local'], grupo: 'Ventas' },
@@ -428,7 +430,7 @@ export class ShellComponent implements OnInit, OnDestroy {
   constructor() {
     addIcons({ hourglassOutline, swapHorizontalOutline, searchOutline, 
       sparklesOutline, globeOutline, chatbubblesOutline, analyticsOutline, add, close, chevronDownOutline, layersOutline, pricetagsOutline, returnDownBackOutline, pieChartOutline, alertCircleOutline, cardOutline, trendingDownOutline, barChartOutline, chevronBackOutline, chevronForwardOutline, cubeOutline, ellipsisHorizontal,
-      logOutOutline, moonOutline, peopleOutline, receiptOutline, bicycleOutline, clipboardOutline, sunnyOutline, walletOutline, statsChartOutline, settingsOutline,
+      logOutOutline, moonOutline, peopleOutline, receiptOutline, bicycleOutline, clipboardOutline, sunnyOutline, walletOutline, ticketOutline, statsChartOutline, settingsOutline,
       storefrontOutline, listOutline, trophyOutline, bookOutline, gridOutline, cashOutline, bagHandleOutline, peopleCircleOutline, timeOutline, personCircleOutline, notificationsOutline, locationOutline,
     });
   }

@@ -178,3 +178,22 @@ html body ion-icon {
   user-select: none;
   -webkit-touch-callout: none;
 }
+
+/* Catálogo público: "Lo más vendido", "Te puede gustar" y cupón */
+app-tienda .tienda-top { display: flex; flex-direction: column; gap: 8px; margin: 4px 0 14px; }
+app-tienda .tienda-top h2, app-tienda .tienda-relac h3 { margin: 0; font-size: 16px; }
+app-tienda .tienda-relac { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; padding-top: 12px; border-top: 1px dashed var(--border); }
+app-tienda .tienda-carrusel { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+app-tienda .tienda-mini { position: relative; flex: 0 0 128px; display: flex; flex-direction: column; gap: 4px; padding: 0 0 8px; border: 1px solid var(--border);
+  border-radius: var(--radius); background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer; overflow: hidden; scroll-snap-align: start; }
+app-tienda .tienda-mini img, app-tienda .tienda-mini .ini { width: 100%; aspect-ratio: 1; object-fit: cover; background: var(--surface-2); display: grid; place-items: center; font-size: 28px; font-weight: 700; color: var(--text-muted); }
+app-tienda .tienda-mini .nom { padding: 0 8px; font-size: 12.5px; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+app-tienda .tienda-mini strong { padding: 0 8px; font-family: var(--mono-font); font-size: 13.5px; }
+app-tienda .tienda-mini .puesto { position: absolute; top: 6px; left: 6px; padding: 1px 7px; border-radius: 999px; background: #e8590c; color: #fff; font-size: 11.5px; font-weight: 800; }
+app-tienda .tienda-cupon .link { border: 0; background: none; padding: 0; color: var(--accent); font: inherit; font-size: 14px; text-decoration: underline; cursor: pointer; }
+app-tienda .tienda-cupon .cupon-form { display: flex; gap: 8px; }
+app-tienda .tienda-cupon .cupon-form input { flex: 1; min-width: 0; text-transform: uppercase; }
+app-tienda .tienda-cupon .cupon-ok { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--ok-wash); font-size: 14px; }
+app-tienda .tienda-cupon .cupon-ok small { display: block; color: var(--efectivo-texto); font-weight: 600; }
+app-tienda .tienda-cupon .cupon-ok small.falta { color: var(--oro-texto); }
+app-tienda .totales .desc-linea { color: var(--efectivo-texto); }

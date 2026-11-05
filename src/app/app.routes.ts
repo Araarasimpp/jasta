@@ -124,6 +124,10 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/actividad/actividad.page').then((m) => m.ActividadPage),
       },
       {
+        path: 'cupones', canActivate: [rolGuard], data: { roles: ['admin'] },
+        loadComponent: () => import('./paginas/cupones/cupones.page').then((m) => m.CuponesPage),
+      },
+      {
         // Pedidos que llegan del catálogo público, para confirmar con el cliente
         path: 'pedidos-web', canActivate: [rolGuard], data: { roles: ['admin', 'vendedora'] },
         loadComponent: () => import('./paginas/pedidos-web/pedidos-web.page').then((m) => m.PedidosWebPage),

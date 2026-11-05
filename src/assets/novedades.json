@@ -1,5 +1,50 @@
 [
   {
+    "id": "2026-11-05-cupones",
+    "fecha": "2026-11-05",
+    "hora": "02:56",
+    "titulo": "Cupones de descuento para el catálogo",
+    "cuerpo": "Ahora puedes crear cupones (por ejemplo BIENVENIDO10) para que los clientes tengan descuento al pedir en el catálogo público.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Crear un cupón",
+        "pasos": [
+          "Ve a Más → Ventas → Cupones y toca \"Nuevo cupón\".",
+          "Escribe el código, elige si es porcentaje (ej: 10%) o valor fijo (ej: $5.000) y, si quieres, una compra mínima, un máximo de usos y una fecha de vencimiento.",
+          "Toca \"Copiar mensaje para clientes\" y compártelo por WhatsApp, estados o redes."
+        ]
+      },
+      {
+        "titulo": "Qué ve el cliente",
+        "texto": "En su pedido toca \"¿Tienes un cupón de descuento?\", escribe el código y ve cuánto se ahorra. El descuento es sobre los productos (no sobre el domicilio)."
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "El descuento se reparte en los precios de los productos del pedido, así que la ganancia de la tienda y la comisión de la vendedora bajan en la misma proporción. En Pedidos de la tienda sale qué cupón usó cada cliente, y en Cupones ves cuántas veces se ha usado y cuánto se ha descontado. Puedes pausar o eliminar un cupón cuando quieras."
+      }
+    ]
+  },
+  {
+    "id": "2026-11-05-mas-vendido",
+    "fecha": "2026-11-05",
+    "hora": "02:56",
+    "titulo": "El catálogo muestra lo más vendido y productos que te pueden gustar",
+    "cuerpo": "Arriba del catálogo público sale \"🔥 Lo más vendido\" con los 10 productos que más se han vendido en el último mes. Y al abrir un producto, abajo aparecen otros de la misma categoría en \"Te puede gustar\".",
+    "roles": [
+      "admin",
+      "vendedora"
+    ],
+    "secciones": [
+      {
+        "titulo": "Bueno saber",
+        "texto": "Se actualiza solo con las ventas de los últimos 30 días. Los productos agotados no aparecen ahí. Así los clientes encuentran rápido lo que más se vende y ven más productos antes de pedir."
+      }
+    ]
+  },
+  {
     "id": "2026-11-05-borrar-cuentas",
     "fecha": "2026-11-05",
     "hora": "01:33",

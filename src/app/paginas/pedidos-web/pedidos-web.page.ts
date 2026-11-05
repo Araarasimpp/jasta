@@ -18,7 +18,7 @@ interface PedidoWeb {
   cliente_nombre: string; cliente_telefono: string; direccion: string; barrio: string; observaciones: string | null;
   valor_domicilio: number; domicilio_por_confirmar: boolean; items: ItemWeb[]; subtotal: number; pedido_id: number | null;
   motivo: string | null; atendido_por: string | null; atendido_at: string | null; created_at: string; riesgo: Riesgo | null;
-  pago?: 'contra_entrega' | 'en_linea'; pago_estado?: 'pendiente' | 'aprobado' | 'rechazado' | null; pago_metodo?: string | null; recargo?: number;
+  pago?: 'contra_entrega' | 'en_linea'; pago_estado?: 'pendiente' | 'aprobado' | 'rechazado' | null; pago_metodo?: string | null; recargo?: number; cupon?: string | null; descuento?: number;
 }
 
 /** Enlace de la tienda: /tienda/<primer nombre>-<id> */
@@ -118,6 +118,9 @@ export function enlaceTienda(u: { id: number; nombre: string } | null): string {
               <li><span>Domicilio</span><span class="num">{{ w.domicilio_por_confirmar && w.estado === 'por_confirmar' ? 'Por definir' : pesos(w.valor_domicilio) }}</span></li>
             </ul>
             <div class="tot"><span>Total</span><span class="num">{{ pesos(+w.subtotal + +w.valor_domicilio) }}</span></div>
+            @if (w.cupon) {
+              <p class="pagado-linea">🎟️ Usó el cupón <strong>{{ w.cupon }}</strong>: se le descontaron {{ pesos(w.descuento ?? 0) }} (ya están restados en los precios).</p>
+            }
             @if (w.pago_estado === 'aprobado') {
               <p class="pagado-linea">💳 <strong>Ya pagó en línea</strong>{{ w.pago_metodo ? ' con ' + metodoPago(w.pago_metodo) : '' }} (Wompi). Al entregar no se le cobra nada.</p>
             }
