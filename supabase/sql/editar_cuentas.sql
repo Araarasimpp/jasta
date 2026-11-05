@@ -1,4 +1,4 @@
--- Editar entregas y abonos de Cuentas por cobrar (PENDIENTE DE APLICAR)
+-- Editar entregas y abonos de Cuentas por cobrar (YA APLICADO 2026-11-05)
 create or replace function public.editar_entrega_costo(p_entrega bigint, p_items jsonb, p_fecha date, p_nota text)
 returns void language plpgsql security definer set search_path to '' as $function$
 declare e public.cuenta_entregas; it jsonb; pr public.productos; v_cant int; v_costo numeric; v_total numeric := 0; v_saldo numeric;

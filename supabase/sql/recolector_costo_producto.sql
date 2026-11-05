@@ -1,5 +1,5 @@
 -- El recolector registra la compra de un producto del inventario con lo que le costó, y el precio de
--- compra (costo) del producto se actualiza solo. (PENDIENTE DE APLICAR)
+-- compra (costo) del producto se actualiza solo. (YA APLICADO 2026-11-05)
 
 alter table public.recoleccion_compras
   add column if not exists producto_id bigint references public.productos(id),
