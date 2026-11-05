@@ -299,6 +299,8 @@ app-tienda.tv2.tv2.tv2 .tienda-mini .puesto { background: var(--t-acc); }
 body.dark app-tienda.tv2.tv2.tv2 .foto img, body.dark app-tienda.tv2.tv2.tv2 .t-galeria-caja .galeria img,
 body.dark app-tienda.tv2.tv2.tv2 .lineas img, body.dark app-tienda.tv2.tv2.tv2 .lineas .mini { mix-blend-mode: normal; }
 
+app-tienda.tv2.tv2.tv2 .t-ver-pedido { background: var(--t-acc); }
+
 /* Categorías con ícono */
 app-tienda.tv2.tv2.tv2 .t-cats { gap: 12px; padding-top: 4px; padding-bottom: 2px; }
 app-tienda.tv2.tv2.tv2 .t-cats button { height: auto; width: 68px; padding: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; border: 0; background: none; box-shadow: none;

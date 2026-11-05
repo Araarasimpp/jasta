@@ -14,13 +14,14 @@ import { enlaceWhatsapp } from '../../shared/whatsapp';
 import { mensajeError, pesos } from '../../shared/formato';
 import { formatoFechaCO, hoyColombiaISO } from '../../shared/fecha-colombia';
 
-interface Cuenta { id: number; nombre: string; telefono: string | null; entregado: number; abonado: number; saldo: number; ultima_entrega: string | null; ultimo_abono: string | null }
-interface ItemEntrega { producto_id: number; nombre: string; cantidad: number; costo: number }
-interface Entrega { id: number; fecha: string; total: number; nota: string | null; quien: string | null; items: ItemEntrega[] }
+interface Cuenta { id: number; nombre: string; telefono: string | null; aumento: number; ganancia: number; entregado: number; abonado: number; saldo: number; ultima_entrega: string | null; ultimo_abono: string | null }
+/** costo = lo que le cobras c/u · costo_real = lo que te costó a ti */
+interface ItemEntrega { producto_id: number; nombre: string; cantidad: number; costo: number; costo_real: number }
+interface Entrega { id: number; fecha: string; total: number; ganancia: number; nota: string | null; quien: string | null; items: ItemEntrega[] }
 interface Abono { id: number; fecha: string; valor: number; metodo: string; comprobantes: string[]; nota: string | null; quien: string | null }
 interface Detalle { id: number; nombre: string; telefono: string | null; entregas: Entrega[]; abonos: Abono[] }
 interface Prod { id: number; nombre: string; sku: string | null; costo: number | null }
-interface Linea { id: number; nombre: string; cantidad: number | null; costo: number | null }
+interface Linea { id: number; nombre: string; cantidad: number | null; real: number | null; costo: number | null; manual: boolean }
 type Mov = { tipo: 'entrega'; fecha: string; e: Entrega } | { tipo: 'abono'; fecha: string; a: Abono };
 
 const METODOS = [
@@ -70,7 +71,15 @@ const normal = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLower
       .f-sug button { width: 100%; display: flex; justify-content: space-between; gap: 8px; padding: 9px 10px; border: 0; border-radius: var(--radius-sm); background: none; color: var(--text); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
       .f-sug small { color: var(--text-muted); white-space: nowrap; }
       .f-lineas { display: flex; flex-direction: column; gap: 6px; }
-      .f-linea { display: grid; grid-template-columns: minmax(0, 1fr) 60px 100px 32px; gap: 6px; align-items: center; }
+      .f-linea { display: grid; grid-template-columns: minmax(0, 1fr) 56px 96px 32px; gap: 6px; align-items: center; }
+      .f-linea.dos { grid-template-columns: 60px minmax(0, 1fr) minmax(0, 1fr) 32px; row-gap: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--border-soft); }
+      .f-linea.dos .nom { grid-column: 1 / -1; font-weight: 600; }
+      .f-linea.dos.f-cab { padding-bottom: 0; border-bottom: 0; }
+      .f-linea.dos.f-cab span:first-child { display: none; }
+      .f-cab { font-size: 11.5px; font-weight: 650; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; }
+      .f-cab span:not(:first-child) { text-align: center; }
+      .gan { color: var(--efectivo-texto); font-weight: 650; }
+      .chip-aum { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: var(--ok-wash); color: var(--efectivo-texto); font-size: 11.5px; font-weight: 700; vertical-align: middle; }
       .f-linea .nom { font-size: 13.5px; line-height: 1.25; overflow-wrap: anywhere; }
       .f-linea input { height: 38px; padding: 0 8px; font-size: 14px; min-width: 0; }
       .f-linea .quitar { height: 32px; border: 0; border-radius: var(--radius-sm); background: var(--danger-wash); color: var(--danger); cursor: pointer; }
@@ -87,22 +96,23 @@ const normal = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLower
   template: `
     <div class="page">
       <div class="head">
-        <div><p class="fecha">Mercancía entregada al costo y sus abonos</p><h1>Cuentas por cobrar</h1></div>
+        <div><p class="fecha">Mercancía entregada a crédito y sus abonos</p><h1>Cuentas por cobrar</h1></div>
         <button class="b b-pri" (click)="abrirCuenta(null)"><ion-icon name="add-circle-outline"></ion-icon>Nueva cuenta</button>
       </div>
-      <p class="ayuda" style="margin: 0">Aquí llevas lo que le entregas a tu precio de compra a alguien de confianza y lo que te va pasando. No cuenta como venta: no suma en Ventas del local, caja ni reportes. Sí descuenta inventario y cuenta como vendido en Deudas.</p>
+      <p class="ayuda" style="margin: 0">Aquí llevas lo que le entregas a alguien de confianza (a tu costo o con un aumento) y lo que te va pasando. No suma en Ventas del local ni caja. Sí descuenta inventario y cuenta como vendido en Deudas. Si le vendes por encima de tu costo, esa diferencia es ganancia tuya y suma en la utilidad del Inicio.</p>
 
       <div class="lista">
         @for (c of cuentas(); track c.id) {
           <article class="cuenta">
             <div class="cab">
-              <div><h3>{{ c.nombre }}</h3><small>{{ c.telefono || 'Sin celular' }}</small></div>
+              <div><h3>{{ c.nombre }}@if (+c.aumento) { <span class="chip-aum">+{{ +c.aumento }}%</span> }</h3><small>{{ c.telefono || 'Sin celular' }}</small></div>
               <button class="link" (click)="abrirCuenta(c)">Editar</button>
             </div>
             <div class="saldo" [class.cero]="+c.saldo <= 0">
               <span>{{ +c.saldo > 0 ? 'Te debe' : 'Está al día' }}</span>
               <strong>{{ pesos(c.saldo) }}</strong>
               <small>Le has entregado {{ pesos(c.entregado) }} · te ha pasado {{ pesos(c.abonado) }}</small>
+              @if (+c.ganancia) { <small class="gan">Tu ganancia con esta cuenta: {{ pesos(c.ganancia) }}</small> }
             </div>
             <div class="acciones">
               <button class="b" (click)="abrirEntrega(c)">Entregar mercancía</button>
@@ -119,7 +129,8 @@ const normal = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLower
                     @if (m.tipo === 'entrega') {
                       <li class="mov">
                         <div class="mov-top"><span>{{ fecha(m.fecha) }} · <b>Le entregaste</b></span><strong>+ {{ pesos(m.e.total) }}</strong></div>
-                        <ul>@for (i of m.e.items; track $index) { <li>{{ i.cantidad }} × {{ i.nombre }} · {{ pesos(i.costo) }} c/u</li> }</ul>
+                        <ul>@for (i of m.e.items; track $index) { <li>{{ i.cantidad }} × {{ i.nombre }} · {{ pesos(i.costo) }} c/u@if (+i.costo !== +i.costo_real) { <small> (tu costo {{ pesos(i.costo_real) }})</small> }</li> }</ul>
+                        @if (+m.e.ganancia) { <small class="gan">Ganancia: {{ pesos(m.e.ganancia) }}</small> }
                         @if (m.e.nota) { <small>{{ m.e.nota }}</small> }
                         <div class="pie-mov"><button class="link" (click)="abrirEntrega(c, m.e)">Editar</button>
                           <button class="link peligro" (click)="eliminarEntrega(m.e)">Eliminar entrega</button></div>
@@ -157,6 +168,9 @@ const normal = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLower
         <div class="hoja-body">
           <div class="campo"><label for="cta-n">Nombre</label><input id="cta-n" maxlength="80" [(ngModel)]="cNombre" placeholder="Ej: Mi hermano Carlos" /></div>
           <div class="campo"><label for="cta-t">Celular (opcional)</label><input id="cta-t" inputmode="tel" maxlength="20" [(ngModel)]="cTelefono" placeholder="Para mandarle el estado de cuenta" /></div>
+          <div class="campo"><label for="cta-a">Aumento sobre tu costo (%)</label>
+            <input id="cta-a" class="num" type="number" inputmode="decimal" min="0" max="300" step="1" [(ngModel)]="cAumento" placeholder="0" />
+            <small class="suave">0 = se la entregas a tu costo. Si pones 20, un producto que te costó $10.000 le sale en $12.000 y los $2.000 son tu ganancia. Igual lo puedes cambiar en cada entrega.</small></div>
           @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
         </div>
         <div class="hoja-pie">
@@ -172,7 +186,7 @@ const normal = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLower
         <div class="hoja-head"><h2 id="t-ent">{{ entregaEdit() ? 'Editar entrega' : 'Entregar mercancía a ' + c.nombre }}</h2>
           <button class="b b-icono" aria-label="Cerrar" (click)="entregaDe.set(null)"><ion-icon name="close-outline"></ion-icon></button></div>
         <div class="hoja-body">
-          <p class="ayuda" style="margin: 0">Cada producto queda a tu precio de compra. Si el precio de compra está desactualizado, cámbialo aquí.</p>
+          <p class="ayuda" style="margin: 0">@if (+c.aumento) { "Tu costo" es lo que te costó a ti y "Le cobras" es lo que te va a pagar (tu costo + {{ +c.aumento }}%). La diferencia es tu ganancia. } @else { Cada producto queda a tu precio de compra. Si quieres cobrarle más, cambia "Le cobras": la diferencia es tu ganancia. }</p>
           <div class="campo f-buscar">
             <label for="ent-b">Agregar producto</label>
             <input id="ent-b" [ngModel]="busca()" (ngModelChange)="busca.set($event)" placeholder="Escribe el nombre o el SKU" autocomplete="off" />
@@ -186,16 +200,18 @@ const normal = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLower
           </div>
           @if (lineas().length) {
             <div class="f-lineas">
+              <div class="f-linea dos f-cab" aria-hidden="true"><span>Producto</span><span>Cant.</span><span>Tu costo</span><span>Le cobras</span><span></span></div>
               @for (l of lineas(); track l.id; let i = $index) {
-                <div class="f-linea">
+                <div class="f-linea dos">
                   <span class="nom">{{ l.nombre }}</span>
                   <input class="num" type="number" inputmode="numeric" min="1" [(ngModel)]="l.cantidad" (ngModelChange)="tocar()" aria-label="Cantidad" />
-                  <input pesos class="num" [(ngModel)]="l.costo" (ngModelChange)="tocar()" aria-label="Costo por unidad" placeholder="Costo c/u" />
+                  <input pesos class="num" [(ngModel)]="l.real" (ngModelChange)="cambioReal(l)" aria-label="Tu costo por unidad" placeholder="Tu costo" />
+                  <input pesos class="num" [(ngModel)]="l.costo" (ngModelChange)="l.manual = true; tocar()" aria-label="Le cobras por unidad" placeholder="Le cobras" />
                   <button type="button" class="quitar" (click)="quitar(i)" aria-label="Quitar">✕</button>
                 </div>
               }
             </div>
-            <div class="f-total"><span>{{ unidades() }} unidades</span><strong>{{ pesos(totalEntrega()) }}</strong></div>
+            <div class="f-total"><span>{{ unidades() }} unidades@if (gananciaEntrega()) { <br /><span class="gan">Tu ganancia: {{ pesos(gananciaEntrega()) }}</span> }</span><strong>{{ pesos(totalEntrega()) }}</strong></div>
           } @else { <p class="vacio-txt" style="padding: 6px 0">Todavía no has agregado productos.</p> }
           <div class="fila-campos">
             <div class="campo"><label for="ent-f">Fecha</label><input id="ent-f" type="date" [max]="hoy" [(ngModel)]="fechaMov" /></div>
@@ -263,6 +279,7 @@ export class CuentasPage implements OnInit {
   editCuenta = signal<{ id: number | null } | null>(null);
   cNombre = '';
   cTelefono = '';
+  cAumento: number | null = null;
   // Entrega
   entregaDe = signal<Cuenta | null>(null);
   private prods = signal<Prod[]>([]);
@@ -278,6 +295,10 @@ export class CuentasPage implements OnInit {
   totalEntrega = computed(() => {
     this.version();
     return this.lineas().reduce((s, l) => s + (Number(l.cantidad) || 0) * (Number(l.costo) || 0), 0);
+  });
+  gananciaEntrega = computed(() => {
+    this.version();
+    return this.lineas().reduce((s, l) => s + (Number(l.cantidad) || 0) * ((Number(l.costo) || 0) - (Number(l.real) || 0)), 0);
   });
   unidades = computed(() => {
     this.version();
@@ -327,13 +348,14 @@ export class CuentasPage implements OnInit {
     this.error.set('');
     this.cNombre = c?.nombre ?? '';
     this.cTelefono = c?.telefono ?? '';
+    this.cAumento = c && +c.aumento ? Number(c.aumento) : null;
     this.editCuenta.set({ id: c?.id ?? null });
   }
 
   async guardarCuenta(): Promise<void> {
     if (this.cNombre.trim().length < 2) return this.error.set('Escribe el nombre.');
     this.ocupado.set(true);
-    const { error } = await this.sb.client.rpc('guardar_cuenta', { p_cuenta: this.editCuenta()?.id ?? null, p_nombre: this.cNombre.trim(), p_telefono: this.cTelefono.trim() });
+    const { error } = await this.sb.client.rpc('guardar_cuenta', { p_cuenta: this.editCuenta()?.id ?? null, p_nombre: this.cNombre.trim(), p_telefono: this.cTelefono.trim(), p_aumento: Number(this.cAumento) || 0 });
     this.ocupado.set(false);
     if (error) return this.error.set(mensajeError(error));
     this.editCuenta.set(null);
@@ -345,7 +367,7 @@ export class CuentasPage implements OnInit {
     this.error.set('');
     this.busca.set('');
     this.entregaEdit.set(e);
-    this.lineas.set(e ? e.items.map((i) => ({ id: i.producto_id, nombre: i.nombre, cantidad: i.cantidad, costo: Number(i.costo) })) : []);
+    this.lineas.set(e ? e.items.map((i) => ({ id: i.producto_id, nombre: i.nombre, cantidad: i.cantidad, real: Number(i.costo_real), costo: Number(i.costo), manual: true })) : []);
     this.fechaMov = e?.fecha ?? this.hoy;
     this.nota = e?.nota ?? '';
     this.entregaDe.set(c);
@@ -356,9 +378,23 @@ export class CuentasPage implements OnInit {
   }
 
   agregar(p: Prod): void {
-    this.lineas.update((l) => [...l, { id: p.id, nombre: p.nombre, cantidad: 1, costo: p.costo ?? null }]);
+    const real = p.costo ? Number(p.costo) : null;
+    this.lineas.update((l) => [...l, { id: p.id, nombre: p.nombre, cantidad: 1, real, costo: this.conAumento(real), manual: false }]);
     this.busca.set('');
     setTimeout(() => document.getElementById('ent-b')?.focus(), 0);
+  }
+
+  /** Lo que le cobra: tu costo + el aumento de la cuenta (redondeado a $100) */
+  private conAumento(real: number | null): number | null {
+    if (!real) return null;
+    const a = Number(this.entregaDe()?.aumento) || 0;
+    return a ? Math.round((real * (1 + a / 100)) / 100) * 100 : real;
+  }
+
+  /** Si cambia su costo y "Le cobras" no lo ha tocado, se recalcula */
+  cambioReal(l: Linea): void {
+    if (!l.manual) l.costo = this.conAumento(Number(l.real) || null);
+    this.tocar();
   }
 
   quitar(i: number): void {
@@ -374,9 +410,10 @@ export class CuentasPage implements OnInit {
     if (!c) return;
     const ls = this.lineas();
     if (ls.some((l) => !(Number(l.cantidad) > 0))) return this.error.set('Escribe la cantidad de cada producto.');
-    if (ls.some((l) => !(Number(l.costo) > 0))) return this.error.set('Escribe el costo de cada producto.');
+    if (ls.some((l) => !(Number(l.real) > 0))) return this.error.set('Escribe tu costo de cada producto.');
+    if (ls.some((l) => !(Number(l.costo) > 0))) return this.error.set('Escribe cuánto le cobras por cada producto.');
     this.ocupado.set(true);
-    const items = ls.map((l) => ({ producto_id: l.id, cantidad: Math.round(Number(l.cantidad)), costo: Number(l.costo) }));
+    const items = ls.map((l) => ({ producto_id: l.id, cantidad: Math.round(Number(l.cantidad)), costo: Number(l.costo), costo_real: Number(l.real) }));
     const ed = this.entregaEdit();
     const { error } = ed
       ? await this.sb.client.rpc('editar_entrega_costo', { p_entrega: ed.id, p_items: items, p_fecha: this.fechaMov || this.hoy, p_nota: this.nota.trim() })

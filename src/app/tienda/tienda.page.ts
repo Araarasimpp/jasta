@@ -28,7 +28,7 @@ interface Tienda {
   productos: ProductoTienda[];
 }
 interface Linea { producto_id: number; nombre: string; precio: number; imagen_url: string | null; cantidad: number; color: string | null; talla: string | null; max: number }
-interface Hecho { id: number; total: number; domicilioPendiente: boolean }
+interface Hecho { id: number; total: number; domicilioPendiente: boolean; codigo: string }
 
 function normal(s: string): string {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -182,6 +182,7 @@ function parecido(a: string, b: string): number {
           <h2>¡Recibimos tu pedido!</h2>
           <p>{{ t()?.vendedora ? primerNombre(t()!.vendedora!.nombre) : 'La tienda' }} te va a llamar o escribir al {{ telefonoMostrar() }} para confirmarlo. Después de confirmado, te lo enviamos.</p>
           <p><strong>Total: {{ pesos(h.total) }}</strong>{{ h.domicilioPendiente ? ' + domicilio (te lo confirman)' : ', domicilio incluido' }}</p>
+          <a class="wa t-ver-pedido" [href]="'/pago/' + h.codigo">Ver mi pedido y su seguimiento →</a>
           @if (whatsapp(); as w) { <a class="wa" [href]="w" target="_blank" rel="noopener">Escribir por WhatsApp</a> }
           <button class="b mas" (click)="hecho.set(null)">Seguir viendo productos</button>
         </section>
@@ -1064,7 +1065,7 @@ export class TiendaPage implements OnInit {
       return;
     }
     this.enviando.set(false);
-    this.hecho.set({ id: r.id, total: Number(r.subtotal) + Number(r.domicilio), domicilioPendiente: r.domicilio_por_confirmar });
+    this.hecho.set({ id: r.id, total: Number(r.subtotal) + Number(r.domicilio), domicilioPendiente: r.domicilio_por_confirmar, codigo: r.codigo });
     this.lineas.set([]);
     this.cupon.set(null);
     this.cerrarPantalla();

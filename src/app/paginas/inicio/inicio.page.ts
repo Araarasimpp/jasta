@@ -171,6 +171,13 @@ function finMes(): string {
             <span class="kpi-valor num">{{ pesos(m.ganancia_tienda) }}</span>
             <span class="kpi-nota">Pedidos entregados</span>
           </div>
+          @if (m.ganancia_cuentas) {
+            <a class="kpi" role="listitem" routerLink="/app/cuentas">
+              <span class="kpi-label">Ganancia cuentas por cobrar</span>
+              <span class="kpi-valor num">{{ pesos(m.ganancia_cuentas) }}</span>
+              <span class="kpi-nota">Lo que cobraste por encima de tu costo</span>
+            </a>
+          }
           <a class="kpi" role="listitem" routerLink="/app/gastos">
             <span class="kpi-label">Gastos</span>
             <span class="kpi-valor num">{{ pesos(m.gastos) }}</span>
@@ -179,7 +186,7 @@ function finMes(): string {
           <a class="kpi kpi-principal" role="listitem" routerLink="/app/gastos">
             <span class="kpi-label">Utilidad real</span>
             <span class="kpi-valor num" [class.neg]="m.utilidad < 0">{{ pesos(m.utilidad) }}</span>
-            <span class="kpi-nota">Ganancia − gastos</span>
+            <span class="kpi-nota">{{ m.ganancia_cuentas ? 'Ganancia + cuentas − gastos' : 'Ganancia − gastos' }}</span>
           </a>
           <a class="kpi" role="listitem" routerLink="/app/comisiones">
             <span class="kpi-label">Comisiones por pagar</span>
@@ -418,7 +425,7 @@ export class InicioPage implements OnInit, OnDestroy {
   }
 
   // -------------------------------------------------------------- Este mes
-  mes = signal<{ ganancia_tienda: number; gastos: number; utilidad: number; comisiones: number; vendedoras: number } | null>(null);
+  mes = signal<{ ganancia_tienda: number; ganancia_cuentas: number; gastos: number; utilidad: number; comisiones: number; vendedoras: number } | null>(null);
 
   private async cargarMes(): Promise<void> {
     const hoy = hoyColombiaISO();
@@ -428,10 +435,10 @@ export class InicioPage implements OnInit, OnDestroy {
     ]);
     // Si algo falla, el resto del Inicio se ve igual
     if (g.error || c.error) return;
-    const res = g.data as { ganancia_tienda: number; gastos: number; utilidad: number };
+    const res = g.data as { ganancia_tienda: number; ganancia_cuentas?: number; gastos: number; utilidad: number };
     const pend = (c.data ?? []) as { total: number }[];
     this.mes.set({
-      ganancia_tienda: Number(res.ganancia_tienda), gastos: Number(res.gastos), utilidad: Number(res.utilidad),
+      ganancia_tienda: Number(res.ganancia_tienda), ganancia_cuentas: Number(res.ganancia_cuentas ?? 0), gastos: Number(res.gastos), utilidad: Number(res.utilidad),
       comisiones: pend.reduce((s, x) => s + Number(x.total), 0), vendedoras: pend.length,
     });
   }

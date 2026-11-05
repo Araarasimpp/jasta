@@ -114,6 +114,7 @@ const MENU: ItemMenu[] = [
   { label: 'Recolector', path: '/app/recolector', icon: 'bag-handle-outline', roles: ['admin', 'recolector', 'cuadres'], grupo: 'Entregas' , buscar: 'base recoger' },
   { label: 'Barrios', path: '/app/barrios', icon: 'location-outline', roles: ['admin'], grupo: 'Entregas' , buscar: 'domicilio tarifa valor' },
   { label: 'Inventario', path: '/app/inventario', icon: 'layers-outline', roles: ['admin', 'alistador'], grupo: 'Bodega' , buscar: 'stock compras comprar bodega' },
+  { label: 'Productos quietos', path: '/app/quietos', icon: 'hourglass-outline', roles: ['admin'], grupo: 'Bodega', buscar: 'sin vender no se venden rotacion estancados quieta' },
   { label: 'Productos', path: '/app/productos', icon: 'pricetags-outline', roles: ['admin'], grupo: 'Bodega' , buscar: 'precios fotos crear' },
   { label: 'Devoluciones', path: '/app/devoluciones', icon: 'return-down-back-outline', roles: ['admin', 'alistador', 'venta_local', 'cuadres'], grupo: 'Bodega' },
   { label: 'Reportes', path: '/app/reportes', icon: 'stats-chart-outline', roles: ['admin', 'vendedora'], grupo: 'Finanzas' },

@@ -17,6 +17,11 @@ interface PagoTienda {
   items: { nombre: string; cantidad: number; precio: number; color: string | null; talla: string | null }[];
   vendedora: string | null;
   vendedora_id: number | null;
+  vendedora_telefono?: string | null;
+  telefonos?: string | null;
+  /** Código del seguimiento cuando el pedido ya está confirmado */
+  seguimiento?: string | null;
+  pedido_id?: number | null;
 }
 
 const METODOS: Record<string, string> = {
@@ -52,6 +57,18 @@ const METODOS: Record<string, string> = {
       .acciones .b { width: 100%; height: 46px; font-size: 15px; }
       .error { margin: 0; color: var(--danger); font-size: 14px; }
       .seguro { font-size: 12.5px; color: var(--text-muted); }
+      .sigue { text-align: left; gap: 12px; }
+      .sigue h2 { margin: 0; font-size: 17px; }
+      .pasos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+      .pasos li { display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: start; font-size: 14px; line-height: 1.4; color: var(--text-soft); }
+      .pasos b { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: var(--surface-2); color: var(--text-muted); font-size: 13px; }
+      .pasos li.hecho b { background: var(--ok-wash); color: var(--efectivo-texto); }
+      .pasos li.hecho { color: var(--text); }
+      .ir { display: flex; align-items: center; justify-content: center; height: 50px; border-radius: var(--radius); background: var(--accent); color: #fff; font-size: 15.5px; font-weight: 700; text-decoration: none; }
+      .botones { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .botones .b { height: 44px; font-size: 14px; }
+      .wa { display: flex; align-items: center; justify-content: center; height: 44px; border-radius: var(--radius); background: #25d366; color: #fff; font-size: 14px; font-weight: 650; text-decoration: none; }
+      .botones .wa:only-child, .botones .b:only-child { grid-column: 1 / -1; }
     `,
   ],
   template: `
@@ -96,6 +113,26 @@ const METODOS: Record<string, string> = {
           }
         </div>
 
+        @if (w.pago_estado === 'aprobado' || (w.pago === 'contra_entrega' && w.estado !== 'cancelado')) {
+          <section class="tarjeta sigue" aria-labelledby="t-sigue">
+            <h2 id="t-sigue">Sigue tu pedido</h2>
+            <ol class="pasos">
+              <li class="hecho"><b>✓</b><span>{{ w.pago_estado === 'aprobado' ? 'Pago recibido' : 'Pedido recibido' }}</span></li>
+              <li [class.hecho]="!!w.seguimiento"><b>{{ w.seguimiento ? '✓' : '2' }}</b><span>{{ w.seguimiento ? 'Pedido confirmado' : 'Te contactamos para confirmar tu pedido' }}</span></li>
+              <li><b>3</b><span>Te lo enviamos y aquí ves cuándo sale y cuándo llega</span></li>
+            </ol>
+            @if (w.seguimiento) {
+              <a class="ir" [href]="'/seguimiento/' + w.seguimiento">Ver el seguimiento de mi pedido →</a>
+            } @else {
+              <p class="seguro" style="margin: 0">Guarda este enlace: cuando confirmemos tu pedido, aquí mismo te sale el seguimiento paso a paso.</p>
+            }
+            <div class="botones">
+              <button class="b" type="button" (click)="compartir(w)">{{ copiado() ? '¡Enlace copiado!' : 'Guardar enlace' }}</button>
+              @if (whatsapp(w); as wa) { <a class="wa" [href]="wa" target="_blank" rel="noopener">WhatsApp</a> }
+            </div>
+          </section>
+        }
+
         <div class="tarjeta">
           <ul class="items">
             @for (i of w.items; track $index) { <li><span>{{ i.cantidad }} × {{ i.nombre }}{{ i.color ? ' · ' + i.color : '' }}{{ i.talla ? ' · ' + i.talla : '' }}</span><span>{{ pesos(i.precio * i.cantidad) }}</span></li> }
@@ -139,6 +176,7 @@ export class PagoPage implements OnInit, OnDestroy {
     this.tx = this.ruta.snapshot.queryParamMap.get('id') ?? '';
     await this.cargar();
     this.cargando.set(false);
+    this.vigilar();
     if (this.tx && this.p()?.pago_estado !== 'aprobado') {
       this.verificando.set(true);
       void this.verificar();
@@ -147,6 +185,38 @@ export class PagoPage implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     clearTimeout(this.timer);
+    clearInterval(this.revisar);
+  }
+
+  /** Mientras esperan la confirmación, revisa cada 30 s para mostrar el seguimiento apenas exista */
+  private revisar?: ReturnType<typeof setInterval>;
+  private vigilar(): void {
+    clearInterval(this.revisar);
+    this.revisar = setInterval(() => {
+      const w = this.p();
+      if (!w || w.seguimiento || w.estado === 'cancelado') return clearInterval(this.revisar);
+      if (document.visibilityState === 'visible') void this.cargar();
+    }, 30000);
+  }
+
+  copiado = signal(false);
+  /** El enlace de esta página (o el del seguimiento, si ya está) para guardarlo o compartirlo */
+  async compartir(w: PagoTienda): Promise<void> {
+    const url = w.seguimiento ? `${location.origin}/seguimiento/${w.seguimiento}` : location.origin + location.pathname;
+    try {
+      if (navigator.share) return void (await navigator.share({ title: 'Mi pedido', text: 'Seguimiento de mi pedido', url }));
+      await navigator.clipboard.writeText(url);
+      this.copiado.set(true);
+      setTimeout(() => this.copiado.set(false), 2000);
+    } catch { /* lo cerró */ }
+  }
+
+  whatsapp(w: PagoTienda): string | null {
+    const tel = (w.vendedora_telefono ?? w.telefonos?.split(/[-,/]/)[0] ?? '').replace(/\D/g, '');
+    if (tel.length < 7) return null;
+    const num = tel.length === 10 ? '57' + tel : tel;
+    const enlace = w.seguimiento ? `${location.origin}/seguimiento/${w.seguimiento}` : location.origin + location.pathname;
+    return `https://wa.me/${num}?text=${encodeURIComponent(`Hola, hice un pedido en el catálogo a nombre de ${w.cliente}. ${enlace}`)}`;
   }
 
   private async cargar(): Promise<void> {
