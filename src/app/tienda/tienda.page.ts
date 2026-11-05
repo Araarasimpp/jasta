@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild, computed, effect, inject, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, ViewChild, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { SupabaseService } from '../core/services/supabase.service';
@@ -13,7 +13,13 @@ interface ProductoTienda {
   agotado: boolean; disponibles: number | null; categoria?: string | null;
   /** Puesto entre los 10 más vendidos de los últimos 30 días */
   top?: number | null;
+  /** Promedio de estrellas y cuántas reseñas tiene */
+  rating?: number | null; resenas?: number;
+  /** Agregado en los últimos 15 días */
+  nuevo?: boolean;
 }
+interface Resena { estrellas: number; comentario: string | null; cliente: string | null; fecha: string }
+interface UltimoPedido { items: { producto_id: number; cantidad: number; color: string | null; talla: string | null }[]; fecha: string }
 interface Cupon { codigo: string; tipo: 'porcentaje' | 'valor'; valor: number; minimo: number; descripcion: string | null }
 interface Tienda {
   negocio: string | null; telefonos: string | null;
@@ -164,7 +170,7 @@ function parecido(a: string, b: string): number {
           <h1>{{ t()?.negocio || 'Jasta' }}</h1>
           <small>{{ t()?.vendedora ? 'Catálogo de ' + primerNombre(t()!.vendedora!.nombre) : 'Catálogo' }} · Pide aquí y te lo llevamos</small>
         </div>
-        <button type="button" class="t-icono-carrito" (click)="lineas().length && verCarrito.set(true)" [attr.aria-label]="'Mi pedido: ' + unidades() + ' productos'">
+        <button type="button" class="t-icono-carrito" (click)="lineas().length && abrirCarrito()" [attr.aria-label]="'Mi pedido: ' + unidades() + ' productos'">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7h12l-1 13H7L6 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
           @if (unidades()) { <span class="t-badge">{{ unidades() }}</span> }
         </button>
@@ -192,6 +198,15 @@ function parecido(a: string, b: string): number {
             @if (urlMini(heroImg()); as u) { <img [src]="u" alt="" /> }
           </section>
         }
+        @if (ultimo(); as u) {
+          @if (!q().trim() && !categoria() && !soloFavs() && !lineas().length) {
+            <button type="button" class="t-repetir" (click)="repetir(u)">
+              <span class="t-repetir-ico" aria-hidden="true">🔁</span>
+              <span><strong>Repetir mi último pedido</strong><small>{{ resumenUltimo(u) }}</small></span>
+              <span class="t-flecha" aria-hidden="true">›</span>
+            </button>
+          }
+        }
         <div class="filtros">
           <input type="search" [ngModel]="q()" (ngModelChange)="q.set($event); limite.set(40)" placeholder="Buscar producto" aria-label="Buscar producto" />
           <button type="button" class="solo" [class.on]="soloDisp()" [attr.aria-pressed]="soloDisp()" (click)="soloDisp.set(!soloDisp())">Disponibles</button>
@@ -199,10 +214,10 @@ function parecido(a: string, b: string): number {
             <button type="button" class="solo" [class.on]="soloFavs()" [attr.aria-pressed]="soloFavs()" (click)="soloFavs.set(!soloFavs())">♥ Favoritos</button>
           }
           @if (categorias().length > 1) {
-            <div class="cats" role="group" aria-label="Categorías">
-              <button type="button" [class.on]="!categoria()" [attr.aria-pressed]="!categoria()" (click)="elegirCategoria(null)">Todo</button>
+            <div class="cats t-cats" role="group" aria-label="Categorías">
+              <button type="button" [class.on]="!categoria()" [attr.aria-pressed]="!categoria()" (click)="elegirCategoria(null)"><span class="t-cat-ico" aria-hidden="true">🛍️</span><span class="t-cat-nom">Todo</span></button>
               @for (c of categorias(); track c.nombre) {
-                <button type="button" [class.on]="categoria() === c.nombre" [attr.aria-pressed]="categoria() === c.nombre" (click)="elegirCategoria(c.nombre)">{{ c.nombre }}<small>{{ c.n }}</small></button>
+                <button type="button" [class.on]="categoria() === c.nombre" [attr.aria-pressed]="categoria() === c.nombre" (click)="elegirCategoria(c.nombre)"><span class="t-cat-ico" aria-hidden="true">{{ icono(c.nombre) }}</span><span class="t-cat-nom">{{ c.nombre }}</span></button>
               }
             </div>
           }
@@ -227,14 +242,15 @@ function parecido(a: string, b: string): number {
             <article class="prod" [class.agot]="p.agotado">
               <button type="button" class="foto" (click)="abrir(p)" [attr.aria-label]="'Ver ' + p.nombre">
                 @if (urlMini(p.imagen_url); as u) { <img [src]="u" alt="" loading="lazy" decoding="async" /> } @else { <span class="ini">{{ p.nombre.charAt(0) }}</span> }
-                @if (p.agotado) { <span class="etq-agot">Agotado</span> } @else if (p.top && p.top <= 3) { <span class="t-best">Más vendido</span> }
+                @if (p.agotado) { <span class="etq-agot">Agotado</span> } @else if (p.top && p.top <= 3) { <span class="t-best">Más vendido</span> } @else if (p.nuevo) { <span class="t-best t-nuevo">Nuevo</span> }
               </button>
               <button type="button" class="t-fav" [class.on]="favs().has(p.id)" (click)="alternarFav(p)" [attr.aria-label]="(favs().has(p.id) ? 'Quitar de' : 'Agregar a') + ' favoritos'" [attr.aria-pressed]="favs().has(p.id)">{{ favs().has(p.id) ? '♥' : '♡' }}</button>
               <div class="info">
                 <h2 (click)="abrir(p)">{{ p.nombre }}</h2>
+                @if (p.resenas) { <span class="t-rating" [attr.aria-label]="p.rating + ' de 5 estrellas, ' + p.resenas + ' reseñas'"><b>★</b> {{ p.rating }} <small>({{ p.resenas }})</small></span> }
                 <div class="t-precio-fila">
                   <span class="precio">{{ pesos(p.precio) }}</span>
-                  <button class="agregar" [class.en]="enCarrito(p)" [disabled]="p.agotado" (click)="rapido(p)" [attr.aria-label]="p.agotado ? 'Agotado' : 'Agregar ' + p.nombre">{{ p.agotado ? '×' : enCarrito(p) ? '✓' : '+' }}</button>
+                  @if (enCarrito(p)) { <span class="t-en-pedido" aria-label="Ya está en tu pedido">✓</span> }
                 </div>
               </div>
             </article>
@@ -253,88 +269,130 @@ function parecido(a: string, b: string): number {
     </div>
     </div>
 
+    @if (avisoAgregado()) { <p class="t-toast" role="status">{{ avisoAgregado() }}</p> }
     @if (lineas().length && !verCarrito() && !sel() && !hecho()) {
-      <button class="carrito" (click)="verCarrito.set(true)">
+      <button class="carrito" (click)="abrirCarrito()">
         <span>🛍️ Ver mi pedido · {{ unidades() }} {{ unidades() === 1 ? 'producto' : 'productos' }}</span><strong>{{ pesos(subtotal()) }} →</strong>
       </button>
     }
 
     @if (sel(); as p) {
-      <button class="velo" aria-label="Cerrar" (click)="sel.set(null)"></button>
-      <div class="hoja hoja-centro" role="dialog" aria-labelledby="t-prod">
-        <div class="hoja-head"><h2 id="t-prod">{{ p.nombre }}</h2></div>
-        <div class="hoja-body">
-          <div class="t-galeria-caja">
-            <div class="galeria">
-              @for (f of fotos(); track f) { <img [src]="f" alt="" loading="lazy" /> }
-            </div>
-            @if (p.top && p.top <= 10) { <span class="t-best grande">Más vendido</span> }
-            <button type="button" class="t-fav grande" [class.on]="favs().has(p.id)" (click)="alternarFav(p)" [attr.aria-label]="(favs().has(p.id) ? 'Quitar de' : 'Agregar a') + ' favoritos'">{{ favs().has(p.id) ? '♥' : '♡' }}</button>
-          </div>
-          @if (p.categoria) { <span class="t-cat">{{ p.categoria }}</span> }
-          <div class="precio-fila">
-            <span class="precio">{{ pesos(p.precio) }}</span>
-            <button type="button" class="compartir-p" (click)="compartirProducto(p)">{{ avisoCopiado() ? '¡Enlace copiado!' : 'Compartir' }}</button>
-          </div>
-          @if (descripcion()) { <p class="desc">{{ descripcion() }}</p> }
-          @if (p.colores.length) {
-            <div class="campo"><span class="etq">Color</span>
-              <div class="opciones">
-                @for (c of p.colores; track c.nombre) {
-                  <button type="button" class="op" [class.on]="color() === c.nombre" (click)="color.set(c.nombre)">
-                    @if (c.hex) { <i [style.--tono]="c.hex"></i> }{{ c.nombre }}</button>
-                }
-              </div>
-            </div>
-          }
-          @if (p.tallas.length) {
-            <div class="campo"><span class="etq">Talla</span>
-              <div class="opciones">
-                @for (tl of p.tallas; track tl) { <button type="button" class="op" [class.on]="talla() === tl" (click)="talla.set(tl)">{{ tl }}</button> }
-              </div>
-            </div>
-          }
-          @if (!p.agotado) {
-            <div class="campo"><span class="etq">Cantidad</span>
-              <span class="paso">
-                <button type="button" (click)="cant.set(cant() - 1)" [disabled]="cant() <= 1" aria-label="Menos">−</button>
-                <span>{{ cant() }}</span>
-                <button type="button" (click)="cant.set(cant() + 1)" [disabled]="cant() >= maximo(p)" aria-label="Más">+</button>
-              </span>
-            </div>
-          }
-          @if (errorSel()) { <p class="error" role="alert">{{ errorSel() }}</p> }
-          @if (relacionados().length) {
-            <section class="tienda-relac" aria-labelledby="t-rel">
-              <h3 id="t-rel">Te puede gustar</h3>
-              <div class="tienda-carrusel">
-                @for (r of relacionados(); track r.id) {
-                  <button type="button" class="tienda-mini" (click)="abrir(r)">
-                    @if (urlMini(r.imagen_url); as u) { <img [src]="u" alt="" loading="lazy" /> } @else { <span class="ini">{{ r.nombre.charAt(0) }}</span> }
-                    <span class="nom">{{ r.nombre }}</span><strong>{{ pesos(r.precio) }}</strong>
-                  </button>
-                }
-              </div>
-            </section>
-          }
+      <div class="t-pantalla" role="dialog" aria-modal="true" [attr.aria-label]="p.nombre">
+        <div class="t-barra">
+          <button type="button" class="t-circ" (click)="cerrarPantalla()" aria-label="Volver">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+          </button>
+          <span class="t-barra-tit">Detalle</span>
+          <span class="t-barra-der">
+            <button type="button" class="t-circ" [class.fav-on]="favs().has(p.id)" (click)="alternarFav(p)" [attr.aria-label]="(favs().has(p.id) ? 'Quitar de' : 'Agregar a') + ' favoritos'" [attr.aria-pressed]="favs().has(p.id)">{{ favs().has(p.id) ? '♥' : '♡' }}</button>
+            <button type="button" class="t-circ" (click)="compartirProducto(p)" aria-label="Compartir">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>
+            </button>
+          </span>
         </div>
-        <div class="hoja-pie">
+        <div class="t-pantalla-body" #detalle>
+          <div class="t-foto-grande">
+            <div class="t-fotos" #fotosCaja (scroll)="alDeslizar(fotosCaja)">
+              @for (f of fotos(); track f) { <img [src]="f" alt="" /> } @empty { <span class="ini">{{ p.nombre.charAt(0) }}</span> }
+            </div>
+            @if (p.agotado) { <span class="etq-agot">Agotado</span> } @else if (p.top && p.top <= 10) { <span class="t-best">Más vendido</span> } @else if (p.nuevo) { <span class="t-best t-nuevo">Nuevo</span> }
+            @if (fotos().length > 1) { <span class="t-contador">{{ fotoI() + 1 }}/{{ fotos().length }}</span> }
+          </div>
+          @if (fotos().length > 1) {
+            <div class="t-miniaturas">
+              @for (f of fotos(); track f; let k = $index) {
+                <button type="button" [class.on]="fotoI() === k" (click)="verFoto(fotosCaja, k)" [attr.aria-label]="'Foto ' + (k + 1)"><img [src]="f" alt="" loading="lazy" /></button>
+              }
+            </div>
+          }
+          <div class="t-det">
+            <div class="t-det-cab">
+              <span class="t-cat">{{ p.categoria || 'Producto' }}</span>
+              @if (p.resenas) { <span class="t-rating"><b>★</b> {{ p.rating }} <small>({{ p.resenas }} {{ p.resenas === 1 ? 'reseña' : 'reseñas' }})</small></span> }
+            </div>
+            <h1 class="t-det-nom">{{ p.nombre }}</h1>
+            <span class="precio">{{ pesos(p.precio) }}</span>
+            @if (avisoCopiado()) { <p class="t-copiado" role="status">¡Enlace copiado!</p> }
+            @if (descripcion()) {
+              <div class="t-bloque"><h3>Descripción</h3><p class="desc">{{ descripcion() }}</p></div>
+            }
+            @if (p.colores.length) {
+              <div class="t-bloque"><h3>Color{{ color() ? ': ' + color() : '' }}</h3>
+                <div class="opciones">
+                  @for (c of p.colores; track c.nombre) {
+                    <button type="button" class="op" [class.on]="color() === c.nombre" (click)="elegirColor(c.nombre, fotosCaja)">
+                      @if (c.hex) { <i [style.--tono]="c.hex"></i> }{{ c.nombre }}</button>
+                  }
+                </div>
+              </div>
+            }
+            @if (p.tallas.length) {
+              <div class="t-bloque"><h3>Talla</h3>
+                <div class="opciones">
+                  @for (tl of p.tallas; track tl) { <button type="button" class="op" [class.on]="talla() === tl" (click)="talla.set(tl)">{{ tl }}</button> }
+                </div>
+              </div>
+            }
+            @if (!p.agotado) {
+              <div class="t-bloque t-cant"><h3>Cantidad</h3>
+                <span class="paso">
+                  <button type="button" (click)="cant.set(cant() - 1)" [disabled]="cant() <= 1" aria-label="Menos">−</button>
+                  <span>{{ cant() }}</span>
+                  <button type="button" (click)="cant.set(cant() + 1)" [disabled]="cant() >= maximo(p)" aria-label="Más">+</button>
+                </span>
+              </div>
+            }
+            @if (errorSel()) { <p class="error" role="alert">{{ errorSel() }}</p> }
+            @if (resenas().length) {
+              <div class="t-bloque"><h3>Reseñas</h3>
+                <ul class="t-resenas">
+                  @for (r of resenas().slice(0, verTodasResenas() ? 20 : 3); track $index) {
+                    <li>
+                      <div><span class="t-estr" [attr.aria-label]="r.estrellas + ' de 5 estrellas'">{{ '★★★★★'.slice(0, r.estrellas) }}<em>{{ '★★★★★'.slice(r.estrellas) }}</em></span>
+                        <small>{{ r.cliente || 'Cliente' }} · {{ fechaCorta(r.fecha) }}</small></div>
+                      @if (r.comentario) { <p>{{ r.comentario }}</p> }
+                    </li>
+                  }
+                </ul>
+                @if (resenas().length > 3 && !verTodasResenas()) { <button type="button" class="t-link" (click)="verTodasResenas.set(true)">Ver las {{ resenas().length }} reseñas</button> }
+              </div>
+            }
+            @if (relacionados().length) {
+              <section class="tienda-relac" aria-labelledby="t-rel">
+                <h3 id="t-rel">Te puede gustar</h3>
+                <div class="tienda-carrusel">
+                  @for (r of relacionados(); track r.id) {
+                    <button type="button" class="tienda-mini" (click)="abrir(r)">
+                      @if (urlMini(r.imagen_url); as u) { <img [src]="u" alt="" loading="lazy" /> } @else { <span class="ini">{{ r.nombre.charAt(0) }}</span> }
+                      <span class="nom">{{ r.nombre }}</span><strong>{{ pesos(r.precio) }}</strong>
+                    </button>
+                  }
+                </div>
+              </section>
+            }
+          </div>
+        </div>
+        <div class="t-pantalla-pie">
           @if (p.agotado) {
-            <button class="b" (click)="sel.set(null)">Cerrar</button>
             <button class="b b-pri" disabled>Agotado</button>
           } @else {
-            <button class="b t-btn-sec" (click)="agregarSel(p)">🛍️ Agregar</button>
-            <button class="b b-pri" (click)="comprarYa(p)">Pedir ya · {{ pesos(p.precio * cant()) }}</button>
+            <button class="b t-btn-sec" (click)="agregarSel(p)">Agregar al carrito</button>
+            <button class="b b-pri" (click)="comprarYa(p)">Comprar ahora</button>
           }
         </div>
       </div>
     }
 
     @if (verCarrito()) {
-      <button class="velo" aria-label="Cerrar" (click)="verCarrito.set(false)"></button>
-      <div class="hoja hoja-centro" role="dialog" aria-labelledby="t-car">
-        <div class="hoja-head"><h2 id="t-car">Tu pedido</h2></div>
-        <div class="hoja-body">
+      <div class="t-pantalla" role="dialog" aria-modal="true" aria-labelledby="t-car">
+        <div class="t-barra">
+          <button type="button" class="t-circ" (click)="cerrarPantalla()" aria-label="Volver">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+          </button>
+          <span class="t-barra-tit" id="t-car">Mi pedido</span>
+          <span class="t-barra-der"><span class="t-circ t-circ-num" aria-hidden="true">{{ unidades() }}</span></span>
+        </div>
+        <div class="t-pantalla-body t-carro-body">
           <ul class="lineas">
             @for (l of lineas(); track $index) {
               <li>
@@ -443,8 +501,7 @@ function parecido(a: string, b: string): number {
           }
           @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
         </div>
-        <div class="hoja-pie">
-          <button class="b" (click)="verCarrito.set(false)">Seguir comprando</button>
+        <div class="t-pantalla-pie">
           <button class="b b-pri" (click)="enviar()" [disabled]="enviando() || !lineas().length">{{ enviando() ? (enLinea() ? 'Abriendo el pago…' : 'Enviando…') : enLinea() ? 'Ir a pagar ' + pesos(subtotal() - descuento() + (domicilio() ?? 0) + recargo()) + ' →' : 'Hacer pedido →' }}</button>
         </div>
       </div>
@@ -707,6 +764,7 @@ export class TiendaPage implements OnInit {
       this.vendedoraId = id;
     }
     this.clave = 'tienda-carrito-' + (this.vendedoraId ?? 'general');
+    this.leerGuardados();
     try {
       const guardado = JSON.parse(localStorage.getItem(this.clave) ?? '[]') as Linea[];
       if (Array.isArray(guardado)) this.lineas.set(guardado);
@@ -719,6 +777,8 @@ export class TiendaPage implements OnInit {
     const t = data as Tienda;
     this.t.set(t);
     this.evento('visita');
+    // El barrio guardado se vuelve a buscar ya con la lista de domicilios
+    if (this.barrio()) { this.escribirBarrio(this.barrio()); this.enBarrio.set(false); }
     // Lo guardado se ajusta a lo que hay hoy (precio, agotados)
     const porId = new Map(t.productos.map((p) => [p.id, p]));
     this.lineas.update((ls) => ls.filter((l) => porId.has(l.producto_id) && !porId.get(l.producto_id)!.agotado)
@@ -758,9 +818,137 @@ export class TiendaPage implements OnInit {
   }
   avisoCopiado = signal(false);
 
+  /** Pantallas completas (detalle y pedido): el botón atrás del celular las cierra */
+  private enPantalla = false;
+  private abrirPantalla(): void {
+    if (this.enPantalla) return;
+    this.enPantalla = true;
+    try { history.pushState({ tiendaPantalla: true }, ''); } catch { /* sin historial */ }
+  }
+  cerrarPantalla(): void {
+    if (this.enPantalla && history.state?.tiendaPantalla) return history.back();
+    this.enPantalla = false;
+    this.sel.set(null);
+    this.verCarrito.set(false);
+  }
+  @HostListener('window:popstate')
+  alVolver(): void {
+    this.enPantalla = false;
+    this.sel.set(null);
+    this.verCarrito.set(false);
+  }
+  abrirCarrito(): void {
+    this.abrirPantalla();
+    this.sel.set(null);
+    this.verCarrito.set(true);
+  }
+
+  /** Ícono de cada categoría (por palabras, así aguanta nombres parecidos) */
+  icono(c: string): string {
+    const n = normal(c);
+    const mapa: [RegExp, string][] = [
+      [/jug|beb|nin/, '🧸'], [/organiz/, '🗂️'], [/cocin/, '🍳'], [/herram/, '🔧'], [/bellez|cuidad/, '💄'], [/tecno|celul|electr/, '📱'],
+      [/limpi/, '🧽'], [/hogar|casa/, '🏠'], [/carro|moto/, '🏍️'], [/ilumin|solar|luz|lampar/, '💡'], [/deport|camp/, '⛺'], [/bols|malet/, '🎒'],
+      [/mascot/, '🐾'], [/ropa|moda/, '👕'], [/salud/, '💊'], [/oficin|escol/, '✏️'],
+    ];
+    return mapa.find(([r]) => r.test(n))?.[1] ?? '🛍️';
+  }
+
+  /** Foto que se ve en el detalle */
+  fotoI = signal(0);
+  alDeslizar(el: HTMLElement): void {
+    const i = Math.round(el.scrollLeft / Math.max(1, el.clientWidth));
+    if (i !== this.fotoI()) this.fotoI.set(i);
+  }
+  verFoto(el: HTMLElement, i: number): void {
+    this.fotoI.set(i);
+    el.scrollTo({ left: i * el.clientWidth, behavior: 'smooth' });
+  }
+  elegirColor(c: string, el: HTMLElement): void {
+    this.color.set(c);
+    // La foto del color queda de primera
+    this.fotoI.set(0);
+    el.scrollTo({ left: 0 });
+  }
+
+  resenas = signal<Resena[]>([]);
+  verTodasResenas = signal(false);
+  fechaCorta(iso: string): string {
+    return new Date(iso).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'America/Bogota' });
+  }
+
+  avisoAgregado = signal('');
+  private avisar(t: string): void {
+    this.avisoAgregado.set(t);
+    setTimeout(() => this.avisoAgregado() === t && this.avisoAgregado.set(''), 2200);
+  }
+
+  /** Último pedido hecho desde este celular (para repetirlo) */
+  ultimo = signal<UltimoPedido | null>(null);
+  resumenUltimo(u: UltimoPedido): string {
+    const porId = new Map((this.t()?.productos ?? []).map((p) => [p.id, p]));
+    const nombres = u.items.map((i) => porId.get(i.producto_id)?.nombre).filter((x): x is string => !!x);
+    const n = u.items.reduce((s, i) => s + i.cantidad, 0);
+    return `${n} ${n === 1 ? 'producto' : 'productos'}` + (nombres.length ? ' · ' + nombres.slice(0, 2).join(', ') + (nombres.length > 2 ? '…' : '') : '');
+  }
+  repetir(u: UltimoPedido): void {
+    const porId = new Map((this.t()?.productos ?? []).map((p) => [p.id, p]));
+    let faltan = 0;
+    for (const i of u.items) {
+      const p = porId.get(i.producto_id);
+      const colorOk = !i.color || !!p?.colores.some((c) => c.nombre === i.color);
+      const tallaOk = !i.talla || !!p?.tallas.includes(i.talla);
+      if (!p || p.agotado || !colorOk || !tallaOk) { faltan++; continue; }
+      this.agregar(p, i.cantidad, i.color, i.talla);
+    }
+    if (!this.lineas().length) return this.avisar('Esos productos ya no están disponibles 😕');
+    this.abrirCarrito();
+    if (faltan) this.avisar(faltan === 1 ? 'Un producto ya no está disponible' : `${faltan} productos ya no están disponibles`);
+  }
+  private claveUltimo(): string {
+    return 'tienda-ultimo-' + (this.vendedoraId ?? 'general');
+  }
+  /** Guarda el pedido y los datos del cliente en este celular */
+  private guardarUltimo(): void {
+    try {
+      const u: UltimoPedido = { fecha: new Date().toISOString(), items: this.lineas().map((l) => ({ producto_id: l.producto_id, cantidad: l.cantidad, color: l.color, talla: l.talla })) };
+      localStorage.setItem(this.claveUltimo(), JSON.stringify(u));
+      localStorage.setItem('tienda-datos', JSON.stringify({ nombre: this.nombre.trim(), prefijo: this.prefijo, telefono: this.telefono, direccion: this.direccion.trim(), barrio: this.barrioOficial() }));
+      this.ultimo.set(u);
+    } catch { /* sin almacenamiento */ }
+  }
+  private leerGuardados(): void {
+    try {
+      const u = JSON.parse(localStorage.getItem(this.claveUltimo()) ?? 'null') as UltimoPedido | null;
+      if (u && Array.isArray(u.items) && u.items.length) this.ultimo.set(u);
+      const d = JSON.parse(localStorage.getItem('tienda-datos') ?? 'null') as { nombre?: string; prefijo?: string; telefono?: string; direccion?: string; barrio?: string } | null;
+      if (d) {
+        this.nombre = d.nombre ?? '';
+        this.prefijo = d.prefijo || '57';
+        this.telefono = d.telefono ?? '';
+        this.direccion = d.direccion ?? '';
+        if (d.barrio) this.escribirBarrio(d.barrio);
+        this.enBarrio.set(false);
+      }
+    } catch { /* nada guardado */ }
+  }
+
+  @ViewChild('detalle') private detalle?: ElementRef<HTMLElement>;
+
   async abrir(p: ProductoTienda): Promise<void> {
     this.evento('ver', p.id);
+    this.abrirPantalla();
+    this.verCarrito.set(false);
     this.sel.set(p);
+    this.fotoI.set(0);
+    this.resenas.set([]);
+    this.verTodasResenas.set(false);
+    this.detalle?.nativeElement.scrollTo({ top: 0 });
+    if (p.resenas) {
+      void this.sb.client.rpc('tienda_resenas', { p_producto: p.id }).then(({ data }) => {
+        if (this.sel()?.id === p.id && Array.isArray(data)) this.resenas.set(data as Resena[]);
+      });
+    }
     this.color.set(p.colores.length === 1 ? p.colores[0].nombre : null);
     this.talla.set(p.tallas.length === 1 ? p.tallas[0] : null);
     this.cant.set(1);
@@ -774,24 +962,23 @@ export class TiendaPage implements OnInit {
     this.fotosExtra.set(d.imagenes ?? []);
   }
 
-  /** Sin colores ni tallas se agrega directo; si tiene, se abre para elegir */
-  rapido(p: ProductoTienda): void {
-    if (p.agotado) return;
-    if (p.colores.length > 1 || p.tallas.length > 1) return void this.abrir(p);
-    this.agregar(p, 1, p.colores[0]?.nombre ?? null, p.tallas[0] ?? null);
-  }
-
-  agregarSel(p: ProductoTienda): boolean {
+  private elegido(p: ProductoTienda): boolean {
     if (p.colores.length && !this.color()) return this.errorSel.set('Elige el color.'), false;
     if (p.tallas.length && !this.talla()) return this.errorSel.set('Elige la talla.'), false;
     this.agregar(p, this.cant(), this.color(), this.talla());
-    this.sel.set(null);
     return true;
+  }
+
+  /** Agrega y vuelve al catálogo */
+  agregarSel(p: ProductoTienda): void {
+    if (!this.elegido(p)) return;
+    this.cerrarPantalla();
+    this.avisar('✓ Agregado a tu pedido');
   }
 
   /** Agrega y abre de una vez el pedido para terminarlo */
   comprarYa(p: ProductoTienda): void {
-    if (this.agregarSel(p)) this.verCarrito.set(true);
+    if (this.elegido(p)) this.abrirCarrito();
   }
 
   private agregar(p: ProductoTienda, cantidad: number, color: string | null, talla: string | null): void {
@@ -866,6 +1053,7 @@ export class TiendaPage implements OnInit {
       return this.error.set(mensajeError(error));
     }
     const r = data as { id: number; codigo: string; subtotal: number; domicilio: number; domicilio_por_confirmar: boolean; pago: string };
+    this.guardarUltimo();
     if (r.pago === 'en_linea') {
       // El pedido ya quedó guardado: se va a Wompi a pagar (y si algo falla, la página del pago deja reintentar)
       this.lineas.set([]);
@@ -879,7 +1067,7 @@ export class TiendaPage implements OnInit {
     this.hecho.set({ id: r.id, total: Number(r.subtotal) + Number(r.domicilio), domicilioPendiente: r.domicilio_por_confirmar });
     this.lineas.set([]);
     this.cupon.set(null);
-    this.verCarrito.set(false);
+    this.cerrarPantalla();
     this.scroll?.nativeElement.scrollTo({ top: 0 });
   }
 

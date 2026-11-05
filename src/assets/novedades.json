@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026-11-05-tienda-pantalla-completa-resenas",
+    "fecha": "2026-11-05",
+    "hora": "10:25",
+    "titulo": "Catálogo: detalle en pantalla completa, reseñas y repetir pedido",
+    "cuerpo": "El catálogo público ahora funciona como una app de tienda: cada producto se abre en pantalla completa y los clientes pueden calificar lo que compraron.",
+    "roles": [
+      "admin",
+      "vendedora"
+    ],
+    "secciones": [
+      {
+        "titulo": "Qué cambió",
+        "pasos": [
+          "Los productos solo se agregan desde su detalle: se toca el producto, se elige color, talla y cantidad, y luego \"Agregar al carrito\" o \"Comprar ahora\".",
+          "El detalle y \"Mi pedido\" ocupan toda la pantalla, con botón para volver (también sirve el botón atrás del celular).",
+          "Las categorías salen con su ícono redondo.",
+          "Los productos agregados en los últimos 15 días llevan la etiqueta \"Nuevo\"."
+        ]
+      },
+      {
+        "titulo": "Reseñas con estrellas",
+        "pasos": [
+          "Cuando un pedido se entrega, en la página de seguimiento el cliente puede calificar cada producto de 1 a 5 estrellas y dejar un comentario.",
+          "El catálogo muestra el promedio de estrellas y las reseñas en el detalle del producto."
+        ]
+      },
+      {
+        "titulo": "Repetir mi último pedido",
+        "pasos": [
+          "Si el cliente ya pidió desde su celular, le sale \"Repetir mi último pedido\": con un toque agrega lo mismo y sus datos de entrega ya quedan llenos."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-11-05-tienda-nuevo-diseno",
     "fecha": "2026-11-05",
     "hora": "10:12",

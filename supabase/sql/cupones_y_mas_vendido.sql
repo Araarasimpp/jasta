@@ -1,4 +1,4 @@
--- Cupones de descuento en el catálogo y "Lo más vendido" (PENDIENTE DE APLICAR)
+-- Cupones de descuento en el catálogo y "Lo más vendido" (YA APLICADO 2026-11-05)
 -- El descuento del cupón se reparte en los precios de los productos del pedido (así el pedido, las
 -- comisiones y los reportes cuadran sin cambios) y queda guardado qué cupón se usó y cuánto descontó.
 
