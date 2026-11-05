@@ -124,6 +124,10 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/actividad/actividad.page').then((m) => m.ActividadPage),
       },
       {
+        path: 'calendario', canActivate: [rolGuard], data: { roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador', 'venta_local', 'recolector'] },
+        loadComponent: () => import('./paginas/calendario/calendario.page').then((m) => m.CalendarioPage),
+      },
+      {
         path: 'quietos', canActivate: [rolGuard], data: { roles: ['admin'] },
         loadComponent: () => import('./paginas/quietos/quietos.page').then((m) => m.QuietosPage),
       },

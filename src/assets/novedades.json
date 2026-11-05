@@ -1,5 +1,40 @@
 [
   {
+    "id": "2026-11-05-calendario",
+    "fecha": "2026-11-05",
+    "hora": "12:48",
+    "titulo": "Nuevo: Calendario",
+    "cuerpo": "En el menú hay un Calendario nuevo con diseño de vidrio: fechas especiales, festivos, quincenas y tus recordatorios, que te avisan al celular.",
+    "roles": [
+      "admin",
+      "cuadres",
+      "vendedora",
+      "mensajero",
+      "alistador",
+      "venta_local",
+      "recolector"
+    ],
+    "secciones": [
+      {
+        "titulo": "Qué muestra",
+        "pasos": [
+          "Festivos de Colombia (en rojo), quincenas y primas.",
+          "Fechas buenas para vender (Día de la Madre, Amor y Amistad, Black Friday, Navidad…) con un consejo unos días antes.",
+          "Admin: las ventas de cada día (más verde = más ventas), la caja del local, los pagos (deudas que vencen, abonos, comisiones pagadas) y lo pendiente.",
+          "Ventas del local: las ventas y la caja de cada día."
+        ]
+      },
+      {
+        "titulo": "Recordatorios",
+        "pasos": [
+          "Toca un día y luego \"+ Recordatorio\". Puede ser una vez, cada semana, cada mes o cada año.",
+          "Te llega un aviso al celular ese día (a las 7 a. m. o a la hora que pongas).",
+          "Márcalo como hecho con el círculo. El admin puede ponerlos para todo el equipo."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-11-05-caja-base-fija-movimientos",
     "fecha": "2026-11-05",
     "hora": "12:04",

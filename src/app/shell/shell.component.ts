@@ -6,6 +6,7 @@ import { addIcons } from 'ionicons';
 import {
   add,
   barChartOutline,
+  calendarOutline,
   hourglassOutline,
   swapHorizontalOutline,
   searchOutline,
@@ -98,6 +99,7 @@ const MENU: ItemMenu[] = [
   { label: 'Inicio', path: '/app/tablero', icon: 'bar-chart-outline', roles: ['alistador'], sinRoles: ['admin'] },
   { label: 'Mi panel', path: '/app/mi-panel', icon: 'grid-outline', roles: ['vendedora'] },
   { label: 'Pedidos', path: '/app/pedidos', icon: 'receipt-outline', roles: ['admin', 'alistador', 'cuadres'] },
+  { label: 'Calendario', path: '/app/calendario', icon: 'calendar-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador', 'venta_local', 'recolector'], buscar: 'fechas recordatorio agenda festivos quincena dia de la madre' },
   { label: 'Mis entregas', path: '/app/mis-entregas', icon: 'bicycle-outline', roles: ['mensajero'] },
   { label: 'Venta en local', path: '/app/venta-local', icon: 'storefront-outline', roles: ['admin', 'venta_local'], grupo: 'Ventas' , buscar: 'vender caja registrar' },
   { label: 'Ventas del local', path: '/app/ventas-local', icon: 'list-outline', roles: ['admin', 'venta_local'], grupo: 'Ventas' , buscar: 'caja ticket cuadrar' },
@@ -429,7 +431,7 @@ export class ShellComponent implements OnInit, OnDestroy {
   );
 
   constructor() {
-    addIcons({ hourglassOutline, swapHorizontalOutline, searchOutline, 
+    addIcons({ calendarOutline, hourglassOutline, swapHorizontalOutline, searchOutline, 
       sparklesOutline, globeOutline, chatbubblesOutline, analyticsOutline, add, close, chevronDownOutline, layersOutline, pricetagsOutline, returnDownBackOutline, pieChartOutline, alertCircleOutline, cardOutline, trendingDownOutline, barChartOutline, chevronBackOutline, chevronForwardOutline, cubeOutline, ellipsisHorizontal,
       logOutOutline, moonOutline, peopleOutline, receiptOutline, bicycleOutline, clipboardOutline, sunnyOutline, walletOutline, ticketOutline, statsChartOutline, settingsOutline,
       storefrontOutline, listOutline, trophyOutline, bookOutline, gridOutline, cashOutline, bagHandleOutline, peopleCircleOutline, timeOutline, personCircleOutline, notificationsOutline, locationOutline,
