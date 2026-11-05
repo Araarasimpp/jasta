@@ -51,6 +51,17 @@ import { CAPTCHA_ACTIVO, CaptchaComponent } from '../../shared/captcha/captcha.c
           </button>
         </form>
 
+        @if (puedeBiometria) {
+          <div class="bio-sep"><span>o</span></div>
+          <button type="button" class="bio-btn" [disabled]="cargando()" (click)="entrarBiometria()">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+              <path d="M7 3H5a2 2 0 0 0-2 2v2M17 3h2a2 2 0 0 1 2 2v2M7 21H5a2 2 0 0 1-2-2v-2M17 21h2a2 2 0 0 0 2-2v-2M9 9v1M15 9v1M12 9v4h-1M9 16c1.7 1.3 4.3 1.3 6 0" />
+            </svg>
+            Entrar con Face ID o huella
+          </button>
+          @if (errorBio()) { <p class="error-msg" role="alert" style="margin-top: 10px">{{ errorBio() }}</p> }
+        }
+
         <p class="switch-link">
           ¿Primera vez aquí? <a routerLink="/auth/registro">Crea tu cuenta</a> con el mismo correo que usabas en la
           página de Jasta y entrarás con tus permisos de siempre.
@@ -73,6 +84,32 @@ export class LoginPage implements OnDestroy {
   ver = signal(false);
   cargando = signal(false);
   error = signal('');
+  /** El navegador puede usar llaves de acceso (Face ID, huella) */
+  readonly puedeBiometria = typeof window !== 'undefined' && 'PublicKeyCredential' in window;
+
+  /** Inicio de sesión con la llave de acceso guardada en el celular (Face ID, Touch ID o huella) */
+  errorBio = signal('');
+
+  async entrarBiometria(): Promise<void> {
+    this.error.set('');
+    this.errorBio.set('');
+    this.cargando.set(true);
+    const { error } = await this.sb.client.auth.signInWithPasskey();
+    if (error) {
+      this.cargando.set(false);
+      const code = (error as { code?: string }).code ?? '';
+      const msg = (error.message ?? '').toLowerCase();
+      if (code === 'passkey_disabled') this.errorBio.set('El inicio con Face ID todavía no está activado. Entra con tu contraseña.');
+      else if (code === 'webauthn_credential_not_found')
+        this.errorBio.set('Este celular no tiene Face ID activado para Jasta. Entra con tu contraseña y actívalo en Mi perfil.');
+      else if (msg.includes('notallowed') || msg.includes('cancel') || msg.includes('abort')) return;
+      else this.errorBio.set('No se pudo entrar con Face ID. Entra con tu contraseña.');
+      return;
+    }
+    await this.sb.cargarUsuario();
+    this.cargando.set(false);
+    this.router.navigateByUrl(this.sb.inicioSegunRoles());
+  }
 
   async entrar(): Promise<void> {
     if (!this.email || !this.password) {

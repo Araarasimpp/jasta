@@ -336,3 +336,40 @@
   line-height: 1.45;
   color: var(--text-muted);
 }
+
+/* Entrar con Face ID o huella (llave de acceso) */
+.bio-sep {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0 10px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.bio-sep::before,
+.bio-sep::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.bio-btn {
+  width: 100%;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.bio-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

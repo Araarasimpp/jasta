@@ -1,5 +1,34 @@
 [
   {
+    "id": "2026-11-05-face-id",
+    "fecha": "2026-11-05",
+    "titulo": "Entra a la app con Face ID o huella",
+    "cuerpo": "Ya no tienes que escribir la contraseña cada vez: activa Face ID (iPhone) o la huella (Android) en tu celular y entra con un toque.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "mensajero",
+      "alistador",
+      "venta_local",
+      "recolector",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se activa (una sola vez por celular)",
+        "pasos": [
+          "Entra a la app con tu correo y contraseña, como siempre.",
+          "Ve a Más → Mi perfil → \"Entrar con Face ID o huella\" y toca \"Activar en este celular\".",
+          "Confirma con Face ID o tu huella. Listo."
+        ]
+      },
+      {
+        "titulo": "Cómo se usa",
+        "texto": "En la pantalla de inicio toca \"Entrar con Face ID o huella\". En el iPhone usa Safari (o la app instalada desde Safari); en Android, Chrome. Si cambias de celular, actívalo de nuevo en el nuevo. Desde Mi perfil puedes quitar los celulares que ya no uses."
+      }
+    ]
+  },
+  {
     "id": "2026-11-05-colores-tallas-agotados",
     "fecha": "2026-11-05",
     "titulo": "Marca colores y tallas agotados",

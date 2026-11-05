@@ -10,12 +10,13 @@ import { TelegramPanelComponent } from '../../shared/telegram/telegram-panel.com
 import { ROLES } from '../../shared/modelos';
 import { mensajeError } from '../../shared/formato';
 import { MisDatosPagoComponent } from './mis-datos-pago.component';
+import { FaceIdComponent } from './face-id.component';
 
 /** Mi perfil y mi seguridad: nombre, teléfono, foto, contraseña y sesiones */
 @Component({
   selector: 'app-perfil',
   standalone: true,
-  imports: [FormsModule, AvatarComponent, RecortarFotoComponent, TelegramPanelComponent, MisDatosPagoComponent],
+  imports: [FormsModule, AvatarComponent, RecortarFotoComponent, TelegramPanelComponent, MisDatosPagoComponent, FaceIdComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -91,6 +92,10 @@ import { MisDatosPagoComponent } from './mis-datos-pago.component';
 
       <section class="panel">
         <app-mis-datos-pago></app-mis-datos-pago>
+      </section>
+
+      <section class="panel">
+        <app-face-id></app-face-id>
       </section>
 
       <section class="panel">
