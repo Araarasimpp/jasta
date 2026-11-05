@@ -83,7 +83,7 @@
   --dur: 140ms;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
 
-  --tabbar-h: 60px;
+  --tabbar-h: 78px; /* barra flotante: 64 de alto + 8 de margen + aire */
 }
 
 body.dark {
