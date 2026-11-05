@@ -5,9 +5,9 @@
 .pill-nav {
   /* Barra flotante tipo píldora de vidrio (estilo iOS): la pestaña activa queda en una
      píldora hundida con el ícono y el texto en el color de acento */
-  --pn-fondo: rgba(255, 255, 255, 0.74);
-  --pn-borde: rgba(20, 20, 30, 0.08);
-  --pn-activa: rgba(20, 20, 40, 0.07);
+  --pn-fondo: rgba(255, 255, 255, 0.38);
+  --pn-borde: rgba(255, 255, 255, 0.55);
+  --pn-activa: rgba(255, 255, 255, 0.55);
   --pn-texto: var(--text-soft);
   --pn-acento: var(--accent);
   position: fixed;
@@ -26,17 +26,17 @@
   border-radius: 999px;
   border: 1px solid var(--pn-borde);
   background: var(--pn-fondo);
-  -webkit-backdrop-filter: blur(22px) saturate(180%);
-  backdrop-filter: blur(22px) saturate(180%);
-  box-shadow: 0 10px 30px rgba(10, 10, 30, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  -webkit-backdrop-filter: blur(10px) saturate(190%) brightness(1.05);
+  backdrop-filter: blur(10px) saturate(190%) brightness(1.05);
+  box-shadow: 0 10px 30px rgba(10, 10, 30, 0.16), inset 0 1px 1px rgba(255, 255, 255, 0.8), inset 0 -1px 1px rgba(255, 255, 255, 0.25);
 }
 
 :host-context(body.dark) .pill-nav {
-  --pn-fondo: rgba(38, 40, 46, 0.84);
-  --pn-borde: rgba(255, 255, 255, 0.08);
-  --pn-activa: rgba(0, 0, 0, 0.42);
+  --pn-fondo: rgba(30, 32, 38, 0.45);
+  --pn-borde: rgba(255, 255, 255, 0.14);
+  --pn-activa: rgba(0, 0, 0, 0.35);
   --pn-texto: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.18);
 }
 
 @media (prefers-reduced-transparency: reduce) {
