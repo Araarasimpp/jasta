@@ -86,6 +86,8 @@ export interface Pedido {
   guia?: string | null;
   costo_envio?: number | null;
   enviado_at?: string | null;
+  /** Cobro por link de Wompi: pendiente, aprobado o rechazado */
+  cobro_estado?: 'pendiente' | 'aprobado' | 'rechazado' | null;
   total: number;
   tipo_recaudo: TipoRecaudo | null;
   valor_efectivo: number | null;

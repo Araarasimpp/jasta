@@ -23,13 +23,14 @@ import { fotoDeItem, nombreConVariante, variante } from '../variante';
 import { urlsComprobantes } from '../comprobantes';
 import { EsqueletoComponent } from '../esqueleto/esqueleto.component';
 import { DespacharNacionalComponent } from '../envio-nacional/despachar-nacional.component';
+import { CobroLinkComponent } from '../cobro-link/cobro-link.component';
 import { mensajeGuia } from '../envio-nacional/envio-nacional';
 
 /** Hoja lateral con todo el pedido y las acciones que le tocan a cada rol */
 @Component({
   selector: 'app-pedido-detalle',
   standalone: true,
-  imports: [EsqueletoComponent, FormsModule, IonIcon, EntregarComponent, ChatPedidoComponent, AvatarComponent, DevolucionComponent, DespacharNacionalComponent],
+  imports: [EsqueletoComponent, FormsModule, IonIcon, EntregarComponent, ChatPedidoComponent, AvatarComponent, DevolucionComponent, DespacharNacionalComponent, CobroLinkComponent],
   styles: [
     `
       .resumen { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -241,6 +242,9 @@ import { mensajeGuia } from '../envio-nacional/envio-nacional';
               @if (p.entregado_at) {
                 <dt>Entregado</dt><dd>{{ fecha(p.entregado_at) }}</dd>
               }
+              @if (!p.pagado_linea && p.cobro_estado) {
+                <dt>Cobro por link</dt><dd>{{ p.cobro_estado === 'rechazado' ? '⚠️ El pago fue rechazado: puede intentarlo otra vez con el mismo link o mándale uno nuevo' : '⏳ Esperando que el cliente pague' }}</dd>
+              }
               @if (p.pagado_linea) {
                 <dt>Pago en línea</dt><dd>💳 {{ pesos(p.pagado_linea) }} con Wompi desde el catálogo{{ +p.pagado_linea >= +p.total ? ': no se cobra al entregar' : '' }}</dd>
               }
@@ -328,6 +332,9 @@ import { mensajeGuia } from '../envio-nacional/envio-nacional';
     @if (devolviendo() && pedido()) {
       <app-devolucion [pedido]="pedido()!" (cerrar)="devolviendo.set(false)" (registrado)="alDevolver()"></app-devolucion>
     }
+    @if (cobrando() && pedido()) {
+      <app-cobro-link [pedido]="pedido()!" (cerrar)="cobrando.set(false); cargar()"></app-cobro-link>
+    }
     @if (despachandoNac() && pedido()) {
       <app-despachar-nacional [pedido]="pedido()!" (cerrar)="despachandoNac.set(false)" (despachado)="alDespacharNac()"></app-despachar-nacional>
     }
@@ -359,6 +366,7 @@ export class PedidoDetalleComponent implements OnChanges {
   ocupado = signal(false);
   entregando = signal(false);
   despachandoNac = signal(false);
+  cobrando = signal(false);
   mensajeroSel: number | null = null;
   /** 'chat' = ventana de la conversación, aparte de la información del pedido */
   vista = signal<'pedido' | 'chat'>('pedido');
@@ -408,6 +416,8 @@ export class PedidoDetalleComponent implements OnChanges {
     if (p.estado === 'despachado' && !p.envio_nacional && (admin || p.mensajero_id === yo))
       out.push({ id: 'entregar', label: 'Entregar', principal: true });
     // Cancelar y editar: solo el admin (la vendedora solo ve el pedido y su conversación)
+    if (p.estado !== 'cancelado' && !p.pagado_linea && !(p.canal === 'local' && p.estado === 'entregado') && (admin || (p.vendedora_id === yo && this.sb.tiene('vendedora'))))
+      out.push({ id: 'cobro', label: p.cobro_estado ? 'Link de pago' : 'Cobrar por link' });
     if (p.estado !== 'cancelado' && admin) out.push({ id: 'cancelado', label: 'Cancelar pedido', peligro: true });
     if (p.estado !== 'cancelado' && this.sb.tiene('admin', 'alistador'))
       out.push({ id: 'rotulo', label: p.rotulo_impreso_at ? 'Reimprimir rótulo' : 'Imprimir rótulo' });
@@ -446,6 +456,7 @@ export class PedidoDetalleComponent implements OnChanges {
   async ejecutar(id: string): Promise<void> {
     if (id === 'entregar') return this.entregando.set(true);
     if (id === 'nacional') return this.despachandoNac.set(true);
+    if (id === 'cobro') return this.cobrando.set(true);
     if (id === 'devolucion') return this.devolviendo.set(true);
     if (id === 'editar') {
       void this.router.navigate(['/app/pedidos', this.pedidoId, 'editar']);

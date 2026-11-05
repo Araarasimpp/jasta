@@ -2,6 +2,7 @@ import { Component, ElementRef, OnInit, ViewChild, computed, effect, inject, sig
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { SupabaseService } from '../core/services/supabase.service';
+import { recargoWompi } from '../shared/recargo-wompi';
 import { mensajeError, pesos, urlImagen, urlMini } from '../shared/formato';
 import { PAISES, bandera, errorTelefono, limpiarNombre, unirTelefono } from '../shared/paises';
 import { EsqueletoComponent } from '../shared/esqueleto/esqueleto.component';
@@ -19,15 +20,6 @@ interface Tienda {
 }
 interface Linea { producto_id: number; nombre: string; precio: number; imagen_url: string | null; cantidad: number; color: string | null; talla: string | null; max: number }
 interface Hecho { id: number; total: number; domicilioPendiente: boolean }
-
-/**
- * Comisión de Wompi (2,65 % + $700, más IVA del 19 % sobre la comisión): se le cobra al cliente lo justo
- * para que al negocio le llegue completo el pedido. Igual que privado.recargo_wompi en la base de datos.
- */
-function recargoWompi(base: number): number {
-  if (!(base > 0)) return 0;
-  return Math.ceil(((base + 700 * 1.19) / (1 - 0.0265 * 1.19) - base) / 100) * 100;
-}
 
 function normal(s: string): string {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();

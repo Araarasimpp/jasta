@@ -1,5 +1,30 @@
 [
   {
+    "id": "2026-11-05-cobro-link",
+    "fecha": "2026-11-05",
+    "titulo": "Cobra cualquier pedido con un link de pago",
+    "cuerpo": "Ahora puedes mandarle al cliente un link para que pague su pedido con tarjeta, PSE, Nequi o Daviplata. Cuando paga, el pedido queda pagado solo: no hay que revisar pantallazos y el domiciliario no le cobra.",
+    "roles": [
+      "admin",
+      "vendedora"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se hace",
+        "pasos": [
+          "Abre el pedido y toca \"Cobrar por link\".",
+          "Deja marcado \"El cliente paga el costo del pago en línea\" para que te llegue completo el valor del pedido (o desmárcalo si quieres asumir tú la comisión de Wompi).",
+          "Toca \"Crear link de pago\" y luego \"Mandar por WhatsApp\". El mensaje ya lleva el valor y el link.",
+          "Cuando el cliente paga, te llega el aviso \"💳 Pagó el pedido por link\" y el pedido queda marcado como pagado."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "El link vale 3 días. El cliente también puede pagar desde la página de seguimiento de su pedido, con el botón \"Pagar ahora\". Sirve muy bien para los envíos a otras ciudades: al despachar ya no hay que subir el comprobante."
+      }
+    ]
+  },
+  {
     "id": "2026-11-05-recolector-costo",
     "fecha": "2026-11-05",
     "titulo": "Al registrar una compra, el costo del producto se actualiza solo",

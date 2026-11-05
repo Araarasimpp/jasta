@@ -26,6 +26,8 @@ interface Seguimiento {
   guia?: string | null;
   destino?: string | null;
   enviado_at?: string | null;
+  pagado_linea?: number | null;
+  cobro?: { total: number; recargo: number; estado: 'pendiente' | 'rechazado' } | null;
   novedad_at: string | null;
   vendedora: string | null;
   vendedora_telefono: string | null;
@@ -83,6 +85,10 @@ interface Seguimiento {
       .total strong { font-family: var(--mono-font); font-size: 20px; }
       .total-nota { margin: 2px 0 0; font-size: 12.5px; color: var(--text-muted); }
       h2 { margin: 0 0 8px; font-size: 13px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
+      .cobro-card { display: flex; flex-direction: column; gap: 6px; }
+      .cobro-card.pagado { background: var(--ok-wash); border-color: transparent; }
+      .cobro-card.pagado strong { color: var(--efectivo-texto); }
+      .cobro-total { font-family: var(--mono-font); font-size: 26px; font-weight: 700; }
       .guia-envio { display: flex; flex-direction: column; gap: 6px; }
       .guia-num { font-family: var(--mono-font); font-size: 24px; letter-spacing: .04em; overflow-wrap: anywhere; }
       .guia-acc { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }
@@ -132,6 +138,22 @@ interface Seguimiento {
           }
           <span class="estado" [class.entregado]="p.estado === 'entregado'" [class.cancelado]="p.estado === 'cancelado'">{{ titulo() }}</span>
         </section>
+
+        @if (verificandoPago()) {
+          <section class="tarjeta cobro-card"><strong>Estamos confirmando tu pago…</strong><p class="sub">Esto toma unos segundos.</p></section>
+        } @else if (p.pagado_linea) {
+          <section class="tarjeta cobro-card pagado"><strong>✓ Pago recibido en línea: {{ pesos(p.pagado_linea) }}</strong>
+            <p class="sub">{{ p.estado === 'entregado' ? 'Gracias por tu compra.' : 'Al recibir tu pedido no tienes que pagar nada.' }}</p></section>
+        } @else if (p.cobro) {
+          <section class="tarjeta cobro-card">
+            <strong>Paga tu pedido en línea</strong>
+            <span class="cobro-total">{{ pesos(p.cobro.total) }}</span>
+            <p class="sub">Con tarjeta débito o crédito, PSE, Nequi o Daviplata, por Wompi (de Bancolombia).{{ +p.cobro.recargo ? ' Incluye ' + pesos(p.cobro.recargo) + ' del costo del pago en línea.' : '' }}</p>
+            @if (p.cobro.estado === 'rechazado') { <p class="sub" style="color: var(--danger)">El pago anterior no se aprobó. Puedes intentarlo otra vez.</p> }
+            <button type="button" class="guia-btn pri" [disabled]="abriendoPago()" (click)="pagar()">{{ abriendoPago() ? 'Abriendo el pago…' : 'Pagar ahora' }}</button>
+            @if (errorPago()) { <p class="sub" style="color: var(--danger)">{{ errorPago() }}</p> }
+          </section>
+        }
 
         @if (p.envio_nacional && p.guia) {
           <section class="tarjeta guia-envio">
@@ -303,8 +325,15 @@ export class SeguimientoPage implements OnInit, OnDestroy {
     return t && t.length >= 7 ? t : '';
   });
 
+  verificandoPago = signal(false);
+  abriendoPago = signal(false);
+  errorPago = signal('');
+
   ngOnInit(): void {
-    void this.cargar();
+    // Vuelve de pagar en Wompi (?id=transacción): se confirma el pago con Wompi
+    const tx = this.route.snapshot.queryParamMap.get('id');
+    if (tx) void this.verificarPago(tx);
+    else void this.cargar();
     // Mientras la página esté abierta, se revisa cada minuto
     this.reloj = setInterval(() => {
       if (document.visibilityState === 'visible' && this.s()?.estado !== 'entregado') void this.cargar();
@@ -313,6 +342,31 @@ export class SeguimientoPage implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     clearInterval(this.reloj);
+  }
+
+  private async verificarPago(tx: string): Promise<void> {
+    const seguimiento = this.route.snapshot.paramMap.get('codigo') ?? '';
+    this.verificandoPago.set(true);
+    for (let i = 0; i < 12; i++) {
+      const { data } = await this.sb.client.functions.invoke('wompi-pagar', { body: { seguimiento, tx } });
+      const r = (data ?? {}) as { pagado?: boolean; status?: string };
+      if (r.pagado || (r.status && r.status !== 'PENDING')) break;
+      await new Promise((ok) => setTimeout(ok, 5000));
+    }
+    await this.cargar();
+    this.verificandoPago.set(false);
+  }
+
+  async pagar(): Promise<void> {
+    const seguimiento = this.route.snapshot.paramMap.get('codigo') ?? '';
+    this.errorPago.set('');
+    this.abriendoPago.set(true);
+    const { data } = await this.sb.client.functions.invoke('wompi-pagar', { body: { seguimiento, origen: location.origin } });
+    const r = (data ?? {}) as { url?: string; pagado?: boolean };
+    if (r.url && r.url.startsWith('https://checkout.wompi.co/')) return location.assign(r.url);
+    this.abriendoPago.set(false);
+    if (r.pagado) return void this.cargar();
+    this.errorPago.set('No se pudo abrir el pago. Intenta otra vez o escríbenos.');
   }
 
   private async cargar(): Promise<void> {
