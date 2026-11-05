@@ -197,3 +197,103 @@ app-tienda .tienda-cupon .cupon-ok { display: flex; justify-content: space-betwe
 app-tienda .tienda-cupon .cupon-ok small { display: block; color: var(--efectivo-texto); font-weight: 600; }
 app-tienda .tienda-cupon .cupon-ok small.falta { color: var(--oro-texto); }
 app-tienda .totales .desc-linea { color: var(--efectivo-texto); }
+
+/* ===== Catálogo público: diseño de tienda (lila suave, tarjetas redondeadas, botones tipo píldora) ===== */
+app-tienda.tv2.tv2.tv2 {
+  --t-acc: #6b4fe0;
+  --t-acc-2: #5a3fd0;
+  --t-wash: color-mix(in srgb, var(--t-acc) 10%, var(--surface));
+  --t-wash-2: color-mix(in srgb, var(--t-acc) 18%, var(--surface));
+  --t-sombra: 0 6px 20px rgba(60, 40, 140, .08);
+  background: color-mix(in srgb, var(--t-acc) 4%, var(--bg));
+}
+app-tienda.tv2.tv2.tv2 .scroll { background: color-mix(in srgb, var(--t-acc) 4%, var(--bg)); }
+app-tienda.tv2.tv2.tv2 .marca { position: relative; padding-right: 52px; }
+app-tienda.tv2.tv2.tv2 .marca img { border-radius: 14px; box-shadow: var(--t-sombra); }
+app-tienda.tv2.tv2.tv2 .t-icono-carrito { position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; display: grid; place-items: center;
+  border: 0; border-radius: 50%; background: var(--surface); color: var(--text); box-shadow: var(--t-sombra); cursor: pointer; }
+app-tienda.tv2.tv2.tv2 .t-badge { position: absolute; top: -2px; right: -2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--t-acc);
+  color: #fff; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center; }
+
+/* Banner */
+app-tienda.tv2.tv2.tv2 .t-hero { position: relative; display: flex; align-items: center; gap: 10px; min-height: 170px; margin: 0 0 14px; padding: 18px 16px 18px 20px;
+  border-radius: 22px; overflow: hidden; background: linear-gradient(135deg, var(--t-wash-2), var(--t-wash)); box-shadow: var(--t-sombra); }
+app-tienda.tv2.tv2.tv2 .t-hero-txt { position: relative; z-index: 1; flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+app-tienda.tv2.tv2.tv2 .t-pill { padding: 3px 10px; border-radius: 999px; background: var(--surface); color: var(--text); font-size: 12px; font-weight: 650; }
+app-tienda.tv2.tv2.tv2 .t-hero h2 { margin: 2px 0 0; font-size: 21px; line-height: 1.2; font-weight: 800; letter-spacing: -.01em; }
+app-tienda.tv2.tv2.tv2 .t-hero p { margin: 0; font-size: 13.5px; color: var(--text-soft); }
+app-tienda.tv2.tv2.tv2 .t-hero-txt button { margin-top: 6px; height: 38px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--t-acc); color: #fff;
+  font: inherit; font-size: 14px; font-weight: 650; cursor: pointer; }
+app-tienda.tv2.tv2.tv2 .t-hero img { width: 38%; max-width: 180px; aspect-ratio: 1; object-fit: contain; filter: drop-shadow(0 10px 18px rgba(60, 40, 140, .22)); }
+
+/* Buscador y categorías */
+app-tienda.tv2.tv2.tv2 .filtros { background: color-mix(in srgb, var(--t-acc) 4%, var(--bg)); }
+app-tienda.tv2.tv2.tv2 .filtros input { border: 0; background: var(--surface); box-shadow: var(--t-sombra); padding-left: 16px; }
+app-tienda.tv2.tv2.tv2 .solo { border: 0; background: var(--surface); box-shadow: var(--t-sombra); }
+app-tienda.tv2.tv2.tv2 .solo.on, app-tienda.tv2.tv2.tv2 .cats button.on { border-color: var(--t-acc); background: var(--t-acc); color: #fff; font-weight: 650; }
+app-tienda.tv2.tv2.tv2 .cats button { border-color: transparent; background: var(--surface); box-shadow: 0 2px 8px rgba(60, 40, 140, .06); }
+app-tienda.tv2.tv2.tv2 .t-titulo { display: flex; align-items: baseline; justify-content: space-between; margin: 6px 0 10px; }
+app-tienda.tv2.tv2.tv2 .t-titulo h2 { margin: 0; font-size: 17px; font-weight: 750; }
+app-tienda.tv2.tv2.tv2 .t-titulo span { font-size: 13px; color: var(--text-muted); }
+
+/* Tarjetas de producto */
+app-tienda.tv2.tv2.tv2 .prod { position: relative; border: 0; border-radius: 20px; box-shadow: var(--t-sombra); }
+app-tienda.tv2.tv2.tv2 .foto { margin: 8px 8px 0; width: calc(100% - 16px); border-radius: 16px; overflow: hidden; background: var(--t-wash); }
+app-tienda.tv2.tv2.tv2 .foto img { mix-blend-mode: multiply; }
+app-tienda.tv2.tv2.tv2 .info { gap: 4px; padding: 10px 12px 12px; }
+app-tienda.tv2.tv2.tv2 .info h2 { font-size: 14px; font-weight: 650; }
+app-tienda.tv2.tv2.tv2 .t-precio-fila { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: auto; }
+app-tienda.tv2.tv2.tv2 .precio { margin-top: 0; font-size: 15.5px; }
+app-tienda.tv2.tv2.tv2 .agregar { flex-shrink: 0; width: 36px; height: 36px; padding: 0; border-radius: 50%; background: var(--t-acc); font-size: 22px; line-height: 1;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--t-acc) 35%, transparent); }
+app-tienda.tv2.tv2.tv2 .agregar.en { background: var(--efectivo-texto, #1f9d55); font-size: 17px; }
+app-tienda.tv2.tv2.tv2 .agregar:disabled { box-shadow: none; }
+app-tienda.tv2.tv2.tv2 .t-fav { position: absolute; top: 14px; right: 14px; z-index: 2; width: 32px; height: 32px; display: grid; place-items: center; border: 0; border-radius: 50%;
+  background: var(--surface); color: var(--text-soft); font-size: 17px; line-height: 1; box-shadow: 0 2px 8px rgba(0, 0, 0, .08); cursor: pointer; }
+app-tienda.tv2.tv2.tv2 .t-fav.on { color: #e5484d; }
+app-tienda.tv2.tv2.tv2 .t-best { position: absolute; top: 8px; left: 8px; padding: 3px 9px; border-radius: 999px; background: var(--t-acc); color: #fff; font-size: 11px; font-weight: 700; }
+app-tienda.tv2.tv2.tv2 .etq-agot { border-radius: 999px; }
+
+/* Botón flotante del pedido */
+app-tienda.tv2.tv2.tv2 .carrito { background: var(--t-acc); color: #fff; box-shadow: 0 10px 26px color-mix(in srgb, var(--t-acc) 45%, transparent); }
+
+/* Detalle del producto */
+app-tienda.tv2.tv2.tv2 .t-galeria-caja { position: relative; margin: -4px -4px 4px; padding: 14px 10px; border-radius: 20px; background: var(--t-wash); }
+app-tienda.tv2.tv2.tv2 .t-galeria-caja .galeria img { background: transparent; mix-blend-mode: multiply; }
+app-tienda.tv2.tv2.tv2 .t-best.grande { top: 12px; left: auto; right: 54px; font-size: 12px; padding: 4px 11px; }
+app-tienda.tv2.tv2.tv2 .t-fav.grande { top: 10px; right: 10px; }
+app-tienda.tv2.tv2.tv2 .t-cat { align-self: flex-start; font-size: 13px; font-weight: 650; color: var(--t-acc); }
+app-tienda.tv2.tv2.tv2 .hoja .precio { font-size: 24px; font-weight: 800; }
+app-tienda.tv2.tv2.tv2 .op { border-color: var(--border); background: var(--surface); }
+app-tienda.tv2.tv2.tv2 .op.on { border-color: var(--t-acc); background: var(--t-acc); color: #fff; }
+app-tienda.tv2.tv2.tv2 .paso button { border: 0; border-radius: 50%; background: var(--t-wash); color: var(--text); }
+app-tienda.tv2.tv2.tv2 .hoja-pie .b { border-radius: 999px; height: 48px; }
+app-tienda.tv2.tv2.tv2 .hoja-pie .b-pri { background: var(--t-acc); border-color: var(--t-acc); }
+app-tienda.tv2.tv2.tv2 .hoja-pie .t-btn-sec { border: 1.5px solid var(--t-acc); color: var(--t-acc); background: var(--surface); }
+
+/* Carrito */
+app-tienda.tv2.tv2.tv2 .lineas { display: flex; flex-direction: column; gap: 10px; }
+app-tienda.tv2.tv2.tv2 .lineas li { grid-template-columns: 64px minmax(0, 1fr) auto; padding: 10px; border: 0; border-radius: 18px; background: var(--surface); box-shadow: var(--t-sombra); }
+app-tienda.tv2.tv2.tv2 .lineas img, app-tienda.tv2.tv2.tv2 .lineas .mini { width: 64px; height: 64px; border-radius: 14px; background: var(--t-wash); mix-blend-mode: multiply; }
+app-tienda.tv2.tv2.tv2 .lineas .nom { font-size: 14px; }
+app-tienda.tv2.tv2.tv2 .lineas .paso { padding: 2px; border-radius: 999px; background: var(--t-wash); }
+app-tienda.tv2.tv2.tv2 .lineas .paso button { width: 30px; height: 30px; background: var(--surface); font-size: 16px; }
+app-tienda.tv2.tv2.tv2 .tienda-cupon .link { display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px 14px; border-radius: 16px; background: var(--t-wash);
+  color: var(--text); text-decoration: none; font-weight: 600; }
+app-tienda.tv2.tv2.tv2 .tienda-cupon .link::before { content: '🎁'; }
+app-tienda.tv2.tv2.tv2 .tienda-cupon .link::after { content: '›'; margin-left: auto; font-size: 20px; color: var(--text-muted); }
+app-tienda.tv2.tv2.tv2 .tienda-cupon .cupon-ok .link { display: inline; width: auto; padding: 0; background: none; color: var(--accent); text-decoration: underline; font-weight: 400; }
+app-tienda.tv2.tv2.tv2 .tienda-cupon .cupon-ok .link::before, app-tienda.tv2.tv2.tv2 .tienda-cupon .cupon-ok .link::after { content: none; }
+app-tienda.tv2.tv2.tv2 .tienda-cupon .cupon-ok { border-radius: 16px; }
+app-tienda.tv2.tv2.tv2 .totales { padding: 14px 16px; border-radius: 18px; background: var(--surface); box-shadow: var(--t-sombra); }
+app-tienda.tv2.tv2.tv2 .totales .fin { padding-top: 8px; margin-top: 4px; border-top: 1px solid var(--border); font-size: 18px; }
+app-tienda.tv2.tv2.tv2 .formas-pago button { border-radius: 16px; }
+app-tienda.tv2.tv2.tv2 .formas-pago button.on { border-color: var(--t-acc); background: var(--t-wash); box-shadow: inset 0 0 0 1px var(--t-acc); }
+
+/* Lo más vendido y Te puede gustar */
+app-tienda.tv2.tv2.tv2 .tienda-mini { border: 0; border-radius: 18px; box-shadow: var(--t-sombra); }
+app-tienda.tv2.tv2.tv2 .tienda-mini img, app-tienda.tv2.tv2.tv2 .tienda-mini .ini { background: var(--t-wash); }
+app-tienda.tv2.tv2.tv2 .tienda-mini .puesto { background: var(--t-acc); }
+/* En modo oscuro las fotos no se mezclan con el fondo (se verían apagadas) */
+body.dark app-tienda.tv2.tv2.tv2 .foto img, body.dark app-tienda.tv2.tv2.tv2 .t-galeria-caja .galeria img,
+body.dark app-tienda.tv2.tv2.tv2 .lineas img, body.dark app-tienda.tv2.tv2.tv2 .lineas .mini { mix-blend-mode: normal; }
