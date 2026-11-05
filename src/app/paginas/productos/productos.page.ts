@@ -13,6 +13,7 @@ import { VisorService } from '../../shared/visor/visor.service';
 import { ColoresProductoComponent } from '../../shared/colores-producto/colores-producto.component';
 import { ElegirFotoComponent } from '../../shared/elegir-foto/elegir-foto.component';
 import { FotosProductoComponent } from '../../shared/fotos-producto/fotos-producto.component';
+import { VariantesAgotadasComponent } from '../../shared/variantes-agotadas/variantes-agotadas.component';
 import { TallasProductoComponent } from '../../shared/tallas-producto/tallas-producto.component';
 import { VideosProductoComponent } from '../../shared/videos-producto/videos-producto.component';
 import { CargaMasivaComponent } from './carga-masiva.component';
@@ -33,7 +34,7 @@ const VACIO: Omit<Producto, 'id'> = {
 @Component({
   selector: 'app-productos',
   standalone: true,
-  imports: [PesosDirective, EsqueletoComponent, FormsModule, IonIcon, ColoresProductoComponent, ElegirFotoComponent, FotosProductoComponent, TallasProductoComponent, VideosProductoComponent, CargaMasivaComponent],
+  imports: [PesosDirective, EsqueletoComponent, FormsModule, IonIcon, ColoresProductoComponent, ElegirFotoComponent, FotosProductoComponent, TallasProductoComponent, VideosProductoComponent, CargaMasivaComponent, VariantesAgotadasComponent],
   styles: [
     `
       .tonos { display: inline-flex; gap: 3px; margin-left: 8px; vertical-align: middle; }
@@ -179,6 +180,15 @@ const VACIO: Omit<Producto, 'id'> = {
               <p class="ayuda">Guarda el producto primero y luego agrega sus colores con sus fotos.</p>
             }
           </section>
+          @if (editId(); as pid) {
+            @if (variantesF(pid) || f.tallas?.length) {
+              <section class="colores-sec">
+                <h3 class="seccion-titulo">¿Se acabó algún color o talla?</h3>
+                <p class="ayuda">Márcalo como agotado: deja de salir en el catálogo y no se puede pedir. También se hace desde Inventario. Si acabas de agregar colores o tallas, guarda primero.</p>
+                <div><button type="button" class="b" (click)="variantesDe.set({ id: pid, nombre: f.nombre })">Colores y tallas agotados</button></div>
+              </section>
+            }
+          }
           @if (error()) {
             <p class="error" role="alert">{{ error() }}</p>
           }
@@ -188,6 +198,10 @@ const VACIO: Omit<Producto, 'id'> = {
           <button class="b b-pri" [disabled]="guardando()" (click)="guardar(f)">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button>
         </div>
       </aside>
+    }
+
+    @if (variantesDe(); as v) {
+      <app-variantes-agotadas [productoId]="v.id" [nombre]="v.nombre" (cerrar)="variantesDe.set(null)" (guardado)="alGuardarVariantes($event)"></app-variantes-agotadas>
     }
   `,
 })
@@ -331,6 +345,19 @@ export class ProductosPage implements OnInit {
   }
 
   /** Al cambiar los colores en la hoja, la lista también se actualiza */
+  /** Colores y tallas agotados (el mismo cuadro de Inventario) */
+  variantesDe = signal<{ id: number; nombre: string } | null>(null);
+
+  variantesF(id: number): number {
+    return this.productos().find((p) => p.id === id)?.colores?.length ?? 0;
+  }
+
+  alGuardarVariantes(agotadas: number): void {
+    const v = this.variantesDe();
+    this.variantesDe.set(null);
+    this.toast.ok(agotadas ? `${v?.nombre}: ${agotadas} ${agotadas === 1 ? 'opción agotada' : 'opciones agotadas'}` : `${v?.nombre}: todo disponible`);
+  }
+
   coloresCambiaron(id: number, colores: ProductoColor[]): void {
     this.productos.update((l) => l.map((p) => (p.id === id ? { ...p, colores } : p)));
   }

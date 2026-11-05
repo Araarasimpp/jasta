@@ -16,7 +16,8 @@
           "Ve a Inventario y busca el producto (si no lleva inventario, míralo en \"Todos\").",
           "Toca \"Colores/tallas\".",
           "Toca cada color o talla que se acabó: pasa de \"Hay\" a \"Agotado\". Tócalo otra vez cuando vuelva a llegar.",
-          "Toca Guardar. En la lista el botón queda en rojo con cuántos hay agotados."
+          "Toca Guardar. En la lista el botón queda en rojo con cuántos hay agotados.",
+          "También puedes hacerlo desde Productos: al editar el producto, abajo de sus colores, toca \"Colores y tallas agotados\" (solo admins)."
         ]
       },
       {
