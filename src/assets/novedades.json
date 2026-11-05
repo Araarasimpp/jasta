@@ -1,5 +1,41 @@
 [
   {
+    "id": "2026-11-05-caja-base-fija-movimientos",
+    "fecha": "2026-11-05",
+    "hora": "12:04",
+    "titulo": "Caja del local: base fija, gastos de caja y entrega del efectivo",
+    "cuerpo": "La caja del local ahora tiene una base fija, se registran las salidas y entradas de plata y al cerrar se entrega el efectivo sin tocar la base.",
+    "roles": [
+      "admin",
+      "venta_local"
+    ],
+    "secciones": [
+      {
+        "titulo": "Base fija",
+        "pasos": [
+          "La base de la caja la pone solo el admin (en Ventas del local, junto a la caja, \"Cambiar\").",
+          "Es la misma todos los días: siempre se queda en la caja para dar vueltas."
+        ]
+      },
+      {
+        "titulo": "Movimiento de caja",
+        "pasos": [
+          "Si pagas algo con plata de la caja (domicilio, bolsas, aseo, almuerzo…), regístralo como Salida. Queda como gasto del negocio.",
+          "Si entra plata que no es una venta (cambio, un abono), regístrala como Entrada.",
+          "Puedes tomarle foto al recibo. El admin recibe un aviso de cada movimiento."
+        ]
+      },
+      {
+        "titulo": "Al cerrar",
+        "pasos": [
+          "Toca \"Cuadrar caja\" y escribe todo el efectivo que contaste, con la base.",
+          "La app te dice si cuadra y cuánto recoger: deja la base y recoge el resto.",
+          "Cuando le entregues la plata al admin, toca \"Entregué\". El admin confirma con \"Recibí\"."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-11-05-quietos-cuentas-aumento-seguimiento",
     "fecha": "2026-11-05",
     "hora": "11:31",

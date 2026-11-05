@@ -24,6 +24,8 @@ export const CATEGORIAS_GASTO = [
   { id: 'mantenimiento', label: 'Mantenimiento' },
   { id: 'impuestos', label: 'Impuestos' },
   { id: 'otros', label: 'Otros' },
+  // Salidas de la caja del local (se registran desde Ventas del local, no desde aquí)
+  { id: 'caja_local', label: 'Caja del local' },
 ] as const;
 
 interface Gasto {
@@ -206,7 +208,7 @@ export class GastosPage {
   error = signal('');
   maxCat = computed(() => Math.max(1, ...(this.r()?.por_categoria ?? []).map((c) => Number(c.total))));
 
-  categorias = CATEGORIAS_GASTO;
+  categorias = CATEGORIAS_GASTO.filter((c) => c.id !== 'caja_local');
   metodos = [
     { id: 'efectivo', label: 'Efectivo' },
     { id: 'transferencia', label: 'Transferencia' },
