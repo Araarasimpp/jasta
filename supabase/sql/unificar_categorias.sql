@@ -36,3 +36,7 @@ alter table public.productos disable trigger act_productos;
 update public.productos set categoria = privado.categoria_oficial(categoria)
  where categoria is distinct from privado.categoria_oficial(categoria) and categoria is not null;
 alter table public.productos enable trigger act_productos;
+
+-- Arreglo: la función del trigger corre como dueño (si no, al guardar un producto salía
+-- "permission denied for schema privado", porque los usuarios no pueden entrar a ese esquema)
+alter function privado.producto_categoria() security definer;
