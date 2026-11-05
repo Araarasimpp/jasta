@@ -52,11 +52,6 @@ function guardarBio(v: 'si' | 'no'): void {
             <button type="button" class="bio-luego" [disabled]="cargando()" (click)="noBio()">Ahora no</button>
           </div>
         } @else {
-        @if (puedeBio() && bioEnEsteCelular) {
-          <button type="button" class="submit-btn bio-principal" [disabled]="cargando()" (click)="entrarBiometria()">{{ cargando() ? 'Entrando…' : 'Entrar con Face ID o huella' }}</button>
-          @if (errorBio()) { <p class="error-msg" role="alert" style="margin-top: 10px">{{ errorBio() }}</p> }
-          <div class="bio-sep"><span>o con tu contraseña</span></div>
-        }
         <form class="auth-form" (ngSubmit)="entrar()">
           <div class="field">
             <label for="email">Correo</label>
@@ -84,13 +79,13 @@ function guardarBio(v: 'si' | 'no'): void {
           </button>
         </form>
 
-        @if (puedeBio() && !bioEnEsteCelular) {
+        @if (puedeBio()) {
           <div class="bio-sep"><span>o</span></div>
           <button type="button" class="bio-btn" [disabled]="cargando()" (click)="entrarBiometria()">
             <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
               <path d="M7 3H5a2 2 0 0 0-2 2v2M17 3h2a2 2 0 0 1 2 2v2M7 21H5a2 2 0 0 1-2-2v-2M17 21h2a2 2 0 0 0 2-2v-2M9 9v1M15 9v1M12 9v4h-1M9 16c1.7 1.3 4.3 1.3 6 0" />
             </svg>
-            Entrar con Face ID o huella
+            {{ cargando() ? 'Entrando…' : 'Entrar con Face ID o huella' }}
           </button>
           @if (errorBio()) { <p class="error-msg" role="alert" style="margin-top: 10px">{{ errorBio() }}</p> }
         }
@@ -125,8 +120,6 @@ export class LoginPage implements OnDestroy {
 
   /** Inicio de sesión con la llave de acceso guardada en el celular (Face ID, Touch ID o huella) */
   errorBio = signal('');
-  /** Este celular ya tiene Face ID activado (se recuerda en el celular) */
-  readonly bioEnEsteCelular = leerBio() === 'si';
   /** Después de entrar con contraseña: se ofrece activar Face ID una vez por celular */
   ofrecerBio = signal(false);
 
