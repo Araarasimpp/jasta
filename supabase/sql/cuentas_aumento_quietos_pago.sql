@@ -133,3 +133,18 @@ returns jsonb language sql stable security definer set search_path to '' as $fun
   where w.codigo = p_codigo
 $function$;
 grant execute on function public.tienda_pago(uuid) to anon, authenticated;
+
+-- Arreglo (YA APLICADO): al editar una entrega salía "column reference pr.id is ambiguous" porque la
+-- función tiene una variable llamada pr y el update de productos usaba el mismo alias.
+do $$
+declare v text := replace(pg_get_functiondef('public.editar_entrega_costo(bigint,jsonb,date,text)'::regprocedure), chr(13), '');
+begin
+  if position('productos px' in v) = 0 then
+    v := replace(v, 'update public.productos pr set stock = pr.stock + i.cantidad, updated_at = now()
+    from public.cuenta_entrega_items i where i.entrega_id = e.id and i.producto_id = pr.id and pr.controla_stock;',
+      'update public.productos px set stock = px.stock + i.cantidad, updated_at = now()
+    from public.cuenta_entrega_items i where i.entrega_id = e.id and i.producto_id = px.id and px.controla_stock;');
+    if position('productos px' in v) = 0 then raise exception 'No se pudo cambiar editar_entrega_costo'; end if;
+    execute v;
+  end if;
+end $$;
