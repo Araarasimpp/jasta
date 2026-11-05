@@ -1,4 +1,4 @@
--- Borrar cuentas (PENDIENTE DE APLICAR)
+-- Borrar cuentas (YA APLICADO 2026-11-05)
 -- La persona puede borrar su propia cuenta y el admin puede borrar cuentas que no se usan.
 -- Siempre se borra el acceso (usuario de Auth: correo, contraseña, Face ID, sesiones) y los datos
 -- personales (cédula y cuenta bancaria, teléfono, foto, celulares para avisos, Telegram).
