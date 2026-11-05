@@ -1,5 +1,31 @@
 [
   {
+    "id": "2026-11-05-recolector-costo",
+    "fecha": "2026-11-05",
+    "titulo": "Al registrar una compra, el costo del producto se actualiza solo",
+    "cuerpo": "En Recolector → Registrar compra ahora eliges el producto del inventario que compraste y cuánto te costó cada uno. El precio de compra de ese producto queda actualizado con ese valor.",
+    "roles": [
+      "recolector",
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se hace",
+        "pasos": [
+          "Toca Registrar compra y deja marcado \"Producto del inventario\".",
+          "Busca el producto por nombre o SKU y elígelo. Ves su costo actual.",
+          "Escribe cuántos compraste y cuánto te costó cada uno. El total de la compra se calcula solo.",
+          "Escribe el proveedor, sube la foto de la factura y toca Registrar compra.",
+          "Si compraste algo que no está en el inventario (bolsas, cinta…), elige \"Otra cosa\" y escríbelo como antes."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "Si el costo cambia, el admin recibe un aviso con el costo anterior y el nuevo. Ese costo es el que se usa desde ahí para calcular las ganancias."
+      }
+    ]
+  },
+  {
     "id": "2026-11-04-cuentas-por-cobrar",
     "fecha": "2026-11-04",
     "titulo": "Cuentas por cobrar: lo que entregas al costo y sus abonos",

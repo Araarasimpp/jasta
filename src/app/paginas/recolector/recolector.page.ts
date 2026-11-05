@@ -45,6 +45,9 @@ interface Resumen {
  * registra cada compra con su valor, proveedor, producto y foto de la factura.
  * Cuadre = bases − compras (lo que debe tener en la mano).
  */
+interface ProdCosto { id: number; nombre: string; sku: string | null; imagen_url: string | null; costo: number | null }
+const normalP = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+
 @Component({
   selector: 'app-recolector',
   standalone: true,
@@ -109,6 +112,19 @@ interface Resumen {
       .hoja-centro .hoja-body { gap: 14px; }
       .hoja-head h2 { margin: 0 auto 0 0; }
       .aviso-neg { margin: 0; font-size: 12.5px; color: var(--danger); }
+      .tipo-compra { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+      .tipo-compra button { min-height: 40px; padding: 4px 8px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font: inherit; font-size: 14px; cursor: pointer; }
+      .tipo-compra button.on { border-color: var(--accent); background: var(--accent-wash); color: var(--accent); font-weight: 650; }
+      .buscar-prod { position: relative; }
+      .sug-prod { position: absolute; left: 0; right: 0; top: 100%; z-index: 5; margin: 4px 0 0; padding: 4px; list-style: none; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); box-shadow: 0 6px 20px rgba(0,0,0,.12); max-height: 240px; overflow-y: auto; }
+      .sug-prod button { width: 100%; display: flex; justify-content: space-between; gap: 8px; padding: 9px 10px; border: 0; border-radius: var(--radius-sm); background: none; color: var(--text); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+      .sug-prod small { color: var(--text-muted); white-space: nowrap; }
+      .prod-sel { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface-2); }
+      .prod-sel small { display: block; font-size: 12.5px; color: var(--text-muted); }
+      .b.chico { height: 32px; padding: 0 10px; font-size: 12.5px; }
+      .total-inv { margin: 0; font-size: 14px; }
+      .total-inv strong { font-family: var(--mono-font); }
+      .aviso-costo { margin: 0; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--oro-wash); color: var(--oro-texto); font-size: 13px; }
 
       @media (max-width: 640px) {
         .head .acciones { width: 100%; }
@@ -246,10 +262,44 @@ interface Resumen {
         <div class="hoja-head"><h2 id="t-compra">Registrar compra</h2>
           <button class="b b-icono" aria-label="Cerrar" (click)="formCompra.set(false)"><ion-icon name="close-outline"></ion-icon></button></div>
         <div class="hoja-body">
-          <div class="campo"><label for="cv">Valor</label><input pesos id="cv" class="inp num" [(ngModel)]="compraValor" /></div>
-          @if ((compraValor || 0) > cuadre() && cuadre() >= 0) { <p class="aviso-neg">Es más de lo que queda de base ({{ pesos(cuadre()) }}).</p> }
+          <div class="tipo-compra" role="group" aria-label="Qué compraste">
+            <button type="button" [class.on]="deInventario()" (click)="deInventario.set(true)">Producto del inventario</button>
+            <button type="button" [class.on]="!deInventario()" (click)="deInventario.set(false)">Otra cosa</button>
+          </div>
+          @if (deInventario()) {
+            @if (prodSel(); as p) {
+              <div class="prod-sel">
+                <span><strong>{{ p.nombre }}</strong><small>Costo actual: {{ p.costo ? pesos(p.costo) : 'sin costo' }}</small></span>
+                <button type="button" class="b chico" (click)="prodSel.set(null)">Cambiar</button>
+              </div>
+              <div class="fila-campos">
+                <div class="campo"><label for="cc">¿Cuántos compraste?</label><input id="cc" class="inp num" type="number" inputmode="numeric" min="1" [ngModel]="compraCant()" (ngModelChange)="compraCant.set(+$event || null)" /></div>
+                <div class="campo"><label for="cu">¿Cuánto te costó cada uno?</label><input pesos id="cu" class="inp num" [ngModel]="compraCosto()" (ngModelChange)="compraCosto.set(+$event || null)" /></div>
+              </div>
+              @if (totalInv()) { <p class="total-inv">Total de la compra: <strong>{{ pesos(totalInv()) }}</strong></p> }
+              @if (compraCosto() && p.costo && +compraCosto()! !== +p.costo) {
+                <p class="aviso-costo">El costo de {{ p.nombre }} va a quedar en {{ pesos(compraCosto()!) }} (antes {{ pesos(p.costo) }}).</p>
+              }
+              @if (totalInv() > cuadre() && cuadre() >= 0) { <p class="aviso-neg">Es más de lo que queda de base ({{ pesos(cuadre()) }}).</p> }
+            } @else {
+              <div class="campo buscar-prod">
+                <label for="cbp">Busca el producto que compraste</label>
+                <input id="cbp" class="inp" autocomplete="off" [ngModel]="buscaProd()" (ngModelChange)="buscaProd.set($event)" placeholder="Nombre o SKU" />
+                @if (sugerencias().length) {
+                  <ul class="sug-prod">
+                    @for (p of sugerencias(); track p.id) {
+                      <li><button type="button" (click)="elegirProd(p)"><span>{{ p.nombre }}</span><small>{{ p.costo ? pesos(p.costo) : '' }}</small></button></li>
+                    }
+                  </ul>
+                } @else if (buscaProd().trim().length >= 2) { <small class="suave">No encontramos ese producto. Si no está en el inventario, elige "Otra cosa".</small> }
+              </div>
+            }
+          } @else {
+            <div class="campo"><label for="cv">Valor</label><input pesos id="cv" class="inp num" [(ngModel)]="compraValor" /></div>
+            @if ((compraValor || 0) > cuadre() && cuadre() >= 0) { <p class="aviso-neg">Es más de lo que queda de base ({{ pesos(cuadre()) }}).</p> }
+            <div class="campo"><label for="cd">¿Qué compraste?</label><input id="cd" class="inp" maxlength="200" [(ngModel)]="compraProducto" placeholder="Ej: bolsas, cinta" /></div>
+          }
           <div class="campo"><label for="cp">Proveedor</label><input id="cp" class="inp" maxlength="120" [(ngModel)]="compraProveedor" placeholder="Ej: Distribuidora El Centro" /></div>
-          <div class="campo"><label for="cd">Producto</label><input id="cd" class="inp" maxlength="200" [(ngModel)]="compraProducto" placeholder="Ej: 20 cables USB-C" /></div>
           <app-comprobantes-input titulo="Foto de la factura" pista="Foto de la factura o el recibo donde se vea el valor." [rutas]="compraFacturas()"
             (cambio)="compraFacturas.set($event); errorForm.set('')"></app-comprobantes-input>
           @if (errorForm()) { <p class="error" role="alert">{{ errorForm() }}</p> }
@@ -285,6 +335,19 @@ export class RecolectorPage implements OnInit, OnDestroy {
   compraProveedor = '';
   compraProducto = '';
   compraFacturas = signal<string[]>([]);
+  /** Compra de un producto del inventario: su costo se actualiza con lo que le costó */
+  deInventario = signal(true);
+  private prods = signal<ProdCosto[]>([]);
+  buscaProd = signal('');
+  prodSel = signal<ProdCosto | null>(null);
+  compraCant = signal<number | null>(null);
+  compraCosto = signal<number | null>(null);
+  totalInv = computed(() => (Number(this.compraCant()) || 0) * (Number(this.compraCosto()) || 0));
+  sugerencias = computed(() => {
+    const t = normalP(this.buscaProd());
+    if (t.length < 2) return [];
+    return this.prods().filter((p) => normalP(p.nombre).includes(t) || normalP(p.sku ?? '').includes(t)).slice(0, 8);
+  });
 
   /** Ve a todos los recolectores (cuadres también, pero solo para revisar) */
   esAdmin = computed(() => this.sb.tiene('admin', 'cuadres'));
@@ -391,11 +454,28 @@ export class RecolectorPage implements OnInit, OnDestroy {
     this.compraProveedor = '';
     this.compraProducto = '';
     this.compraFacturas.set([]);
+    this.deInventario.set(true);
+    this.buscaProd.set('');
+    this.prodSel.set(null);
+    this.compraCant.set(null);
+    this.compraCosto.set(null);
     this.errorForm.set('');
     this.formCompra.set(true);
+    if (!this.prods().length) {
+      void this.sb.client.rpc('recolector_productos').then(({ data }) => this.prods.set((data ?? []) as ProdCosto[]));
+    }
+  }
+
+  elegirProd(p: ProdCosto): void {
+    this.prodSel.set(p);
+    this.buscaProd.set('');
+    this.compraCant.set(1);
+    this.compraCosto.set(p.costo ? Number(p.costo) : null);
+    this.errorForm.set('');
   }
 
   async guardarCompra(): Promise<void> {
+    if (this.deInventario()) return this.guardarCompraInventario();
     const valor = Number(this.compraValor) || 0;
     if (valor <= 0) return this.errorForm.set('Escribe el valor de la compra.');
     if (!this.compraProveedor.trim()) return this.errorForm.set('Escribe el proveedor.');
@@ -408,6 +488,29 @@ export class RecolectorPage implements OnInit, OnDestroy {
     this.ocupado.set(false);
     if (error) return this.errorForm.set(mensajeError(error));
     this.toast.ok(`Compra de ${pesos(valor)} registrada`);
+    this.formCompra.set(false);
+    await this.cargar();
+  }
+
+  private async guardarCompraInventario(): Promise<void> {
+    const p = this.prodSel();
+    if (!p) return this.errorForm.set('Busca y elige el producto que compraste.');
+    const cant = Math.round(Number(this.compraCant()) || 0);
+    const costo = Math.round(Number(this.compraCosto()) || 0);
+    if (cant <= 0) return this.errorForm.set('Escribe cuántos compraste.');
+    if (costo <= 0) return this.errorForm.set('Escribe cuánto te costó cada uno.');
+    if (!this.compraProveedor.trim()) return this.errorForm.set('Escribe el proveedor.');
+    if (!this.compraFacturas().length) return this.errorForm.set('Sube la foto de la factura.');
+    this.ocupado.set(true);
+    const { error } = await this.sb.client.rpc('recoleccion_registrar_compra', {
+      p_valor: cant * costo, p_proveedor: this.compraProveedor.trim(), p_producto: `${cant} × ${p.nombre}`, p_facturas: this.compraFacturas(),
+      p_producto_id: p.id, p_cantidad: cant, p_costo: costo,
+    });
+    this.ocupado.set(false);
+    if (error) return this.errorForm.set(mensajeError(error));
+    const cambio = Number(p.costo) !== costo;
+    this.toast.ok(`Compra de ${pesos(cant * costo)} registrada${cambio ? ` · el costo de ${p.nombre} quedó en ${pesos(costo)}` : ''}`);
+    if (cambio) this.prods.update((l) => l.map((x) => (x.id === p.id ? { ...x, costo } : x)));
     this.formCompra.set(false);
     await this.cargar();
   }
