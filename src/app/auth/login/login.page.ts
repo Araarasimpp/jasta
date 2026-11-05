@@ -94,12 +94,19 @@ export class LoginPage implements OnDestroy {
     this.error.set('');
     this.errorBio.set('');
     this.cargando.set(true);
-    const { error } = await this.sb.client.auth.signInWithPasskey();
+    if (this.captchaActivo && !this.captcha()) {
+      this.cargando.set(false);
+      return this.errorBio.set('Primero marca la casilla "Verifique que es un ser humano" y luego toca Face ID.');
+    }
+    const { error } = await this.sb.client.auth.signInWithPasskey({ options: { captchaToken: this.captcha() || undefined } });
+    this.captchaCmp?.reiniciar();
+    this.captcha.set('');
     if (error) {
       this.cargando.set(false);
       const code = (error as { code?: string }).code ?? '';
       const msg = (error.message ?? '').toLowerCase();
-      if (code === 'passkey_disabled') this.errorBio.set('El inicio con Face ID todavía no está activado. Entra con tu contraseña.');
+      if (code === 'captcha_failed') this.errorBio.set('No pasó la verificación de seguridad. Márcala otra vez y vuelve a tocar Face ID.');
+      else if (code === 'passkey_disabled') this.errorBio.set('El inicio con Face ID todavía no está activado. Entra con tu contraseña.');
       else if (code === 'webauthn_credential_not_found')
         this.errorBio.set('Este celular no tiene Face ID activado para Jasta. Entra con tu contraseña y actívalo en Mi perfil.');
       else if (msg.includes('notallowed') || msg.includes('cancel') || msg.includes('abort')) return;
