@@ -23,7 +23,7 @@ interface Llave { id: string; friendly_name?: string | null; created_at: string;
     @if (!soporta) {
       <p class="ayuda" style="margin: 0">Este navegador no permite entrar con Face ID o huella. En el iPhone usa Safari; en Android, Chrome.</p>
     } @else {
-      <p class="ayuda" style="margin: 0">Actívalo en cada celular que uses. La próxima vez, en la pantalla de inicio toca "Entrar con Face ID o huella" y listo, sin escribir la contraseña.</p>
+      <p class="ayuda" style="margin: 0">La app te ofrece activarlo al entrar con tu contraseña en un celular nuevo. Aquí ves los celulares donde lo tienes activado y puedes quitar los que ya no uses.</p>
       @if (llaves().length) {
         <ul>
           @for (l of llaves(); track l.id) {
@@ -64,6 +64,7 @@ export class FaceIdComponent implements OnInit {
       if (code === 'webauthn_credential_exists') return this.toast.error('Este celular ya tiene Face ID activado.');
       return this.toast.error('No se pudo activar: ' + error.message);
     }
+    try { localStorage.setItem('jasta-face-id', 'si'); } catch { /* sin almacenamiento */ }
     this.toast.ok('¡Listo! La próxima vez entra con Face ID o huella');
     await this.cargar();
   }

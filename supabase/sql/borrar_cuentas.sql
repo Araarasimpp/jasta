@@ -32,7 +32,7 @@ revoke execute on function privado.borrar_cuenta(bigint) from public, anon, auth
 -- Quedaría sin ningún admin activo
 create or replace function privado.ultimo_admin(p_usuario bigint)
 returns boolean language sql stable security definer set search_path to '' as $$
-  select 'admin' = any ((select roles::text[] from public.usuarios where id = p_usuario))
+  select exists (select 1 from public.usuarios where id = p_usuario and 'admin' = any (roles::text[]))
      and not exists (select 1 from public.usuarios where id <> p_usuario and activo and eliminado_at is null and 'admin' = any (roles::text[]))
 $$;
 revoke execute on function privado.ultimo_admin(bigint) from public, anon, authenticated;

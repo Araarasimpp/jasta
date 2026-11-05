@@ -4,6 +4,20 @@ import { Router, RouterLink } from '@angular/router';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { CAPTCHA_ACTIVO, CaptchaComponent } from '../../shared/captcha/captcha.component';
 
+/** Si este celular ya tiene Face ID activado ('si') o la persona dijo que no ('no') */
+function leerBio(): string | null {
+  try {
+    return localStorage.getItem('jasta-face-id');
+  } catch {
+    return null;
+  }
+}
+function guardarBio(v: 'si' | 'no'): void {
+  try {
+    localStorage.setItem('jasta-face-id', v);
+  } catch { /* sin almacenamiento */ }
+}
+
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -24,6 +38,25 @@ import { CAPTCHA_ACTIVO, CaptchaComponent } from '../../shared/captcha/captcha.c
           </div>
         </div>
 
+        @if (ofrecerBio()) {
+          <div class="bio-oferta">
+            <div class="bio-icono" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+                <path d="M7 3H5a2 2 0 0 0-2 2v2M17 3h2a2 2 0 0 1 2 2v2M7 21H5a2 2 0 0 1-2-2v-2M17 21h2a2 2 0 0 0 2-2v-2M9 9v1M15 9v1M12 9v4h-1M9 16c1.7 1.3 4.3 1.3 6 0" />
+              </svg>
+            </div>
+            <h2>¿Entrar con Face ID la próxima vez?</h2>
+            <p>Sin escribir tu correo ni tu contraseña: solo miras el celular (o pones tu huella) y entras.</p>
+            @if (errorBio()) { <p class="error-msg" role="alert">{{ errorBio() }}</p> }
+            <button type="button" class="submit-btn" [disabled]="cargando()" (click)="activarBio()">{{ cargando() ? 'Esperando Face ID…' : 'Activar Face ID' }}</button>
+            <button type="button" class="bio-luego" [disabled]="cargando()" (click)="noBio()">Ahora no</button>
+          </div>
+        } @else {
+        @if (puedeBio() && bioEnEsteCelular) {
+          <button type="button" class="submit-btn bio-principal" [disabled]="cargando()" (click)="entrarBiometria()">{{ cargando() ? 'Entrando…' : 'Entrar con Face ID o huella' }}</button>
+          @if (errorBio()) { <p class="error-msg" role="alert" style="margin-top: 10px">{{ errorBio() }}</p> }
+          <div class="bio-sep"><span>o con tu contraseña</span></div>
+        }
         <form class="auth-form" (ngSubmit)="entrar()">
           <div class="field">
             <label for="email">Correo</label>
@@ -51,7 +84,7 @@ import { CAPTCHA_ACTIVO, CaptchaComponent } from '../../shared/captcha/captcha.c
           </button>
         </form>
 
-        @if (puedeBiometria) {
+        @if (puedeBio() && !bioEnEsteCelular) {
           <div class="bio-sep"><span>o</span></div>
           <button type="button" class="bio-btn" [disabled]="cargando()" (click)="entrarBiometria()">
             <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
@@ -60,6 +93,8 @@ import { CAPTCHA_ACTIVO, CaptchaComponent } from '../../shared/captcha/captcha.c
             Entrar con Face ID o huella
           </button>
           @if (errorBio()) { <p class="error-msg" role="alert" style="margin-top: 10px">{{ errorBio() }}</p> }
+        }
+
         }
 
         <p class="switch-link">
@@ -85,18 +120,58 @@ export class LoginPage implements OnDestroy {
   cargando = signal(false);
   error = signal('');
   /** El navegador puede usar llaves de acceso (Face ID, huella) */
-  readonly puedeBiometria = typeof window !== 'undefined' && 'PublicKeyCredential' in window;
+  /** El celular tiene Face ID, Touch ID o lector de huella que sirva para entrar */
+  puedeBio = signal(false);
 
   /** Inicio de sesión con la llave de acceso guardada en el celular (Face ID, Touch ID o huella) */
   errorBio = signal('');
+  /** Este celular ya tiene Face ID activado (se recuerda en el celular) */
+  readonly bioEnEsteCelular = leerBio() === 'si';
+  /** Después de entrar con contraseña: se ofrece activar Face ID una vez por celular */
+  ofrecerBio = signal(false);
+
+  constructor() {
+    const pk = (window as unknown as { PublicKeyCredential?: { isUserVerifyingPlatformAuthenticatorAvailable?: () => Promise<boolean> } }).PublicKeyCredential;
+    void pk?.isUserVerifyingPlatformAuthenticatorAvailable?.().then((si) => this.puedeBio.set(!!si)).catch(() => undefined);
+  }
+
+  private irAlInicio(): void {
+    this.router.navigateByUrl(this.sb.inicioSegunRoles());
+  }
+
+  async activarBio(): Promise<void> {
+    this.errorBio.set('');
+    this.cargando.set(true);
+    const { error } = await this.sb.client.auth.registerPasskey();
+    this.cargando.set(false);
+    if (error) {
+      const code = (error as { code?: string }).code ?? '';
+      const msg = (error.message ?? '').toLowerCase();
+      if (msg.includes('notallowed') || msg.includes('cancel') || msg.includes('abort')) return;
+      if (code === 'webauthn_credential_exists') {
+        guardarBio('si');
+        return this.irAlInicio();
+      }
+      return this.errorBio.set('No se pudo activar Face ID. Puedes intentarlo después en Mi perfil.');
+    }
+    guardarBio('si');
+    this.irAlInicio();
+  }
+
+  noBio(): void {
+    guardarBio('no');
+    this.irAlInicio();
+  }
 
   async entrarBiometria(): Promise<void> {
     this.error.set('');
     this.errorBio.set('');
     this.cargando.set(true);
+    // La verificación de seguridad casi siempre se completa sola: se espera hasta 10 s
+    for (let i = 0; i < 20 && this.captchaActivo && !this.captcha(); i++) await new Promise((ok) => setTimeout(ok, 500));
     if (this.captchaActivo && !this.captcha()) {
       this.cargando.set(false);
-      return this.errorBio.set('Primero marca la casilla "Verifique que es un ser humano" y luego toca Face ID.');
+      return this.errorBio.set('Marca la casilla "Verifique que es un ser humano" (abajo) y vuelve a tocar Face ID.');
     }
     const { error } = await this.sb.client.auth.signInWithPasskey({ options: { captchaToken: this.captcha() || undefined } });
     this.captchaCmp?.reiniciar();
@@ -108,14 +183,15 @@ export class LoginPage implements OnDestroy {
       if (code === 'captcha_failed') this.errorBio.set('No pasó la verificación de seguridad. Márcala otra vez y vuelve a tocar Face ID.');
       else if (code === 'passkey_disabled') this.errorBio.set('El inicio con Face ID todavía no está activado. Entra con tu contraseña.');
       else if (code === 'webauthn_credential_not_found')
-        this.errorBio.set('Este celular no tiene Face ID activado para Jasta. Entra con tu contraseña y actívalo en Mi perfil.');
+        this.errorBio.set('Este celular ya no tiene Face ID para Jasta. Entra con tu contraseña y vuelve a activarlo.');
       else if (msg.includes('notallowed') || msg.includes('cancel') || msg.includes('abort')) return;
       else this.errorBio.set('No se pudo entrar con Face ID. Entra con tu contraseña.');
       return;
     }
+    guardarBio('si');
     await this.sb.cargarUsuario();
     this.cargando.set(false);
-    this.router.navigateByUrl(this.sb.inicioSegunRoles());
+    this.irAlInicio();
   }
 
   async entrar(): Promise<void> {
@@ -151,7 +227,12 @@ export class LoginPage implements OnDestroy {
     this.fallos = 0;
     await this.sb.cargarUsuario();
     this.cargando.set(false);
-    this.router.navigateByUrl(this.sb.inicioSegunRoles());
+    // Primera vez en este celular: se ofrece entrar con Face ID la próxima vez
+    if (this.puedeBio() && !leerBio()) {
+      this.ofrecerBio.set(true);
+      return;
+    }
+    this.irAlInicio();
   }
 
   private bloquear(segundos: number): void {

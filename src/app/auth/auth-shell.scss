@@ -373,3 +373,48 @@
   opacity: 0.6;
   cursor: default;
 }
+
+.bio-principal {
+  width: 100%;
+  margin-top: 0;
+}
+.bio-oferta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  padding: 8px 0;
+}
+.bio-oferta h2 {
+  margin: 4px 0 0;
+  font-size: 20px;
+}
+.bio-oferta p {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: var(--text-soft);
+}
+.bio-oferta .submit-btn {
+  width: 100%;
+  margin-top: 8px;
+}
+.bio-icono {
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  border-radius: 20px;
+  background: var(--accent-wash);
+  color: var(--accent);
+}
+.bio-luego {
+  height: 40px;
+  border: 0;
+  background: none;
+  color: var(--text-soft);
+  font: inherit;
+  font-size: 14.5px;
+  cursor: pointer;
+}

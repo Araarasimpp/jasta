@@ -44,16 +44,16 @@
     ],
     "secciones": [
       {
-        "titulo": "Cómo se activa (una sola vez por celular)",
+        "titulo": "Cómo se activa",
         "pasos": [
           "Entra a la app con tu correo y contraseña, como siempre.",
-          "Ve a Más → Mi perfil → \"Entrar con Face ID o huella\" y toca \"Activar en este celular\".",
-          "Confirma con Face ID o tu huella. Listo."
+          "La app te pregunta \"¿Entrar con Face ID la próxima vez?\". Toca \"Activar Face ID\" y confirma con tu cara o tu huella.",
+          "Listo: desde ahí, en la pantalla de inicio sale arriba el botón \"Entrar con Face ID o huella\"."
         ]
       },
       {
-        "titulo": "Cómo se usa",
-        "texto": "En la pantalla de inicio toca \"Entrar con Face ID o huella\". En el iPhone usa Safari (o la app instalada desde Safari); en Android, Chrome. Si cambias de celular, actívalo de nuevo en el nuevo. Desde Mi perfil puedes quitar los celulares que ya no uses."
+        "titulo": "Bueno saber",
+        "texto": "Se activa una vez por celular. En el iPhone usa Safari (o la app instalada desde Safari); en Android, Chrome. Si dijiste \"Ahora no\", lo puedes activar después en Mi perfil, donde también puedes quitar los celulares que ya no uses."
       }
     ]
   },
