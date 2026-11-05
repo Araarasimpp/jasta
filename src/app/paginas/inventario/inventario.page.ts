@@ -13,6 +13,7 @@ import { urlsComprobantes } from '../../shared/comprobantes';
 import { mensajeError, numero, pesos, urlMini } from '../../shared/formato';
 import { diaCorto, formatoFechaCO, formatoHoraCO, hoyColombiaISO } from '../../shared/fecha-colombia';
 import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
+import { VariantesAgotadasComponent } from '../../shared/variantes-agotadas/variantes-agotadas.component';
 import { PesosDirective } from '../../shared/pesos/pesos.directive';
 
 interface Prod {
@@ -25,6 +26,9 @@ interface Prod {
   controla_stock: boolean;
   costo: number | null;
   vendidos_30: number;
+  /** Cuántos colores y tallas tiene, y cuántos están agotados */
+  variantes?: number;
+  agotadas?: number;
 }
 interface Movimiento { id?: number; fecha: string; tipo: 'compra' | 'ajuste' | 'anulacion' | 'venta'; cantidad: number; detalle: string | null; autor: string | null; stock_despues: number | null }
 interface Compra {
@@ -50,7 +54,7 @@ type Filtro = 'con' | 'bajos' | 'agotados' | 'sin' | 'todos';
 @Component({
   selector: 'app-inventario',
   standalone: true,
-  imports: [PesosDirective, EsqueletoComponent, FormsModule, IonIcon, ComprobantesInputComponent, RangoComponent],
+  imports: [PesosDirective, EsqueletoComponent, FormsModule, IonIcon, ComprobantesInputComponent, RangoComponent, VariantesAgotadasComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -73,6 +77,8 @@ type Filtro = 'con' | 'bajos' | 'agotados' | 'sin' | 'todos';
       .stock.sin { background: var(--surface-2); color: var(--text-muted); font-family: inherit; font-size: 12px; font-weight: 600; }
       .acc { display: flex; gap: 6px; }
       .acc .b { height: 34px; font-size: 13px; }
+      .acc .b.con-agotadas { border-color: var(--danger); color: var(--danger); }
+      .acc { flex-wrap: wrap; }
       .mas-btn { margin: 10px auto 0; display: block; }
       .movs { list-style: none; margin: 0; padding: 0; }
       .movs li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; padding: 9px 0; border-bottom: var(--perfora); font-size: 13.5px; }
@@ -190,6 +196,7 @@ type Filtro = 'con' | 'bajos' | 'agotados' | 'sin' | 'todos';
                   <span class="acc">
                     <button class="b" (click)="abrirConteo(p)">{{ p.controla_stock ? 'Contar' : 'Empezar' }}</button>
                     @if (p.controla_stock) { <button class="b" (click)="abrirHistorial(p)">Historial</button> }
+                    @if (p.variantes) { <button class="b" [class.con-agotadas]="p.agotadas" (click)="variantesDe.set(p)">Colores/tallas{{ p.agotadas ? ' · ' + p.agotadas + ' agotad' + (p.agotadas === 1 ? 'o' : 'os') : '' }}</button> }
                   </span>
                 </li>
               }
@@ -290,6 +297,10 @@ type Filtro = 'con' | 'bajos' | 'agotados' | 'sin' | 'todos';
           <button class="b b-pri" (click)="guardarConteo()" [disabled]="ocupado()">{{ ocupado() ? 'Guardando…' : 'Guardar' }}</button>
         </div>
       </div>
+    }
+
+    @if (variantesDe(); as p) {
+      <app-variantes-agotadas [productoId]="p.id" [nombre]="p.nombre" (cerrar)="variantesDe.set(null)" (guardado)="alGuardarVariantes(p, $event)"></app-variantes-agotadas>
     }
 
     <!-- Historial de un producto -->
@@ -587,6 +598,15 @@ export class InventarioPage implements OnInit {
     if (error) return this.error.set(mensajeError(error));
     this.contando.set(null);
     await this.cargar();
+  }
+
+  // ---------- Colores y tallas agotados ----------
+  variantesDe = signal<Prod | null>(null);
+
+  alGuardarVariantes(p: Prod, agotadas: number): void {
+    this.variantesDe.set(null);
+    this.productos.update((l) => l.map((x) => (x.id === p.id ? { ...x, agotadas } : x)));
+    this.toast.ok(agotadas ? `${p.nombre}: ${agotadas} ${agotadas === 1 ? 'opción agotada' : 'opciones agotadas'}` : `${p.nombre}: todo disponible`);
   }
 
   // ---------- Historial ----------

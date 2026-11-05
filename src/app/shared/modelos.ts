@@ -41,6 +41,8 @@ export interface Producto {
   imagenes?: string[] | null;
   /** Tallas disponibles (vacío = el producto no maneja tallas) */
   tallas?: string[] | null;
+  /** Tallas agotadas (no se pueden pedir) */
+  tallas_agotadas?: string[] | null;
   /** Videos del producto (bucket público "videos") */
   videos?: string[] | null;
   /** Categoría para filtrar el catálogo público (si no se pone, se sugiere por el nombre) */
@@ -55,6 +57,8 @@ export interface ProductoColor {
   hex: string | null;
   imagen_url: string | null;
   orden: number;
+  /** false = color agotado: no se puede pedir */
+  disponible?: boolean;
 }
 
 export interface Pedido {

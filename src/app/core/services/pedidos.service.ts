@@ -305,7 +305,7 @@ export class PedidosService {
     return ((this.check(
       await this.db
         .from('productos')
-        .select('id,nombre,sku,codigo_barras,precio_venta,precio_base,precio_compra,stock,controla_stock,imagen_url,activo,tallas,colores:producto_colores(id,nombre,hex,imagen_url,orden)')
+        .select('id,nombre,sku,codigo_barras,precio_venta,precio_base,precio_compra,stock,controla_stock,imagen_url,activo,tallas,tallas_agotadas,colores:producto_colores(id,nombre,hex,imagen_url,orden,disponible)')
         .eq('activo', true)
         .order('nombre')
     ) ?? []) as Producto[]).map((p) => ({ ...p, colores: [...(p.colores ?? [])].sort((a, b) => a.orden - b.orden || a.id - b.id) }));

@@ -85,6 +85,9 @@ function normal(s: string): string {
       .var.on { border-color: var(--text); background: var(--text); color: var(--bg); font-weight: 600; }
       .var .tono { width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 0 1px var(--border-strong); flex: none; }
       .var.on .tono { box-shadow: 0 0 0 1.5px var(--bg); }
+      .var.agotada { border-style: dashed; color: var(--text-muted); text-decoration: line-through; opacity: .7; }
+      .var.agotada small { font-size: 10.5px; text-decoration: none; }
+      .var:disabled { cursor: not-allowed; }
       .var.talla { min-width: 38px; justify-content: center; padding: 0 9px; font-family: var(--mono-font); }
       .pregunta { grid-column: 2 / -1; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-radius: var(--radius); background: var(--accent-wash);
         border: 1px solid var(--accent-soft); animation: aparece 180ms ease both; }
@@ -337,8 +340,9 @@ function normal(s: string): string {
                       <div class="var-fila" role="radiogroup" [attr.aria-label]="'Color de ' + l.producto.nombre">
                         <span class="var-etq" [class.pide]="!l.color">Color</span>
                         @for (c of l.producto.colores!; track c.id) {
-                          <button type="button" class="var" role="radio" [attr.aria-checked]="l.color === c.nombre" [class.on]="l.color === c.nombre" (click)="elegir(i, 'color', c.nombre)">
-                            <span class="tono" [style.background]="c.hex || '#ccc'"></span>{{ c.nombre }}</button>
+                          <button type="button" class="var" role="radio" [attr.aria-checked]="l.color === c.nombre" [class.on]="l.color === c.nombre" [class.agotada]="c.disponible === false"
+                            [disabled]="c.disponible === false && l.color !== c.nombre" (click)="elegir(i, 'color', c.nombre)" [title]="c.disponible === false ? 'Agotado' : ''">
+                            <span class="tono" [style.background]="c.hex || '#ccc'"></span>{{ c.nombre }}@if (c.disponible === false) { <small>agotado</small> }</button>
                         }
                       </div>
                     }
@@ -346,7 +350,8 @@ function normal(s: string): string {
                       <div class="var-fila" role="radiogroup" [attr.aria-label]="'Talla de ' + l.producto.nombre">
                         <span class="var-etq" [class.pide]="!l.talla">Talla</span>
                         @for (t of l.producto.tallas!; track t) {
-                          <button type="button" class="var talla" role="radio" [attr.aria-checked]="l.talla === t" [class.on]="l.talla === t" (click)="elegir(i, 'talla', t)">{{ t }}</button>
+                          <button type="button" class="var talla" role="radio" [attr.aria-checked]="l.talla === t" [class.on]="l.talla === t" [class.agotada]="tallaAgotada(l.producto, t)"
+                            [disabled]="tallaAgotada(l.producto, t) && l.talla !== t" (click)="elegir(i, 'talla', t)" [title]="tallaAgotada(l.producto, t) ? 'Agotada' : ''">{{ t }}</button>
                         }
                       </div>
                     }
@@ -686,8 +691,10 @@ export class NuevoPedidoPage implements OnInit {
 
   private lineaNueva(p: Producto, base?: Partial<Linea>): Linea {
     // Si solo hay un color o una talla, ya queda elegida
-    const color = p.colores?.length === 1 ? p.colores[0].nombre : null;
-    const talla = p.tallas?.length === 1 ? p.tallas[0] : null;
+    const colores = (p.colores ?? []).filter((c) => c.disponible !== false);
+    const tallas = (p.tallas ?? []).filter((t) => !this.tallaAgotada(p, t));
+    const color = colores.length === 1 ? colores[0].nombre : null;
+    const talla = tallas.length === 1 ? tallas[0] : null;
     return { key: ++claves, producto: p, cantidad: 1, precio: Number(p.precio_venta), color, talla, iguales: false, ...base };
   }
 
@@ -717,6 +724,10 @@ export class NuevoPedidoPage implements OnInit {
     const c = !!p.colores?.length;
     const t = !!p.tallas?.length;
     return c && t ? 'color y talla' : c ? 'color' : 'talla';
+  }
+
+  tallaAgotada(p: Producto, t: string): boolean {
+    return !!p.tallas_agotadas?.includes(t);
   }
 
   elegir(i: number, campo: 'color' | 'talla', valor: string): void {

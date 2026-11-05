@@ -1,5 +1,31 @@
 [
   {
+    "id": "2026-11-05-colores-tallas-agotados",
+    "fecha": "2026-11-05",
+    "titulo": "Marca colores y tallas agotados",
+    "cuerpo": "Cuando se acaba un color o una talla de un producto, ahora lo puedes marcar como agotado. Deja de salir en el catálogo y nadie lo puede pedir, pero el producto sigue a la venta con lo que sí hay.",
+    "roles": [
+      "admin",
+      "alistador",
+      "vendedora"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se hace (admin y alistamiento)",
+        "pasos": [
+          "Ve a Inventario y busca el producto (si no lleva inventario, míralo en \"Todos\").",
+          "Toca \"Colores/tallas\".",
+          "Toca cada color o talla que se acabó: pasa de \"Hay\" a \"Agotado\". Tócalo otra vez cuando vuelva a llegar.",
+          "Toca Guardar. En la lista el botón queda en rojo con cuántos hay agotados."
+        ]
+      },
+      {
+        "titulo": "Qué cambia",
+        "texto": "En el catálogo público ese color o talla ya no aparece; si se agotan todos, el producto sale como agotado. En Nuevo pedido sale tachado y no se puede elegir. Si alguien intenta pedirlo igual, la app no lo deja."
+      }
+    ]
+  },
+  {
     "id": "2026-11-05-cobro-link",
     "fecha": "2026-11-05",
     "titulo": "Cobra cualquier pedido con un link de pago",
