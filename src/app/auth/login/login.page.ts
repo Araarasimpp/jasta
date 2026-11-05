@@ -106,6 +106,11 @@ export class LoginPage implements OnDestroy {
 
   /** Inicio de sesión con la llave de acceso guardada en el celular (Face ID, Touch ID o huella) */
   errorBio = signal('');
+  constructor() {
+    const pk = (window as unknown as { PublicKeyCredential?: { isUserVerifyingPlatformAuthenticatorAvailable?: () => Promise<boolean> } }).PublicKeyCredential;
+    void pk?.isUserVerifyingPlatformAuthenticatorAvailable?.().then((si) => this.puedeBio.set(!!si)).catch(() => undefined);
+  }
+
   private irAlInicio(): void {
     this.router.navigateByUrl(this.sb.inicioSegunRoles());
   }
