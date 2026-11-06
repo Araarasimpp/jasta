@@ -1,0 +1,232 @@
+// Vista Tablero de Pedidos: columnas por estado con tarjetas que se arrastran
+// (como el tablero del video de referencia: columnas de color, tarjetas de vidrio, flechas de avance)
+
+.vistas {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+.vistas button {
+  height: 30px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-soft);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.vistas button.on {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.tablero {
+  --c: var(--st-pendiente);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(240px, 1fr));
+  gap: 12px;
+  align-items: start;
+  margin-top: 8px;
+  overflow-x: auto;
+  padding: 2px 24px 8px;
+  scroll-snap-type: x proximity;
+}
+
+.col {
+  --c: var(--st-pendiente);
+  display: flex;
+  flex-direction: column;
+  min-height: 220px;
+  max-height: calc(100dvh - 230px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--c) 7%, var(--surface));
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  scroll-snap-align: start;
+  transition: box-shadow 160ms var(--ease), border-color 160ms var(--ease), background 160ms var(--ease);
+}
+.col[data-estado='alistado'] { --c: var(--info); }
+.col[data-estado='despachado'] { --c: var(--st-ruta); }
+.col[data-estado='entregado'] { --c: var(--st-entregado); }
+
+// Mientras se arrastra: las columnas que aceptan se iluminan y la de encima brilla
+.tablero.arrastrando .col:not(.puede) { opacity: 0.55; }
+.col.puede { border-style: dashed; border-color: color-mix(in srgb, var(--c) 60%, transparent); }
+.col.sobre {
+  border-style: solid;
+  border-color: var(--c);
+  background: color-mix(in srgb, var(--c) 16%, var(--surface));
+  box-shadow: 0 0 0 1px var(--c), 0 0 28px color-mix(in srgb, var(--c) 35%, transparent);
+}
+
+.col-cab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px 10px;
+}
+.col-punto {
+  width: 26px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--c);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--c) 60%, transparent);
+}
+.col-cab h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+.col-n {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--c) 18%, transparent);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+}
+.col-suma {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.col-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 10px 12px;
+  overflow-y: auto;
+}
+
+.tarj {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--c) 9%, var(--surface));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: transform 140ms var(--ease), box-shadow 140ms var(--ease);
+}
+.tarj[draggable='true'] { cursor: grab; }
+.tarj[draggable='true']:active { cursor: grabbing; }
+@media (hover: hover) {
+  .tarj:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18), 0 0 0 1px color-mix(in srgb, var(--c) 40%, transparent);
+  }
+}
+.tarj.mia {
+  opacity: 0.5;
+  transform: rotate(-2deg) scale(0.98);
+}
+.tarj:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.tarj-cab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tarj-id {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.tarj-chip {
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--text-soft);
+}
+.tarj-total {
+  margin-left: auto;
+  font-size: 15px;
+  font-weight: 700;
+}
+.tarj-cli {
+  font-size: 14px;
+  line-height: 1.25;
+}
+.tarj-sub {
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+// Flechas de avance (como las del video): una por paso, encendidas hasta el estado actual
+.tarj-pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+}
+.flechas {
+  display: inline-flex;
+  gap: 2px;
+}
+.flechas i {
+  width: 16px;
+  height: 10px;
+  background: var(--border-strong);
+  clip-path: polygon(0 0, 70% 0, 100% 50%, 70% 100%, 0 100%, 30% 50%);
+}
+.flechas i.on {
+  background: var(--c);
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--c) 70%, transparent));
+}
+.tarj-sig {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--c) 50%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--c) 14%, transparent);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.col-vacia {
+  margin: 0;
+  padding: 18px 6px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.tablero-ayuda {
+  margin: 8px 24px 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.mensajeros-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+}
+.mensajeros-lista .b { height: 46px; }
+
+// Celular: las columnas se deslizan de lado, una casi completa a la vez
+@media (max-width: 860px) {
+  .tablero {
+    grid-template-columns: repeat(4, 84vw);
+    margin: 8px 0 0;
+    padding: 0 16px 8px;
+  }
+  .col { max-height: none; }
+  .tablero-ayuda { margin: 8px 16px 0; }
+}

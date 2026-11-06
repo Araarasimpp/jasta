@@ -27,6 +27,10 @@
     </nav>
   </div>
   <div class="toolbar toolbar-fechas">
+    <div class="vistas" role="group" aria-label="Vista">
+      <button type="button" [class.on]="vista() === 'lista'" [attr.aria-pressed]="vista() === 'lista'" (click)="cambiarVista('lista')">Lista</button>
+      <button type="button" [class.on]="vista() === 'tablero'" [attr.aria-pressed]="vista() === 'tablero'" (click)="cambiarVista('tablero')">Tablero</button>
+    </div>
     <span class="espacio"></span>
     @if (filtro() === 'alistado' && gestiona() && alistadosSinRotulo() > 0) {
       <button class="btn-imprimir-alistados" (click)="imprimirAlistados()" [disabled]="imprimiendo()"
@@ -61,7 +65,51 @@
     <p class="error-carga" role="alert">{{ error() }} <button class="btn" (click)="cargar()">Reintentar</button></p>
   }
 
-  @if (!cargando() || filas().length) {
+  @if (vista() === 'tablero' && (!cargando() || filas().length)) {
+    <div class="tablero" [class.arrastrando]="!!arrastrando()">
+      @for (c of tablero(); track c.estado) {
+        <section class="col" [attr.data-estado]="c.estado" [class.sobre]="sobre() === c.estado"
+          [class.puede]="arrastrando() && sePuedeMover(arrastrando()!, c.estado)"
+          (dragover)="encima(c.estado, $event)" (dragleave)="sobre() === c.estado && sobre.set(null)" (drop)="soltar(c.estado, $event)">
+          <header class="col-cab">
+            <span class="col-punto" aria-hidden="true"></span>
+            <h2>{{ c.titulo }}</h2>
+            <span class="col-n num">{{ c.total }}</span>
+            <span class="col-suma num">{{ pesos(c.subtotal) }}</span>
+          </header>
+          <div class="col-lista">
+            @for (p of c.pedidos; track p.id) {
+              <article class="tarj" [class.mia]="arrastrando()?.id === p.id" [attr.draggable]="gestiona() && p.canal !== 'local'"
+                (dragstart)="empezarArrastre(p, $event)" (dragend)="terminarArrastre()" (click)="abierto.set(p.id)" tabindex="0" (keydown.enter)="abierto.set(p.id)">
+                <div class="tarj-cab">
+                  <span class="tarj-id num">#{{ p.id }}</span>
+                  @if (ordinal(p) && p.estado === 'alistado') { <span class="tarj-chip">{{ ordinal(p) }}</span> }
+                  @if (p.envio_nacional) { <span class="tarj-chip">Nacional</span> }
+                  <span class="tarj-total num">{{ pesos(p.total) }}</span>
+                </div>
+                <strong class="tarj-cli">{{ p.cliente_nombre }}</strong>
+                <span class="tarj-sub">{{ p.barrio || p.destino_ciudad || '—' }} · {{ (p.pedido_items?.length || 0) }} {{ p.pedido_items?.length === 1 ? 'producto' : 'productos' }}</span>
+                @if (p.estado === 'despachado') { <span class="tarj-sub">🛵 {{ nombreMensajero(p) }}</span> }
+                <div class="tarj-pie">
+                  <span class="flechas" aria-hidden="true">
+                    @for (n of pasos; track n) { <i [class.on]="n <= pasoDe(p.estado)"></i> }
+                  </span>
+                  @if (siguiente(p); as sig) {
+                    <button type="button" class="tarj-sig" (click)="$event.stopPropagation(); mover(p, sig)"
+                      [attr.aria-label]="'Pasar a ' + (sig === 'alistado' ? 'Alistados' : sig === 'despachado' ? 'En ruta' : 'Entregados')">
+                      {{ sig === 'alistado' ? 'Alistar' : sig === 'despachado' ? 'Despachar' : 'Entregar' }} →</button>
+                  }
+                </div>
+              </article>
+            } @empty {
+              <p class="col-vacia">{{ arrastrando() && sePuedeMover(arrastrando()!, c.estado) ? 'Suéltalo aquí' : 'Nada por aquí' }}</p>
+            }
+          </div>
+        </section>
+      }
+    </div>
+    @if (gestiona()) { <p class="tablero-ayuda">Arrastra las tarjetas para alistar, despachar o devolver un pedido. Para entregarlo se abre el pedido y se registra el pago.</p> }
+  } @else if (!cargando() || filas().length) {
     @if (grupos().length) {
       <div class="list">
         <div class="list-head row-grid">
@@ -313,4 +361,19 @@
 
 @if (fichaProducto(); as f) {
   <app-producto-detalle [producto]="f.producto" [fotos]="f.fotos" [colorInicial]="f.color" modo="pedido" (cerrar)="fichaProducto.set(null)"></app-producto-detalle>
+}
+
+@if (despachoDe(); as p) {
+  <button class="velo" aria-label="Cerrar" (click)="despachoDe.set(null)"></button>
+  <div class="hoja hoja-centro" role="dialog" aria-labelledby="t-desp">
+    <div class="hoja-head"><h2 id="t-desp">Despachar #{{ p.id }} · ¿con quién?</h2></div>
+    <div class="hoja-body">
+      <div class="mensajeros-lista">
+        @for (m of mensajeros(); track m.id) {
+          <button type="button" class="b" (click)="despacharCon(m.id)">{{ m.nombre }}</button>
+        } @empty { <p>No hay mensajeros activos.</p> }
+      </div>
+    </div>
+    <div class="hoja-pie"><button class="b" (click)="despachoDe.set(null)">Cancelar</button></div>
+  </div>
 }

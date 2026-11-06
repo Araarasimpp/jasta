@@ -1,5 +1,38 @@
 [
   {
+    "id": "2026-11-06-diseno-neon",
+    "fecha": "2026-11-05",
+    "hora": "19:53",
+    "titulo": "Nuevo diseño y tablero de pedidos",
+    "cuerpo": "La app estrena diseño: fondo oscuro con brillo verde, acento verde lima y paneles de vidrio. En Pedidos hay una vista nueva de Tablero.",
+    "roles": [
+      "admin",
+      "cuadres",
+      "vendedora",
+      "mensajero",
+      "alistador",
+      "venta_local",
+      "recolector"
+    ],
+    "secciones": [
+      {
+        "titulo": "Diseño",
+        "pasos": [
+          "Tarjetas y paneles de vidrio, esquinas redondeadas y el número más importante de cada pantalla con borde que brilla.",
+          "Funciona en modo oscuro (el principal) y en modo claro."
+        ]
+      },
+      {
+        "titulo": "Tablero de pedidos",
+        "pasos": [
+          "En Pedidos toca \"Tablero\": los pedidos se ven en columnas (Por alistar, Alistados, En ruta, Entregados).",
+          "Arrastra una tarjeta para alistarla, despacharla (te pregunta el mensajero) o devolverla. En el celular usa el botón de cada tarjeta.",
+          "Para entregar, se abre el pedido y se registra el pago, como siempre."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-11-06-cambio-otro-producto",
     "fecha": "2026-11-05",
     "hora": "19:44",

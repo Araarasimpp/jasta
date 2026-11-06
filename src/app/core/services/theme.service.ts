@@ -23,6 +23,8 @@ export class ThemeService {
   }
 
   private applyTheme(dark: boolean): void {
+    // Diseño Neón (vidrio y acento verde lima)
+    document.body.classList.add('neon');
     document.body.classList.toggle('dark', dark);
   }
 }

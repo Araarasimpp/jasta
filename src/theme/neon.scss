@@ -1,0 +1,281 @@
+// src/theme/neon.scss
+// Diseño "Neón" (rama diseno-neon): fondo casi negro con brillo verde de bosque, acento verde
+// lima, paneles de vidrio esmerilado con borde de luz y esquinas redondeadas.
+// Se activa con la clase body.neon (la pone ThemeService). Los selectores van con body.neon
+// para ganarle a los estilos de cada componente.
+
+// ------------------------------------------------------------------ Colores (claro)
+body.neon {
+  --tinta: #10140f;
+  --oro: #65a30d;
+  --oro-texto: #4d7c0f;
+  --oro-wash: rgba(132, 204, 22, 0.14);
+  --oro-soft: rgba(132, 204, 22, 0.28);
+  --efectivo: #16a34a;
+  --efectivo-texto: #15803d;
+  --cobalto: #2563eb;
+
+  --bg: #eef2e9;
+  --surface: rgba(255, 255, 255, 0.78);
+  --surface-2: rgba(16, 20, 15, 0.035);
+  --hover: rgba(16, 20, 15, 0.05);
+  --selected: rgba(132, 204, 22, 0.16);
+
+  --text: #10140f;
+  --text-2: #1c2219;
+  --text-soft: #4a5446;
+  --text-muted: #6b7567;
+
+  --border: rgba(16, 20, 15, 0.09);
+  --border-soft: rgba(16, 20, 15, 0.05);
+  --border-strong: rgba(16, 20, 15, 0.16);
+
+  --accent: #5b8c00;
+  --accent-hover: #4d7700;
+  --on-accent: #ffffff;
+  --accent-soft: rgba(132, 204, 22, 0.24);
+  --accent-wash: rgba(132, 204, 22, 0.12);
+
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --shadow-pop: 0 18px 44px rgba(16, 20, 15, 0.16), 0 0 0 1px rgba(16, 20, 15, 0.05);
+
+  --neon: #84cc16;
+  --neon-glow: rgba(132, 204, 22, 0.3);
+  --vidrio-borde: rgba(255, 255, 255, 0.7);
+  --vidrio-luz: rgba(255, 255, 255, 0.85);
+  --ion-background-color: transparent;
+}
+
+// ------------------------------------------------------------------ Colores (oscuro: el del video)
+body.neon.dark {
+  --tinta: #eef3e8;
+  --oro: #c6f432;
+  --oro-texto: #d4ff4f;
+  --oro-wash: rgba(198, 244, 50, 0.1);
+  --oro-soft: rgba(198, 244, 50, 0.22);
+  --efectivo: #4ade80;
+  --efectivo-texto: #6ee7a0;
+  --cobalto: #60a5fa;
+
+  --bg: #070908;
+  --surface: rgba(22, 27, 23, 0.74);
+  --surface-2: rgba(255, 255, 255, 0.04);
+  --hover: rgba(255, 255, 255, 0.06);
+  --selected: rgba(198, 244, 50, 0.12);
+
+  --text: #eef3e8;
+  --text-2: #dfe6d8;
+  --text-soft: #a8b2a3;
+  --text-muted: #7f8a7a;
+
+  --border: rgba(255, 255, 255, 0.08);
+  --border-soft: rgba(255, 255, 255, 0.05);
+  --border-strong: rgba(255, 255, 255, 0.15);
+
+  --accent: #c6f432;
+  --accent-hover: #d6ff5c;
+  --on-accent: #0b0f0a;
+  --accent-soft: rgba(198, 244, 50, 0.2);
+  --accent-wash: rgba(198, 244, 50, 0.1);
+
+  --danger: #ff6b5e;
+  --danger-wash: rgba(255, 107, 94, 0.13);
+  --ok-wash: rgba(74, 222, 128, 0.12);
+  --ruta-wash: rgba(96, 165, 250, 0.14);
+  --st-cancelado: #ff6b5e;
+  --st-cancelado-text: #ff8a7f;
+
+  --shadow-pop: 0 20px 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --neon: #c6f432;
+  --neon-glow: rgba(198, 244, 50, 0.35);
+  --vidrio-borde: rgba(255, 255, 255, 0.09);
+  --vidrio-luz: rgba(255, 255, 255, 0.06);
+}
+
+// ------------------------------------------------------------------ Fondo con brillo
+body.neon {
+  background:
+    radial-gradient(900px 520px at 8% -8%, rgba(132, 204, 22, 0.16), transparent 62%),
+    radial-gradient(800px 600px at 105% 10%, rgba(34, 197, 94, 0.1), transparent 60%),
+    radial-gradient(1000px 700px at 50% 115%, rgba(101, 163, 13, 0.12), transparent 62%),
+    var(--bg);
+  background-attachment: fixed;
+}
+body.neon.dark {
+  background:
+    radial-gradient(900px 520px at 8% -8%, rgba(198, 244, 50, 0.13), transparent 62%),
+    radial-gradient(800px 640px at 105% 6%, rgba(34, 197, 94, 0.09), transparent 60%),
+    radial-gradient(1100px 760px at 50% 118%, rgba(22, 78, 38, 0.42), transparent 62%),
+    var(--bg);
+  background-attachment: fixed;
+}
+// El contenido deja ver el fondo (antes tenía su propio color sólido)
+body.neon .shell,
+body.neon .layout,
+body.neon main.content,
+body.neon ion-app,
+body.neon ion-content {
+  background: transparent;
+  --background: transparent;
+}
+
+// ------------------------------------------------------------------ Títulos
+body.neon h1 {
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+// ------------------------------------------------------------------ Vidrio: paneles, KPIs, hojas, barra lateral
+body.neon .panel,
+body.neon .kpi,
+body.neon .hoja,
+body.neon .sidebar,
+body.neon .more-sheet,
+body.neon .tarjeta {
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
+}
+
+body.neon .panel {
+  border-color: var(--vidrio-borde);
+  border-radius: var(--radius-lg);
+  box-shadow: inset 0 1px 0 var(--vidrio-luz), 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+body.neon.dark .panel {
+  box-shadow: inset 0 1px 0 var(--vidrio-luz), 0 14px 40px rgba(0, 0, 0, 0.35);
+}
+
+// KPIs: tarjetas sueltas de vidrio (antes una grilla con rayas)
+body.neon .kpis {
+  gap: 10px;
+  border: 0;
+  background: transparent;
+  overflow: visible;
+}
+body.neon .kpi {
+  border: 1px solid var(--vidrio-borde);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: inset 0 1px 0 var(--vidrio-luz);
+  transition: transform 180ms var(--ease), box-shadow 180ms var(--ease);
+}
+@media (hover: hover) {
+  body.neon a.kpi:hover {
+    transform: translateY(-2px);
+    box-shadow: inset 0 1px 0 var(--vidrio-luz), 0 0 0 1px var(--neon-glow), 0 10px 30px rgba(0, 0, 0, 0.18);
+  }
+}
+// El número que más importa: borde neón que brilla
+body.neon .kpi-principal {
+  background: linear-gradient(155deg, var(--oro-soft), var(--oro-wash) 55%, var(--surface));
+  border-color: var(--neon-glow);
+  box-shadow: inset 0 1px 0 var(--vidrio-luz), 0 0 0 1px var(--neon-glow), 0 0 26px var(--oro-wash);
+}
+body.neon.dark .kpi-principal .kpi-valor {
+  color: var(--neon);
+  text-shadow: 0 0 18px rgba(198, 244, 50, 0.35);
+}
+body.neon .kpi-valor {
+  font-weight: 700;
+}
+
+// Hojas (paneles que suben o salen de lado)
+body.neon .hoja {
+  border-color: var(--vidrio-borde);
+}
+body.neon.dark .hoja {
+  background: rgba(16, 20, 17, 0.9);
+}
+body.neon .velo {
+  background: rgba(4, 6, 5, 0.45);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+// Barra lateral
+body.neon .sidebar {
+  border-right-color: var(--vidrio-borde);
+}
+
+// ------------------------------------------------------------------ Botones
+body.neon .b {
+  border-radius: var(--radius-sm);
+  transition: background var(--dur) var(--ease), box-shadow 180ms var(--ease), transform 120ms var(--ease);
+}
+body.neon .b:active:not(:disabled) {
+  transform: scale(0.97);
+}
+body.neon .b-pri {
+  font-weight: 650;
+}
+body.neon.dark .b-pri {
+  box-shadow: 0 0 0 1px rgba(198, 244, 50, 0.5), 0 6px 22px rgba(198, 244, 50, 0.22);
+}
+@media (hover: hover) {
+  body.neon.dark .b-pri:hover {
+    box-shadow: 0 0 0 1px rgba(198, 244, 50, 0.7), 0 8px 30px rgba(198, 244, 50, 0.35);
+  }
+}
+body.neon.dark .b-ok {
+  color: #06140b;
+  font-weight: 650;
+  box-shadow: 0 6px 20px rgba(74, 222, 128, 0.22);
+}
+
+// ------------------------------------------------------------------ Campos
+body.neon .campo input,
+body.neon .campo select,
+body.neon .campo textarea,
+body.neon .inp {
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+body.neon .campo input:focus,
+body.neon .campo select:focus,
+body.neon .campo textarea:focus,
+body.neon .inp:focus {
+  border-color: var(--neon);
+  box-shadow: 0 0 0 3px var(--accent-wash);
+}
+
+// ------------------------------------------------------------------ Barra inferior del celular
+body.neon.dark .pill-nav {
+  --pn-fondo: rgba(14, 18, 15, 0.5);
+}
+body.neon.dark .pill-nav a.active,
+body.neon.dark .pill-nav .tab.active {
+  box-shadow: inset 0 0 0 1px rgba(198, 244, 50, 0.25);
+}
+body.neon.dark .pill-center .pill-action ion-icon {
+  box-shadow: 0 0 18px rgba(198, 244, 50, 0.45);
+}
+
+// Barra de estado del iPhone: que no tape el brillo con un color sólido
+body.neon .layout::before,
+body.neon .shell::before {
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+// Celular: menos desenfoque (más rápido)
+@media (max-width: 860px) {
+  body.neon .panel,
+  body.neon .kpi {
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  body.neon .panel,
+  body.neon .kpi,
+  body.neon .hoja,
+  body.neon .sidebar {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}

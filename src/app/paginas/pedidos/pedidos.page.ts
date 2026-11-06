@@ -60,7 +60,7 @@ const ETIQUETA_GRUPO: Record<EstadoPedido, string> = {
   standalone: true,
   imports: [FormsModule, RouterLink, IonIcon, PedidoDetalleComponent, NovedadComponent, AvatarComponent, EstadoIconComponent, ProductoDetalleComponent],
   templateUrl: './pedidos.page.html',
-  styleUrls: ['./pedidos.page.scss'],
+  styleUrls: ['./pedidos.page.scss', './tablero.scss'],
 })
 export class PedidosPage implements OnInit, OnDestroy {
   private ps = inject(PedidosService);
@@ -198,6 +198,7 @@ export class PedidosPage implements OnInit, OnDestroy {
     // Desde el Inicio de alistamiento ("Sin rótulo") llega ?rotulo=pendiente
     const rot = this.route.snapshot.queryParamMap.get('rotulo');
     if (rot === 'pendiente' || rot === 'impreso') this.filtroRotulo = rot;
+    if (this.vista() === 'tablero' && !est) this.filtro.set('todos');
     this.irPagina(0);
     // Los cambios de otros (realtime) llegan seguidos: se agrupan en una sola recarga
     this.dejarDeEscuchar = this.ps.escuchar(() => {
@@ -462,6 +463,109 @@ export class PedidosPage implements OnInit, OnDestroy {
     else this.toast.ok(lista.length === 1 ? `#${lista[0].id} ${texto.replace('(s)', '')}` : `${ok} pedidos ${texto.replace('(s)', 's')}`);
     this.sel.set(new Set());
     await this.cargar();
+  }
+
+  // ---------- Tablero (columnas por estado, se arrastran las tarjetas) ----------
+  vista = signal<'lista' | 'tablero'>(PedidosPage.vistaGuardada());
+  readonly columnas: { estado: EstadoPedido; titulo: string; paso: number }[] = [
+    { estado: 'por_alistar', titulo: 'Por alistar', paso: 1 },
+    { estado: 'alistado', titulo: 'Alistados', paso: 2 },
+    { estado: 'despachado', titulo: 'En ruta', paso: 3 },
+    { estado: 'entregado', titulo: 'Entregados', paso: 4 },
+  ];
+  pasos = [1, 2, 3, 4];
+  /** Pedidos de cada columna, en el mismo orden que la lista */
+  tablero = computed(() => {
+    const porEstado = new Map(this.grupos().map((g) => [g.estado, g]));
+    return this.columnas.map((c) => {
+      const g = porEstado.get(c.estado);
+      return { ...c, pedidos: g?.pedidos ?? [], total: g?.total ?? this.conteos()[c.estado] ?? 0, subtotal: g?.subtotal ?? 0 };
+    });
+  });
+  arrastrando = signal<Pedido | null>(null);
+  sobre = signal<EstadoPedido | null>(null);
+  /** Pedido que se soltó en En ruta: falta elegir el mensajero */
+  despachoDe = signal<Pedido | null>(null);
+
+  private static vistaGuardada(): 'lista' | 'tablero' {
+    try {
+      return localStorage.getItem('pedidos-vista') === 'tablero' ? 'tablero' : 'lista';
+    } catch {
+      return 'lista';
+    }
+  }
+
+  cambiarVista(v: 'lista' | 'tablero'): void {
+    this.vista.set(v);
+    try { localStorage.setItem('pedidos-vista', v); } catch { /* sin almacenamiento */ }
+    // El tablero muestra todos los estados a la vez
+    if (v === 'tablero' && this.filtro() !== 'todos') this.cambiarFiltro('todos');
+  }
+
+  /** ¿Se puede soltar este pedido en esa columna? */
+  sePuedeMover(p: Pedido, a: EstadoPedido): boolean {
+    if (!this.gestiona() || p.estado === a || p.canal === 'local') return false;
+    if (p.estado === 'por_alistar') return a === 'alistado';
+    if (p.estado === 'alistado') return a === 'por_alistar' || (a === 'despachado' && this.puedeAsignar(p));
+    if (p.estado === 'despachado') return a === 'alistado' || a === 'entregado';
+    return false;
+  }
+
+  empezarArrastre(p: Pedido, ev: DragEvent): void {
+    this.arrastrando.set(p);
+    ev.dataTransfer?.setData('text/plain', String(p.id));
+    if (ev.dataTransfer) ev.dataTransfer.effectAllowed = 'move';
+  }
+
+  terminarArrastre(): void {
+    this.arrastrando.set(null);
+    this.sobre.set(null);
+  }
+
+  encima(estado: EstadoPedido, ev: DragEvent): void {
+    const p = this.arrastrando();
+    if (!p || !this.sePuedeMover(p, estado)) return;
+    ev.preventDefault();
+    if (ev.dataTransfer) ev.dataTransfer.dropEffect = 'move';
+    this.sobre.set(estado);
+  }
+
+  async soltar(estado: EstadoPedido, ev: DragEvent): Promise<void> {
+    ev.preventDefault();
+    const p = this.arrastrando();
+    this.terminarArrastre();
+    if (!p || !this.sePuedeMover(p, estado)) return;
+    await this.mover(p, estado);
+  }
+
+  /** Lo mismo que hacen los botones de la lista (con sus reglas) */
+  async mover(p: Pedido, a: EstadoPedido): Promise<void> {
+    if (p.estado === 'por_alistar' && a === 'alistado') return this.alistar([p]);
+    if (p.estado === 'alistado' && a === 'por_alistar') return this.quitarAlistado(p);
+    if (p.estado === 'alistado' && a === 'despachado') return void this.despachoDe.set(p);
+    if (p.estado === 'despachado' && a === 'alistado') return this.asignar(p, null);
+    if (p.estado === 'despachado' && a === 'entregado') {
+      // Para entregarlo hay que registrar cómo pagó: se abre el pedido
+      this.toast.ok('Registra la entrega y el pago en el pedido');
+      this.abierto.set(p.id);
+    }
+  }
+
+  /** Botón de la tarjeta (en el celular no se arrastra): avanza al siguiente estado */
+  siguiente(p: Pedido): EstadoPedido | null {
+    const orden: EstadoPedido[] = ['por_alistar', 'alistado', 'despachado', 'entregado'];
+    const n = orden[orden.indexOf(p.estado) + 1];
+    return n && this.sePuedeMover(p, n) ? n : null;
+  }
+
+  async despacharCon(id: number): Promise<void> {
+    const p = this.despachoDe();
+    this.despachoDe.set(null);
+    if (p) await this.asignar(p, id);
+  }
+
+  pasoDe(e: EstadoPedido): number {
+    return this.columnas.find((c) => c.estado === e)?.paso ?? 0;
   }
 
   // ---------- Rótulos ----------
