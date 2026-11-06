@@ -109,6 +109,7 @@ function finMes(): string {
         .a-pedidos { order: 1; } .a-graf { order: 2; } .a-atencion { order: 3; } .a-mes { order: 4; } .a-pagos { order: 5; } .a-local { order: 6; } .a-vend { order: 7; } .a-prod { order: 8; }
         .a-hoy { order: 0; }
         .local-cuerpo { grid-template-columns: 1fr; }
+        .spark { display: none; }
       }
       .head .acciones { display: flex; gap: 8px; }
       a.kpi { color: inherit; text-decoration: none; }
