@@ -1,5 +1,39 @@
 [
   {
+    "id": "2026-11-06-diseno-vidrio-tema",
+    "fecha": "2026-11-05",
+    "hora": "20:16",
+    "titulo": "Nuevo diseño de vidrio y fondo personalizable",
+    "cuerpo": "La app ahora tiene una foto de fondo y todo encima es de vidrio esmerilado. El fondo lo eliges tú en Ajustes → Tema.",
+    "roles": [
+      "admin",
+      "cuadres",
+      "vendedora",
+      "mensajero",
+      "alistador",
+      "venta_local",
+      "recolector"
+    ],
+    "secciones": [
+      {
+        "titulo": "Tema",
+        "pasos": [
+          "En el menú → Ajustes → Tema (o el botón de la paleta arriba a la derecha en el computador).",
+          "Elige uno de los 10 fondos que vienen con la app o sube tu propia imagen.",
+          "Puedes oscurecer o desenfocar el fondo y hacer el vidrio más sólido si te cuesta leer.",
+          "Escoge vidrio oscuro o vidrio claro. Todo se guarda en ese celular o computador."
+        ]
+      },
+      {
+        "titulo": "En el computador",
+        "pasos": [
+          "Arriba hay una barra con un saludo, tus secciones principales y los avisos.",
+          "El menú de la izquierda es una barra flotante de íconos: al tocar un grupo se abre completo."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-11-06-cambio-otro-producto",
     "fecha": "2026-11-05",
     "hora": "19:44",

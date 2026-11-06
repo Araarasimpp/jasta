@@ -4,6 +4,7 @@
  */
 @use './theme/tema.scss' as *;
 @use './theme/gestion.scss';
+@use './theme/vidrio.scss';
 
 /* Tipografías servidas desde la app (sin depender de Google Fonts) */
 @import "@fontsource-variable/geist/index.css";

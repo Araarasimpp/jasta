@@ -7,6 +7,7 @@ import {
   add,
   barChartOutline,
   calendarOutline,
+  colorPaletteOutline,
   hourglassOutline,
   swapHorizontalOutline,
   searchOutline,
@@ -55,6 +56,7 @@ import { SupabaseService } from '../core/services/supabase.service';
 import { RequisitosComponent } from '../shared/requisitos/requisitos.component';
 import { TransferenciasAlertaComponent } from '../shared/transferencias-alerta/transferencias-alerta.component';
 import { ThemeService } from '../core/services/theme.service';
+import { FondoService } from '../core/services/fondo.service';
 import { ROLES, Rol } from '../shared/modelos';
 import { ToastComponent } from '../shared/toast/toast.component';
 import { AvatarComponent } from '../shared/avatar/avatar.component';
@@ -131,6 +133,7 @@ const MENU: ItemMenu[] = [
   { label: 'Actividad', path: '/app/actividad', icon: 'time-outline', roles: ['admin'], grupo: 'Equipo' , buscar: 'historial cambios' },
 
   { label: 'Configuración', path: '/app/configuracion', icon: 'settings-outline', roles: ['admin'], grupo: 'Ajustes' , buscar: 'qr cuentas telegram whatsapp rotulo' },
+  { label: 'Tema', path: '/app/tema', icon: 'color-palette-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador', 'venta_local', 'recolector'], grupo: 'Ajustes', buscar: 'fondo pantalla imagen foto apariencia colores modo oscuro claro' },
   { label: 'Actualizaciones', path: '/app/actualizaciones', icon: 'sparkles-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador', 'venta_local', 'recolector'], grupo: 'Ajustes' , buscar: 'novedades nuevo ayuda' },
   { label: 'Mi perfil', path: '/app/perfil', icon: 'person-circle-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador', 'venta_local', 'recolector'], grupo: 'Ajustes' , buscar: 'foto contraseña' },
 ];
@@ -141,6 +144,7 @@ const MENU: ItemMenu[] = [
   imports: [RouterOutlet, RouterLink, RouterLinkActive, NgTemplateOutlet, IonIcon, ToastComponent, AvatarComponent, AvisosPanelComponent, RequisitosComponent, TransferenciasAlertaComponent],
   styleUrls: ['../shared/pill-nav.scss', './shell.component.scss'],
   template: `
+    <div class="vd-fondo" aria-hidden="true"></div>
     <div class="shell" [class.collapsed]="colapsado()">
       <aside class="sidebar">
         <div class="brand">
@@ -164,11 +168,17 @@ const MENU: ItemMenu[] = [
 
         <nav class="menu" aria-label="Secciones">
           @if (colapsado()) {
-            @for (item of menu(); track item.path) {
+            <!-- Barra de íconos: las secciones sueltas y un ícono por grupo (al tocarlo se abre el menú en ese grupo) -->
+            @for (item of sueltos(); track item.path) {
               <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.path === '/app/pedidos' }"
                 class="menu-item" [attr.aria-label]="item.label" [title]="item.label">
                 <ion-icon [name]="item.icon"></ion-icon>
               </a>
+            }
+            @for (g of grupos(); track g.id) {
+              <button type="button" class="menu-item grupo-ico" [class.active]="g.activo" (click)="abrirGrupo(g.id)" [attr.aria-label]="g.id" [title]="g.id">
+                <ion-icon [name]="g.icon"></ion-icon>
+              </button>
             }
           } @else {
             @for (item of sueltos(); track item.path) {
@@ -235,6 +245,26 @@ const MENU: ItemMenu[] = [
       </aside>
 
       <main class="content">
+        <!-- Barra superior (diseño Vidrio, escritorio): saludo, secciones principales y accesos -->
+        <header class="vd-top">
+          <span class="vd-saludo">{{ saludo() }}</span>
+          <nav class="vd-nav" aria-label="Secciones principales">
+            @for (item of principales(); track item.path) {
+              <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.path === '/app/pedidos' }">
+                <ion-icon [name]="item.icon"></ion-icon>{{ item.label }}</a>
+            }
+          </nav>
+          <div class="vd-der">
+            <a class="vd-circ" routerLink="/app/tema" aria-label="Tema y fondo" title="Tema y fondo"><ion-icon name="color-palette-outline"></ion-icon></a>
+            <button class="vd-circ" (click)="avisos.toggle()" [attr.aria-label]="'Avisos' + (avisos.noLeidas() ? ', ' + avisos.noLeidas() + ' sin leer' : '')">
+              <ion-icon name="notifications-outline"></ion-icon>
+              @if (avisos.noLeidas()) { <span class="badge-num num">{{ avisos.noLeidas() > 9 ? '9+' : avisos.noLeidas() }}</span> }
+            </button>
+            <a routerLink="/app/perfil" [attr.aria-label]="'Mi perfil: ' + sb.usuario()?.nombre">
+              <app-avatar [nombre]="sb.usuario()?.nombre" [foto]="sb.usuario()?.avatar_url" [usuario]="sb.usuario()?.id" [tam]="38"></app-avatar>
+            </a>
+          </div>
+        </header>
         <app-transferencias-alerta></app-transferencias-alerta>
         <router-outlet></router-outlet>
       </main>
@@ -327,6 +357,8 @@ const MENU: ItemMenu[] = [
 export class ShellComponent implements OnInit, OnDestroy {
   sb = inject(SupabaseService);
   theme = inject(ThemeService);
+  /** Aplica la foto de fondo del diseño Vidrio (Ajustes → Tema) */
+  fondo = inject(FondoService);
   avisos = inject(NotificacionesService);
   private presencia = inject(PresenciaService);
   private router = inject(Router);
@@ -388,6 +420,19 @@ export class ShellComponent implements OnInit, OnDestroy {
 
   /** En el celular caben 2 secciones en la barra (más Nuevo, Avisos y Más); el resto va en "Más" */
   tabs = computed(() => this.menu().slice(0, 2));
+  /** Desde la barra de íconos: abre el menú completo con ese grupo desplegado */
+  abrirGrupo(id: string): void {
+    if (this.colapsado()) this.alternarMenu();
+    if (!this.abierto(id)) this.alternarGrupo(id);
+  }
+
+  /** Las 4 primeras secciones, en la barra superior del diseño Vidrio */
+  principales = computed(() => this.menu().slice(0, 4));
+  saludo = computed(() => {
+    const h = Number(new Intl.DateTimeFormat('es-CO', { hour: 'numeric', hour12: false, timeZone: 'America/Bogota' }).format(new Date()));
+    const nombre = (this.sb.usuario()?.nombre ?? '').trim().split(/\s+/)[0];
+    return (h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches') + (nombre ? `, ${nombre}` : '');
+  });
   masItems = computed(() => this.menu().slice(2));
 
   /** Buscador del menú del celular */
@@ -431,7 +476,7 @@ export class ShellComponent implements OnInit, OnDestroy {
   );
 
   constructor() {
-    addIcons({ calendarOutline, hourglassOutline, swapHorizontalOutline, searchOutline, 
+    addIcons({ colorPaletteOutline, calendarOutline, hourglassOutline, swapHorizontalOutline, searchOutline, 
       sparklesOutline, globeOutline, chatbubblesOutline, analyticsOutline, add, close, chevronDownOutline, layersOutline, pricetagsOutline, returnDownBackOutline, pieChartOutline, alertCircleOutline, cardOutline, trendingDownOutline, barChartOutline, chevronBackOutline, chevronForwardOutline, cubeOutline, ellipsisHorizontal,
       logOutOutline, moonOutline, peopleOutline, receiptOutline, bicycleOutline, clipboardOutline, sunnyOutline, walletOutline, ticketOutline, statsChartOutline, settingsOutline,
       storefrontOutline, listOutline, trophyOutline, bookOutline, gridOutline, cashOutline, bagHandleOutline, peopleCircleOutline, timeOutline, personCircleOutline, notificationsOutline, locationOutline,
