@@ -528,3 +528,9 @@
 @media (prefers-reduced-motion: reduce) {
   .auth-marca, .am-foto, .am-logo, .am-nombre, .auth-marca .am-txt p, .auth-card { animation: none; }
 }
+
+// Face ID y huella: dos píldoras lado a lado (como "Google / Apple" del reel)
+.bio-fila { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.bio-fila .bio-btn { width: 100%; gap: 10px; }
+.bio-nota { margin: 10px 0 0; font-size: 12.5px; line-height: 1.45; text-align: center; color: var(--text-muted); }
+.bio-sep { margin: 18px 0 14px; }

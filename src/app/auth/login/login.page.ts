@@ -74,12 +74,20 @@ function guardarBio(v: 'si' | 'pendiente' | null): void {
 
         @if (puedeBio()) {
           <div class="bio-sep"><span>o continúa con</span></div>
-          <button type="button" class="bio-btn" [disabled]="cargando()" (click)="entrarBiometria()">
-            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-              <path d="M7 3H5a2 2 0 0 0-2 2v2M17 3h2a2 2 0 0 1 2 2v2M7 21H5a2 2 0 0 1-2-2v-2M17 21h2a2 2 0 0 0 2-2v-2M9 9v1M15 9v1M12 9v4h-1M9 16c1.7 1.3 4.3 1.3 6 0" />
-            </svg>
-            {{ cargando() ? 'Entrando…' : 'Entrar con Face ID o huella' }}
-          </button>
+          <div class="bio-fila">
+            <button type="button" class="bio-btn" [disabled]="cargando()" (click)="entrarBiometria()" aria-label="Entrar con Face ID">
+              <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                <path d="M7 3H5a2 2 0 0 0-2 2v2M17 3h2a2 2 0 0 1 2 2v2M7 21H5a2 2 0 0 1-2-2v-2M17 21h2a2 2 0 0 0 2-2v-2M9 9v1M15 9v1M12 9v4h-1M9 16c1.7 1.3 4.3 1.3 6 0" />
+              </svg>
+              {{ cargando() ? 'Entrando…' : 'Face ID' }}
+            </button>
+            <button type="button" class="bio-btn" [disabled]="cargando()" (click)="entrarBiometria()" aria-label="Entrar con huella">
+              <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 11v3a8 8 0 0 1-1.5 4.7M8.5 7.2A5 5 0 0 1 17 11v1.5M7 11a5 5 0 0 1 .5-2.2M4 12.5V11a8 8 0 0 1 13.3-6M20 11v1a12 12 0 0 1-.6 3.8M9 11a3 3 0 0 1 6 0v1.5a11 11 0 0 1-1.4 5.4M6.6 19a12 12 0 0 0 1.4-5.5V11" />
+              </svg>
+              Huella
+            </button>
+          </div>
           @if (errorBio()) { <p class="error-msg" role="alert" style="margin-top: 10px">{{ errorBio() }}</p> }
         }
 
