@@ -1,5 +1,5 @@
 import { Component, OnDestroy, ViewChild, inject, signal } from '@angular/core';
-import { fotoFondoGuardada } from '../../core/services/fondo.service';
+import { AuthMarcaComponent } from '../../shared/auth-marca/auth-marca.component';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { SupabaseService } from '../../core/services/supabase.service';
@@ -23,22 +23,15 @@ function guardarBio(v: 'si' | 'pendiente' | null): void {
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, RouterLink, CaptchaComponent],
+  imports: [FormsModule, RouterLink, CaptchaComponent, AuthMarcaComponent],
   styleUrls: ['../auth-shell.scss'],
   template: `
     <div class="auth-shell">
-      <!-- Cabecera con la foto del tema (como la pantalla de carga) -->
-      <aside class="auth-marca" aria-hidden="true">
-        <div class="am-foto" [style.background-image]="'url(' + fotoFondo + ')'"></div>
-        <div class="am-txt">
-          <span class="am-logo"><img src="assets/icon/logo.png" alt="" /></span>
-          <strong class="am-nombre">Jasta<i>.</i></strong>
-          <p>Hobbies y accesorios,<br />tus pedidos en orden.</p>
-        </div>
-      </aside>
+      <!-- Foto en diagonal con carrusel (la del tema primero) -->
+      <app-auth-marca class="auth-marca"></app-auth-marca>
       <div class="auth-card">
         <div class="auth-head">
-          <img class="brand-mark" src="assets/icon/logo.png" alt="Jasta" />
+          <span class="form-logo"><img src="assets/icon/logo.png" alt="Jasta" /></span>
           <div>
             <h1>Bienvenido de nuevo</h1>
             <p>Entra para ver tus pedidos, entregas y cuadres.</p>
@@ -68,24 +61,26 @@ function guardarBio(v: 'si' | 'pendiente' | null): void {
             <p class="error-msg" role="alert">{{ error() }}</p>
           }
           <button type="submit" class="submit-btn" [disabled]="cargando() || espera() > 0 || (captchaActivo && !captcha())">
-            {{ cargando() ? 'Ingresando…' : espera() > 0 ? 'Espera ' + espera() + ' s' : 'Ingresar' }}
+            <span>{{ cargando() ? 'Ingresando…' : espera() > 0 ? 'Espera ' + espera() + ' s' : 'Ingresar' }}</span>
+            <span class="flecha" aria-hidden="true">→</span>
           </button>
         </form>
 
         @if (puedeBio()) {
-          <div class="bio-sep"><span>o continúa con</span></div>
+          <div class="bio-sep" aria-hidden="true"><span class="tres">•••</span></div>
+          <p class="bio-tit">o entra con</p>
           <div class="bio-fila">
             <button type="button" class="bio-btn" [disabled]="cargando()" (click)="entrarBiometria()" aria-label="Entrar con Face ID">
-              <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+              <span class="bio-circ"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
                 <path d="M7 3H5a2 2 0 0 0-2 2v2M17 3h2a2 2 0 0 1 2 2v2M7 21H5a2 2 0 0 1-2-2v-2M17 21h2a2 2 0 0 0 2-2v-2M9 9v1M15 9v1M12 9v4h-1M9 16c1.7 1.3 4.3 1.3 6 0" />
-              </svg>
-              {{ cargando() ? 'Entrando…' : 'Face ID' }}
+              </svg></span>
+              <small>{{ cargando() ? 'Entrando…' : 'Face ID' }}</small>
             </button>
             <button type="button" class="bio-btn" [disabled]="cargando()" (click)="entrarBiometria()" aria-label="Entrar con huella">
-              <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <span class="bio-circ"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 11v3a8 8 0 0 1-1.5 4.7M8.5 7.2A5 5 0 0 1 17 11v1.5M7 11a5 5 0 0 1 .5-2.2M4 12.5V11a8 8 0 0 1 13.3-6M20 11v1a12 12 0 0 1-.6 3.8M9 11a3 3 0 0 1 6 0v1.5a11 11 0 0 1-1.4 5.4M6.6 19a12 12 0 0 0 1.4-5.5V11" />
-              </svg>
-              Huella
+              </svg></span>
+              <small>Huella</small>
             </button>
           </div>
           @if (errorBio()) { <p class="error-msg" role="alert" style="margin-top: 10px">{{ errorBio() }}</p> }
@@ -101,8 +96,6 @@ function guardarBio(v: 'si' | 'pendiente' | null): void {
   `,
 })
 export class LoginPage implements OnDestroy {
-  /** Foto de fondo del tema (la misma de la pantalla de carga) */
-  readonly fotoFondo = fotoFondoGuardada();
   @ViewChild(CaptchaComponent) private captchaCmp?: CaptchaComponent;
   private sb = inject(SupabaseService);
   readonly captchaActivo = CAPTCHA_ACTIVO;

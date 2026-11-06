@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { fotoFondoGuardada } from '../../core/services/fondo.service';
+import { AuthMarcaComponent } from '../../shared/auth-marca/auth-marca.component';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SupabaseService } from '../../core/services/supabase.service';
@@ -8,22 +8,15 @@ import { REGLA_CLAVE, problemaClave } from '../../shared/clave';
 @Component({
   selector: 'app-nueva-clave',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, AuthMarcaComponent],
   styleUrls: ['../auth-shell.scss'],
   template: `
     <div class="auth-shell">
-      <!-- Cabecera con la foto del tema (como la pantalla de carga) -->
-      <aside class="auth-marca" aria-hidden="true">
-        <div class="am-foto" [style.background-image]="'url(' + fotoFondo + ')'"></div>
-        <div class="am-txt">
-          <span class="am-logo"><img src="assets/icon/logo.png" alt="" /></span>
-          <strong class="am-nombre">Jasta<i>.</i></strong>
-          <p>Hobbies y accesorios,<br />tus pedidos en orden.</p>
-        </div>
-      </aside>
+      <!-- Foto en diagonal con carrusel (la del tema primero) -->
+      <app-auth-marca class="auth-marca"></app-auth-marca>
       <div class="auth-card">
         <div class="auth-head">
-          <img class="brand-mark" src="assets/icon/logo.png" alt="Jasta" />
+          <span class="form-logo"><img src="assets/icon/logo.png" alt="Jasta" /></span>
           <div><h1>Nueva contraseña</h1><p>Escribe la contraseña que vas a usar de ahora en adelante.</p></div>
         </div>
         <form class="auth-form" (ngSubmit)="guardar()">
@@ -41,8 +34,6 @@ import { REGLA_CLAVE, problemaClave } from '../../shared/clave';
   `,
 })
 export class NuevaClavePage {
-  /** Foto de fondo del tema (la misma de la pantalla de carga) */
-  readonly fotoFondo = fotoFondoGuardada();
   private sb = inject(SupabaseService);
   private router = inject(Router);
   readonly regla = REGLA_CLAVE;
