@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular
 import { FormsModule } from '@angular/forms';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { addCircleOutline, bagHandleOutline, checkmarkOutline, closeOutline, walletOutline } from 'ionicons/icons';
+import { addCircleOutline, bagHandleOutline, cashOutline, checkmarkOutline, closeOutline, walletOutline } from 'ionicons/icons';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { VisorService } from '../../shared/visor/visor.service';
@@ -16,8 +16,9 @@ import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 import { PesosDirective } from '../../shared/pesos/pesos.directive';
 
 interface Pendiente { id: number; monto: number; nombre: string; de: string | null; recolector: string; fecha: string }
+interface PorRecolector { id: number; nombre: string; base: number; compras: number; entregado: number; pendientes: number; saldo: number }
 interface Movimiento {
-  tipo: 'base' | 'compra';
+  tipo: 'base' | 'compra' | 'entrega';
   id: number;
   fecha: string;
   valor: number;
@@ -32,6 +33,11 @@ interface Movimiento {
 interface Resumen {
   base: number;
   compras: number;
+  /** Lo que le entregó al admin ese día */
+  entregado: number;
+  /** Lo que debe tener ahora (todos los días); null cuando son todos */
+  saldo: number | null;
+  por_recolector: PorRecolector[];
   n_bases: number;
   n_compras: number;
   pendientes: Pendiente[];
@@ -108,6 +114,31 @@ const normalP = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, ''
       .estado.rechazada { background: color-mix(in srgb, var(--danger) 10%, transparent); color: var(--danger); }
       .factura { width: 40px; height: 40px; padding: 0; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: var(--surface-2); cursor: zoom-in; }
       .factura img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      /* Una tarjeta por recolector */
+      .recs { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+      .rec { display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface);
+        -webkit-backdrop-filter: blur(18px) saturate(150%); backdrop-filter: blur(18px) saturate(150%); }
+      .rec-cab { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+      .rec-cab strong { font-size: 16px; }
+      .rec-cab small { font-size: 11.5px; font-weight: 650; padding: 1px 8px; border-radius: 8px; background: var(--oro-wash); color: var(--oro-texto); }
+      .rec dl { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; font-size: 13.5px; }
+      .rec dt { color: var(--text-soft); }
+      .rec dd { margin: 0; text-align: right; font-family: var(--mono-font); font-weight: 600; }
+      .rec .debe { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: var(--radius); background: var(--ok-wash); }
+      .rec .debe.neg { background: var(--danger-wash); }
+      .rec .debe.cero { background: var(--surface-2); }
+      .rec .debe span { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
+      .rec .debe strong { font-family: var(--mono-font); font-size: 22px; }
+      .rec-acc { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .rec-acc .b { height: 40px; justify-content: center; }
+      .renglon.entregado .val { color: var(--st-ruta-text); }
+      .renglon.saldo { margin-top: 10px; padding: 12px 14px; border-radius: var(--radius); background: var(--ok-wash); }
+      .renglon.saldo.neg { background: var(--danger-wash); }
+      .renglon.saldo .val { font-size: 20px; font-weight: 700; }
+      .renglon.saldo .lbl small { display: block; margin: 2px 0 0; }
+      .ico.entrega { background: color-mix(in srgb, var(--st-ruta) 14%, transparent); color: var(--st-ruta-text); }
+      .mov .monto.entrega { color: var(--st-ruta-text); }
+      .link-borrar { border: 0; background: none; padding: 0; color: var(--danger); font: inherit; font-size: 12px; text-decoration: underline; cursor: pointer; }
       .vacio-txt { margin: 0; padding: 14px 0 6px; text-align: center; font-size: 13.5px; color: var(--text-soft); }
       .hoja-centro .hoja-body { gap: 14px; }
       .hoja-head h2 { margin: 0 auto 0 0; }
@@ -182,15 +213,52 @@ const normalP = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, ''
         </section>
       }
 
-      <section class="resumen" aria-labelledby="t-res" [attr.aria-busy]="cargando()">
-        <h2 id="t-res">Resumen</h2>
-        <div class="renglon"><span class="lbl">Base<small>{{ numero(r()?.n_bases) }} {{ r()?.n_bases === 1 ? 'base' : 'bases' }}</small></span><span class="punteado"></span>
-          <span class="val">{{ pesos(r()?.base) }}</span></div>
-        <div class="renglon compras"><span class="lbl">Compras<small>{{ numero(r()?.n_compras) }}</small></span><span class="punteado"></span>
-          <span class="val">− {{ pesos(r()?.compras) }}</span></div>
-        <div class="renglon total" [class.neg]="cuadre() < 0"><span class="lbl">Cuadre<small>{{ cuadre() < 0 ? 'Gastó más de la base' : 'Lo que debe tener en la mano' }}</small></span>
-          <span class="punteado"></span><span class="val">{{ pesos(cuadre()) }}</span></div>
-      </section>
+      @if (vistaTodos()) {
+        <!-- Admin con "Todos": una tarjeta por recolector (cada uno con su base y su saldo) -->
+        <section class="recs" aria-label="Recolectores" [attr.aria-busy]="cargando()">
+          @for (x of r()?.por_recolector ?? []; track x.id) {
+            <article class="rec">
+              <div class="rec-cab"><strong>{{ x.nombre }}</strong>@if (x.pendientes) { <small>{{ x.pendientes }} por aceptar</small> }</div>
+              <dl>
+                <dt>Base del día</dt><dd>{{ pesos(x.base) }}</dd>
+                <dt>Compras del día</dt><dd>− {{ pesos(x.compras) }}</dd>
+                @if (+x.entregado) { <dt>Te entregó hoy</dt><dd>− {{ pesos(x.entregado) }}</dd> }
+              </dl>
+              <div class="debe" [class.neg]="+x.saldo < 0" [class.cero]="+x.saldo === 0">
+                <span>{{ +x.saldo < 0 ? 'Gastó de más' : 'Debe tener ahora' }}</span>
+                <strong>{{ pesos(x.saldo) }}</strong>
+              </div>
+              <div class="rec-acc">
+                <button class="b" (click)="verRecolector(x.id)">Ver detalle</button>
+                @if (admin()) { <button class="b b-ok" [disabled]="+x.saldo <= 0" (click)="abrirRecibir(x)"><ion-icon name="cash-outline"></ion-icon>Recibir</button> }
+              </div>
+            </article>
+          } @empty {
+            @if (!cargando()) { <p class="vacio-txt">No hay usuarios con el rol Recolector. Asígnalo en Usuarios.</p> }
+          }
+        </section>
+      } @else {
+        <section class="resumen" aria-labelledby="t-res" [attr.aria-busy]="cargando()">
+          <h2 id="t-res">Resumen</h2>
+          <div class="renglon"><span class="lbl">Base<small>{{ numero(r()?.n_bases) }} {{ r()?.n_bases === 1 ? 'base' : 'bases' }}</small></span><span class="punteado"></span>
+            <span class="val">{{ pesos(r()?.base) }}</span></div>
+          <div class="renglon compras"><span class="lbl">Compras<small>{{ numero(r()?.n_compras) }}</small></span><span class="punteado"></span>
+            <span class="val">− {{ pesos(r()?.compras) }}</span></div>
+          @if (+(r()?.entregado ?? 0)) {
+            <div class="renglon entregado"><span class="lbl">Entregado al admin</span><span class="punteado"></span>
+              <span class="val">− {{ pesos(r()?.entregado) }}</span></div>
+          }
+          <div class="renglon total" [class.neg]="cuadre() < 0"><span class="lbl">Cuadre del día<small>{{ cuadre() < 0 ? 'Gastó más de la base' : 'Lo que quedó de este día' }}</small></span>
+            <span class="punteado"></span><span class="val">{{ pesos(cuadre()) }}</span></div>
+          @if (r()?.saldo !== null && r()?.saldo !== undefined) {
+            <div class="renglon saldo" [class.neg]="+r()!.saldo! < 0"><span class="lbl">Debe tener ahora<small>Sumando todos los días, menos lo ya entregado</small></span>
+              <span class="punteado"></span><span class="val">{{ pesos(r()!.saldo) }}</span></div>
+          }
+          @if (admin() && filtroRec && +(r()?.saldo ?? 0) > 0) {
+            <button class="b b-ok" style="margin-top: 12px; width: 100%; justify-content: center" (click)="abrirRecibirSel()"><ion-icon name="cash-outline"></ion-icon>Recibir {{ pesos(r()!.saldo) }}</button>
+          }
+        </section>
+      }
 
       <section class="panel" aria-labelledby="t-movs">
         <div class="panel-head"><div><h2 id="t-movs">Movimientos del día</h2><p class="panel-sub">Bases que entraron y compras</p></div></div>
@@ -198,19 +266,23 @@ const normalP = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, ''
           <ul class="movs">
             @for (m of r()!.movimientos; track m.tipo + m.id) {
               <li class="mov">
-                <span class="ico" [class]="'ico ' + m.tipo" aria-hidden="true"><ion-icon [name]="m.tipo === 'base' ? 'wallet-outline' : 'bag-handle-outline'"></ion-icon></span>
+                <span class="ico" [class]="'ico ' + m.tipo" aria-hidden="true"><ion-icon [name]="m.tipo === 'base' ? 'wallet-outline' : m.tipo === 'entrega' ? 'cash-outline' : 'bag-handle-outline'"></ion-icon></span>
                 <span style="min-width: 0">
                   @if (m.tipo === 'base') {
                     <span class="t1">{{ m.nombre }}</span>
                     <span class="t2">Base · {{ m.quien || '—' }} · {{ hora(m.fecha) }}@if (esAdmin() && !filtroRec) { · {{ m.recolector }} }</span>
+                  } @else if (m.tipo === 'entrega') {
+                    <span class="t1">Le entregó al admin{{ m.nombre ? ' · ' + m.nombre : '' }}</span>
+                    <span class="t2">Recibió {{ m.quien || 'el admin' }} · {{ hora(m.fecha) }}@if (esAdmin() && !filtroRec) { · {{ m.recolector }} }</span>
                   } @else {
                     <span class="t1">{{ m.producto }}</span>
                     <span class="t2">{{ m.proveedor }} · {{ hora(m.fecha) }}@if (esAdmin() && !filtroRec) { · {{ m.recolector }} }</span>
                   }
                 </span>
                 <span class="der">
-                  <span class="monto" [class.base]="m.tipo === 'base'" [class.compra]="m.tipo === 'compra'" [class.tachado]="m.tipo === 'base' && m.estado !== 'aceptada'">
+                  <span class="monto" [class.base]="m.tipo === 'base'" [class.compra]="m.tipo === 'compra'" [class.entrega]="m.tipo === 'entrega'" [class.tachado]="m.tipo === 'base' && m.estado !== 'aceptada'">
                     {{ m.tipo === 'base' ? '+' : '−' }}{{ pesos(m.valor) }}</span>
+                  @if (m.tipo === 'entrega' && admin()) { <button type="button" class="link-borrar" (click)="borrarEntrega(m)">Borrar</button> }
                   @if (m.tipo === 'base' && m.estado !== 'aceptada') { <span class="estado" [class]="'estado ' + m.estado">{{ m.estado === 'pendiente' ? 'Por aceptar' : 'Rechazada' }}</span> }
                   @if (m.tipo === 'compra' && m.facturas?.length) {
                     <button type="button" class="factura" (click)="verFactura(m)" aria-label="Ver factura">
@@ -251,6 +323,29 @@ const normalP = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, ''
         <div class="hoja-pie">
           <button class="b" (click)="formBase.set(false)">Cancelar</button>
           <button class="b b-ok" (click)="guardarBase()" [disabled]="ocupado()">{{ ocupado() ? 'Guardando…' : admin() && !esRecolector() ? 'Enviar base' : 'Agregar base' }}</button>
+        </div>
+      </div>
+    }
+
+    <!-- Recibir la plata del recolector -->
+    @if (recibirDe(); as x) {
+      <button class="velo" aria-label="Cerrar" (click)="recibirDe.set(null)"></button>
+      <div class="hoja hoja-centro" role="dialog" aria-labelledby="t-rec">
+        <div class="hoja-head"><h2 id="t-rec">Recibir de {{ x.nombre }}</h2>
+          <button class="b b-icono" aria-label="Cerrar" (click)="recibirDe.set(null)"><ion-icon name="close-outline"></ion-icon></button></div>
+        <div class="hoja-body">
+          <p class="ayuda" style="margin: 0">Debe tener <strong>{{ pesos(x.saldo) }}</strong> (bases aceptadas − compras − lo que ya te entregó).</p>
+          <div class="campo"><label for="rv">¿Cuánto recibiste?</label><input pesos id="rv" class="inp num" [(ngModel)]="recibirValor" />
+            <button type="button" class="b chico" style="margin-top: 6px; align-self: flex-start" (click)="recibirValor = +x.saldo">Todo · {{ pesos(x.saldo) }}</button></div>
+          @if ((recibirValor || 0) > 0 && +recibirValor! !== +x.saldo) {
+            <p class="aviso-costo">{{ +recibirValor! < +x.saldo ? 'Le quedan ' + pesos(+x.saldo - +recibirValor!) + ' por entregar.' : 'Te entregó ' + pesos(+recibirValor! - +x.saldo) + ' de más.' }}</p>
+          }
+          <div class="campo"><label for="rn">Nota (opcional)</label><input id="rn" class="inp" maxlength="300" [(ngModel)]="recibirNota" placeholder="Ej: en efectivo, al final del día" /></div>
+          @if (errorForm()) { <p class="error" role="alert">{{ errorForm() }}</p> }
+        </div>
+        <div class="hoja-pie">
+          <button class="b" (click)="recibirDe.set(null)">Cancelar</button>
+          <button class="b b-ok" (click)="guardarRecibir()" [disabled]="ocupado()">{{ ocupado() ? 'Guardando…' : 'Recibí ' + pesos(recibirValor || 0) }}</button>
         </div>
       </div>
     }
@@ -355,7 +450,14 @@ export class RecolectorPage implements OnInit, OnDestroy {
   /** Cuadres revisa el cuadre del recolector sin enviar bases ni registrar compras */
   soloLectura = computed(() => !this.sb.tiene('admin', 'recolector'));
   esRecolector = computed(() => this.sb.tiene('recolector'));
-  cuadre = computed(() => Number(this.r()?.base ?? 0) - Number(this.r()?.compras ?? 0));
+  cuadre = computed(() => Number(this.r()?.base ?? 0) - Number(this.r()?.compras ?? 0) - Number(this.r()?.entregado ?? 0));
+  /** Admin (o cuadres) mirando a todos: una tarjeta por recolector en vez de sumarlos */
+  vistaTodos = computed(() => this.esAdmin() && !this.filtroSel() && (this.r()?.por_recolector?.length ?? 0) > 0);
+  private filtroSel = signal<number | null>(null);
+  // Recibir
+  recibirDe = signal<{ id: number; nombre: string; saldo: number } | null>(null);
+  recibirValor: number | null = null;
+  recibirNota = '';
 
   pesos = pesos;
   numero = numero;
@@ -365,7 +467,7 @@ export class RecolectorPage implements OnInit, OnDestroy {
   private timer?: ReturnType<typeof setTimeout>;
 
   constructor() {
-    addIcons({ addCircleOutline, bagHandleOutline, checkmarkOutline, closeOutline, walletOutline });
+    addIcons({ addCircleOutline, bagHandleOutline, cashOutline, checkmarkOutline, closeOutline, walletOutline });
   }
 
   ngOnInit(): void {
@@ -379,7 +481,8 @@ export class RecolectorPage implements OnInit, OnDestroy {
       (c) =>
         c
           .on('postgres_changes', { event: '*', schema: 'public', table: 'recoleccion_bases' }, recargar)
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'recoleccion_compras' }, recargar),
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'recoleccion_compras' }, recargar)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'recoleccion_entregas' }, recargar),
       recargar
     );
   }
@@ -398,6 +501,7 @@ export class RecolectorPage implements OnInit, OnDestroy {
   async cargar(): Promise<void> {
     if (!this.dia) return;
     const n = ++this.consulta;
+    this.filtroSel.set(this.filtroRec);
     const { data, error } = await this.sb.client.rpc('recoleccion_resumen', { p_desde: this.dia, p_hasta: this.dia, p_recolector: this.filtroRec });
     if (n !== this.consulta) return;
     this.cargando.set(false);
@@ -410,6 +514,49 @@ export class RecolectorPage implements OnInit, OnDestroy {
       const urls = await urlsComprobantes(this.sb.client, faltan);
       this.fotos.update((m) => ({ ...m, ...Object.fromEntries(faltan.map((f, i) => [f, urls[i]])) }));
     }
+  }
+
+  // ---------- Recibir ----------
+  verRecolector(id: number): void {
+    this.filtroRec = id;
+    void this.cargar();
+  }
+
+  abrirRecibir(x: PorRecolector): void {
+    this.recibirValor = Number(x.saldo) > 0 ? Number(x.saldo) : null;
+    this.recibirNota = '';
+    this.errorForm.set('');
+    this.recibirDe.set({ id: x.id, nombre: x.nombre, saldo: Number(x.saldo) });
+  }
+
+  abrirRecibirSel(): void {
+    const id = this.filtroRec;
+    const nombre = this.r()?.recolectores.find((x) => x.id === id)?.nombre ?? 'el recolector';
+    if (!id) return;
+    this.abrirRecibir({ id, nombre, base: 0, compras: 0, entregado: 0, pendientes: 0, saldo: Number(this.r()?.saldo ?? 0) });
+  }
+
+  async guardarRecibir(): Promise<void> {
+    const x = this.recibirDe();
+    const v = Math.round(Number(this.recibirValor) || 0);
+    if (!x) return;
+    if (v <= 0) return this.errorForm.set('Escribe cuánto recibiste.');
+    this.ocupado.set(true);
+    const { data, error } = await this.sb.client.rpc('recoleccion_recibir', { p_recolector: x.id, p_valor: v, p_nota: this.recibirNota.trim() });
+    this.ocupado.set(false);
+    if (error) return this.errorForm.set(mensajeError(error));
+    const saldo = Number(data);
+    this.toast.ok(`Recibiste ${pesos(v)} de ${x.nombre}` + (saldo > 0 ? ` · todavía debe tener ${pesos(saldo)}` : saldo === 0 ? ' · quedó en cero ✓' : ''));
+    this.recibirDe.set(null);
+    await this.cargar();
+  }
+
+  async borrarEntrega(m: Movimiento): Promise<void> {
+    if (!confirm(`¿Borrar lo recibido de ${m.recolector} (${pesos(m.valor)})? Vuelve a contar como plata que debe tener.`)) return;
+    const { error } = await this.sb.client.rpc('recoleccion_borrar_entrega', { p_id: m.id });
+    if (error) return this.toast.error(mensajeError(error));
+    this.toast.ok('Borrado');
+    await this.cargar();
   }
 
   // ---------- Bases ----------

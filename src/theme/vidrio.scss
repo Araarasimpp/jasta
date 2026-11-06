@@ -231,7 +231,11 @@ body.vidrio .b-pri {
   body.vidrio .b-pri:hover { background: rgba(255, 255, 255, 0.86); border-color: transparent; }
 }
 body.vidrio:not(.dark) .b-pri { background: #10131a; color: #fff; }
-body.vidrio .b-ok { border-color: transparent; }
+// Botones de dinero: verdes (el estilo general de .b les quitaba el color)
+body.vidrio .b-ok { border-color: transparent; background: var(--efectivo); color: #fff; font-weight: 650; }
+// El verde de Vidrio oscuro es claro: letra oscura para que se lea
+body.vidrio.dark .b-ok { color: #05261a; }
+@media (hover: hover) { body.vidrio .b-ok:hover { background: color-mix(in srgb, var(--efectivo) 88%, #000); } }
 
 // Campos
 body.vidrio .campo input,

@@ -1,5 +1,33 @@
 [
   {
+    "id": "2026-11-06-recolector-recibir",
+    "fecha": "2026-11-05",
+    "hora": "22:01",
+    "titulo": "Recolectores: cada uno con su base y recibir la plata",
+    "cuerpo": "En Recolector ahora ves una tarjeta por cada recolector, con su base, sus compras y lo que debe tener, y puedes registrar lo que te entrega.",
+    "roles": [
+      "admin",
+      "cuadres",
+      "recolector"
+    ],
+    "secciones": [
+      {
+        "titulo": "Admin",
+        "pasos": [
+          "En Recolector, con \"Todos los recolectores\", sale una tarjeta por cada uno: base del día, compras del día y lo que debe tener ahora (sumando todos los días).",
+          "Toca \"Recibir\" cuando te entregue la plata: puede ser todo o una parte. Le llega un aviso con lo que le queda.",
+          "\"Ver detalle\" muestra sus movimientos del día."
+        ]
+      },
+      {
+        "titulo": "Recolector",
+        "pasos": [
+          "En tu resumen ves lo que entregaste al admin y \"Debe tener ahora\": tus bases menos tus compras menos lo ya entregado."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-11-06-diseno-vidrio-tema",
     "fecha": "2026-11-05",
     "hora": "20:16",
