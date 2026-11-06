@@ -31,7 +31,6 @@ function guardarBio(v: 'si' | 'pendiente' | null): void {
       <app-auth-marca class="auth-marca"></app-auth-marca>
       <div class="auth-card">
         <div class="auth-head">
-          <span class="form-logo"><img src="assets/icon/logo.png" alt="Jasta" /></span>
           <div>
             <h1>Bienvenido de nuevo</h1>
             <p>Entra para ver tus pedidos, entregas y cuadres.</p>

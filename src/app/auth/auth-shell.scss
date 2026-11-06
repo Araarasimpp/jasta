@@ -533,6 +533,8 @@
   }
   @keyframes am-entra { from { clip-path: polygon(0 0, 100% 0, 100% 0, 0 0); } }
   .auth-card { margin: -34px auto 0; padding: 0 22px calc(32px + env(safe-area-inset-bottom)); }
+  // Sin logo (inicio de sesión) el título no se monta sobre la foto
+  .auth-card:not(:has(.form-logo)) { margin-top: 6px; }
   .form-logo { width: 58px; height: 58px; border-radius: 18px; }
   .form-logo img { width: 42px; height: 42px; }
   .auth-head h1 { font-size: 26px; }
