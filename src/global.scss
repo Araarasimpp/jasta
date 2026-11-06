@@ -392,7 +392,7 @@ body.dark app-tienda.tv2.tv2.tv2 .t-fotos img, body.dark app-tienda.tv2.tv2.tv2 
 
 // La página que sale se desenfoca y se desvanece; la nueva la arman sus tarjetas en cascada (core/cascada.ts)
 ::view-transition-old(root) {
-  animation: pagina-sale 280ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: pagina-sale 200ms cubic-bezier(0.4, 0, 1, 1) both;
 }
 ::view-transition-new(root) {
   animation: none;
@@ -405,7 +405,10 @@ body.dark app-tienda.tv2.tv2.tv2 .t-fotos img, body.dark app-tienda.tv2.tv2.tv2 
   animation: none;
   mix-blend-mode: normal;
 }
-@keyframes pagina-sale { to { opacity: 0; filter: blur(14px); transform: scale(0.985); } }
+@keyframes pagina-sale { to { opacity: 0; filter: blur(6px); transform: scale(0.985); } }
+// En celular, sin desenfoque (es lo que más pesa)
+@keyframes pagina-sale-cel { to { opacity: 0; transform: scale(0.985); } }
+@media (max-width: 820px) { ::view-transition-old(root) { animation-name: pagina-sale-cel; } }
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
 }

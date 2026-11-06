@@ -8,9 +8,9 @@ const yaAnimados = new WeakSet<Element>();
 let observador: MutationObserver | null = null;
 let fin: ReturnType<typeof setTimeout> | undefined;
 
-const MAX = 16;
-const PASO = 55;
-const INICIO = 90;
+const MAX = 10;
+const PASO = 45;
+const INICIO = 70;
 
 function reducir(): boolean {
   return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -64,10 +64,11 @@ function animar(lista: Element[]): void {
     yaAnimados.add(el);
     (el as HTMLElement).animate(
       [
-        { opacity: 0, filter: 'blur(12px)', transform: 'translateY(18px) scale(0.97)' },
-        { opacity: 1, filter: 'blur(0)', transform: 'none' },
+        // Solo opacidad y movimiento: los hace la tarjeta gráfica sin redibujar el vidrio (un desenfoque animado se traba)
+        { opacity: 0, transform: 'translate3d(0, 16px, 0) scale(0.975)' },
+        { opacity: 1, transform: 'none' },
       ],
-      { duration: 560, delay: INICIO + i * PASO, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'backwards' },
+      { duration: 420, delay: INICIO + i * PASO, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'backwards' },
     );
   });
 }
@@ -81,15 +82,16 @@ export function entradaEnCascada(): void {
   // Lo que aparece cuando llegan los datos también entra en cascada
   observador?.disconnect();
   clearTimeout(fin);
+  // Revisa como mucho cada 150 ms, para no medir la página en cada cuadro de la animación
   let pendiente = false;
-  observador = new MutationObserver(() => {
-    if (pendiente) return;
+  observador = new MutationObserver((cambios) => {
+    if (pendiente || !cambios.some((c) => [...c.addedNodes].some((n) => n.nodeType === 1))) return;
     pendiente = true;
-    requestAnimationFrame(() => {
+    setTimeout(() => {
       pendiente = false;
       const r = pagina();
       if (r) animar(bloques(r));
-    });
+    }, 150);
   });
   observador.observe(raiz, { childList: true, subtree: true });
   fin = setTimeout(() => observador?.disconnect(), 1500);
