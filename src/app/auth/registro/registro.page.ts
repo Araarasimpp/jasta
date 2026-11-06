@@ -1,4 +1,5 @@
 import { Component, OnDestroy, ViewChild, inject, signal } from '@angular/core';
+import { AuthMarcaComponent } from '../../shared/auth-marca/auth-marca.component';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { SupabaseService } from '../../core/services/supabase.service';
@@ -8,17 +9,15 @@ import { REGLA_CLAVE, problemaClave } from '../../shared/clave';
 @Component({
   selector: 'app-registro',
   standalone: true,
-  imports: [FormsModule, RouterLink, CaptchaComponent],
+  imports: [FormsModule, RouterLink, CaptchaComponent, AuthMarcaComponent],
   styleUrls: ['../auth-shell.scss'],
   template: `
     <div class="auth-shell">
-      <aside class="auth-marca" aria-hidden="true">
-        <img class="sello" src="assets/icon/logo.png" alt="" />
-        <p>Pedidos, despachos y cuadres del día, en un solo lugar.</p>
-      </aside>
+      <!-- Foto en diagonal con carrusel (la del tema primero) -->
+      <app-auth-marca class="auth-marca"></app-auth-marca>
       <div class="auth-card">
         <div class="auth-head">
-          <img class="brand-mark" src="assets/icon/logo.png" alt="Jasta" />
+          <span class="form-logo"><img src="assets/icon/logo.png" alt="Jasta" /></span>
           <div>
             <h1>Crea tu cuenta</h1>
             <p>Usa el correo que te autorizó el administrador (si ya trabajabas en Jasta, el mismo de antes).</p>

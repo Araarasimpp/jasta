@@ -373,3 +373,167 @@
   opacity: 0.6;
   cursor: default;
 }
+
+/* ===================================================================== Login partido en diagonal
+   A la izquierda la foto (carrusel) con el borde inclinado; a la derecha el formulario centrado,
+   con el logo arriba, campos con ícono, botón de degradado con flecha y botones redondos.
+   Va al final para mandar sobre lo de arriba. */
+
+.auth-shell {
+  position: relative;
+  grid-template-columns: minmax(0, 1.15fr) minmax(400px, 0.85fr);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+// La foto se mete un poco debajo del formulario y se corta en diagonal
+.auth-marca {
+  display: block;
+  margin: 0 -14% 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  clip-path: polygon(0 0, 100% 0, 74% 100%, 0 100%);
+  min-height: 100vh;
+  min-height: 100dvh;
+  animation: am-entra 800ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+@keyframes am-entra { from { clip-path: polygon(0 0, 0 0, 0 100%, 0 100%); } }
+
+.brand-mark,
+.auth-head .brand-mark { display: none !important; }
+
+.auth-card {
+  position: relative;
+  z-index: 1;
+  max-width: 400px;
+  gap: 22px;
+  animation: am-sube 600ms ease 250ms both;
+}
+@keyframes am-sube { from { opacity: 0; transform: translateY(14px); } }
+
+// Logo centrado arriba del formulario (como la "A" de la referencia)
+.auth-head { align-items: center; text-align: center; gap: 14px; }
+.form-logo {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.18), 0 0 0 1px rgba(15, 23, 42, 0.06);
+}
+.form-logo img { width: 48px; height: 48px; object-fit: contain; }
+.auth-head h1 { font-size: 30px; font-weight: 800; letter-spacing: -0.03em; }
+
+// Campos con ícono
+.field input {
+  height: 52px;
+  padding: 0 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  background-color: var(--surface);
+  font-size: 15.5px;
+}
+:host-context(.dark) .field input { background-color: rgba(255, 255, 255, 0.05); }
+.field input:focus { border-color: #6d5cf6; box-shadow: 0 0 0 4px rgba(109, 92, 246, 0.14); }
+.field input[type='email'],
+.password-wrap input {
+  padding-left: 46px;
+  background-repeat: no-repeat;
+  background-position: 16px center;
+  background-size: 19px;
+}
+.field input[type='email'] {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a93a3' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6'/%3E%3C/svg%3E");
+}
+.password-wrap input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a93a3' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='10' width='16' height='11' rx='3'/%3E%3Cpath d='M8 10V7a4 4 0 0 1 8 0v3'/%3E%3C/svg%3E");
+}
+.reveal-btn { top: 7px; right: 7px; height: 38px; border-radius: 12px; }
+
+// Botón de degradado con la flecha en un círculo a la derecha
+.submit-btn {
+  position: relative;
+  height: 54px;
+  padding: 0 60px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #4f6bf5, #8b5cf6);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: 0 14px 30px rgba(109, 92, 246, 0.35);
+  transition: transform 120ms var(--ease), box-shadow 160ms var(--ease), filter 160ms var(--ease);
+}
+@media (hover: hover) { .submit-btn:hover:not(:disabled) { filter: brightness(1.06); box-shadow: 0 16px 34px rgba(109, 92, 246, 0.45); } }
+.submit-btn:active:not(:disabled) { transform: scale(0.98); }
+.submit-btn .flecha {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #fff;
+  color: #6d5cf6;
+  font-size: 18px;
+  font-weight: 800;
+  transition: transform 200ms var(--ease);
+}
+@media (hover: hover) { .submit-btn:hover:not(:disabled) .flecha { transform: translate(3px, -50%); } }
+.submit-secundario { background: var(--surface); color: var(--text); box-shadow: none; border: 1.5px solid var(--border); }
+
+// "•••" y botones redondos (como los de Google / Apple / GitHub)
+.bio-sep { margin: 20px 0 6px; color: var(--text-muted); }
+.bio-sep .tres { letter-spacing: 4px; font-size: 12px; color: #8b5cf6; }
+.bio-tit { margin: 0 0 12px; text-align: center; font-size: 12.5px; color: var(--text-muted); }
+.bio-fila { display: flex; justify-content: center; gap: 28px; }
+.bio-fila .bio-btn {
+  width: auto;
+  height: auto;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-soft);
+}
+.bio-circ {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+  transition: transform 140ms var(--ease), border-color 160ms var(--ease);
+}
+@media (hover: hover) { .bio-btn:hover .bio-circ { border-color: #8b5cf6; transform: translateY(-2px); } }
+.bio-btn small { font-size: 12px; font-weight: 600; }
+.switch-link { border-top: 0; padding-top: 4px; text-align: center; }
+
+// Celular: la foto arriba con el borde de abajo en diagonal, el formulario debajo
+@media (max-width: 820px) {
+  .auth-shell { grid-template-columns: 1fr; align-content: start; }
+  .auth-marca {
+    display: block;
+    margin: 0;
+    min-height: 0;
+    height: 38vh;
+    height: 38dvh;
+    clip-path: polygon(0 0, 100% 0, 100% 72%, 0 100%);
+  }
+  @keyframes am-entra { from { clip-path: polygon(0 0, 100% 0, 100% 0, 0 0); } }
+  .auth-card { margin: -34px auto 0; padding: 0 22px calc(32px + env(safe-area-inset-bottom)); }
+  .form-logo { width: 58px; height: 58px; border-radius: 18px; }
+  .form-logo img { width: 42px; height: 42px; }
+  .auth-head h1 { font-size: 26px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .auth-marca, .auth-card { animation: none; }
+}

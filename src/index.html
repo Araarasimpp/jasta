@@ -16,8 +16,85 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Jasta" />
+  <!-- Pantalla de carga (se ve al instante, antes de que cargue la app) -->
+  <style>
+    #carga { position: fixed; inset: 0; z-index: 99999; display: grid; place-items: center; overflow: hidden; background: #0e1015;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color: #fff;
+      transition: transform 700ms cubic-bezier(.7, 0, .2, 1), border-radius 700ms cubic-bezier(.7, 0, .2, 1), opacity 500ms ease 250ms; }
+    #carga .cg-foto { position: absolute; inset: -30px; background: center / cover no-repeat; filter: blur(10px) saturate(120%); transform: scale(1.08);
+      animation: carga-zoom 2.4s ease-out both; }
+    #carga .cg-velo { position: absolute; inset: 0; background: radial-gradient(120% 80% at 50% 30%, rgba(10,12,16,.25), rgba(10,12,16,.72)); }
+    #carga .cg-tarjeta { position: relative; width: min(330px, 82vw); padding: 34px 28px 28px; border-radius: 34px; text-align: center;
+      background: rgba(22,24,30,.38); border: 1px solid rgba(255,255,255,.18); box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 30px 80px rgba(0,0,0,.45);
+      -webkit-backdrop-filter: blur(26px) saturate(170%); backdrop-filter: blur(26px) saturate(170%);
+      animation: carga-sube 700ms cubic-bezier(.2, .9, .3, 1.15) both; }
+    #carga .cg-logo { width: 86px; height: 86px; margin: 0 auto 18px; display: grid; place-items: center; border-radius: 28px; background: #fff;
+      box-shadow: 0 14px 34px rgba(0,0,0,.35); animation: carga-pop 800ms cubic-bezier(.2, 1.4, .4, 1) 150ms both; }
+    #carga .cg-logo img { width: 66px; height: 66px; object-fit: contain; }
+    #carga h1 { margin: 0; font-size: 40px; font-weight: 800; letter-spacing: -.04em; line-height: 1; }
+    #carga h1 span { display: inline-block; animation: carga-letra 600ms cubic-bezier(.2, .9, .3, 1.2) both; }
+    #carga h1 .cg-punto { color: #8fb3ff; }
+    #carga p { margin: 10px 0 0; font-size: 15px; line-height: 1.4; color: rgba(255,255,255,.72); animation: carga-aparece 600ms ease 900ms both; }
+    #carga .cg-barra { position: relative; height: 6px; margin: 26px 8px 0; border-radius: 999px; background: rgba(255,255,255,.14); overflow: hidden;
+      animation: carga-aparece 400ms ease 1000ms both; }
+    #carga .cg-barra i { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: inherit; background: linear-gradient(90deg, #fff, #8fb3ff);
+      box-shadow: 0 0 12px rgba(143,179,255,.8); animation: carga-llena 1.6s cubic-bezier(.4, 0, .2, 1) 1000ms forwards; }
+    #carga .cg-barra::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent);
+      transform: translateX(-100%); animation: carga-brillo 1.2s ease-in-out 1s infinite; }
+    /* Al terminar: sube como una cabecera que se recoge y deja ver la app */
+    #carga.sale { transform: translateY(-100%); border-radius: 0 0 48px 48px; opacity: 0; pointer-events: none; }
+    #carga.sale .cg-tarjeta { transition: transform 600ms cubic-bezier(.7, 0, .2, 1); transform: translateY(40px) scale(.94); }
+    @keyframes carga-zoom { from { transform: scale(1.18); } }
+    @keyframes carga-sube { from { opacity: 0; transform: translateY(40px) scale(.96); } }
+    @keyframes carga-pop { from { opacity: 0; transform: scale(.4) rotate(-12deg); } }
+    @keyframes carga-letra { from { opacity: 0; transform: translateY(28px) rotate(6deg); } }
+    @keyframes carga-aparece { from { opacity: 0; transform: translateY(6px); } }
+    @keyframes carga-llena { to { width: 100%; } }
+    @keyframes carga-brillo { to { transform: translateX(100%); } }
+    @media (prefers-reduced-motion: reduce) {
+      #carga *, #carga { animation-duration: 1ms !important; animation-delay: 0s !important; transition-duration: 200ms !important; }
+    }
+  </style>
 </head>
 <body>
+  <div id="carga" role="status" aria-label="Cargando Jasta">
+    <div class="cg-foto"></div>
+    <div class="cg-velo"></div>
+    <div class="cg-tarjeta">
+      <div class="cg-logo"><img src="assets/icon/logo.png" alt="" /></div>
+      <h1 aria-hidden="true"><span style="animation-delay:450ms">J</span><span style="animation-delay:510ms">a</span><span style="animation-delay:570ms">s</span><span style="animation-delay:630ms">t</span><span style="animation-delay:690ms">a</span><span class="cg-punto" style="animation-delay:760ms">.</span></h1>
+      <p>Hobbies y accesorios,<br />tus pedidos en orden.</p>
+      <div class="cg-barra"><i></i></div>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var el = document.getElementById('carga');
+      var inicio = Date.now();
+      // Las páginas de los clientes (catálogo, seguimiento, pago) entran sin pantalla de carga
+      if (/^\/(tienda|seguimiento|pago)(\/|$)/.test(location.pathname)) { el.remove(); window.jastaLista = function () {}; return; }
+      // La foto de fondo elegida en Tema (o la que viene por defecto)
+      var foto = 'assets/fondos/sala.jpg';
+      try {
+        var a = JSON.parse(localStorage.getItem('jasta-fondo') || '{}');
+        if (a.fondo === 'propio') foto = localStorage.getItem('jasta-fondo-propio') || foto;
+        else if (/^[a-z]+$/.test(a.fondo || '')) foto = 'assets/fondos/' + a.fondo + '.jpg';
+      } catch (e) {}
+      el.querySelector('.cg-foto').style.backgroundImage = 'url("' + foto + '")';
+      var listo = false;
+      // La app avisa cuando arrancó; se muestra al menos 2,2 s para que se vea la animación
+      window.jastaLista = function () {
+        if (listo) return;
+        listo = true;
+        setTimeout(function () {
+          el.classList.add('sale');
+          setTimeout(function () { el.remove(); }, 900);
+        }, Math.max(0, 2200 - (Date.now() - inicio)));
+      };
+      // Por si algo falla, nunca se queda pegada
+      setTimeout(window.jastaLista, 9000);
+    })();
+  </script>
   <app-root></app-root>
 </body>
 </html>

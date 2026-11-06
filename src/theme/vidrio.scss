@@ -1,0 +1,491 @@
+// src/theme/vidrio.scss
+// Diseño "Vidrio" (rama diseno-vidrio): una foto de fondo elegible (Ajustes → Tema) y encima
+// tarjetas de vidrio esmerilado, menú de íconos flotante y barra superior con píldoras.
+// Lo activa FondoService con body.vidrio y las variables --fondo-img, --fondo-oscuro,
+// --fondo-blur y --vd-alpha (qué tan sólido es el vidrio).
+
+// ------------------------------------------------------------------ Colores: vidrio oscuro (el de la imagen)
+body.vidrio {
+  --vd-alpha: 0.4;
+  --vd-rgb: 22, 24, 30;
+  --vd-texto-rgb: 255, 255, 255;
+
+  --tinta: #ffffff;
+  --oro: #ffffff;
+  --oro-texto: #ffffff;
+  --oro-wash: rgba(255, 255, 255, 0.14);
+  --oro-soft: rgba(255, 255, 255, 0.22);
+  --efectivo: #34d399;
+  --efectivo-texto: #6ee7b7;
+  --cobalto: #8fb3ff;
+
+  --bg: #0e1015;
+  --surface: rgba(var(--vd-rgb), var(--vd-alpha));
+  --surface-2: rgba(255, 255, 255, 0.07);
+  --hover: rgba(255, 255, 255, 0.09);
+  --selected: rgba(255, 255, 255, 0.16);
+
+  --text: #ffffff;
+  --text-2: rgba(255, 255, 255, 0.92);
+  --text-soft: rgba(255, 255, 255, 0.76);
+  --text-muted: rgba(255, 255, 255, 0.58);
+
+  --border: rgba(255, 255, 255, 0.14);
+  --border-soft: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.24);
+
+  --accent: #8fb3ff;
+  --accent-hover: #a9c4ff;
+  --on-accent: #0b0d12;
+  --accent-soft: rgba(143, 179, 255, 0.24);
+  --accent-wash: rgba(143, 179, 255, 0.14);
+
+  --st-pendiente: #fbbf24;
+  --st-pendiente-text: #fcd34d;
+  --st-ruta: #8fb3ff;
+  --st-ruta-text: #a9c4ff;
+  --st-entregado: #34d399;
+  --st-entregado-text: #6ee7b7;
+  --st-cancelado: #f87171;
+  --st-cancelado-text: #fca5a5;
+  --info: #c4b5fd;
+  --info-text: #ddd6fe;
+  --danger: #ff8a80;
+  --danger-wash: rgba(248, 113, 113, 0.18);
+  --ok-wash: rgba(52, 211, 153, 0.16);
+  --ruta-wash: rgba(143, 179, 255, 0.16);
+
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius: 14px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
+  --shadow-pop: 0 24px 60px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  --vd-borde: rgba(255, 255, 255, 0.16);
+  --vd-luz: rgba(255, 255, 255, 0.22);
+  --ion-background-color: transparent;
+  background: var(--bg);
+  color: var(--text);
+}
+
+// ------------------------------------------------------------------ Vidrio claro (modo claro)
+body.vidrio:not(.dark) {
+  --vd-rgb: 255, 255, 255;
+  --tinta: #10131a;
+  --oro: #e0a800;
+  --oro-texto: #7a5800;
+  --oro-wash: rgba(255, 255, 255, 0.5);
+  --oro-soft: rgba(255, 255, 255, 0.65);
+  --efectivo: #059669;
+  --efectivo-texto: #047857;
+  --cobalto: #2f5bd3;
+  --bg: #e9edf3;
+  --surface: rgba(var(--vd-rgb), calc(var(--vd-alpha) + 0.22));
+  --surface-2: rgba(255, 255, 255, 0.35);
+  --hover: rgba(255, 255, 255, 0.45);
+  --selected: rgba(255, 255, 255, 0.7);
+  --text: #10131a;
+  --text-2: #1c2230;
+  --text-soft: rgba(16, 19, 26, 0.76);
+  --text-muted: rgba(16, 19, 26, 0.6);
+  --border: rgba(255, 255, 255, 0.55);
+  --border-soft: rgba(255, 255, 255, 0.35);
+  --border-strong: rgba(16, 19, 26, 0.18);
+  --accent: #2f5bd3;
+  --accent-hover: #2449b5;
+  --on-accent: #ffffff;
+  --accent-soft: rgba(47, 91, 211, 0.18);
+  --accent-wash: rgba(47, 91, 211, 0.1);
+  --st-ruta: #2f5bd3;
+  --st-ruta-text: #2449b5;
+  --st-pendiente-text: #b45309;
+  --st-entregado-text: #047857;
+  --st-cancelado-text: #dc2626;
+  --info-text: #6d28d9;
+  --danger: #dc2626;
+  --vd-borde: rgba(255, 255, 255, 0.6);
+  --vd-luz: rgba(255, 255, 255, 0.9);
+}
+
+// ------------------------------------------------------------------ La foto de fondo
+.vd-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: #0e1015;
+}
+.vd-fondo::before {
+  content: '';
+  position: absolute;
+  inset: calc(var(--fondo-blur, 0px) * -2);
+  background: var(--fondo-img) center / cover no-repeat;
+  filter: blur(var(--fondo-blur, 0px));
+}
+.vd-fondo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, calc(var(--fondo-oscuro, 0.35) * 0.7)), rgba(0, 0, 0, var(--fondo-oscuro, 0.35)));
+}
+body.vidrio:not(.dark) .vd-fondo::after {
+  background: rgba(255, 255, 255, calc(var(--fondo-oscuro, 0.35) * 0.6));
+}
+
+// El contenido deja ver la foto
+body.vidrio .shell,
+body.vidrio .layout,
+body.vidrio main.content,
+body.vidrio ion-app,
+body.vidrio ion-content {
+  background: transparent;
+  --background: transparent;
+}
+body.vidrio .shell { position: relative; z-index: 1; }
+// Las páginas pintan su fondo con var(--bg): dentro del contenido es transparente (se ve la foto)
+body.vidrio main.content { --bg: transparent; }
+// Títulos y etiquetas que quedan sueltos sobre la foto: sombra suave para leerlos bien
+body.vidrio.dark main.content :is(h1, .fecha, .titulo-mes, .subtitle, .titulo-local label, .fechas-local label) {
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.55);
+}
+// Barras pegajosas de las páginas: vidrio, para que no se mezcle el texto al desplazar
+body.vidrio main.content .toolbar,
+body.vidrio main.content .filtros,
+body.vidrio main.content .list-head {
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+}
+
+// ------------------------------------------------------------------ Vidrio: todo lo que es tarjeta
+body.vidrio .panel,
+body.vidrio .kpi,
+body.vidrio .hoja,
+body.vidrio .sidebar,
+body.vidrio .more-sheet,
+body.vidrio .tarjeta,
+body.vidrio .card,
+body.vidrio .list,
+body.vidrio .vd-top {
+  -webkit-backdrop-filter: blur(26px) saturate(160%);
+  backdrop-filter: blur(26px) saturate(160%);
+}
+body.vidrio .panel,
+body.vidrio .list {
+  border-color: var(--vd-borde);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: inset 0 1px 0 var(--vd-luz), 0 16px 40px rgba(0, 0, 0, 0.18);
+}
+body.vidrio h1 { font-weight: 700; letter-spacing: -0.03em; }
+
+// KPIs: tarjetas sueltas
+body.vidrio .kpis {
+  gap: 12px;
+  border: 0;
+  background: transparent;
+  overflow: visible;
+}
+body.vidrio .kpi {
+  border: 1px solid var(--vd-borde);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: inset 0 1px 0 var(--vd-luz), 0 12px 30px rgba(0, 0, 0, 0.15);
+  transition: transform 180ms var(--ease);
+}
+@media (hover: hover) {
+  body.vidrio a.kpi:hover { transform: translateY(-2px); }
+}
+body.vidrio .kpi-principal {
+  background: rgba(255, 255, 255, calc(var(--vd-alpha) * 0.55));
+}
+body.vidrio.dark .kpi-principal {
+  background: rgba(255, 255, 255, 0.16);
+}
+body.vidrio .kpi-valor { font-weight: 700; }
+
+// Hojas: un poco más sólidas para leer bien
+body.vidrio .hoja {
+  border-color: var(--vd-borde);
+  background: rgba(var(--vd-rgb), 0.82);
+}
+body.vidrio .velo {
+  background: rgba(0, 0, 0, 0.3);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+// ------------------------------------------------------------------ Botones: píldoras
+body.vidrio .b {
+  border-radius: 999px;
+  border-color: var(--vd-borde);
+  background: var(--surface-2);
+}
+body.vidrio .b-pri {
+  border-color: transparent;
+  background: #ffffff;
+  color: #0b0d12;
+  font-weight: 650;
+}
+@media (hover: hover) {
+  body.vidrio .b-pri:hover { background: rgba(255, 255, 255, 0.86); border-color: transparent; }
+}
+body.vidrio:not(.dark) .b-pri { background: #10131a; color: #fff; }
+body.vidrio .b-ok { border-color: transparent; }
+
+// Campos
+body.vidrio .campo input,
+body.vidrio .campo select,
+body.vidrio .campo textarea,
+body.vidrio .inp,
+body.vidrio input.inp {
+  border-radius: var(--radius-sm);
+  border-color: var(--vd-borde);
+  background: var(--surface-2);
+  color: var(--text);
+}
+// Las opciones de los menús desplegables las pinta el sistema: texto oscuro sobre blanco
+body.vidrio select option { color: #10131a; background: #ffffff; }
+
+// ------------------------------------------------------------------ Menú lateral: píldora flotante de íconos
+.rail-capa { display: none; }
+@media (min-width: 861px) {
+  body.vidrio .shell .sidebar.rail {
+    position: fixed;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 30;
+    width: auto;
+    height: auto;
+    max-height: calc(100dvh - 120px);
+    margin: 0;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    overflow: visible;
+    border: 1px solid var(--vd-borde);
+    border-radius: 999px;
+    background: var(--surface);
+    box-shadow: inset 0 1px 0 var(--vd-luz), 0 18px 44px rgba(0, 0, 0, 0.28);
+  }
+  // El contenido deja libre el espacio de la píldora
+  body.vidrio main.content { padding-left: 80px; }
+}
+.rail-btn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-soft);
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 160ms var(--ease), color 160ms var(--ease), transform 120ms var(--ease);
+}
+.rail-btn ion-icon { font-size: 19px; }
+.rail-btn:hover, .rail-btn.abierto { background: var(--hover); color: var(--text); }
+.rail-btn:active { transform: scale(0.92); }
+.rail-btn.active { background: rgba(255, 255, 255, 0.94); color: #0b0d12; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18); }
+body.vidrio:not(.dark) .rail-btn.active { background: #10131a; color: #fff; }
+.rail-nuevo { background: rgba(255, 255, 255, 0.94); color: #0b0d12; }
+body.vidrio:not(.dark) .rail-nuevo { background: #10131a; color: #fff; }
+.rail-sep { width: 22px; height: 1px; margin: 2px 0; background: var(--border-strong); }
+// Nombre al pasar el mouse (como en la captura)
+@media (hover: hover) {
+  .rail-btn[data-tip]:hover::after {
+    content: attr(data-tip);
+    position: absolute;
+    left: calc(100% + 12px);
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 5px 10px;
+    border-radius: 8px;
+    background: rgba(10, 11, 14, 0.92);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+  }
+  .rail-btn.abierto::after { display: none; }
+}
+// Panel de la categoría, al lado de la píldora
+.rail-capa { position: fixed; inset: 0; z-index: 28; border: 0; padding: 0; background: transparent; cursor: default; }
+@media (min-width: 861px) { .rail-capa { display: block; } }
+.rail-fly {
+  position: fixed;
+  left: 84px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 29;
+  width: 250px;
+  max-height: calc(100dvh - 120px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 10px;
+  border: 1px solid var(--vd-borde);
+  border-radius: 24px;
+  background: rgba(var(--vd-rgb), 0.82);
+  -webkit-backdrop-filter: blur(28px) saturate(170%);
+  backdrop-filter: blur(28px) saturate(170%);
+  box-shadow: inset 0 1px 0 var(--vd-luz), 0 24px 60px rgba(0, 0, 0, 0.35);
+  animation: rail-entra 180ms var(--ease);
+}
+@media (max-width: 860px) { .rail-fly { display: none; } }
+@keyframes rail-entra { from { opacity: 0; transform: translate(-6px, -50%); } }
+.rail-fly-tit { margin: 2px 10px 6px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
+.rail-fly-op {
+  display: flex; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 14px;
+  color: var(--text); font-size: 14px; font-weight: 550; text-decoration: none;
+}
+.rail-fly-op ion-icon { font-size: 18px; color: var(--text-soft); flex-shrink: 0; }
+.rail-fly-op:hover { background: var(--hover); }
+.rail-fly-op.active { background: rgba(255, 255, 255, 0.94); color: #0b0d12; }
+.rail-fly-op.active ion-icon { color: #0b0d12; }
+body.vidrio:not(.dark) .rail-fly-op.active { background: #10131a; color: #fff; }
+body.vidrio:not(.dark) .rail-fly-op.active ion-icon { color: #fff; }
+
+// Logo en la barra de arriba
+.vd-logo { flex-shrink: 0; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; background: #fff; overflow: hidden; }
+.vd-logo img { width: 30px; height: 30px; object-fit: contain; }
+
+// ------------------------------------------------------------------ Barra superior (escritorio)
+.vd-top { display: none; }
+@media (min-width: 861px) {
+  // Contenedor pegado arriba: una franja de vidrio que se desvanece detrás de la barra,
+  // para que lo que se desplaza no se vea por encima de ella
+  body.vidrio .vd-top-wrap {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    padding: 12px 18px 10px;
+  }
+  body.vidrio .vd-top-wrap::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 -18px;
+    z-index: -1;
+    pointer-events: none;
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    background: linear-gradient(180deg, rgba(var(--vd-rgb), 0.35), rgba(var(--vd-rgb), 0));
+    -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent);
+    mask-image: linear-gradient(180deg, #000 60%, transparent);
+  }
+  body.vidrio .vd-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 10px 8px 10px;
+    border: 1px solid var(--vd-borde);
+    border-radius: 999px;
+    background: var(--surface);
+    box-shadow: inset 0 1px 0 var(--vd-luz), 0 14px 34px rgba(0, 0, 0, 0.2);
+  }
+}
+.vd-saludo { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vd-nav { display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--surface-2); }
+.vd-nav a {
+  display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 999px;
+  color: var(--text-soft); font-size: 13.5px; font-weight: 600; text-decoration: none; white-space: nowrap;
+  transition: background 160ms var(--ease), color 160ms var(--ease);
+}
+.vd-nav a ion-icon { font-size: 16px; }
+.vd-nav a:hover { color: var(--text); }
+.vd-nav a.active { background: rgba(255, 255, 255, 0.92); color: #0b0d12; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15); }
+body.vidrio:not(.dark) .vd-nav a.active { background: #10131a; color: #fff; }
+.vd-der { flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
+.vd-circ {
+  position: relative; width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid var(--vd-borde); border-radius: 50%;
+  background: var(--surface-2); color: var(--text); text-decoration: none; cursor: pointer; font: inherit;
+}
+.vd-circ ion-icon { font-size: 18px; }
+.vd-circ .badge-num { top: -3px; right: -3px; }
+
+// ------------------------------------------------------------------ Celular
+body.vidrio.vidrio.vidrio .pill-nav.pill-nav {
+  --pn-fondo: rgba(var(--vd-rgb), calc(var(--vd-alpha) + 0.05));
+  --pn-borde: var(--vd-borde);
+  --pn-activa: rgba(255, 255, 255, 0.92);
+  --pn-acento: #0b0d12;
+  --pn-texto: var(--text);
+}
+body.vidrio.vidrio.vidrio:not(.dark) .pill-nav.pill-nav { --pn-activa: #10131a; --pn-acento: #fff; }
+body.vidrio .shell::before,
+body.vidrio .layout::before {
+  background: transparent;
+}
+@media (max-width: 860px) {
+  body.vidrio .panel,
+  body.vidrio .kpi,
+  body.vidrio .list {
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    backdrop-filter: blur(16px) saturate(150%);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  body.vidrio { --vd-alpha: 0.85; }
+}
+
+// ------------------------------------------------------------------ Mini pantalla de la foto (arriba a la derecha)
+.vd-yo { position: relative; }
+.vd-avatar { padding: 0; border: 0; background: none; border-radius: 50%; cursor: pointer; display: block; }
+.vd-avatar:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.vd-capa { position: fixed; inset: 0; z-index: 40; border: 0; padding: 0; background: transparent; cursor: default; }
+.vd-menu {
+  position: absolute; right: 0; top: calc(100% + 10px); z-index: 41; width: 300px;
+  display: flex; flex-direction: column; gap: 2px; padding: 10px;
+  border: 1px solid var(--vd-borde); border-radius: 22px;
+  background: rgba(var(--vd-rgb), 0.86);
+  -webkit-backdrop-filter: blur(28px) saturate(170%); backdrop-filter: blur(28px) saturate(170%);
+  box-shadow: inset 0 1px 0 var(--vd-luz), 0 24px 60px rgba(0, 0, 0, 0.35);
+  animation: vd-baja 180ms var(--ease);
+}
+@keyframes vd-baja { from { opacity: 0; transform: translateY(-6px) scale(0.98); } }
+.vd-menu-cab { display: flex; align-items: center; gap: 12px; padding: 6px 8px 10px; }
+.vd-menu-cab strong { display: block; font-size: 15px; color: var(--text); }
+.vd-menu-cab small { display: block; font-size: 12px; color: var(--text-muted); }
+.vd-menu-tit { margin: 4px 10px 2px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
+.vd-menu-op {
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 10px; border: 0; border-radius: 14px; background: none;
+  color: var(--text); font: inherit; font-size: 14px; font-weight: 550; text-align: left; text-decoration: none; cursor: pointer;
+}
+.vd-menu-op:hover { background: var(--hover); }
+.vd-menu-op.on { background: var(--selected); }
+.vd-menu-op ion-icon { font-size: 19px; color: var(--text-soft); flex-shrink: 0; width: 18px; }
+.vd-menu-op.peligro, .vd-menu-op.peligro ion-icon { color: var(--danger); }
+.vd-menu-txt { flex: 1; min-width: 0; }
+.vd-menu-txt small { display: block; font-size: 11.5px; font-weight: 400; color: var(--text-muted); }
+.vd-ok { font-weight: 800; color: var(--text); }
+.vd-pres { width: 12px; height: 12px; margin: 0 3px; border-radius: 50%; flex-shrink: 0; }
+.vd-pres.activo { background: #23a55a; }
+.vd-pres.ausente { background: #f0b232; }
+.vd-pres.desconectado { background: transparent; box-shadow: inset 0 0 0 3px #80848e; }
+.vd-sep { height: 1px; margin: 6px 8px; background: var(--border); }
+
+// Panel de avisos: en el computador baja desde la campana de arriba
+@media (min-width: 861px) {
+  body.vidrio app-avisos-panel .panel {
+    left: auto;
+    right: 18px;
+    top: 74px;
+    bottom: auto;
+    border-color: var(--vd-borde);
+    background: rgba(var(--vd-rgb), 0.88);
+    -webkit-backdrop-filter: blur(28px) saturate(170%);
+    backdrop-filter: blur(28px) saturate(170%);
+  }
+  body.vidrio app-avisos-panel header { background: rgba(var(--vd-rgb), 0.92); }
+}

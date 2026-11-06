@@ -7,6 +7,8 @@ import {
   add,
   barChartOutline,
   calendarOutline,
+  homeOutline,
+  colorPaletteOutline,
   hourglassOutline,
   swapHorizontalOutline,
   searchOutline,
@@ -55,6 +57,7 @@ import { SupabaseService } from '../core/services/supabase.service';
 import { RequisitosComponent } from '../shared/requisitos/requisitos.component';
 import { TransferenciasAlertaComponent } from '../shared/transferencias-alerta/transferencias-alerta.component';
 import { ThemeService } from '../core/services/theme.service';
+import { FondoService } from '../core/services/fondo.service';
 import { ROLES, Rol } from '../shared/modelos';
 import { ToastComponent } from '../shared/toast/toast.component';
 import { AvatarComponent } from '../shared/avatar/avatar.component';
@@ -94,13 +97,13 @@ const GRUPOS: { id: Grupo; icon: string }[] = [
 ];
 
 const MENU: ItemMenu[] = [
-  { label: 'Inicio', path: '/app/inicio', icon: 'bar-chart-outline', roles: ['admin'] },
+  { label: 'Inicio', path: '/app/inicio', icon: 'home-outline', roles: ['admin'], grupo: 'Finanzas' },
   // Alistamiento: su propio Inicio, solo con información de los pedidos (sin la ganancia de la tienda)
-  { label: 'Inicio', path: '/app/tablero', icon: 'bar-chart-outline', roles: ['alistador'], sinRoles: ['admin'] },
-  { label: 'Mi panel', path: '/app/mi-panel', icon: 'grid-outline', roles: ['vendedora'] },
-  { label: 'Pedidos', path: '/app/pedidos', icon: 'receipt-outline', roles: ['admin', 'alistador', 'cuadres'] },
-  { label: 'Calendario', path: '/app/calendario', icon: 'calendar-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador', 'venta_local', 'recolector'], buscar: 'fechas recordatorio agenda festivos quincena dia de la madre' },
-  { label: 'Mis entregas', path: '/app/mis-entregas', icon: 'bicycle-outline', roles: ['mensajero'] },
+  { label: 'Inicio', path: '/app/tablero', icon: 'home-outline', roles: ['alistador'], sinRoles: ['admin'], grupo: 'Bodega' },
+  { label: 'Mi panel', path: '/app/mi-panel', icon: 'grid-outline', roles: ['vendedora'], grupo: 'Ventas' },
+  { label: 'Pedidos', path: '/app/pedidos', icon: 'receipt-outline', roles: ['admin', 'alistador', 'cuadres'], grupo: 'Ventas' },
+  { label: 'Calendario', path: '/app/calendario', icon: 'calendar-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador', 'venta_local', 'recolector'], grupo: 'Equipo', buscar: 'fechas recordatorio agenda festivos quincena dia de la madre' },
+  { label: 'Mis entregas', path: '/app/mis-entregas', icon: 'bicycle-outline', roles: ['mensajero'], grupo: 'Entregas' },
   { label: 'Venta en local', path: '/app/venta-local', icon: 'storefront-outline', roles: ['admin', 'venta_local'], grupo: 'Ventas' , buscar: 'vender caja registrar' },
   { label: 'Ventas del local', path: '/app/ventas-local', icon: 'list-outline', roles: ['admin', 'venta_local'], grupo: 'Ventas' , buscar: 'caja ticket cuadrar' },
   { label: 'Servicio local', path: '/app/servicio-local', icon: 'cash-outline', roles: ['admin', 'venta_local', 'cuadres'], grupo: 'Ventas' , buscar: 'alcancia caja' },
@@ -131,6 +134,7 @@ const MENU: ItemMenu[] = [
   { label: 'Actividad', path: '/app/actividad', icon: 'time-outline', roles: ['admin'], grupo: 'Equipo' , buscar: 'historial cambios' },
 
   { label: 'Configuración', path: '/app/configuracion', icon: 'settings-outline', roles: ['admin'], grupo: 'Ajustes' , buscar: 'qr cuentas telegram whatsapp rotulo' },
+  { label: 'Tema', path: '/app/tema', icon: 'color-palette-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador', 'venta_local', 'recolector'], grupo: 'Ajustes', buscar: 'fondo pantalla imagen foto apariencia colores modo oscuro claro' },
   { label: 'Actualizaciones', path: '/app/actualizaciones', icon: 'sparkles-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador', 'venta_local', 'recolector'], grupo: 'Ajustes' , buscar: 'novedades nuevo ayuda' },
   { label: 'Mi perfil', path: '/app/perfil', icon: 'person-circle-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador', 'venta_local', 'recolector'], grupo: 'Ajustes' , buscar: 'foto contraseña' },
 ];
@@ -141,100 +145,86 @@ const MENU: ItemMenu[] = [
   imports: [RouterOutlet, RouterLink, RouterLinkActive, NgTemplateOutlet, IonIcon, ToastComponent, AvatarComponent, AvisosPanelComponent, RequisitosComponent, TransferenciasAlertaComponent],
   styleUrls: ['../shared/pill-nav.scss', './shell.component.scss'],
   template: `
+    <div class="vd-fondo" aria-hidden="true"></div>
     <div class="shell" [class.collapsed]="colapsado()">
-      <aside class="sidebar">
-        <div class="brand">
-          <img class="brand-mark" src="assets/icon/logo.png" alt="" />
-          @if (!colapsado()) {
-            <span class="brand-name">Jasta<small>Hobbies &amp; Accesorios</small></span>
-          }
-          <button class="icon-btn" (click)="alternarMenu()" [attr.aria-label]="colapsado() ? 'Expandir menú' : 'Contraer menú'">
-            <ion-icon [name]="colapsado() ? 'chevron-forward-outline' : 'chevron-back-outline'"></ion-icon>
-          </button>
-        </div>
-
+      <!-- Computador: barra flotante de íconos (cada categoría abre su panel al lado) -->
+      <aside class="sidebar rail" aria-label="Menú">
         @if (puedeVender()) {
-          <a routerLink="/app/pedidos/nuevo" class="new-btn" [attr.aria-label]="colapsado() ? 'Nuevo pedido' : null">
-            <ion-icon name="add"></ion-icon>
-            @if (!colapsado()) {
-              <span>Nuevo pedido</span>
-            }
-          </a>
+          <a routerLink="/app/pedidos/nuevo" class="rail-btn rail-nuevo" data-tip="Nuevo pedido" aria-label="Nuevo pedido"><ion-icon name="add"></ion-icon></a>
+          <span class="rail-sep" aria-hidden="true"></span>
         }
-
-        <nav class="menu" aria-label="Secciones">
-          @if (colapsado()) {
-            @for (item of menu(); track item.path) {
-              <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.path === '/app/pedidos' }"
-                class="menu-item" [attr.aria-label]="item.label" [title]="item.label">
-                <ion-icon [name]="item.icon"></ion-icon>
-              </a>
-            }
-          } @else {
-            @for (item of sueltos(); track item.path) {
-              <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.path === '/app/pedidos' }" class="menu-item">
-                <ion-icon [name]="item.icon"></ion-icon><span>{{ item.label }}</span>
-              </a>
-            }
-            @for (g of grupos(); track g.id) {
-              <div class="grupo" [class.abierto]="abierto(g.id)">
-                <button type="button" class="grupo-head" (click)="alternarGrupo(g.id)" [attr.aria-expanded]="abierto(g.id)">
-                  <ion-icon [name]="g.icon"></ion-icon><span>{{ g.id }}</span>
-                  @if (!abierto(g.id) && g.activo) { <span class="grupo-punto" aria-hidden="true"></span> }
-                  <ion-icon class="grupo-flecha" name="chevron-down-outline"></ion-icon>
-                </button>
-                @if (abierto(g.id)) {
-                  <div class="grupo-items">
-                    @for (item of g.items; track item.path) {
-                      <a [routerLink]="item.path" routerLinkActive="active" class="menu-item">
-                        <ion-icon [name]="item.icon"></ion-icon><span>{{ item.label }}</span>
-                      </a>
-                    }
-                  </div>
-                }
-              </div>
-            }
+        @for (item of sueltos(); track item.path) {
+          <a [routerLink]="item.path" routerLinkActive="active" class="rail-btn" [attr.data-tip]="item.label" [attr.aria-label]="item.label"><ion-icon [name]="item.icon"></ion-icon></a>
+        }
+        @for (g of grupos(); track g.id) {
+          <button type="button" class="rail-btn" [class.active]="g.activo" [class.abierto]="flotante() === g.id" [attr.data-tip]="g.id" [attr.aria-label]="g.id"
+            [attr.aria-expanded]="flotante() === g.id" (click)="flotante.set(flotante() === g.id ? null : g.id)">
+            <ion-icon [name]="g.icon"></ion-icon>
+          </button>
+        }
+      </aside>
+      @if (grupoFlotante(); as g) {
+        <button class="rail-capa" aria-label="Cerrar" (click)="flotante.set(null)"></button>
+        <nav class="rail-fly" [attr.aria-label]="g.id">
+          <p class="rail-fly-tit">{{ g.id }}</p>
+          @for (item of g.items; track item.path) {
+            <a [routerLink]="item.path" routerLinkActive="active" class="rail-fly-op" (click)="flotante.set(null)">
+              <ion-icon [name]="item.icon"></ion-icon><span>{{ item.label }}</span>
+            </a>
           }
         </nav>
-
-        <div class="sidebar-footer">
-          <button class="footer-btn avisos-btn" [class.on]="avisos.abierto()" (click)="avisos.toggle()" [attr.aria-expanded]="avisos.abierto()"
-            [attr.aria-label]="'Avisos' + (avisos.noLeidas() ? ', ' + avisos.noLeidas() + ' sin leer' : '')">
-            <span class="icono-badge">
-              <ion-icon name="notifications-outline"></ion-icon>
-              @if (avisos.noLeidas()) {
-                <span class="badge-num num">{{ avisos.noLeidas() > 9 ? '9+' : avisos.noLeidas() }}</span>
-              }
-            </span>
-            @if (!colapsado()) {
-              <span>Avisos</span>
-            }
-          </button>
-          <a class="usuario" routerLink="/app/perfil" [attr.aria-label]="'Mi perfil: ' + sb.usuario()?.nombre">
-            <app-avatar [nombre]="sb.usuario()?.nombre" [foto]="sb.usuario()?.avatar_url" [usuario]="sb.usuario()?.id" [tam]="32"></app-avatar>
-            @if (!colapsado()) {
-              <div>
-                <strong>{{ sb.usuario()?.nombre }}</strong>
-                <span>{{ rolesTexto() }}</span>
-              </div>
-            }
-          </a>
-          <button class="footer-btn" (click)="theme.toggle()">
-            <ion-icon [name]="theme.isDark() ? 'sunny-outline' : 'moon-outline'"></ion-icon>
-            @if (!colapsado()) {
-              <span>{{ theme.isDark() ? 'Modo claro' : 'Modo oscuro' }}</span>
-            }
-          </button>
-          <button class="footer-btn" (click)="salir()">
-            <ion-icon name="log-out-outline"></ion-icon>
-            @if (!colapsado()) {
-              <span>Cerrar sesión</span>
-            }
-          </button>
-        </div>
-      </aside>
+      }
 
       <main class="content">
+        <!-- Barra superior (diseño Vidrio, escritorio): saludo, secciones principales y accesos -->
+        <div class="vd-top-wrap">
+        <header class="vd-top">
+          <a class="vd-logo" routerLink="/app" aria-label="Jasta"><img src="assets/icon/logo.png" alt="" /></a>
+          <span class="vd-saludo">{{ saludo() }}</span>
+          <nav class="vd-nav" aria-label="Secciones principales">
+            @for (item of principales(); track item.path) {
+              <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.path === '/app/pedidos' }">
+                <ion-icon [name]="item.icon"></ion-icon>{{ item.label }}</a>
+            }
+          </nav>
+          <div class="vd-der">
+            <button class="vd-circ" (click)="theme.toggle()" [attr.aria-label]="theme.isDark() ? 'Modo claro' : 'Modo oscuro'" [title]="theme.isDark() ? 'Modo claro' : 'Modo oscuro'">
+              <ion-icon [name]="theme.isDark() ? 'sunny-outline' : 'moon-outline'"></ion-icon></button>
+            <a class="vd-circ" routerLink="/app/tema" aria-label="Tema y fondo" title="Tema y fondo"><ion-icon name="color-palette-outline"></ion-icon></a>
+            <button class="vd-circ" (click)="avisos.toggle()" [attr.aria-label]="'Avisos' + (avisos.noLeidas() ? ', ' + avisos.noLeidas() + ' sin leer' : '')">
+              <ion-icon name="notifications-outline"></ion-icon>
+              @if (avisos.noLeidas()) { <span class="badge-num num">{{ avisos.noLeidas() > 9 ? '9+' : avisos.noLeidas() }}</span> }
+            </button>
+            <div class="vd-yo">
+              <button class="vd-avatar" (click)="menuYo.set(!menuYo())" [attr.aria-expanded]="menuYo()" aria-haspopup="menu" [attr.aria-label]="'Tu cuenta: ' + sb.usuario()?.nombre">
+                <app-avatar [nombre]="sb.usuario()?.nombre" [foto]="sb.usuario()?.avatar_url" [usuario]="sb.usuario()?.id" [tam]="38"></app-avatar>
+              </button>
+              @if (menuYo()) {
+                <button class="vd-capa" aria-label="Cerrar" (click)="menuYo.set(false)"></button>
+                <div class="vd-menu" role="menu" aria-label="Tu cuenta">
+                  <div class="vd-menu-cab">
+                    <app-avatar [nombre]="sb.usuario()?.nombre" [foto]="sb.usuario()?.avatar_url" [usuario]="sb.usuario()?.id" [tam]="44"></app-avatar>
+                    <div><strong>{{ sb.usuario()?.nombre }}</strong><small>{{ rolesTexto() }}</small></div>
+                  </div>
+                  <p class="vd-menu-tit">Estado</p>
+                  @for (e of estadosYo; track e.valor) {
+                    <button type="button" class="vd-menu-op" role="menuitemradio" [attr.aria-checked]="presencia.preferencia() === e.valor" [class.on]="presencia.preferencia() === e.valor"
+                      (click)="presencia.elegir(e.valor)">
+                      <span class="vd-pres" [class]="'vd-pres ' + e.punto" aria-hidden="true"></span>
+                      <span class="vd-menu-txt">{{ e.etiqueta }}<small>{{ e.ayuda }}</small></span>
+                      @if (presencia.preferencia() === e.valor) { <span class="vd-ok" aria-hidden="true">✓</span> }
+                    </button>
+                  }
+                  <span class="vd-sep" aria-hidden="true"></span>
+                  <a class="vd-menu-op" role="menuitem" routerLink="/app/perfil" (click)="menuYo.set(false)"><ion-icon name="person-circle-outline"></ion-icon><span class="vd-menu-txt">Mi perfil</span></a>
+                  <a class="vd-menu-op" role="menuitem" routerLink="/app/tema" (click)="menuYo.set(false)"><ion-icon name="color-palette-outline"></ion-icon><span class="vd-menu-txt">Tema y fondo</span></a>
+                  <button type="button" class="vd-menu-op peligro" role="menuitem" (click)="menuYo.set(false); salir()"><ion-icon name="log-out-outline"></ion-icon><span class="vd-menu-txt">Cerrar sesión</span></button>
+                </div>
+              }
+            </div>
+          </div>
+        </header>
+        </div>
         <app-transferencias-alerta></app-transferencias-alerta>
         <router-outlet></router-outlet>
       </main>
@@ -327,8 +317,10 @@ const MENU: ItemMenu[] = [
 export class ShellComponent implements OnInit, OnDestroy {
   sb = inject(SupabaseService);
   theme = inject(ThemeService);
+  /** Aplica la foto de fondo del diseño Vidrio (Ajustes → Tema) */
+  fondo = inject(FondoService);
   avisos = inject(NotificacionesService);
-  private presencia = inject(PresenciaService);
+  presencia = inject(PresenciaService);
   private router = inject(Router);
 
   colapsado = signal(this.leerColapsado());
@@ -343,12 +335,12 @@ export class ShellComponent implements OnInit, OnDestroy {
     return i > 0 ? [items[i], ...items.slice(0, i), ...items.slice(i + 1)] : items;
   });
   /** Computador: las secciones sin grupo van arriba y las demás en grupos desplegables */
-  /** La pantalla principal de cada quien también va suelta arriba, aunque sea de un grupo */
-  sueltos = computed(() => this.menu().filter((m) => !m.grupo || m.path === this.sb.inicioSegunRoles()));
+  /** Todas las secciones van en su categoría (las principales están en la barra de arriba) */
+  sueltos = computed(() => this.menu().filter((m) => !m.grupo));
   grupos = computed(() => {
     const url = this.url();
     return GRUPOS.map((g) => {
-      const items = this.menu().filter((m) => m.grupo === g.id && m.path !== this.sb.inicioSegunRoles());
+      const items = this.menu().filter((m) => m.grupo === g.id);
       return { ...g, items, activo: items.some((m) => url.startsWith(m.path)) };
     }).filter((g) => g.items.length);
   });
@@ -388,6 +380,38 @@ export class ShellComponent implements OnInit, OnDestroy {
 
   /** En el celular caben 2 secciones en la barra (más Nuevo, Avisos y Más); el resto va en "Más" */
   tabs = computed(() => this.menu().slice(0, 2));
+  /** Categoría abierta en el panel flotante de la barra de íconos */
+  flotante = signal<string | null>(null);
+  grupoFlotante = computed(() => this.grupos().find((g) => g.id === this.flotante()) ?? null);
+
+  /** Mini pantalla de la foto (arriba a la derecha): estado, Mi perfil y cerrar sesión */
+  menuYo = signal(false);
+  readonly estadosYo: { valor: 'auto' | 'ausente' | 'invisible'; etiqueta: string; ayuda: string; punto: string }[] = [
+    { valor: 'auto', etiqueta: 'Activo', ayuda: 'Pasas a ausente solo si no usas la app', punto: 'activo' },
+    { valor: 'ausente', etiqueta: 'Ausente', ayuda: 'Aunque tengas la app abierta', punto: 'ausente' },
+    { valor: 'invisible', etiqueta: 'Invisible', ayuda: 'Te ven desconectado', punto: 'desconectado' },
+  ];
+
+  /** Desde la barra de íconos: abre el menú completo con ese grupo desplegado */
+  abrirGrupo(id: string): void {
+    if (this.colapsado()) this.alternarMenu();
+    if (!this.abierto(id)) this.alternarGrupo(id);
+  }
+
+  /** Las 4 primeras secciones, en la barra superior del diseño Vidrio */
+  principales = computed(() => {
+    const menu = this.menu();
+    // Inicio (el de cada quien), Pedidos, Calendario y Cuadres; si alguna no le toca, se completa con las siguientes
+    const quiero = [this.sb.inicioSegunRoles(), '/app/pedidos', '/app/calendario', '/app/cuadres'];
+    const elegidas = quiero.map((p) => menu.find((m) => m.path === p)).filter((m): m is ItemMenu => !!m);
+    const extra = menu.filter((m) => !elegidas.includes(m));
+    return [...elegidas, ...extra].slice(0, 4);
+  });
+  saludo = computed(() => {
+    const h = Number(new Intl.DateTimeFormat('es-CO', { hour: 'numeric', hour12: false, timeZone: 'America/Bogota' }).format(new Date()));
+    const nombre = (this.sb.usuario()?.nombre ?? '').trim().split(/\s+/)[0];
+    return (h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches') + (nombre ? `, ${nombre}` : '');
+  });
   masItems = computed(() => this.menu().slice(2));
 
   /** Buscador del menú del celular */
@@ -431,7 +455,7 @@ export class ShellComponent implements OnInit, OnDestroy {
   );
 
   constructor() {
-    addIcons({ calendarOutline, hourglassOutline, swapHorizontalOutline, searchOutline, 
+    addIcons({ homeOutline, colorPaletteOutline, calendarOutline, hourglassOutline, swapHorizontalOutline, searchOutline, 
       sparklesOutline, globeOutline, chatbubblesOutline, analyticsOutline, add, close, chevronDownOutline, layersOutline, pricetagsOutline, returnDownBackOutline, pieChartOutline, alertCircleOutline, cardOutline, trendingDownOutline, barChartOutline, chevronBackOutline, chevronForwardOutline, cubeOutline, ellipsisHorizontal,
       logOutOutline, moonOutline, peopleOutline, receiptOutline, bicycleOutline, clipboardOutline, sunnyOutline, walletOutline, ticketOutline, statsChartOutline, settingsOutline,
       storefrontOutline, listOutline, trophyOutline, bookOutline, gridOutline, cashOutline, bagHandleOutline, peopleCircleOutline, timeOutline, personCircleOutline, notificationsOutline, locationOutline,

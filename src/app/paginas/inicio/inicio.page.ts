@@ -9,6 +9,7 @@ import { diaColombiaDe, formatoFechaCO, formatoHoraCO, hoyColombiaISO } from '..
 import { diaLargo, sumarDias } from '../../shared/rango/rango.component';
 import { STOCK_BAJO } from '../../shared/stock';
 import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
+import { DonaComponent, Segmento } from '../../shared/dona/dona.component';
 
 // Solo lo que usa la gráfica, para no cargar Chart.js entero
 Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip);
@@ -61,11 +62,55 @@ function finMes(): string {
 @Component({
   selector: 'app-inicio',
   standalone: true,
-  imports: [EsqueletoComponent, RouterLink],
+  imports: [EsqueletoComponent, RouterLink, DonaComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
-      .page { max-width: 1100px; }
+      .page { max-width: 1560px; }
+      /* Tablero: en el computador, cuadrícula de 12 columnas como un panel de control */
+      .dash { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
+      .a-hoy { align-self: start; }
+      .dash > * { min-width: 0; }
+      .a-hoy { grid-column: 1 / -1; }
+      .a-graf { grid-column: span 8; }
+      .a-pedidos { grid-column: span 4; }
+      .a-mes, .a-pagos, .a-atencion { grid-column: span 4; }
+      .a-local { grid-column: span 6; }
+      .a-vend, .a-prod { grid-column: span 3; }
+      /* Listas largas: se desplazan dentro de su tarjeta para no estirar la fila */
+      .a-vend .ranking, .a-prod .ranking { max-height: 330px; overflow-y: auto; padding-right: 4px; }
+      .a-pedidos, .a-mes, .a-pagos { display: flex; flex-direction: column; gap: 12px; }
+      .a-graf { display: flex; flex-direction: column; }
+      .a-graf .chart { flex: 1; min-height: 240px; height: auto; }
+      .a-pedidos .renglones, .a-mes .renglones, .a-pagos .renglones { margin-top: 4px; }
+      .kpi { position: relative; }
+      /* Línea pequeña abajo a la derecha (no cambia el alto de la tarjeta) */
+      .spark { position: absolute; right: 14px; bottom: 14px; width: 38%; height: 30px; }
+      .spark polyline { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; opacity: .9; }
+      .spark { color: var(--accent); }
+      .kpi-principal .spark { color: var(--efectivo-texto); }
+      .local-cuerpo { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 20px; align-items: center; flex: 1; }
+      .a-local { display: flex; flex-direction: column; }
+      .a-local .panel-head { flex-wrap: wrap; }
+      .mini-kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .mini { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2); color: inherit; text-decoration: none; }
+      .mini span { font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted); }
+      .mini strong { font-size: 18px; font-weight: 700; }
+      .mini.destacado { background: var(--oro-wash); }
+      .renglones dd.neg { color: var(--danger); }
+      .renglones dt a { color: inherit; }
+      @media (max-width: 1180px) {
+        .a-graf, .a-local { grid-column: 1 / -1; }
+        .a-pedidos, .a-mes, .a-pagos, .a-atencion, .a-vend, .a-prod { grid-column: span 6; }
+      }
+      @media (max-width: 760px) {
+        .dash { grid-template-columns: minmax(0, 1fr); }
+        .dash > * { grid-column: 1 / -1 !important; }
+        .a-pedidos { order: 1; } .a-graf { order: 2; } .a-atencion { order: 3; } .a-mes { order: 4; } .a-pagos { order: 5; } .a-local { order: 6; } .a-vend { order: 7; } .a-prod { order: 8; }
+        .a-hoy { order: 0; }
+        .local-cuerpo { grid-template-columns: 1fr; }
+        .spark { display: none; }
+      }
       .head .acciones { display: flex; gap: 8px; }
       a.kpi { color: inherit; text-decoration: none; }
       @media (hover: hover) { a.kpi:hover { background: var(--hover); } }
@@ -138,12 +183,16 @@ function finMes(): string {
         </div>
       </div>
 
+      <div class="dash">
       <!-- Hoy -->
-      <div class="kpis" role="list" [attr.aria-busy]="cargando()">
+      <div class="kpis a-hoy" role="list" [attr.aria-busy]="cargando()">
         <div class="kpi kpi-principal" role="listitem">
           <span class="kpi-label">Ganancia tienda hoy</span>
           <span class="kpi-valor num">{{ cargando() ? '…' : pesos(gananciaHoy()) }}</span>
           <span class="kpi-nota">Precio base − compra</span>
+          @if (linea(); as ln) {
+            <svg class="spark" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true"><polyline [attr.points]="ln" /></svg>
+          }
         </div>
         <div class="kpi" role="listitem">
           <span class="kpi-label">Ventas de hoy</span>
@@ -154,6 +203,9 @@ function finMes(): string {
           <span class="kpi-label">Pedidos de hoy</span>
           <span class="kpi-valor num">{{ numero(r()?.pedidos) }}</span>
           <span class="kpi-nota num">{{ numero(r()?.entregados) }} entregados · {{ numero(r()?.cancelados) }} cancelados</span>
+          @if (lineaPedidos(); as ln) {
+            <svg class="spark" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true"><polyline [attr.points]="ln" /></svg>
+          }
         </div>
         <a class="kpi" role="listitem" routerLink="/app/cuadres">
           <span class="kpi-label">Por recibir en cuadres</span>
@@ -162,86 +214,8 @@ function finMes(): string {
         </a>
       </div>
 
-      <!-- Este mes: ganancia, gastos, utilidad real y comisiones por pagar -->
-      @if (mes(); as m) {
-        <h2 class="titulo-mes">Este mes</h2>
-        <div class="kpis" role="list">
-          <div class="kpi" role="listitem">
-            <span class="kpi-label">Ganancia tienda</span>
-            <span class="kpi-valor num">{{ pesos(m.ganancia_tienda) }}</span>
-            <span class="kpi-nota">Pedidos entregados</span>
-          </div>
-          @if (m.ganancia_cuentas) {
-            <a class="kpi" role="listitem" routerLink="/app/cuentas">
-              <span class="kpi-label">Ganancia cuentas por cobrar</span>
-              <span class="kpi-valor num">{{ pesos(m.ganancia_cuentas) }}</span>
-              <span class="kpi-nota">Lo que cobraste por encima de tu costo</span>
-            </a>
-          }
-          <a class="kpi" role="listitem" routerLink="/app/gastos">
-            <span class="kpi-label">Gastos</span>
-            <span class="kpi-valor num">{{ pesos(m.gastos) }}</span>
-            <span class="kpi-nota">{{ m.gastos ? 'Ver en qué se gastó' : 'Registra arriendo, nómina…' }}</span>
-          </a>
-          <a class="kpi kpi-principal" role="listitem" routerLink="/app/gastos">
-            <span class="kpi-label">Utilidad real</span>
-            <span class="kpi-valor num" [class.neg]="m.utilidad < 0">{{ pesos(m.utilidad) }}</span>
-            <span class="kpi-nota">{{ m.ganancia_cuentas ? 'Ganancia + cuentas − gastos' : 'Ganancia − gastos' }}</span>
-          </a>
-          <a class="kpi" role="listitem" routerLink="/app/comisiones">
-            <span class="kpi-label">Comisiones por pagar</span>
-            <span class="kpi-valor num">{{ pesos(m.comisiones) }}</span>
-            <span class="kpi-nota">{{ m.vendedoras ? m.vendedoras + (m.vendedoras === 1 ? ' vendedora' : ' vendedoras') : 'Todo pagado' }}</span>
-          </a>
-        </div>
-      }
-
-      <!-- Ventas del local: lo vendido en el punto físico, cómo se pagó y lo que ganó la tienda -->
-      @if (local(); as l) {
-        <div class="titulo-local">
-          <h2 class="titulo-mes">Ventas del local</h2>
-          <div class="fechas-local" role="group" aria-label="Periodo de las ventas del local">
-            <label>Desde<input type="date" class="inp" [value]="desdeLocal()" [max]="hastaLocal()" (change)="cambiarLocal('desde', $any($event.target).value)" /></label>
-            <label>Hasta<input type="date" class="inp" [value]="hastaLocal()" [min]="desdeLocal()" (change)="cambiarLocal('hasta', $any($event.target).value)" /></label>
-            @if (!esMesActual()) { <button type="button" class="b este-mes" (click)="mesActualLocal()">Este mes</button> }
-          </div>
-        </div>
-        <div class="kpis" role="list">
-          <a class="kpi kpi-principal" role="listitem" routerLink="/app/ventas-local">
-            <span class="kpi-label">Ganancia tienda</span>
-            <span class="kpi-valor num">{{ pesos(l.ganancia_tienda) }}</span>
-            <span class="kpi-nota">Solo ventas del local</span>
-          </a>
-          <a class="kpi" role="listitem" routerLink="/app/ventas-local">
-            <span class="kpi-label">Vendido</span>
-            <span class="kpi-valor num">{{ pesos(l.total) }}</span>
-            <span class="kpi-nota">{{ l.ventas }} {{ l.ventas === 1 ? 'venta' : 'ventas' }} · {{ l.unidades }} {{ l.unidades === 1 ? 'unidad' : 'unidades' }}</span>
-          </a>
-          <div class="kpi" role="listitem">
-            <span class="kpi-label">Efectivo</span>
-            <span class="kpi-valor num">{{ pesos(l.efectivo) }}</span>
-            <span class="kpi-nota">Lo que entró a la caja</span>
-          </div>
-          <div class="kpi" role="listitem">
-            <span class="kpi-label">Transferencias</span>
-            <span class="kpi-valor num">{{ pesos(l.transferencia) }}</span>
-            <span class="kpi-nota">A las cuentas</span>
-          </div>
-          <a class="kpi" role="listitem" routerLink="/app/servicio-local">
-            <span class="kpi-label">Alcancía</span>
-            <span class="kpi-valor num">{{ pesos(l.alcancia) }}</span>
-            <span class="kpi-nota">Servicio local</span>
-          </a>
-          <div class="kpi" role="listitem">
-            <span class="kpi-label">Ticket promedio</span>
-            <span class="kpi-valor num">{{ pesos(l.ventas ? l.total / l.ventas : 0) }}</span>
-            <span class="kpi-nota">Por venta</span>
-          </div>
-        </div>
-      }
-
       <!-- Ganancia de la tienda -->
-      <section class="panel" aria-labelledby="t-ganancia">
+      <section class="panel a-graf" aria-labelledby="t-ganancia">
         <div class="panel-head">
           <div>
             <h2 id="t-ganancia">Ganancia de la tienda</h2>
@@ -268,80 +242,114 @@ function finMes(): string {
         <p class="panel-foot">Pedidos entregados, por el día en que se subieron (igual que en Reportes). Toca una barra para ver el detalle.</p>
       </section>
 
-      <div class="cols">
-        <!-- Necesita atención -->
-        <section class="panel" aria-labelledby="t-atencion">
-          <div class="panel-head"><h2 id="t-atencion">Necesita atención<span class="cuenta">{{ tareas().length }}</span></h2></div>
-          @if (tareas().length) {
-            <div class="tareas">
-              @for (t of tareas(); track $index) {
-                <div class="tarea">
-                  <span [class]="'punto ' + t.tipo" aria-hidden="true"></span>
-                  <span class="tarea-texto">
-                    <span class="tarea-titulo">{{ t.titulo }}</span>
-                    <span class="tarea-detalle" [class.neg]="t.tipo === 'negativo'">{{ t.detalle }}</span>
-                  </span>
-                  @if (t.monto !== null) { <span class="tarea-monto">{{ pesos(t.monto) }}</span> } @else { <span></span> }
-                  <a class="b" [routerLink]="t.ruta" [queryParams]="t.query ?? {}">{{ t.accion }}</a>
-                </div>
-              }
-            </div>
-          } @else {
-            @if (cargando()) { <app-esqueleto forma="texto" [filas]="3"></app-esqueleto> } @else { <p class="al-dia"><strong>{{ 'Todo al día' }}</strong>
-              @if (!cargando()) { No hay cuadres pendientes, pedidos por mover ni productos con stock bajo. }</p> }
-          }
-        </section>
-
-        <div class="lado">
-          <section class="panel">
-            <div class="panel-head"><div><h2>En curso</h2><p class="panel-sub">Lo que falta mover ahora</p></div></div>
-            <div class="renglones en-curso">
-              <a routerLink="/app/pedidos" [queryParams]="{ estado: 'por_alistar' }"><span><span class="estado por_alistar">Por alistar</span></span><span class="num">{{ r()?.por_estado?.['por_alistar'] ?? 0 }}</span></a>
-              <a routerLink="/app/pedidos" [queryParams]="{ estado: 'alistado' }"><span><span class="estado alistado">Alistados sin despachar</span></span><span class="num">{{ r()?.por_estado?.['alistado'] ?? 0 }}</span></a>
-              <a routerLink="/app/pedidos" [queryParams]="{ estado: 'despachado' }"><span><span class="estado despachado">En ruta</span></span><span class="num">{{ r()?.por_estado?.['despachado'] ?? 0 }}</span></a>
-            </div>
-          </section>
-
-          <section class="panel">
-            <div class="panel-head"><div><h2>Resumen de hoy</h2><p class="panel-sub">Pedidos entregados hoy</p></div></div>
-            <dl class="renglones">
-              <div><dt>Efectivo</dt><dd>{{ pesos(r()?.efectivo) }}</dd></div>
-              <div><dt>Transferencias</dt><dd>{{ pesos(r()?.transferencia) }}</dd></div>
-              <div><dt>Domicilios <small class="suave">(de los mensajeros)</small></dt><dd>{{ pesos(r()?.domicilios) }}</dd></div>
-              <div><dt>Ganancia vendedoras</dt><dd>{{ pesos(r()?.margen_vendedoras) }}</dd></div>
-              @if (r()?.alcancia) { <div><dt>Servicio local <small class="suave">(ventas del local)</small></dt><dd>{{ pesos(r()?.alcancia) }}</dd></div> }
-              <div class="total"><dt>Ganancia tienda</dt><dd>{{ pesos(gananciaHoy()) }}</dd></div>
-            </dl>
-          </section>
-
-          <section class="panel">
-            <div class="panel-head"><h2>Vendedoras hoy</h2></div>
-            <ol class="ranking">
-              @for (v of r()?.vendedoras ?? []; track v.nombre) {
-                <li>
-                  <span class="nom">{{ v.nombre }}</span><span class="val num">{{ pesos(v.ventas) }} · {{ v.pedidos }}</span>
-                  <span class="pista"><span [style.width.%]="(v.ventas / maxVend()) * 100"></span></span>
-                </li>
-              } @empty {
-                <li class="suave">Sin ventas entregadas hoy.</li>
-              }
-            </ol>
-          </section>
-
-          <section class="panel">
-            <div class="panel-head"><h2>Más vendidos hoy</h2></div>
-            <ol class="ranking">
-              @for (p of r()?.productos ?? []; track p.nombre) {
-                <li>
-                  <span class="nom">{{ p.nombre }}</span><span class="val num">{{ p.cantidad }} und · {{ pesos(p.ventas) }}</span>
-                  <span class="pista"><span [style.width.%]="(p.cantidad / maxProd()) * 100"></span></span>
-                </li>
-              } @empty {
-                <li class="suave">Sin ventas entregadas hoy.</li>
-              }
-            </ol>
-          </section>
+      <!-- Hoy: pedidos (dona) y lo que falta mover -->
+      <section class="panel a-pedidos">
+        <div class="panel-head"><div><h2>Pedidos de hoy</h2><p class="panel-sub">Cómo van</p></div></div>
+        <app-dona [segmentos]="donaPedidos()" [valor]="numero(r()?.pedidos)" etiqueta="pedidos" [tam]="140"></app-dona>
+        <div class="renglones en-curso">
+          <a routerLink="/app/pedidos" [queryParams]="{ estado: 'por_alistar' }"><span><span class="estado por_alistar">Por alistar</span></span><span class="num">{{ r()?.por_estado?.['por_alistar'] ?? 0 }}</span></a>
+          <a routerLink="/app/pedidos" [queryParams]="{ estado: 'alistado' }"><span><span class="estado alistado">Alistados sin despachar</span></span><span class="num">{{ r()?.por_estado?.['alistado'] ?? 0 }}</span></a>
+          <a routerLink="/app/pedidos" [queryParams]="{ estado: 'despachado' }"><span><span class="estado despachado">En ruta</span></span><span class="num">{{ r()?.por_estado?.['despachado'] ?? 0 }}</span></a>
         </div>
+      </section>
+
+      <!-- Este mes: ganancia contra gastos (dona) -->
+      @if (mes(); as m) {
+        <section class="panel a-mes">
+          <div class="panel-head"><div><h2>Este mes</h2><p class="panel-sub">Lo que se ganó y lo que se gastó</p></div>
+            <a class="b" routerLink="/app/gastos">Gastos</a></div>
+          <app-dona [segmentos]="donaMes()" [valor]="pesosCorto(m.utilidad)" etiqueta="utilidad real" [tam]="150" [formato]="pesos"></app-dona>
+          <dl class="renglones">
+            <div><dt><a routerLink="/app/comisiones">Comisiones por pagar</a></dt><dd>{{ pesos(m.comisiones) }}</dd></div>
+            <div class="total"><dt>Utilidad real</dt><dd [class.neg]="m.utilidad < 0">{{ pesos(m.utilidad) }}</dd></div>
+          </dl>
+        </section>
+      }
+
+      <!-- Cómo pagaron hoy (dona) + resumen -->
+      <section class="panel a-pagos">
+        <div class="panel-head"><div><h2>Resumen de hoy</h2><p class="panel-sub">Cómo pagaron los pedidos entregados</p></div></div>
+        <app-dona [segmentos]="donaPagos()" [valor]="pesosCorto(+(r()?.efectivo ?? 0) + +(r()?.transferencia ?? 0))" etiqueta="recibido" [tam]="150" [formato]="pesos"></app-dona>
+        <dl class="renglones">
+          <div><dt>Domicilios <small class="suave">(de los mensajeros)</small></dt><dd>{{ pesos(r()?.domicilios) }}</dd></div>
+          <div><dt>Ganancia vendedoras</dt><dd>{{ pesos(r()?.margen_vendedoras) }}</dd></div>
+          @if (r()?.alcancia) { <div><dt>Servicio local</dt><dd>{{ pesos(r()?.alcancia) }}</dd></div> }
+          <div class="total"><dt>Ganancia tienda</dt><dd>{{ pesos(gananciaHoy()) }}</dd></div>
+        </dl>
+      </section>
+
+      <!-- Necesita atención -->
+      <section class="panel a-atencion" aria-labelledby="t-atencion">
+        <div class="panel-head"><h2 id="t-atencion">Necesita atención<span class="cuenta">{{ tareas().length }}</span></h2></div>
+        @if (tareas().length) {
+          <div class="tareas">
+            @for (t of tareas(); track $index) {
+              <div class="tarea">
+                <span [class]="'punto ' + t.tipo" aria-hidden="true"></span>
+                <span class="tarea-texto">
+                  <span class="tarea-titulo">{{ t.titulo }}</span>
+                  <span class="tarea-detalle" [class.neg]="t.tipo === 'negativo'">{{ t.detalle }}</span>
+                </span>
+                @if (t.monto !== null) { <span class="tarea-monto">{{ pesos(t.monto) }}</span> } @else { <span></span> }
+                <a class="b" [routerLink]="t.ruta" [queryParams]="t.query ?? {}">{{ t.accion }}</a>
+              </div>
+            }
+          </div>
+        } @else {
+          @if (cargando()) { <app-esqueleto forma="texto" [filas]="3"></app-esqueleto> } @else { <p class="al-dia"><strong>Todo al día</strong>
+            No hay cuadres pendientes, pedidos por mover ni productos con stock bajo.</p> }
+        }
+      </section>
+
+      <!-- Ventas del local: dona de cómo pagaron + cifras -->
+      @if (local(); as l) {
+        <section class="panel a-local">
+          <div class="panel-head">
+            <div><h2>Ventas del local</h2><p class="panel-sub">{{ l.ventas }} {{ l.ventas === 1 ? 'venta' : 'ventas' }} · {{ l.unidades }} {{ l.unidades === 1 ? 'unidad' : 'unidades' }}</p></div>
+            <div class="fechas-local" role="group" aria-label="Periodo de las ventas del local">
+              <label>Desde<input type="date" class="inp" [value]="desdeLocal()" [max]="hastaLocal()" (change)="cambiarLocal('desde', $any($event.target).value)" /></label>
+              <label>Hasta<input type="date" class="inp" [value]="hastaLocal()" [min]="desdeLocal()" (change)="cambiarLocal('hasta', $any($event.target).value)" /></label>
+              @if (!esMesActual()) { <button type="button" class="b este-mes" (click)="mesActualLocal()">Este mes</button> }
+            </div>
+          </div>
+          <div class="local-cuerpo">
+            <app-dona [segmentos]="donaLocal()" [valor]="pesosCorto(l.total)" etiqueta="vendido" [tam]="160" [formato]="pesos"></app-dona>
+            <div class="mini-kpis">
+              <a class="mini destacado" routerLink="/app/ventas-local"><span>Ganancia tienda</span><strong class="num">{{ pesos(l.ganancia_tienda) }}</strong></a>
+              <a class="mini" routerLink="/app/ventas-local"><span>Vendido</span><strong class="num">{{ pesos(l.total) }}</strong></a>
+              <div class="mini"><span>Ticket promedio</span><strong class="num">{{ pesos(l.ventas ? l.total / l.ventas : 0) }}</strong></div>
+              <a class="mini" routerLink="/app/servicio-local"><span>Alcancía</span><strong class="num">{{ pesos(l.alcancia) }}</strong></a>
+            </div>
+          </div>
+        </section>
+      }
+
+        <section class="panel a-vend">
+          <div class="panel-head"><h2>Vendedoras hoy</h2></div>
+          <ol class="ranking">
+            @for (v of r()?.vendedoras ?? []; track v.nombre) {
+              <li>
+                <span class="nom">{{ v.nombre }}</span><span class="val num">{{ pesos(v.ventas) }} · {{ v.pedidos }}</span>
+                <span class="pista"><span [style.width.%]="(v.ventas / maxVend()) * 100"></span></span>
+              </li>
+            } @empty {
+              <li class="suave">Sin ventas entregadas hoy.</li>
+            }
+          </ol>
+        </section>
+        <section class="panel a-prod">
+          <div class="panel-head"><h2>Más vendidos hoy</h2></div>
+          <ol class="ranking">
+            @for (p of r()?.productos ?? []; track p.nombre) {
+              <li>
+                <span class="nom">{{ p.nombre }}</span><span class="val num">{{ p.cantidad }} und · {{ pesos(p.ventas) }}</span>
+                <span class="pista"><span [style.width.%]="(p.cantidad / maxProd()) * 100"></span></span>
+              </li>
+            } @empty {
+              <li class="suave">Sin ventas entregadas hoy.</li>
+            }
+          </ol>
+        </section>
       </div>
     </div>
   `,
@@ -380,6 +388,56 @@ export class InicioPage implements OnInit, OnDestroy {
   pesos = pesos;
   numero = numero;
   abs = Math.abs;
+
+  // ---------- Donas ----------
+  donaPedidos = computed<Segmento[]>(() => {
+    const r = this.r();
+    const e = r?.por_estado ?? {};
+    return [
+      { etiqueta: 'Entregados', valor: Number(r?.entregados ?? 0), color: 'var(--st-entregado)' },
+      { etiqueta: 'En curso', valor: Number(e['por_alistar'] ?? 0) + Number(e['alistado'] ?? 0) + Number(e['despachado'] ?? 0), color: 'var(--st-ruta)' },
+      { etiqueta: 'Cancelados', valor: Number(r?.cancelados ?? 0), color: 'var(--st-cancelado)' },
+    ];
+  });
+  donaPagos = computed<Segmento[]>(() => [
+    { etiqueta: 'Efectivo', valor: Number(this.r()?.efectivo ?? 0), color: 'var(--st-entregado)' },
+    { etiqueta: 'Transferencias', valor: Number(this.r()?.transferencia ?? 0), color: 'var(--st-ruta)' },
+  ]);
+  donaMes = computed<Segmento[]>(() => {
+    const m = this.mes();
+    if (!m) return [];
+    return [
+      { etiqueta: 'Ganancia tienda', valor: m.ganancia_tienda, color: 'var(--st-entregado)' },
+      { etiqueta: 'Cuentas por cobrar', valor: m.ganancia_cuentas, color: 'var(--info)' },
+      { etiqueta: 'Gastos', valor: m.gastos, color: 'var(--st-cancelado)' },
+    ];
+  });
+  donaLocal = computed<Segmento[]>(() => {
+    const l = this.local();
+    return [
+      { etiqueta: 'Efectivo', valor: Number(l?.efectivo ?? 0), color: 'var(--st-entregado)' },
+      { etiqueta: 'Transferencias', valor: Number(l?.transferencia ?? 0), color: 'var(--st-ruta)' },
+    ];
+  });
+  /** Línea de la ganancia de los últimos días (en la tarjeta de hoy) */
+  linea = computed(() => this.puntos(this.barras().slice(-7).map((b) => b.ganancia)));
+  lineaPedidos = computed(() => this.puntos(this.barras().slice(-7).map((b) => b.pedidos)));
+  private puntos(v: number[]): string | null {
+    if (v.length < 2) return null;
+    const max = Math.max(...v), min = Math.min(...v, 0);
+    const rango = max - min || 1;
+    return v.map((x, i) => `${(i / (v.length - 1)) * 100},${28 - ((x - min) / rango) * 26}`).join(' ');
+  }
+
+  /** $1,2 M / $850 mil, para el centro de las donas */
+  pesosCorto(n: number | null | undefined): string {
+    const x = Number(n ?? 0);
+    const a = Math.abs(x);
+    const s = x < 0 ? '−$' : '$';
+    if (a >= 1_000_000) return `${s}${(a / 1_000_000).toLocaleString('es-CO', { maximumFractionDigits: 1 })} M`;
+    if (a >= 1_000) return `${s}${Math.round(a / 1_000)} mil`;
+    return `${s}${Math.round(a)}`;
+  }
 
   @ViewChild('lienzo') set lienzo(ref: ElementRef<HTMLCanvasElement> | undefined) {
     this.refLienzo = ref;
