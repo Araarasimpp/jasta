@@ -1,4 +1,4 @@
--- Recolector: cada uno con su base y su saldo, y el admin recibe lo que debe tener (PENDIENTE: córrelo en el SQL Editor de Supabase)
+-- Recolector: cada uno con su base y su saldo, y el admin recibe lo que debe tener (YA APLICADO en Supabase)
 -- * Saldo de cada recolector (lo que debe tener en la mano, sumando todos los días):
 --   bases aceptadas − compras − lo que ya le entregó al admin.
 -- * El admin registra cuánto recibió (puede ser todo o una parte); le llega un aviso al recolector.

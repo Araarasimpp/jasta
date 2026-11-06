@@ -1,5 +1,31 @@
 [
   {
+    "id": "2026-11-06-recolector-foto-quitar",
+    "fecha": "2026-11-06",
+    "hora": "13:25",
+    "titulo": "Recolector: foto del producto al comprar y quitar compras",
+    "cuerpo": "Al registrar una compra del inventario ahora ves la foto de cada producto, y una compra mal registrada se puede quitar.",
+    "roles": [
+      "admin",
+      "recolector"
+    ],
+    "secciones": [
+      {
+        "titulo": "Recolector",
+        "pasos": [
+          "En Registrar compra → Producto del inventario, cada producto de la búsqueda sale con su foto. Al elegirlo, toca la foto para verla grande.",
+          "Si te equivocaste en una compra, toca \"Quitar\" al lado del valor en Movimientos del día. Solo puedes quitar las de hoy, y al admin le llega un aviso."
+        ]
+      },
+      {
+        "titulo": "Admin",
+        "pasos": [
+          "Puedes quitar cualquier compra de cualquier día con \"Quitar\". Si esa compra había cambiado el costo del producto, el costo vuelve al de antes."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-11-06-optimizacion-animaciones",
     "fecha": "2026-11-06",
     "hora": "09:30",

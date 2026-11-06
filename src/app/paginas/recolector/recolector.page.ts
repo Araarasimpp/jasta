@@ -10,8 +10,8 @@ import { DiaComponent } from '../../shared/rango/dia.component';
 import { RangoFechas } from '../../shared/rango/rango.component';
 import { ComprobantesInputComponent } from '../../shared/comprobantes/comprobantes-input.component';
 import { urlsComprobantes } from '../../shared/comprobantes';
-import { mensajeError, numero, pesos } from '../../shared/formato';
-import { formatoFechaCO, formatoHoraCO } from '../../shared/fecha-colombia';
+import { mensajeError, numero, pesos, urlImagen, urlMini } from '../../shared/formato';
+import { formatoFechaCO, formatoHoraCO, hoyColombiaISO } from '../../shared/fecha-colombia';
 import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 import { PesosDirective } from '../../shared/pesos/pesos.directive';
 
@@ -136,6 +136,8 @@ const normalP = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, ''
       .renglon.saldo.neg { background: var(--danger-wash); }
       .renglon.saldo .val { font-size: 20px; font-weight: 700; }
       .renglon.saldo .lbl small { display: block; margin: 2px 0 0; }
+      .renglon.saldo .lbl { white-space: normal; flex: 1; min-width: 0; }
+      .renglon.saldo .punteado { display: none; }
       .ico.entrega { background: color-mix(in srgb, var(--st-ruta) 14%, transparent); color: var(--st-ruta-text); }
       .mov .monto.entrega { color: var(--st-ruta-text); }
       .link-borrar { border: 0; background: none; padding: 0; color: var(--danger); font: inherit; font-size: 12px; text-decoration: underline; cursor: pointer; }
@@ -150,7 +152,12 @@ const normalP = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, ''
       .sug-prod { position: absolute; left: 0; right: 0; top: 100%; z-index: 5; margin: 4px 0 0; padding: 4px; list-style: none; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); box-shadow: 0 6px 20px rgba(0,0,0,.12); max-height: 240px; overflow-y: auto; }
       .sug-prod button { width: 100%; display: flex; justify-content: space-between; gap: 8px; padding: 9px 10px; border: 0; border-radius: var(--radius-sm); background: none; color: var(--text); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
       .sug-prod small { color: var(--text-muted); white-space: nowrap; }
-      .prod-sel { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface-2); }
+      .sug-prod button { align-items: center; }
+      .prod-txt { flex: 1; min-width: 0; }
+      .prod-foto { flex-shrink: 0; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; overflow: hidden; background: var(--surface-2); color: var(--text-muted); font-size: 18px; }
+      .prod-foto img { width: 100%; height: 100%; object-fit: cover; }
+      .prod-foto-g { width: 64px; height: 64px; border-radius: 14px; font-size: 24px; cursor: zoom-in; }
+      .prod-sel { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface-2); }
       .prod-sel small { display: block; font-size: 12.5px; color: var(--text-muted); }
       .b.chico { height: 32px; padding: 0 10px; font-size: 12.5px; }
       .total-inv { margin: 0; font-size: 14px; }
@@ -283,6 +290,7 @@ const normalP = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, ''
                   <span class="monto" [class.base]="m.tipo === 'base'" [class.compra]="m.tipo === 'compra'" [class.entrega]="m.tipo === 'entrega'" [class.tachado]="m.tipo === 'base' && m.estado !== 'aceptada'">
                     {{ m.tipo === 'base' ? '+' : '−' }}{{ pesos(m.valor) }}</span>
                   @if (m.tipo === 'entrega' && admin()) { <button type="button" class="link-borrar" (click)="borrarEntrega(m)">Borrar</button> }
+                  @if (m.tipo === 'compra' && puedeQuitarCompra()) { <button type="button" class="link-borrar" (click)="borrarCompra(m)">Quitar</button> }
                   @if (m.tipo === 'base' && m.estado !== 'aceptada') { <span class="estado" [class]="'estado ' + m.estado">{{ m.estado === 'pendiente' ? 'Por aceptar' : 'Rechazada' }}</span> }
                   @if (m.tipo === 'compra' && m.facturas?.length) {
                     <button type="button" class="factura" (click)="verFactura(m)" aria-label="Ver factura">
@@ -364,7 +372,8 @@ const normalP = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, ''
           @if (deInventario()) {
             @if (prodSel(); as p) {
               <div class="prod-sel">
-                <span><strong>{{ p.nombre }}</strong><small>Costo actual: {{ p.costo ? pesos(p.costo) : 'sin costo' }}</small></span>
+                <span class="prod-foto prod-foto-g" (click)="verFotoProd(p)">@if (urlMini(p.imagen_url); as u) { <img [src]="u" alt="" /> } @else { <ion-icon name="bag-handle-outline"></ion-icon> }</span>
+                <span class="prod-txt"><strong>{{ p.nombre }}</strong><small>Costo actual: {{ p.costo ? pesos(p.costo) : 'sin costo' }}</small></span>
                 <button type="button" class="b chico" (click)="prodSel.set(null)">Cambiar</button>
               </div>
               <div class="fila-campos">
@@ -383,7 +392,7 @@ const normalP = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, ''
                 @if (sugerencias().length) {
                   <ul class="sug-prod">
                     @for (p of sugerencias(); track p.id) {
-                      <li><button type="button" (click)="elegirProd(p)"><span>{{ p.nombre }}</span><small>{{ p.costo ? pesos(p.costo) : '' }}</small></button></li>
+                      <li><button type="button" (click)="elegirProd(p)"><span class="prod-foto">@if (urlMini(p.imagen_url); as u) { <img [src]="u" alt="" loading="lazy" /> } @else { <ion-icon name="bag-handle-outline"></ion-icon> }</span><span class="prod-txt">{{ p.nombre }}</span><small>{{ p.costo ? pesos(p.costo) : '' }}</small></button></li>
                     }
                   </ul>
                 } @else if (buscaProd().trim().length >= 2) { <small class="suave">No encontramos ese producto. Si no está en el inventario, elige "Otra cosa".</small> }
@@ -548,6 +557,24 @@ export class RecolectorPage implements OnInit, OnDestroy {
     const saldo = Number(data);
     this.toast.ok(`Recibiste ${pesos(v)} de ${x.nombre}` + (saldo > 0 ? ` · todavía debe tener ${pesos(saldo)}` : saldo === 0 ? ' · quedó en cero ✓' : ''));
     this.recibirDe.set(null);
+    await this.cargar();
+  }
+
+  readonly urlMini = urlMini;
+  verFotoProd(p: ProdCosto): void {
+    const u = urlImagen(p.imagen_url);
+    if (u) this.visor.abrir([{ url: u, titulo: p.nombre }], 0);
+  }
+  /** El admin quita cualquier compra; el recolector las suyas de hoy (el servidor lo vuelve a revisar) */
+  puedeQuitarCompra(): boolean {
+    return this.admin() || (this.esRecolector() && this.dia === hoyColombiaISO());
+  }
+
+  async borrarCompra(m: Movimiento): Promise<void> {
+    if (!confirm(`¿Quitar la compra "${m.producto}" de ${pesos(m.valor)}? La plata vuelve a contar en la base.`)) return;
+    const { error } = await this.sb.client.rpc('recoleccion_borrar_compra', { p_id: m.id });
+    if (error) return this.toast.error(mensajeError(error));
+    this.toast.ok('Compra quitada');
     await this.cargar();
   }
 
