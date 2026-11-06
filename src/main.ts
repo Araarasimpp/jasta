@@ -5,6 +5,7 @@ import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular';
 import { routes } from './app/app.routes';
 import { AppComponent } from './app/app.component';
 import { PrecargaDiferida } from './app/core/precarga';
+import { entradaEnCascada } from './app/core/cascada';
 
 /** La ruta completa (sin filtros) de una navegación, para no animar cuando solo cambian los filtros */
 function ruta(s: ActivatedRouteSnapshot): string {
@@ -29,7 +30,9 @@ bootstrapApplication(AppComponent, {
         skipInitialTransition: true,
         onViewTransitionCreated: ({ transition, from, to }) => {
           const reducir = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-          if (reducir || ruta(from) === ruta(to)) transition.skipTransition();
+          if (reducir || ruta(from) === ruta(to)) { transition.skipTransition(); return; }
+          // Las tarjetas de la página nueva entran en cascada mientras la anterior se desenfoca
+          transition.updateCallbackDone.then(() => entradaEnCascada()).catch(() => {});
         },
       }),
     ),

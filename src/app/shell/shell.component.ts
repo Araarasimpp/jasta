@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { entradaEnCascada } from '../core/cascada';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { NgTemplateOutlet } from '@angular/common';
 import { IonIcon } from '@ionic/angular';
@@ -466,6 +467,9 @@ export class ShellComponent implements OnInit, OnDestroy {
     this.abrirGrupoActual();
     this.subNav = this.router.events.subscribe((e) => {
       if (e instanceof NavigationEnd) {
+        // Sin View Transitions en el navegador: igual entran las tarjetas en cascada
+        const camino = e.urlAfterRedirects.split(/[?#]/)[0];
+        if (!('startViewTransition' in document) && camino !== this.url().split(/[?#]/)[0]) requestAnimationFrame(() => entradaEnCascada());
         this.url.set(e.urlAfterRedirects);
         this.contarUso(e.urlAfterRedirects);
         this.abrirGrupoActual();

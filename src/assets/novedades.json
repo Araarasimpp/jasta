@@ -4,7 +4,7 @@
     "fecha": "2026-11-06",
     "hora": "09:30",
     "titulo": "La app más rápida y con animación al cambiar de página",
-    "cuerpo": "Ahora la app carga más liviana y al pasar de una página a otra el contenido entra con una animación suave.",
+    "cuerpo": "Ahora la app carga más liviana y al pasar de una página a otra la anterior se desenfoca y las tarjetas de la nueva aparecen una tras otra.",
     "roles": [
       "admin",
       "cuadres",
@@ -24,7 +24,7 @@
         "pasos": [
           "Las pantallas se bajan en segundo plano cuando el celular está libre, y solo las que puedes abrir según tu rol.",
           "Los fondos pesan cerca de un 40% menos.",
-          "Al cambiar de página el contenido aparece deslizándose, mientras las barras, el menú y el fondo se quedan quietos.",
+          "Al cambiar de página, la que sale se desenfoca y se desvanece, y las tarjetas de la nueva entran una por una, de borrosas a nítidas. Las barras, el menú y el fondo se quedan quietos.",
           "Si tienes activado \"reducir movimiento\" en el celular, la página cambia sin animación."
         ]
       }
