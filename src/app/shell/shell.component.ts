@@ -96,13 +96,13 @@ const GRUPOS: { id: Grupo; icon: string }[] = [
 ];
 
 const MENU: ItemMenu[] = [
-  { label: 'Inicio', path: '/app/inicio', icon: 'bar-chart-outline', roles: ['admin'] },
+  { label: 'Inicio', path: '/app/inicio', icon: 'bar-chart-outline', roles: ['admin'], grupo: 'Finanzas' },
   // Alistamiento: su propio Inicio, solo con información de los pedidos (sin la ganancia de la tienda)
-  { label: 'Inicio', path: '/app/tablero', icon: 'bar-chart-outline', roles: ['alistador'], sinRoles: ['admin'] },
-  { label: 'Mi panel', path: '/app/mi-panel', icon: 'grid-outline', roles: ['vendedora'] },
-  { label: 'Pedidos', path: '/app/pedidos', icon: 'receipt-outline', roles: ['admin', 'alistador', 'cuadres'] },
-  { label: 'Calendario', path: '/app/calendario', icon: 'calendar-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador', 'venta_local', 'recolector'], buscar: 'fechas recordatorio agenda festivos quincena dia de la madre' },
-  { label: 'Mis entregas', path: '/app/mis-entregas', icon: 'bicycle-outline', roles: ['mensajero'] },
+  { label: 'Inicio', path: '/app/tablero', icon: 'bar-chart-outline', roles: ['alistador'], sinRoles: ['admin'], grupo: 'Bodega' },
+  { label: 'Mi panel', path: '/app/mi-panel', icon: 'grid-outline', roles: ['vendedora'], grupo: 'Ventas' },
+  { label: 'Pedidos', path: '/app/pedidos', icon: 'receipt-outline', roles: ['admin', 'alistador', 'cuadres'], grupo: 'Ventas' },
+  { label: 'Calendario', path: '/app/calendario', icon: 'calendar-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador', 'venta_local', 'recolector'], grupo: 'Equipo', buscar: 'fechas recordatorio agenda festivos quincena dia de la madre' },
+  { label: 'Mis entregas', path: '/app/mis-entregas', icon: 'bicycle-outline', roles: ['mensajero'], grupo: 'Entregas' },
   { label: 'Venta en local', path: '/app/venta-local', icon: 'storefront-outline', roles: ['admin', 'venta_local'], grupo: 'Ventas' , buscar: 'vender caja registrar' },
   { label: 'Ventas del local', path: '/app/ventas-local', icon: 'list-outline', roles: ['admin', 'venta_local'], grupo: 'Ventas' , buscar: 'caja ticket cuadrar' },
   { label: 'Servicio local', path: '/app/servicio-local', icon: 'cash-outline', roles: ['admin', 'venta_local', 'cuadres'], grupo: 'Ventas' , buscar: 'alcancia caja' },
@@ -366,12 +366,12 @@ export class ShellComponent implements OnInit, OnDestroy {
     return i > 0 ? [items[i], ...items.slice(0, i), ...items.slice(i + 1)] : items;
   });
   /** Computador: las secciones sin grupo van arriba y las demás en grupos desplegables */
-  /** La pantalla principal de cada quien también va suelta arriba, aunque sea de un grupo */
-  sueltos = computed(() => this.menu().filter((m) => !m.grupo || m.path === this.sb.inicioSegunRoles()));
+  /** Todas las secciones van en su categoría (las principales están en la barra de arriba) */
+  sueltos = computed(() => this.menu().filter((m) => !m.grupo));
   grupos = computed(() => {
     const url = this.url();
     return GRUPOS.map((g) => {
-      const items = this.menu().filter((m) => m.grupo === g.id && m.path !== this.sb.inicioSegunRoles());
+      const items = this.menu().filter((m) => m.grupo === g.id);
       return { ...g, items, activo: items.some((m) => url.startsWith(m.path)) };
     }).filter((g) => g.items.length);
   });
@@ -426,7 +426,14 @@ export class ShellComponent implements OnInit, OnDestroy {
   }
 
   /** Las 4 primeras secciones, en la barra superior del diseño Vidrio */
-  principales = computed(() => this.menu().slice(0, 4));
+  principales = computed(() => {
+    const menu = this.menu();
+    // Inicio (el de cada quien), Pedidos, Calendario y Cuadres; si alguna no le toca, se completa con las siguientes
+    const quiero = [this.sb.inicioSegunRoles(), '/app/pedidos', '/app/calendario', '/app/cuadres'];
+    const elegidas = quiero.map((p) => menu.find((m) => m.path === p)).filter((m): m is ItemMenu => !!m);
+    const extra = menu.filter((m) => !elegidas.includes(m));
+    return [...elegidas, ...extra].slice(0, 4);
+  });
   saludo = computed(() => {
     const h = Number(new Intl.DateTimeFormat('es-CO', { hour: 'numeric', hour12: false, timeZone: 'America/Bogota' }).format(new Date()));
     const nombre = (this.sb.usuario()?.nombre ?? '').trim().split(/\s+/)[0];
