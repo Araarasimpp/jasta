@@ -13,4 +13,7 @@ bootstrapApplication(AppComponent, {
     provideIonicAngular({ swipeBackEnabled: false }),
     provideRouter(routes, withPreloading(PreloadAllModules), withComponentInputBinding()),
   ],
-});
+})
+  // Quita la pantalla de carga (index.html) cuando la app ya arrancó
+  .then(() => (window as unknown as { jastaLista?: () => void }).jastaLista?.())
+  .catch(() => (window as unknown as { jastaLista?: () => void }).jastaLista?.());
