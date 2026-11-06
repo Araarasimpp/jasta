@@ -40,7 +40,7 @@ function guardarBio(v: 'si' | 'pendiente' | null): void {
         <form class="auth-form" (ngSubmit)="entrar()">
           <div class="field">
             <label for="email">Correo</label>
-            <input id="email" name="email" type="email" autocomplete="username" inputmode="email"
+            <input id="email" name="email" type="email" autocomplete="username webauthn" inputmode="email"
               autocapitalize="off" spellcheck="false" [(ngModel)]="email" placeholder="nombre@correo.com"
               [attr.aria-invalid]="!!error()" />
           </div>
@@ -55,7 +55,7 @@ function guardarBio(v: 'si' | 'pendiente' | null): void {
               <button type="button" class="reveal-btn" (click)="ver.set(!ver())">{{ ver() ? 'Ocultar' : 'Mostrar' }}</button>
             </div>
           </div>
-          <app-captcha (token)="captcha.set($event)" />
+          <app-captcha (token)="alCaptcha($event)" />
           @if (error()) {
             <p class="error-msg" role="alert">{{ error() }}</p>
           }
@@ -117,6 +117,68 @@ export class LoginPage implements OnDestroy {
   constructor() {
     const pk = (window as unknown as { PublicKeyCredential?: { isUserVerifyingPlatformAuthenticatorAvailable?: () => Promise<boolean> } }).PublicKeyCredential;
     void pk?.isUserVerifyingPlatformAuthenticatorAvailable?.().then((si) => this.puedeBio.set(!!si)).catch(() => undefined);
+    // Llave sobre el teclado: al tocar el correo, iOS/Android ofrecen la llave y entra directo con Face ID
+    // (sin la hoja "¿Iniciar sesión con tu llave de acceso?" que sale al usar el botón)
+    const cond = (window as unknown as { PublicKeyCredential?: { isConditionalMediationAvailable?: () => Promise<boolean> } }).PublicKeyCredential;
+    void cond?.isConditionalMediationAvailable?.().then((si) => {
+      this.autofillPosible = !!si && leerBio() === 'si';
+      if (this.autofillPosible && !this.captchaActivo) void this.iniciarAutofill('');
+      else if (this.autofillPosible && this.captchaGuardado) this.alCaptcha(this.captchaGuardado);
+    }).catch(() => undefined);
+  }
+
+  private autofillPosible = false;
+  private autofill?: AbortController;
+  private autofillReloj?: ReturnType<typeof setTimeout>;
+  private captchaGuardado = '';
+  private autofillFallos = 0;
+
+  /** Cada verificación de seguridad sirve una vez: la primera arranca la llave sobre el teclado y se pide otra para la contraseña */
+  alCaptcha(t: string): void {
+    if (t && this.autofillPosible && !this.autofill && !this.cargando()) {
+      this.captchaGuardado = '';
+      void this.iniciarAutofill(t);
+      this.captchaCmp?.reiniciar();
+      return;
+    }
+    this.captchaGuardado = t;
+    this.captcha.set(t);
+  }
+
+  private async iniciarAutofill(token: string): Promise<void> {
+    const ac = new AbortController();
+    this.autofill = ac;
+    clearTimeout(this.autofillReloj);
+    // El reto del servidor vence a los 5 min: antes de eso se renueva con una verificación nueva
+    this.autofillReloj = setTimeout(() => {
+      this.cancelarAutofill();
+      if (this.captchaActivo) this.captchaCmp?.reiniciar();
+      else void this.iniciarAutofill('');
+    }, 4 * 60_000);
+    const { error } = await this.sb.client.auth.signInWithPasskey({
+      options: { captchaToken: token || undefined, mediation: 'conditional', signal: ac.signal },
+    });
+    if (this.autofill !== ac) return; // se canceló o se reemplazó
+    this.autofill = undefined;
+    clearTimeout(this.autofillReloj);
+    if (error) {
+      // Venció o falló: se vuelve a ofrecer con la próxima verificación (máximo 3 veces seguidas)
+      if (++this.autofillFallos >= 3) this.autofillPosible = false;
+      if (this.captchaActivo) this.captchaCmp?.reiniciar();
+      else if (this.autofillPosible) void this.iniciarAutofill('');
+      return;
+    }
+    this.cargando.set(true);
+    await this.sb.cargarUsuario();
+    this.cargando.set(false);
+    this.irAlInicio();
+  }
+
+  private cancelarAutofill(): void {
+    clearTimeout(this.autofillReloj);
+    const ac = this.autofill;
+    this.autofill = undefined;
+    ac?.abort();
   }
 
   private irAlInicio(): void {
@@ -125,6 +187,7 @@ export class LoginPage implements OnDestroy {
 
 
   async entrarBiometria(): Promise<void> {
+    this.cancelarAutofill();
     this.error.set('');
     this.errorBio.set('');
     this.cargando.set(true);
@@ -210,5 +273,6 @@ export class LoginPage implements OnDestroy {
 
   ngOnDestroy(): void {
     clearInterval(this.reloj);
+    this.cancelarAutofill();
   }
 }
