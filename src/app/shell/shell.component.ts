@@ -7,6 +7,7 @@ import {
   add,
   barChartOutline,
   calendarOutline,
+  homeOutline,
   colorPaletteOutline,
   hourglassOutline,
   swapHorizontalOutline,
@@ -96,9 +97,9 @@ const GRUPOS: { id: Grupo; icon: string }[] = [
 ];
 
 const MENU: ItemMenu[] = [
-  { label: 'Inicio', path: '/app/inicio', icon: 'bar-chart-outline', roles: ['admin'], grupo: 'Finanzas' },
+  { label: 'Inicio', path: '/app/inicio', icon: 'home-outline', roles: ['admin'], grupo: 'Finanzas' },
   // Alistamiento: su propio Inicio, solo con información de los pedidos (sin la ganancia de la tienda)
-  { label: 'Inicio', path: '/app/tablero', icon: 'bar-chart-outline', roles: ['alistador'], sinRoles: ['admin'], grupo: 'Bodega' },
+  { label: 'Inicio', path: '/app/tablero', icon: 'home-outline', roles: ['alistador'], sinRoles: ['admin'], grupo: 'Bodega' },
   { label: 'Mi panel', path: '/app/mi-panel', icon: 'grid-outline', roles: ['vendedora'], grupo: 'Ventas' },
   { label: 'Pedidos', path: '/app/pedidos', icon: 'receipt-outline', roles: ['admin', 'alistador', 'cuadres'], grupo: 'Ventas' },
   { label: 'Calendario', path: '/app/calendario', icon: 'calendar-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador', 'venta_local', 'recolector'], grupo: 'Equipo', buscar: 'fechas recordatorio agenda festivos quincena dia de la madre' },
@@ -146,72 +147,38 @@ const MENU: ItemMenu[] = [
   template: `
     <div class="vd-fondo" aria-hidden="true"></div>
     <div class="shell" [class.collapsed]="colapsado()">
-      <aside class="sidebar">
-        <div class="brand">
-          <img class="brand-mark" src="assets/icon/logo.png" alt="" />
-          @if (!colapsado()) {
-            <span class="brand-name">Jasta<small>Hobbies &amp; Accesorios</small></span>
-          }
-          <button class="icon-btn" (click)="alternarMenu()" [attr.aria-label]="colapsado() ? 'Expandir menú' : 'Contraer menú'">
-            <ion-icon [name]="colapsado() ? 'chevron-forward-outline' : 'chevron-back-outline'"></ion-icon>
-          </button>
-        </div>
-
+      <!-- Computador: barra flotante de íconos (cada categoría abre su panel al lado) -->
+      <aside class="sidebar rail" aria-label="Menú">
         @if (puedeVender()) {
-          <a routerLink="/app/pedidos/nuevo" class="new-btn" [attr.aria-label]="colapsado() ? 'Nuevo pedido' : null">
-            <ion-icon name="add"></ion-icon>
-            @if (!colapsado()) {
-              <span>Nuevo pedido</span>
-            }
-          </a>
+          <a routerLink="/app/pedidos/nuevo" class="rail-btn rail-nuevo" data-tip="Nuevo pedido" aria-label="Nuevo pedido"><ion-icon name="add"></ion-icon></a>
+          <span class="rail-sep" aria-hidden="true"></span>
         }
-
-        <nav class="menu" aria-label="Secciones">
-          @if (colapsado()) {
-            <!-- Barra de íconos: las secciones sueltas y un ícono por grupo (al tocarlo se abre el menú en ese grupo) -->
-            @for (item of sueltos(); track item.path) {
-              <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.path === '/app/pedidos' }"
-                class="menu-item" [attr.aria-label]="item.label" [title]="item.label">
-                <ion-icon [name]="item.icon"></ion-icon>
-              </a>
-            }
-            @for (g of grupos(); track g.id) {
-              <button type="button" class="menu-item grupo-ico" [class.active]="g.activo" (click)="abrirGrupo(g.id)" [attr.aria-label]="g.id" [title]="g.id">
-                <ion-icon [name]="g.icon"></ion-icon>
-              </button>
-            }
-          } @else {
-            @for (item of sueltos(); track item.path) {
-              <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.path === '/app/pedidos' }" class="menu-item">
-                <ion-icon [name]="item.icon"></ion-icon><span>{{ item.label }}</span>
-              </a>
-            }
-            @for (g of grupos(); track g.id) {
-              <div class="grupo" [class.abierto]="abierto(g.id)">
-                <button type="button" class="grupo-head" (click)="alternarGrupo(g.id)" [attr.aria-expanded]="abierto(g.id)">
-                  <ion-icon [name]="g.icon"></ion-icon><span>{{ g.id }}</span>
-                  @if (!abierto(g.id) && g.activo) { <span class="grupo-punto" aria-hidden="true"></span> }
-                  <ion-icon class="grupo-flecha" name="chevron-down-outline"></ion-icon>
-                </button>
-                @if (abierto(g.id)) {
-                  <div class="grupo-items">
-                    @for (item of g.items; track item.path) {
-                      <a [routerLink]="item.path" routerLinkActive="active" class="menu-item">
-                        <ion-icon [name]="item.icon"></ion-icon><span>{{ item.label }}</span>
-                      </a>
-                    }
-                  </div>
-                }
-              </div>
-            }
+        @for (item of sueltos(); track item.path) {
+          <a [routerLink]="item.path" routerLinkActive="active" class="rail-btn" [attr.data-tip]="item.label" [attr.aria-label]="item.label"><ion-icon [name]="item.icon"></ion-icon></a>
+        }
+        @for (g of grupos(); track g.id) {
+          <button type="button" class="rail-btn" [class.active]="g.activo" [class.abierto]="flotante() === g.id" [attr.data-tip]="g.id" [attr.aria-label]="g.id"
+            [attr.aria-expanded]="flotante() === g.id" (click)="flotante.set(flotante() === g.id ? null : g.id)">
+            <ion-icon [name]="g.icon"></ion-icon>
+          </button>
+        }
+      </aside>
+      @if (grupoFlotante(); as g) {
+        <button class="rail-capa" aria-label="Cerrar" (click)="flotante.set(null)"></button>
+        <nav class="rail-fly" [attr.aria-label]="g.id">
+          <p class="rail-fly-tit">{{ g.id }}</p>
+          @for (item of g.items; track item.path) {
+            <a [routerLink]="item.path" routerLinkActive="active" class="rail-fly-op" (click)="flotante.set(null)">
+              <ion-icon [name]="item.icon"></ion-icon><span>{{ item.label }}</span>
+            </a>
           }
         </nav>
-
-      </aside>
+      }
 
       <main class="content">
         <!-- Barra superior (diseño Vidrio, escritorio): saludo, secciones principales y accesos -->
         <header class="vd-top">
+          <a class="vd-logo" routerLink="/app" aria-label="Jasta"><img src="assets/icon/logo.png" alt="" /></a>
           <span class="vd-saludo">{{ saludo() }}</span>
           <nav class="vd-nav" aria-label="Secciones principales">
             @for (item of principales(); track item.path) {
@@ -411,6 +378,10 @@ export class ShellComponent implements OnInit, OnDestroy {
 
   /** En el celular caben 2 secciones en la barra (más Nuevo, Avisos y Más); el resto va en "Más" */
   tabs = computed(() => this.menu().slice(0, 2));
+  /** Categoría abierta en el panel flotante de la barra de íconos */
+  flotante = signal<string | null>(null);
+  grupoFlotante = computed(() => this.grupos().find((g) => g.id === this.flotante()) ?? null);
+
   /** Mini pantalla de la foto (arriba a la derecha): estado, Mi perfil y cerrar sesión */
   menuYo = signal(false);
   readonly estadosYo: { valor: 'auto' | 'ausente' | 'invisible'; etiqueta: string; ayuda: string; punto: string }[] = [
@@ -482,7 +453,7 @@ export class ShellComponent implements OnInit, OnDestroy {
   );
 
   constructor() {
-    addIcons({ colorPaletteOutline, calendarOutline, hourglassOutline, swapHorizontalOutline, searchOutline, 
+    addIcons({ homeOutline, colorPaletteOutline, calendarOutline, hourglassOutline, swapHorizontalOutline, searchOutline, 
       sparklesOutline, globeOutline, chatbubblesOutline, analyticsOutline, add, close, chevronDownOutline, layersOutline, pricetagsOutline, returnDownBackOutline, pieChartOutline, alertCircleOutline, cardOutline, trendingDownOutline, barChartOutline, chevronBackOutline, chevronForwardOutline, cubeOutline, ellipsisHorizontal,
       logOutOutline, moonOutline, peopleOutline, receiptOutline, bicycleOutline, clipboardOutline, sunnyOutline, walletOutline, ticketOutline, statsChartOutline, settingsOutline,
       storefrontOutline, listOutline, trophyOutline, bookOutline, gridOutline, cashOutline, bagHandleOutline, peopleCircleOutline, timeOutline, personCircleOutline, notificationsOutline, locationOutline,
