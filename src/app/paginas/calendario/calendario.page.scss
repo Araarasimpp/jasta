@@ -148,3 +148,40 @@
   .vidrio, .lg-hoja { -webkit-backdrop-filter: none; backdrop-filter: none; --lg-vidrio: #fff; }
   :host-context(body.dark) .vidrio, :host-context(body.dark) .lg-hoja { --lg-vidrio: #221d3a; }
 }
+
+/* Diseño Vidrio: sin fondo propio (se ve la foto del tema) y con los colores y el vidrio del resto de la app */
+:host-context(body.vidrio) {
+  --lg-vidrio: var(--surface);
+  --lg-vidrio-2: var(--surface-2);
+  --lg-borde: var(--vd-borde);
+  --lg-brillo: var(--vd-luz);
+  --lg-sombra: 0 16px 40px rgba(0, 0, 0, .18);
+  --lg-texto: var(--text);
+  --lg-suave: var(--text-muted);
+  --lg-acc: var(--accent);
+  --lg-sobre-acc: var(--on-accent);
+  .lg-fondo { display: none; }
+  .vidrio { border-radius: var(--radius-lg); -webkit-backdrop-filter: blur(26px) saturate(160%); backdrop-filter: blur(26px) saturate(160%); }
+  .vidrio::before { display: none; }
+  .lg-titulo h1 { font-weight: 700; letter-spacing: -.03em; }
+  .lg-dia { background: var(--vd-dia, rgba(255, 255, 255, .05)); }
+  .lg-dia[data-v='1'] { background: color-mix(in srgb, var(--efectivo) 14%, transparent); }
+  .lg-dia[data-v='2'] { background: color-mix(in srgb, var(--efectivo) 26%, transparent); }
+  .lg-dia[data-v='3'] { background: color-mix(in srgb, var(--efectivo) 40%, transparent); }
+  .lg-dia[data-v='4'] { background: color-mix(in srgb, var(--efectivo) 56%, transparent); }
+  .lg-dia.sel { background: var(--selected); }
+  .lg-dia.hoy .n, .lg-mas, .lg-btn.pri { color: var(--lg-sobre-acc); }
+  .lg-mas { box-shadow: none; }
+  .lg-item .ico { background: var(--surface-2); }
+  .lg-seg { background: var(--surface-2); }
+  .lg-velo { background: rgba(0, 0, 0, .3); }
+  .lg-hoja { --lg-vidrio: rgba(var(--vd-rgb), .82); --lg-vidrio-2: var(--surface-2); }
+  .lg-aviso.especial b { color: #f06595; }
+  .lg-aviso.rec b { color: var(--st-ruta-text); }
+  .lg-aviso.pago b { color: var(--st-pendiente-text); }
+  .lg-aviso.cobro b, .t-cobrado b { color: var(--efectivo-texto); }
+}
+:host-context(body.vidrio:not(.dark)) {
+  --vd-dia: rgba(255, 255, 255, .28);
+  .lg-aviso.especial b { color: #c2255c; }
+}
