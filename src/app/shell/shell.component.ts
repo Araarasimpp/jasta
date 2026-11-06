@@ -207,41 +207,6 @@ const MENU: ItemMenu[] = [
           }
         </nav>
 
-        <div class="sidebar-footer">
-          <button class="footer-btn avisos-btn" [class.on]="avisos.abierto()" (click)="avisos.toggle()" [attr.aria-expanded]="avisos.abierto()"
-            [attr.aria-label]="'Avisos' + (avisos.noLeidas() ? ', ' + avisos.noLeidas() + ' sin leer' : '')">
-            <span class="icono-badge">
-              <ion-icon name="notifications-outline"></ion-icon>
-              @if (avisos.noLeidas()) {
-                <span class="badge-num num">{{ avisos.noLeidas() > 9 ? '9+' : avisos.noLeidas() }}</span>
-              }
-            </span>
-            @if (!colapsado()) {
-              <span>Avisos</span>
-            }
-          </button>
-          <a class="usuario" routerLink="/app/perfil" [attr.aria-label]="'Mi perfil: ' + sb.usuario()?.nombre">
-            <app-avatar [nombre]="sb.usuario()?.nombre" [foto]="sb.usuario()?.avatar_url" [usuario]="sb.usuario()?.id" [tam]="32"></app-avatar>
-            @if (!colapsado()) {
-              <div>
-                <strong>{{ sb.usuario()?.nombre }}</strong>
-                <span>{{ rolesTexto() }}</span>
-              </div>
-            }
-          </a>
-          <button class="footer-btn" (click)="theme.toggle()">
-            <ion-icon [name]="theme.isDark() ? 'sunny-outline' : 'moon-outline'"></ion-icon>
-            @if (!colapsado()) {
-              <span>{{ theme.isDark() ? 'Modo claro' : 'Modo oscuro' }}</span>
-            }
-          </button>
-          <button class="footer-btn" (click)="salir()">
-            <ion-icon name="log-out-outline"></ion-icon>
-            @if (!colapsado()) {
-              <span>Cerrar sesión</span>
-            }
-          </button>
-        </div>
       </aside>
 
       <main class="content">
@@ -255,14 +220,40 @@ const MENU: ItemMenu[] = [
             }
           </nav>
           <div class="vd-der">
+            <button class="vd-circ" (click)="theme.toggle()" [attr.aria-label]="theme.isDark() ? 'Modo claro' : 'Modo oscuro'" [title]="theme.isDark() ? 'Modo claro' : 'Modo oscuro'">
+              <ion-icon [name]="theme.isDark() ? 'sunny-outline' : 'moon-outline'"></ion-icon></button>
             <a class="vd-circ" routerLink="/app/tema" aria-label="Tema y fondo" title="Tema y fondo"><ion-icon name="color-palette-outline"></ion-icon></a>
             <button class="vd-circ" (click)="avisos.toggle()" [attr.aria-label]="'Avisos' + (avisos.noLeidas() ? ', ' + avisos.noLeidas() + ' sin leer' : '')">
               <ion-icon name="notifications-outline"></ion-icon>
               @if (avisos.noLeidas()) { <span class="badge-num num">{{ avisos.noLeidas() > 9 ? '9+' : avisos.noLeidas() }}</span> }
             </button>
-            <a routerLink="/app/perfil" [attr.aria-label]="'Mi perfil: ' + sb.usuario()?.nombre">
-              <app-avatar [nombre]="sb.usuario()?.nombre" [foto]="sb.usuario()?.avatar_url" [usuario]="sb.usuario()?.id" [tam]="38"></app-avatar>
-            </a>
+            <div class="vd-yo">
+              <button class="vd-avatar" (click)="menuYo.set(!menuYo())" [attr.aria-expanded]="menuYo()" aria-haspopup="menu" [attr.aria-label]="'Tu cuenta: ' + sb.usuario()?.nombre">
+                <app-avatar [nombre]="sb.usuario()?.nombre" [foto]="sb.usuario()?.avatar_url" [usuario]="sb.usuario()?.id" [tam]="38"></app-avatar>
+              </button>
+              @if (menuYo()) {
+                <button class="vd-capa" aria-label="Cerrar" (click)="menuYo.set(false)"></button>
+                <div class="vd-menu" role="menu" aria-label="Tu cuenta">
+                  <div class="vd-menu-cab">
+                    <app-avatar [nombre]="sb.usuario()?.nombre" [foto]="sb.usuario()?.avatar_url" [usuario]="sb.usuario()?.id" [tam]="44"></app-avatar>
+                    <div><strong>{{ sb.usuario()?.nombre }}</strong><small>{{ rolesTexto() }}</small></div>
+                  </div>
+                  <p class="vd-menu-tit">Estado</p>
+                  @for (e of estadosYo; track e.valor) {
+                    <button type="button" class="vd-menu-op" role="menuitemradio" [attr.aria-checked]="presencia.preferencia() === e.valor" [class.on]="presencia.preferencia() === e.valor"
+                      (click)="presencia.elegir(e.valor)">
+                      <span class="vd-pres" [class]="'vd-pres ' + e.punto" aria-hidden="true"></span>
+                      <span class="vd-menu-txt">{{ e.etiqueta }}<small>{{ e.ayuda }}</small></span>
+                      @if (presencia.preferencia() === e.valor) { <span class="vd-ok" aria-hidden="true">✓</span> }
+                    </button>
+                  }
+                  <span class="vd-sep" aria-hidden="true"></span>
+                  <a class="vd-menu-op" role="menuitem" routerLink="/app/perfil" (click)="menuYo.set(false)"><ion-icon name="person-circle-outline"></ion-icon><span class="vd-menu-txt">Mi perfil</span></a>
+                  <a class="vd-menu-op" role="menuitem" routerLink="/app/tema" (click)="menuYo.set(false)"><ion-icon name="color-palette-outline"></ion-icon><span class="vd-menu-txt">Tema y fondo</span></a>
+                  <button type="button" class="vd-menu-op peligro" role="menuitem" (click)="menuYo.set(false); salir()"><ion-icon name="log-out-outline"></ion-icon><span class="vd-menu-txt">Cerrar sesión</span></button>
+                </div>
+              }
+            </div>
           </div>
         </header>
         <app-transferencias-alerta></app-transferencias-alerta>
@@ -360,7 +351,7 @@ export class ShellComponent implements OnInit, OnDestroy {
   /** Aplica la foto de fondo del diseño Vidrio (Ajustes → Tema) */
   fondo = inject(FondoService);
   avisos = inject(NotificacionesService);
-  private presencia = inject(PresenciaService);
+  presencia = inject(PresenciaService);
   private router = inject(Router);
 
   colapsado = signal(this.leerColapsado());
@@ -420,6 +411,14 @@ export class ShellComponent implements OnInit, OnDestroy {
 
   /** En el celular caben 2 secciones en la barra (más Nuevo, Avisos y Más); el resto va en "Más" */
   tabs = computed(() => this.menu().slice(0, 2));
+  /** Mini pantalla de la foto (arriba a la derecha): estado, Mi perfil y cerrar sesión */
+  menuYo = signal(false);
+  readonly estadosYo: { valor: 'auto' | 'ausente' | 'invisible'; etiqueta: string; ayuda: string; punto: string }[] = [
+    { valor: 'auto', etiqueta: 'Activo', ayuda: 'Pasas a ausente solo si no usas la app', punto: 'activo' },
+    { valor: 'ausente', etiqueta: 'Ausente', ayuda: 'Aunque tengas la app abierta', punto: 'ausente' },
+    { valor: 'invisible', etiqueta: 'Invisible', ayuda: 'Te ven desconectado', punto: 'desconectado' },
+  ];
+
   /** Desde la barra de íconos: abre el menú completo con ese grupo desplegado */
   abrirGrupo(id: string): void {
     if (this.colapsado()) this.alternarMenu();
