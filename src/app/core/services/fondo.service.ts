@@ -117,3 +117,14 @@ export class FondoService {
     try { return localStorage.getItem(CLAVE_PROPIO); } catch { return null; }
   }
 }
+
+/** La foto de fondo guardada en este dispositivo (para pantallas sin sesión, como el login) */
+export function fotoFondoGuardada(): string {
+  try {
+    const a = JSON.parse(localStorage.getItem(CLAVE) ?? '{}') as Partial<Ajustes>;
+    if (a.fondo === 'propio') return localStorage.getItem(CLAVE_PROPIO) ?? `assets/fondos/${POR_DEFECTO.fondo}.jpg`;
+    return `assets/fondos/${FONDOS.some((f) => f.id === a.fondo) ? a.fondo : POR_DEFECTO.fondo}.jpg`;
+  } catch {
+    return `assets/fondos/${POR_DEFECTO.fondo}.jpg`;
+  }
+}

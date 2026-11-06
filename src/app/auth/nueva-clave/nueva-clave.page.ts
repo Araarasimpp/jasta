@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { fotoFondoGuardada } from '../../core/services/fondo.service';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { SupabaseService } from '../../core/services/supabase.service';
@@ -11,9 +12,14 @@ import { REGLA_CLAVE, problemaClave } from '../../shared/clave';
   styleUrls: ['../auth-shell.scss'],
   template: `
     <div class="auth-shell">
+      <!-- Cabecera con la foto del tema (como la pantalla de carga) -->
       <aside class="auth-marca" aria-hidden="true">
-        <img class="sello" src="assets/icon/logo.png" alt="" />
-        <p>Pedidos, despachos y cuadres del día, en un solo lugar.</p>
+        <div class="am-foto" [style.background-image]="'url(' + fotoFondo + ')'"></div>
+        <div class="am-txt">
+          <span class="am-logo"><img src="assets/icon/logo.png" alt="" /></span>
+          <strong class="am-nombre">Jasta<i>.</i></strong>
+          <p>Hobbies y accesorios,<br />tus pedidos en orden.</p>
+        </div>
       </aside>
       <div class="auth-card">
         <div class="auth-head">
@@ -35,6 +41,8 @@ import { REGLA_CLAVE, problemaClave } from '../../shared/clave';
   `,
 })
 export class NuevaClavePage {
+  /** Foto de fondo del tema (la misma de la pantalla de carga) */
+  readonly fotoFondo = fotoFondoGuardada();
   private sb = inject(SupabaseService);
   private router = inject(Router);
   readonly regla = REGLA_CLAVE;
