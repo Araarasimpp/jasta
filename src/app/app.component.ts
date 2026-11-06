@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, Injector, OnDestroy, OnInit, inject } from '@angular/core';
+import { ThemeService } from './core/services/theme.service';
 import { IonApp, IonRouterOutlet } from '@ionic/angular';
 import { VisorComponent } from './shared/visor/visor.component';
 import { NuevaVersionComponent } from './shared/version/nueva-version.component';
@@ -31,7 +32,12 @@ export class AppComponent implements OnInit, OnDestroy {
     if (img instanceof HTMLImageElement && img.src.includes('/object/public/wp/mini/')) img.src = img.src.replace('/object/public/wp/mini/', '/object/public/wp/');
   };
 
+  private injector = inject(Injector);
+
   ngOnInit(): void {
+    // Modo claro u oscuro desde el arranque (así el login también sale oscuro). Las páginas de los
+    // clientes (catálogo, seguimiento, pago) tienen su propio diseño y no lo usan.
+    if (!/^\/(tienda|seguimiento|pago)(\/|$)/.test(location.pathname)) this.injector.get(ThemeService);
     document.addEventListener('error', this.sinMini, true);
     document.addEventListener('focusout', this.alSalirDeCampo);
     this.quitarArrastre = activarArrastreDeHojas();
