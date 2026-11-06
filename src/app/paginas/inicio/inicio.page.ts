@@ -68,20 +68,30 @@ function finMes(): string {
     `
       .page { max-width: 1560px; }
       /* Tablero: en el computador, cuadrícula de 12 columnas como un panel de control */
-      .dash { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; align-items: start; }
+      .dash { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
+      .a-hoy { align-self: start; }
       .dash > * { min-width: 0; }
       .a-hoy { grid-column: 1 / -1; }
       .a-graf { grid-column: span 8; }
       .a-pedidos { grid-column: span 4; }
       .a-mes, .a-pagos, .a-atencion { grid-column: span 4; }
-      .a-local { grid-column: span 8; }
-      .a-lado { grid-column: span 4; display: flex; flex-direction: column; gap: 16px; }
+      .a-local { grid-column: span 6; }
+      .a-vend, .a-prod { grid-column: span 3; }
+      /* Listas largas: se desplazan dentro de su tarjeta para no estirar la fila */
+      .a-vend .ranking, .a-prod .ranking { max-height: 330px; overflow-y: auto; padding-right: 4px; }
       .a-pedidos, .a-mes, .a-pagos { display: flex; flex-direction: column; gap: 12px; }
+      .a-graf { display: flex; flex-direction: column; }
+      .a-graf .chart { flex: 1; min-height: 240px; height: auto; }
       .a-pedidos .renglones, .a-mes .renglones, .a-pagos .renglones { margin-top: 4px; }
-      .spark { display: block; width: 100%; height: 34px; margin-top: 6px; }
+      .kpi { position: relative; }
+      /* Línea pequeña abajo a la derecha (no cambia el alto de la tarjeta) */
+      .spark { position: absolute; right: 14px; bottom: 14px; width: 38%; height: 30px; }
       .spark polyline { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; opacity: .9; }
+      .spark { color: var(--accent); }
       .kpi-principal .spark { color: var(--efectivo-texto); }
-      .local-cuerpo { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 20px; align-items: center; }
+      .local-cuerpo { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 20px; align-items: center; flex: 1; }
+      .a-local { display: flex; flex-direction: column; }
+      .a-local .panel-head { flex-wrap: wrap; }
       .mini-kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
       .mini { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2); color: inherit; text-decoration: none; }
       .mini span { font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted); }
@@ -91,12 +101,12 @@ function finMes(): string {
       .renglones dt a { color: inherit; }
       @media (max-width: 1180px) {
         .a-graf, .a-local { grid-column: 1 / -1; }
-        .a-pedidos, .a-mes, .a-pagos, .a-atencion, .a-lado { grid-column: span 6; }
+        .a-pedidos, .a-mes, .a-pagos, .a-atencion, .a-vend, .a-prod { grid-column: span 6; }
       }
       @media (max-width: 760px) {
         .dash { grid-template-columns: minmax(0, 1fr); }
         .dash > * { grid-column: 1 / -1 !important; }
-        .a-pedidos { order: 1; } .a-graf { order: 2; } .a-atencion { order: 3; } .a-mes { order: 4; } .a-pagos { order: 5; } .a-local { order: 6; } .a-lado { order: 7; }
+        .a-pedidos { order: 1; } .a-graf { order: 2; } .a-atencion { order: 3; } .a-mes { order: 4; } .a-pagos { order: 5; } .a-local { order: 6; } .a-vend { order: 7; } .a-prod { order: 8; }
         .a-hoy { order: 0; }
         .local-cuerpo { grid-template-columns: 1fr; }
       }
@@ -192,6 +202,9 @@ function finMes(): string {
           <span class="kpi-label">Pedidos de hoy</span>
           <span class="kpi-valor num">{{ numero(r()?.pedidos) }}</span>
           <span class="kpi-nota num">{{ numero(r()?.entregados) }} entregados · {{ numero(r()?.cancelados) }} cancelados</span>
+          @if (lineaPedidos(); as ln) {
+            <svg class="spark" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true"><polyline [attr.points]="ln" /></svg>
+          }
         </div>
         <a class="kpi" role="listitem" routerLink="/app/cuadres">
           <span class="kpi-label">Por recibir en cuadres</span>
@@ -310,8 +323,7 @@ function finMes(): string {
         </section>
       }
 
-      <div class="a-lado">
-        <section class="panel">
+        <section class="panel a-vend">
           <div class="panel-head"><h2>Vendedoras hoy</h2></div>
           <ol class="ranking">
             @for (v of r()?.vendedoras ?? []; track v.nombre) {
@@ -324,7 +336,7 @@ function finMes(): string {
             }
           </ol>
         </section>
-        <section class="panel">
+        <section class="panel a-prod">
           <div class="panel-head"><h2>Más vendidos hoy</h2></div>
           <ol class="ranking">
             @for (p of r()?.productos ?? []; track p.nombre) {
@@ -337,7 +349,6 @@ function finMes(): string {
             }
           </ol>
         </section>
-      </div>
       </div>
     </div>
   `,
@@ -408,13 +419,14 @@ export class InicioPage implements OnInit, OnDestroy {
     ];
   });
   /** Línea de la ganancia de los últimos días (en la tarjeta de hoy) */
-  linea = computed(() => {
-    const v = this.barras().slice(-7).map((b) => b.ganancia);
+  linea = computed(() => this.puntos(this.barras().slice(-7).map((b) => b.ganancia)));
+  lineaPedidos = computed(() => this.puntos(this.barras().slice(-7).map((b) => b.pedidos)));
+  private puntos(v: number[]): string | null {
     if (v.length < 2) return null;
     const max = Math.max(...v), min = Math.min(...v, 0);
     const rango = max - min || 1;
     return v.map((x, i) => `${(i / (v.length - 1)) * 100},${28 - ((x - min) / rango) * 26}`).join(' ');
-  });
+  }
 
   /** $1,2 M / $850 mil, para el centro de las donas */
   pesosCorto(n: number | null | undefined): string {

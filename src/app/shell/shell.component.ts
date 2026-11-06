@@ -177,6 +177,7 @@ const MENU: ItemMenu[] = [
 
       <main class="content">
         <!-- Barra superior (diseño Vidrio, escritorio): saludo, secciones principales y accesos -->
+        <div class="vd-top-wrap">
         <header class="vd-top">
           <a class="vd-logo" routerLink="/app" aria-label="Jasta"><img src="assets/icon/logo.png" alt="" /></a>
           <span class="vd-saludo">{{ saludo() }}</span>
@@ -223,6 +224,7 @@ const MENU: ItemMenu[] = [
             </div>
           </div>
         </header>
+        </div>
         <app-transferencias-alerta></app-transferencias-alerta>
         <router-outlet></router-outlet>
       </main>

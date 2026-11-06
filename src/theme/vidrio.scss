@@ -364,15 +364,31 @@ body.vidrio:not(.dark) .rail-fly-op.active ion-icon { color: #fff; }
 // ------------------------------------------------------------------ Barra superior (escritorio)
 .vd-top { display: none; }
 @media (min-width: 861px) {
-  body.vidrio .vd-top {
+  // Contenedor pegado arriba: una franja de vidrio que se desvanece detrás de la barra,
+  // para que lo que se desplaza no se vea por encima de ella
+  body.vidrio .vd-top-wrap {
     position: sticky;
-    top: 12px;
+    top: 0;
     z-index: 20;
+    padding: 12px 18px 10px;
+  }
+  body.vidrio .vd-top-wrap::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 -18px;
+    z-index: -1;
+    pointer-events: none;
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    background: linear-gradient(180deg, rgba(var(--vd-rgb), 0.35), rgba(var(--vd-rgb), 0));
+    -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent);
+    mask-image: linear-gradient(180deg, #000 60%, transparent);
+  }
+  body.vidrio .vd-top {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin: 12px 18px 4px;
-    padding: 8px 10px 8px 16px;
+    padding: 8px 10px 8px 10px;
     border: 1px solid var(--vd-borde);
     border-radius: 999px;
     background: var(--surface);
