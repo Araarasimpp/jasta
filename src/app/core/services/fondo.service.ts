@@ -40,7 +40,7 @@ export class FondoService {
   readonly url = computed(() => {
     const a = this.ajustes();
     if (a.fondo === 'propio' && this.propio()) return this.propio()!;
-    return `assets/fondos/${FONDOS.some((f) => f.id === a.fondo) ? a.fondo : POR_DEFECTO.fondo}.jpg`;
+    return `assets/fondos/${FONDOS.some((f) => f.id === a.fondo) ? a.fondo : POR_DEFECTO.fondo}.webp`;
   });
 
   constructor() {
@@ -122,9 +122,9 @@ export class FondoService {
 export function fotoFondoGuardada(): string {
   try {
     const a = JSON.parse(localStorage.getItem(CLAVE) ?? '{}') as Partial<Ajustes>;
-    if (a.fondo === 'propio') return localStorage.getItem(CLAVE_PROPIO) ?? `assets/fondos/${POR_DEFECTO.fondo}.jpg`;
-    return `assets/fondos/${FONDOS.some((f) => f.id === a.fondo) ? a.fondo : POR_DEFECTO.fondo}.jpg`;
+    if (a.fondo === 'propio') return localStorage.getItem(CLAVE_PROPIO) ?? `assets/fondos/${POR_DEFECTO.fondo}.webp`;
+    return `assets/fondos/${FONDOS.some((f) => f.id === a.fondo) ? a.fondo : POR_DEFECTO.fondo}.webp`;
   } catch {
-    return `assets/fondos/${POR_DEFECTO.fondo}.jpg`;
+    return `assets/fondos/${POR_DEFECTO.fondo}.webp`;
   }
 }

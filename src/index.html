@@ -5,6 +5,8 @@
   <title>Jasta</title>
   <base href="/" />
   <link rel="manifest" href="manifest.json" />
+  <!-- Conexión anticipada al servidor de datos: la primera consulta responde antes -->
+  <link rel="preconnect" href="https://ktksdoedeazkvohewqzx.supabase.co" crossorigin />
   <meta name="color-scheme" content="light dark" />
   <meta name="theme-color" content="#f3f4f6" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#0b1120" media="(prefers-color-scheme: dark)" />
@@ -74,11 +76,11 @@
       // Las páginas de los clientes (catálogo, seguimiento, pago) entran sin pantalla de carga
       if (/^\/(tienda|seguimiento|pago)(\/|$)/.test(location.pathname)) { el.remove(); window.jastaLista = function () {}; return; }
       // La foto de fondo elegida en Tema (o la que viene por defecto)
-      var foto = 'assets/fondos/sala.jpg';
+      var foto = 'assets/fondos/sala.webp';
       try {
         var a = JSON.parse(localStorage.getItem('jasta-fondo') || '{}');
         if (a.fondo === 'propio') foto = localStorage.getItem('jasta-fondo-propio') || foto;
-        else if (/^[a-z]+$/.test(a.fondo || '')) foto = 'assets/fondos/' + a.fondo + '.jpg';
+        else if (/^[a-z]+$/.test(a.fondo || '')) foto = 'assets/fondos/' + a.fondo + '.webp';
       } catch (e) {}
       el.querySelector('.cg-foto').style.backgroundImage = 'url("' + foto + '")';
       var listo = false;

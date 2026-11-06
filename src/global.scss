@@ -381,3 +381,31 @@ body.dark app-tienda.tv2.tv2.tv2 .t-fotos img, body.dark app-tienda.tv2.tv2.tv2 
 @media (min-width: 900px) {
   app-tienda.tv2.tv2.tv2 .t-barra { max-width: 720px; width: 100%; margin: 0 auto; box-sizing: border-box; }
 }
+
+/* ===== Animación al cambiar de página (View Transitions del navegador) =====
+   Solo se mueve el contenido: la barra de arriba, el menú de íconos, la barra de abajo y la foto
+   de fondo tienen su propio nombre y se quedan quietos. */
+.vd-fondo { view-transition-name: fondo; }
+.vd-top-wrap { view-transition-name: barra-arriba; }
+.sidebar.rail { view-transition-name: menu-lateral; }
+.pill-nav { view-transition-name: barra-abajo; }
+
+::view-transition-old(root) {
+  animation: pagina-sale 160ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+::view-transition-new(root) {
+  animation: pagina-entra 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+// Lo fijo no parpadea
+::view-transition-old(fondo), ::view-transition-new(fondo),
+::view-transition-old(barra-arriba), ::view-transition-new(barra-arriba),
+::view-transition-old(menu-lateral), ::view-transition-new(menu-lateral),
+::view-transition-old(barra-abajo), ::view-transition-new(barra-abajo) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+@keyframes pagina-sale { to { opacity: 0; transform: translateY(-6px) scale(0.995); } }
+@keyframes pagina-entra { from { opacity: 0; transform: translateY(14px) scale(0.995); } }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+}

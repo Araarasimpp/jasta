@@ -64,7 +64,7 @@ import { ToastService } from '../../shared/toast/toast.service';
         <div class="rejilla">
           @for (f of fondos; track f.id) {
             <button type="button" class="fondo" [class.on]="fondo.ajustes().fondo === f.id" (click)="fondo.cambiar({ fondo: f.id })" [attr.aria-pressed]="fondo.ajustes().fondo === f.id">
-              <img [src]="'assets/fondos/' + f.id + '-mini.jpg'" alt="" loading="lazy" /><span>{{ f.nombre }}</span>
+              <img [src]="'assets/fondos/' + f.id + '-mini.webp'" alt="" loading="lazy" /><span>{{ f.nombre }}</span>
             </button>
           }
           @if (fondo.propio(); as p) {

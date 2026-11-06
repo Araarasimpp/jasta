@@ -1,5 +1,36 @@
 [
   {
+    "id": "2026-11-06-optimizacion-animaciones",
+    "fecha": "2026-11-06",
+    "hora": "09:30",
+    "titulo": "La app más rápida y con animación al cambiar de página",
+    "cuerpo": "Ahora la app carga más liviana y al pasar de una página a otra el contenido entra con una animación suave.",
+    "roles": [
+      "admin",
+      "cuadres",
+      "vendedor",
+      "vendedora",
+      "venta_local",
+      "recolector",
+      "bodega",
+      "alistador",
+      "domiciliario",
+      "mensajero",
+      "tecnico"
+    ],
+    "secciones": [
+      {
+        "titulo": "Qué cambió",
+        "pasos": [
+          "Las pantallas se bajan en segundo plano cuando el celular está libre, y solo las que puedes abrir según tu rol.",
+          "Los fondos pesan cerca de un 40% menos.",
+          "Al cambiar de página el contenido aparece deslizándose, mientras las barras, el menú y el fondo se quedan quietos.",
+          "Si tienes activado \"reducir movimiento\" en el celular, la página cambia sin animación."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-11-06-recolector-recibir",
     "fecha": "2026-11-05",
     "hora": "22:01",

@@ -57,7 +57,7 @@ import { fotoFondoGuardada } from '../../core/services/fondo.service';
 })
 export class AuthMarcaComponent implements OnInit, OnDestroy {
   /** La foto del tema primero y luego dos más (sin repetir) */
-  readonly fotos = [...new Set([fotoFondoGuardada(), 'assets/fondos/estrellas.jpg', 'assets/fondos/lago.jpg'])].slice(0, 3);
+  readonly fotos = [...new Set([fotoFondoGuardada(), 'assets/fondos/estrellas.webp', 'assets/fondos/lago.webp'])].slice(0, 3);
   actual = signal(0);
   private timer?: ReturnType<typeof setInterval>;
 
