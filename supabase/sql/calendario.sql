@@ -1,4 +1,4 @@
--- Calendario (PENDIENTE: córrelo en el SQL Editor de Supabase)
+-- Calendario (YA APLICADO 2026-11-06)
 -- * Ventas de cada día (admin) y ventas del local (venta_local).
 -- * Caja del local de cada día (cuadrada, faltó, sobró; entregada y recibida).
 -- * Pagos: deudas que vencen, abonos hechos a proveedores, comisiones pagadas, abonos recibidos de
