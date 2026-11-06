@@ -49,6 +49,7 @@ const MOTIVOS = [
       .paso span { min-width: 22px; text-align: center; font-family: var(--mono-font); font-weight: 700; }
       .check { display: flex; gap: 8px; align-items: flex-start; font-size: 13.5px; }
       .nota-com { margin: 0; font-size: 12.5px; color: var(--text-soft); }
+      .obl { color: var(--danger); }
     `,
   ],
   template: `
@@ -80,6 +81,11 @@ const MOTIVOS = [
           </div>
         </div>
 
+        @if (tipo() === 'garantia') {
+          <p class="nota-com">En garantía no se toca el inventario: solo queda registrado el producto y por qué se deja. Después le pones el técnico desde <strong>Devoluciones</strong>.</p>
+          <div class="campo"><label for="dv-pq">¿Por qué se deja en garantía? <span class="obl">*</span></label>
+            <textarea id="dv-pq" rows="3" maxlength="300" [(ngModel)]="nota" placeholder="Ej: no prende, la batería no carga, hace un ruido raro…"></textarea></div>
+        } @else {
         <div class="campo"><span class="etq">Motivo</span>
           <div class="motivos">
             @for (m of motivos; track m.id) {
@@ -95,6 +101,8 @@ const MOTIVOS = [
           </div>
         </div>
 
+        }
+
         @if (tipo() === 'devolucion') {
           <div class="fila-campos">
             <div class="campo"><label for="dv-re">Se le devuelve</label><input pesos id="dv-re" class="num" [(ngModel)]="reembolso" /></div>
@@ -106,7 +114,7 @@ const MOTIVOS = [
             <label class="check"><input type="checkbox" [(ngModel)]="descontarComision" />
               <span>Descontarle a {{ pedido.vendedora?.nombre || 'la vendedora' }} su comisión de estas unidades ({{ pesos(comisionSel()) }}) en el próximo pago</span></label>
           }
-        } @else {
+        } @else if (tipo() === 'cambio') {
           <label class="check"><input type="checkbox" [(ngModel)]="reemplazo" /> <span>Se le entregó otro igual (sale del inventario)</span></label>
         }
 
@@ -114,7 +122,9 @@ const MOTIVOS = [
           <app-comprobantes-input [obligatorio]="false" titulo="Fotos (opcional)" pista="Foto del producto o del comprobante del reembolso." [rutas]="fotos()"
             (cambio)="fotos.set($event)"></app-comprobantes-input>
         }
-        <div class="campo"><label for="dv-no">Nota (opcional)</label><input id="dv-no" maxlength="300" [(ngModel)]="nota" placeholder="Ej: la pantalla no prende" /></div>
+        @if (tipo() !== 'garantia') {
+          <div class="campo"><label for="dv-no">Nota (opcional)</label><input id="dv-no" maxlength="300" [(ngModel)]="nota" placeholder="Ej: la pantalla no prende" /></div>
+        }
         @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
       </div>
       <div class="hoja-pie">
@@ -182,10 +192,12 @@ export class DevolucionComponent implements OnInit {
     if (!items.length) return this.error.set('Elige qué productos y cuántos.');
     const t = this.tipo();
     if (t === 'devolucion' && (this.reembolso ?? 0) > Number(this.pedido.total)) return this.error.set('El reembolso no puede ser mayor que el pedido.');
+    if (t === 'garantia' && !this.nota.trim()) return this.error.set('Escribe por qué se deja en garantía.');
     this.guardando.set(true);
     const { error } = await this.sb.client.rpc('registrar_devolucion', {
-      p_pedido: this.pedido.id, p_items: items, p_tipo: t, p_motivo: this.motivo(), p_estado_producto: this.estado(),
-      p_reemplazo: t !== 'devolucion' && this.reemplazo, p_reembolso: t === 'devolucion' ? Number(this.reembolso) || 0 : 0,
+      p_pedido: this.pedido.id, p_items: items, p_tipo: t, p_motivo: t === 'garantia' ? 'defectuoso' : this.motivo(),
+      p_estado_producto: t === 'garantia' ? 'vuelve_stock' : this.estado(),
+      p_reemplazo: t === 'cambio' && this.reemplazo, p_reembolso: t === 'devolucion' ? Number(this.reembolso) || 0 : 0,
       p_metodo: this.metodo, p_descontar_comision: t === 'devolucion' && this.descontarComision, p_nota: this.nota.trim(), p_fotos: this.fotos(),
     });
     this.guardando.set(false);

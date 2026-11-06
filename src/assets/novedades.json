@@ -1,5 +1,35 @@
 [
   {
+    "id": "2026-11-06-garantias-tecnico",
+    "fecha": "2026-11-05",
+    "hora": "19:31",
+    "titulo": "Garantías: sin tocar inventario y con técnico",
+    "cuerpo": "Al registrar una garantía ya no se mueve el inventario: se escribe por qué se deja y después se le pone el técnico.",
+    "roles": [
+      "admin",
+      "alistador",
+      "venta_local",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "Registrar la garantía",
+        "pasos": [
+          "En el pedido entregado, toca \"Devolución o garantía\" y elige Garantía.",
+          "Elige el producto y escribe por qué se deja en garantía. El inventario no cambia."
+        ]
+      },
+      {
+        "titulo": "Técnico",
+        "pasos": [
+          "En Devoluciones, cada garantía dice si falta técnico, si está con el técnico o si ya se resolvió.",
+          "Toca \"Poner técnico\": nombre del técnico, fecha y observaciones.",
+          "Cuando se le entregue al cliente, marca \"Ya está resuelta\". Todo queda también en las notas del pedido."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-11-05-calendario",
     "fecha": "2026-11-05",
     "hora": "12:48",

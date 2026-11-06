@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { VisorService } from '../../shared/visor/visor.service';
@@ -27,6 +28,10 @@ interface Devolucion {
   fecha: string;
   perdida: number | null;
   items: { nombre: string; cantidad: number }[];
+  tecnico: string | null;
+  tecnico_fecha: string | null;
+  tecnico_obs: string | null;
+  resuelta: boolean;
 }
 
 /**
@@ -36,7 +41,7 @@ interface Devolucion {
 @Component({
   selector: 'app-devoluciones',
   standalone: true,
-  imports: [EsqueletoComponent, PedidoDetalleComponent, RangoComponent],
+  imports: [EsqueletoComponent, PedidoDetalleComponent, RangoComponent, FormsModule],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -60,6 +65,12 @@ interface Devolucion {
       .motivos { display: flex; flex-wrap: wrap; gap: 8px; }
       .motivos span { padding: 5px 11px; border-radius: 999px; background: var(--surface-2); font-size: 13px; }
       .motivos b { font-family: var(--mono-font); margin-left: 4px; }
+      .g-estado { display: inline-block; margin-left: 4px; padding: 1px 8px; border-radius: 8px; font-size: 11.5px; font-weight: 650; background: var(--danger-wash); color: var(--danger); }
+      .g-estado.tec { background: var(--accent-wash); color: var(--accent); }
+      .g-estado.ok { background: var(--ok-wash); color: var(--efectivo-texto); }
+      .tec-info { margin: 4px 0 0; padding: 6px 10px; border-radius: var(--radius-sm); background: var(--surface-2); font-size: 13px; color: var(--text-soft); }
+      .link { display: block; margin: 6px 0 2px; border: 0; background: none; padding: 0; color: var(--accent); font: inherit; font-size: 13px; font-weight: 600; text-decoration: underline; cursor: pointer; }
+      .check { display: flex; gap: 8px; align-items: center; font-size: 14px; }
       .vacio-txt { margin: 0; padding: 14px 0 6px; text-align: center; font-size: 13.5px; color: var(--text-soft); }
     `,
   ],
@@ -73,7 +84,7 @@ interface Devolucion {
 
       <div class="kpis" role="list">
         <div class="kpi" role="listitem"><span class="kpi-label">Casos</span><span class="kpi-valor num">{{ lista().length }}</span>
-          <span class="kpi-nota">{{ cuenta('devolucion') }} devoluciones · {{ cuenta('cambio') }} cambios · {{ cuenta('garantia') }} garantías</span></div>
+          <span class="kpi-nota">{{ cuenta('devolucion') }} devoluciones · {{ cuenta('cambio') }} cambios · {{ cuenta('garantia') }} garantías{{ garantiasAbiertas() ? ' (' + garantiasAbiertas() + ' sin resolver)' : '' }}</span></div>
         <div class="kpi" role="listitem"><span class="kpi-label">Unidades</span><span class="kpi-valor num">{{ resumen().unidades }}</span>
           <span class="kpi-nota">{{ resumen().danadas }} dañadas</span></div>
         <div class="kpi" role="listitem"><span class="kpi-label">Reembolsado</span><span class="kpi-valor num">{{ pesos(resumen().reembolsos) }}</span>
@@ -100,13 +111,25 @@ interface Devolucion {
               <li class="dev" (click)="abierto.set(d.pedido_id)">
                 <span style="min-width: 0">
                   <strong>#{{ d.pedido_id }} {{ d.cliente }}</strong> <span class="tipo" [class]="'tipo ' + d.tipo">{{ tipoTxt(d.tipo) }}</span>
-                  <p>{{ items(d) }} · {{ d.motivo }}</p>
-                  @if (d.nota) { <p>"{{ d.nota }}"</p> }
+                  @if (d.tipo === 'garantia') {
+                    <span class="g-estado" [class.tec]="d.tecnico && !d.resuelta" [class.ok]="d.resuelta">{{ d.resuelta ? 'Resuelta' : d.tecnico ? 'Con el técnico' : 'Falta técnico' }}</span>
+                    <p>{{ items(d) }}</p>
+                    @if (d.nota) { <p>Problema: "{{ d.nota }}"</p> }
+                    @if (d.tecnico) {
+                      <p class="tec-info">🔧 {{ d.tecnico }} · {{ fechaCorta(d.tecnico_fecha) }}{{ d.tecnico_obs ? ' · ' + d.tecnico_obs : '' }}</p>
+                    }
+                    <button type="button" class="link" (click)="$event.stopPropagation(); abrirTecnico(d)">{{ d.tecnico ? 'Editar técnico' : 'Poner técnico' }}</button>
+                  } @else {
+                    <p>{{ items(d) }} · {{ d.motivo }}</p>
+                    @if (d.nota) { <p>"{{ d.nota }}"</p> }
+                  }
                   <small>{{ cuando(d.fecha) }}{{ d.creado_por_nombre ? ' · ' + d.creado_por_nombre : '' }}{{ d.vendedora ? ' · vendió ' + d.vendedora : '' }}</small>
                 </span>
                 <span class="der">
                   @if (d.tipo === 'devolucion' && d.reembolso) { <span class="num">−{{ pesos(d.reembolso) }}</span> }
-                  <span class="estado" [class.danado]="d.estado_producto === 'danado'">{{ d.estado_producto === 'danado' ? 'Dañado' : 'Volvió al inventario' }}{{ d.reemplazo ? ' · se entregó otro' : '' }}</span>
+                  @if (d.tipo !== 'garantia') {
+                    <span class="estado" [class.danado]="d.estado_producto === 'danado'">{{ d.estado_producto === 'danado' ? 'Dañado' : 'Volvió al inventario' }}{{ d.reemplazo ? ' · se entregó otro' : '' }}</span>
+                  }
                   @if (d.comision_descuento) { <small>Comisión −{{ pesos(d.comision_descuento) }}</small> }
                   @if (d.fotos.length) {
                     <button type="button" class="foto" (click)="$event.stopPropagation(); verFotos(d)" aria-label="Ver fotos">
@@ -122,6 +145,25 @@ interface Devolucion {
         }
       </section>
     </div>
+
+    @if (tecDe(); as d) {
+      <button class="velo" aria-label="Cerrar" (click)="tecDe.set(null)"></button>
+      <div class="hoja hoja-centro" role="dialog" aria-labelledby="t-tec">
+        <div class="hoja-head"><h2 id="t-tec">Garantía · #{{ d.pedido_id }}</h2></div>
+        <div class="hoja-body">
+          <p class="ayuda" style="margin: 0">{{ items(d) }}{{ d.nota ? ' · "' + d.nota + '"' : '' }}</p>
+          <div class="campo"><label for="tc-n">Técnico</label><input id="tc-n" maxlength="80" [(ngModel)]="tNombre" placeholder="Nombre del técnico" /></div>
+          <div class="campo"><label for="tc-f">Fecha</label><input id="tc-f" type="date" [(ngModel)]="tFecha" /></div>
+          <div class="campo"><label for="tc-o">Observaciones</label>
+            <textarea id="tc-o" rows="3" maxlength="600" [(ngModel)]="tObs" placeholder="Ej: cambió la batería, queda listo el viernes"></textarea></div>
+          <label class="check"><input type="checkbox" [(ngModel)]="tResuelta" /> Ya está resuelta (se le entregó al cliente)</label>
+        </div>
+        <div class="hoja-pie">
+          <button class="b" (click)="tecDe.set(null)">Cancelar</button>
+          <button class="b b-pri" [disabled]="guardando()" (click)="guardarTecnico()">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button>
+        </div>
+      </div>
+    }
 
     @if (abierto(); as id) {
       <app-pedido-detalle [pedidoId]="id" (cerrar)="abierto.set(null)" (cambiado)="cargar()"></app-pedido-detalle>
@@ -143,6 +185,7 @@ export class DevolucionesPage {
   pesos = pesos;
   private rango: RangoFechas | null = null;
 
+  garantiasAbiertas = computed(() => this.lista().filter((d) => d.tipo === 'garantia' && !d.resuelta).length);
   resumen = computed(() => {
     const l = this.lista();
     return {
@@ -174,6 +217,42 @@ export class DevolucionesPage {
       const urls = await urlsComprobantes(this.sb.client, faltan);
       this.miniaturas.update((m) => ({ ...m, ...Object.fromEntries(faltan.map((f, i) => [f, urls[i]])) }));
     }
+  }
+
+  // Técnico de la garantía
+  tecDe = signal<Devolucion | null>(null);
+  guardando = signal(false);
+  tNombre = '';
+  tFecha = '';
+  tObs = '';
+  tResuelta = false;
+
+  abrirTecnico(d: Devolucion): void {
+    this.tNombre = d.tecnico ?? '';
+    this.tFecha = d.tecnico_fecha ?? hoyColombiaISO();
+    this.tObs = d.tecnico_obs ?? '';
+    this.tResuelta = d.resuelta;
+    this.tecDe.set(d);
+  }
+
+  async guardarTecnico(): Promise<void> {
+    const d = this.tecDe();
+    if (!d) return;
+    if (!this.tNombre.trim()) return this.toast.error('Escribe el nombre del técnico');
+    if (!this.tFecha) return this.toast.error('Elige la fecha');
+    this.guardando.set(true);
+    const { error } = await this.sb.client.rpc('garantia_tecnico', {
+      p_id: d.id, p_tecnico: this.tNombre.trim(), p_fecha: this.tFecha, p_obs: this.tObs.trim(), p_resuelta: this.tResuelta,
+    });
+    this.guardando.set(false);
+    if (error) return this.toast.error(mensajeError(error));
+    this.toast.ok(this.tResuelta ? 'Garantía resuelta ✓' : 'Técnico guardado');
+    this.tecDe.set(null);
+    await this.cargar();
+  }
+
+  fechaCorta(d: string | null): string {
+    return d ? formatoFechaCO(d + 'T12:00:00-05:00', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
   }
 
   cuenta(t: string): number {
