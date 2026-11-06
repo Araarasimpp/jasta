@@ -32,6 +32,10 @@ interface Devolucion {
   tecnico_fecha: string | null;
   tecnico_obs: string | null;
   resuelta: boolean;
+  nuevo_nombre: string | null;
+  nuevo_cantidad: number | null;
+  diferencia: number;
+  diferencia_metodo: string | null;
 }
 
 /**
@@ -121,12 +125,14 @@ interface Devolucion {
                     <button type="button" class="link" (click)="$event.stopPropagation(); abrirTecnico(d)">{{ d.tecnico ? 'Editar técnico' : 'Poner técnico' }}</button>
                   } @else {
                     <p>{{ items(d) }} · {{ d.motivo }}</p>
+                    @if (d.nuevo_nombre) { <p>→ Por {{ d.nuevo_cantidad }} {{ d.nuevo_nombre }}{{ +d.diferencia ? ' · pagó ' + pesos(d.diferencia) + ' de diferencia (' + d.diferencia_metodo + ')' : ' · sin diferencia' }}</p> }
                     @if (d.nota) { <p>"{{ d.nota }}"</p> }
                   }
                   <small>{{ cuando(d.fecha) }}{{ d.creado_por_nombre ? ' · ' + d.creado_por_nombre : '' }}{{ d.vendedora ? ' · vendió ' + d.vendedora : '' }}</small>
                 </span>
                 <span class="der">
                   @if (d.tipo === 'devolucion' && d.reembolso) { <span class="num">−{{ pesos(d.reembolso) }}</span> }
+                  @if (+d.diferencia) { <span class="num" style="color: var(--efectivo-texto)">+{{ pesos(d.diferencia) }}</span> }
                   @if (d.tipo !== 'garantia') {
                     <span class="estado" [class.danado]="d.estado_producto === 'danado'">{{ d.estado_producto === 'danado' ? 'Dañado' : 'Volvió al inventario' }}{{ d.reemplazo ? ' · se entregó otro' : '' }}</span>
                   }

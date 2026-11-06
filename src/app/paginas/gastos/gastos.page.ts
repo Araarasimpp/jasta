@@ -41,6 +41,7 @@ interface Gasto {
 interface Resumen {
   ganancia_tienda: number;
   ganancia_cuentas?: number;
+  ganancia_cambios?: number;
   gastos: number;
   utilidad: number;
   por_categoria: { categoria: string; total: number; n: number }[];
@@ -112,6 +113,10 @@ interface Resumen {
         @if (+(r()?.ganancia_cuentas ?? 0)) {
           <div class="renglon"><span class="lbl">Ganancia de cuentas por cobrar<small>Lo que cobraste por encima de tu costo</small></span><span class="punteado"></span>
             <span class="val">+ {{ pesos(r()?.ganancia_cuentas) }}</span></div>
+        }
+        @if (+(r()?.ganancia_cambios ?? 0)) {
+          <div class="renglon"><span class="lbl">Ganancia de cambios<small>Diferencias que pagaron los clientes al cambiar por otro producto</small></span><span class="punteado"></span>
+            <span class="val">{{ +(r()?.ganancia_cambios ?? 0) < 0 ? '−' : '+' }} {{ pesos(+(r()?.ganancia_cambios ?? 0) < 0 ? -(r()?.ganancia_cambios ?? 0) : r()?.ganancia_cambios) }}</span></div>
         }
         <div class="renglon gastos"><span class="lbl">Gastos<small>{{ r()?.lista?.length ?? 0 }} {{ r()?.lista?.length === 1 ? 'gasto' : 'gastos' }}</small></span><span class="punteado"></span>
           <span class="val">− {{ pesos(r()?.gastos) }}</span></div>

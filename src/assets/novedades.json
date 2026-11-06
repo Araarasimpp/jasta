@@ -1,5 +1,36 @@
 [
   {
+    "id": "2026-11-06-cambio-otro-producto",
+    "fecha": "2026-11-05",
+    "hora": "19:44",
+    "titulo": "Cambio por otro producto más caro",
+    "cuerpo": "En un cambio, el cliente puede llevarse otro producto más caro y pagar la diferencia.",
+    "roles": [
+      "admin",
+      "alistador",
+      "venta_local",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se hace",
+        "pasos": [
+          "En el pedido entregado: \"Devolución o garantía\" → Cambio → \"Por otro producto\".",
+          "Busca el producto nuevo y elige cuántas unidades. La app muestra lo que valía lo devuelto, lo que vale el nuevo y cuánto paga el cliente.",
+          "Elige cómo pagó la diferencia. Si fue en efectivo, entra sola a la caja del local.",
+          "Si el producto nuevo vale menos, usa Devolución."
+        ]
+      },
+      {
+        "titulo": "Inventario y ganancia",
+        "pasos": [
+          "Lo que devuelve vuelve al inventario (o queda dañado) y el producto nuevo sale del inventario.",
+          "La ganancia del cambio suma en la utilidad real de Inicio y Gastos."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-11-06-garantias-tecnico",
     "fecha": "2026-11-05",
     "hora": "19:31",
