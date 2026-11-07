@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
@@ -7,11 +7,11 @@ import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { VisorService } from '../../shared/visor/visor.service';
 import { DiaComponent } from '../../shared/rango/dia.component';
-import { RangoFechas } from '../../shared/rango/rango.component';
+import { RangoFechas, sumarDias } from '../../shared/rango/rango.component';
 import { ComprobantesInputComponent } from '../../shared/comprobantes/comprobantes-input.component';
 import { urlsComprobantes } from '../../shared/comprobantes';
 import { mensajeError, numero, pesos, urlImagen, urlMini } from '../../shared/formato';
-import { formatoFechaCO, formatoHoraCO, hoyColombiaISO } from '../../shared/fecha-colombia';
+import { diaColombiaDe, formatoFechaCO, formatoHoraCO, hoyColombiaISO } from '../../shared/fecha-colombia';
 import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 import { PesosDirective } from '../../shared/pesos/pesos.directive';
 
@@ -29,14 +29,18 @@ interface Movimiento {
   proveedor: string | null;
   producto: string | null;
   facturas: string[] | null;
+  /** Entregas: el día al que pertenece la plata */
+  dia?: string | null;
 }
 interface Resumen {
   base: number;
   compras: number;
-  /** Lo que le entregó al admin ese día */
+  /** Lo que le entregó al admin de ese día (aunque lo haya recibido otro día) */
   entregado: number;
-  /** Lo que debe tener ahora (todos los días); null cuando son todos */
+  /** Lo que falta por entregar de este día (base − compras − entregado de este día); null cuando son todos */
   saldo: number | null;
+  /** Días anteriores que quedaron sin entregar */
+  dias_sin_entregar?: { id: number; nombre: string; dia: string; falta: number }[];
   por_recolector: PorRecolector[];
   n_bases: number;
   n_compras: number;
@@ -140,6 +144,15 @@ const normalP = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, ''
       .renglon.saldo .punteado { display: none; }
       .ico.entrega { background: color-mix(in srgb, var(--st-ruta) 14%, transparent); color: var(--st-ruta-text); }
       .mov .monto.entrega { color: var(--st-ruta-text); }
+      .atras-lista { list-style: none; margin: 0; padding: 0; }
+      .atras-lista li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 10px 0; border-bottom: var(--perfora); }
+      .atras-lista li:last-child { border-bottom: 0; }
+      .atras-txt strong { display: block; font-size: 14px; }
+      .atras-txt small { display: block; font-size: 12px; color: var(--text-muted); }
+      .atras-v { font-family: var(--mono-font); font-weight: 700; color: var(--st-pendiente-text); white-space: nowrap; }
+      .atras-acc { display: flex; gap: 6px; }
+      @media (max-width: 640px) { .atras-lista li { grid-template-columns: minmax(0, 1fr) auto; } .atras-acc { grid-column: 1 / -1; } .atras-acc .b { flex: 1; justify-content: center; } }
+      .sub-dia { display: block; font-size: 12.5px; font-weight: 500; color: var(--text-muted); }
       .link-borrar { border: 0; background: none; padding: 0; color: var(--danger); font: inherit; font-size: 12px; text-decoration: underline; cursor: pointer; }
       .vacio-txt { margin: 0; padding: 14px 0 6px; text-align: center; font-size: 13.5px; color: var(--text-soft); }
       .hoja-centro .hoja-body { gap: 14px; }
@@ -180,7 +193,7 @@ const normalP = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, ''
         <div><p class="fecha">{{ etiqueta() }}</p><h1>Recolector</h1></div>
         @if (!soloLectura()) {
         <div class="acciones">
-          <button class="b" (click)="abrirBase()"><ion-icon name="add-circle-outline"></ion-icon>{{ admin() && !esRecolector() ? 'Enviar base' : 'Agregar base' }}</button>
+          <button class="b" (click)="abrirBase()"><ion-icon name="add-circle-outline"></ion-icon>{{ admin() ? 'Enviar base' : 'Agregar base' }}</button>
           @if (esRecolector()) {
             <button class="b b-pri" (click)="abrirCompra()"><ion-icon name="bag-handle-outline"></ion-icon>Registrar compra</button>
           }
@@ -229,10 +242,10 @@ const normalP = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, ''
               <dl>
                 <dt>Base del día</dt><dd>{{ pesos(x.base) }}</dd>
                 <dt>Compras del día</dt><dd>− {{ pesos(x.compras) }}</dd>
-                @if (+x.entregado) { <dt>Te entregó hoy</dt><dd>− {{ pesos(x.entregado) }}</dd> }
+                @if (+x.entregado) { <dt>Ya te entregó</dt><dd>− {{ pesos(x.entregado) }}</dd> }
               </dl>
               <div class="debe" [class.neg]="+x.saldo < 0" [class.cero]="+x.saldo === 0">
-                <span>{{ +x.saldo < 0 ? 'Gastó de más' : 'Debe tener ahora' }}</span>
+                <span>{{ +x.saldo < 0 ? 'Gastó de más este día' : +x.saldo === 0 ? 'Día cuadrado' : 'Falta por entregar' }}</span>
                 <strong>{{ pesos(x.saldo) }}</strong>
               </div>
               <div class="rec-acc">
@@ -251,19 +264,37 @@ const normalP = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, ''
             <span class="val">{{ pesos(r()?.base) }}</span></div>
           <div class="renglon compras"><span class="lbl">Compras<small>{{ numero(r()?.n_compras) }}</small></span><span class="punteado"></span>
             <span class="val">− {{ pesos(r()?.compras) }}</span></div>
-          @if (+(r()?.entregado ?? 0)) {
-            <div class="renglon entregado"><span class="lbl">Entregado al admin</span><span class="punteado"></span>
-              <span class="val">− {{ pesos(r()?.entregado) }}</span></div>
-          }
           <div class="renglon total" [class.neg]="cuadre() < 0"><span class="lbl">Cuadre del día<small>{{ cuadre() < 0 ? 'Gastó más de la base' : 'Lo que quedó de este día' }}</small></span>
             <span class="punteado"></span><span class="val">{{ pesos(cuadre()) }}</span></div>
+          @if (+(r()?.entregado ?? 0)) {
+            <div class="renglon entregado"><span class="lbl">Ya se le entregó al admin<small>De la plata de este día</small></span><span class="punteado"></span>
+              <span class="val">− {{ pesos(r()?.entregado) }}</span></div>
+          }
           @if (r()?.saldo !== null && r()?.saldo !== undefined) {
-            <div class="renglon saldo" [class.neg]="+r()!.saldo! < 0"><span class="lbl">Debe tener ahora<small>Sumando todos los días, menos lo ya entregado</small></span>
+            <div class="renglon saldo" [class.neg]="+r()!.saldo! < 0"><span class="lbl">{{ +r()!.saldo! < 0 ? 'Entregó de más' : 'Falta por entregar' }}<small>Solo de este día: cada día cuadra por su cuenta</small></span>
               <span class="punteado"></span><span class="val">{{ pesos(r()!.saldo) }}</span></div>
           }
           @if (admin() && filtroRec && +(r()?.saldo ?? 0) > 0) {
             <button class="b b-ok" style="margin-top: 12px; width: 100%; justify-content: center" (click)="abrirRecibirSel()"><ion-icon name="cash-outline"></ion-icon>Recibir {{ pesos(r()!.saldo) }}</button>
           }
+        </section>
+      }
+
+      @if (r()?.dias_sin_entregar?.length) {
+        <section class="panel atras" aria-labelledby="t-atras">
+          <div class="panel-head"><div><h2 id="t-atras">Días anteriores sin entregar</h2><p class="panel-sub">Cada día cuadra solo: lo que quedó pendiente se recibe en su propio día</p></div></div>
+          <ul class="atras-lista">
+            @for (a of r()!.dias_sin_entregar!; track a.id + a.dia) {
+              <li>
+                <span class="atras-txt"><strong>{{ mayus(diaTexto(a.dia)) }}</strong>@if (esAdmin() && !filtroRec) { <small>{{ a.nombre }}</small> }</span>
+                <span class="atras-v">{{ pesos(a.falta) }}</span>
+                <span class="atras-acc">
+                  <button class="b chico" (click)="irADia(a.dia)">Ver día</button>
+                  @if (admin()) { <button class="b b-ok chico" (click)="abrirRecibir({ id: a.id, nombre: a.nombre, saldo: a.falta }, a.dia)"><ion-icon name="cash-outline"></ion-icon>Recibir</button> }
+                </span>
+              </li>
+            }
+          </ul>
         </section>
       }
 
@@ -280,7 +311,7 @@ const normalP = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, ''
                     <span class="t2">Base · {{ m.quien || '—' }} · {{ hora(m.fecha) }}@if (esAdmin() && !filtroRec) { · {{ m.recolector }} }</span>
                   } @else if (m.tipo === 'entrega') {
                     <span class="t1">Le entregó al admin{{ m.nombre ? ' · ' + m.nombre : '' }}</span>
-                    <span class="t2">Recibió {{ m.quien || 'el admin' }} · {{ hora(m.fecha) }}@if (esAdmin() && !filtroRec) { · {{ m.recolector }} }</span>
+                    <span class="t2">Recibió {{ m.quien || 'el admin' }} · {{ m.dia && m.dia !== diaDe(m.fecha) ? 'registrado ' + diaTexto(diaDe(m.fecha)) : hora(m.fecha) }}@if (esAdmin() && !filtroRec) { · {{ m.recolector }} }</span>
                   } @else {
                     <span class="t1">{{ m.producto }}</span>
                     <span class="t2">{{ m.proveedor }} · {{ hora(m.fecha) }}@if (esAdmin() && !filtroRec) { · {{ m.recolector }} }</span>
@@ -311,13 +342,13 @@ const normalP = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, ''
     @if (formBase()) {
       <button class="velo" aria-label="Cerrar" (click)="formBase.set(false)"></button>
       <div class="hoja hoja-centro" role="dialog" aria-labelledby="t-base">
-        <div class="hoja-head"><h2 id="t-base">{{ admin() && !esRecolector() ? 'Enviar base' : 'Agregar base' }}</h2>
+        <div class="hoja-head"><h2 id="t-base">{{ enviaBase() ? 'Enviar base' : 'Agregar base' }}</h2>
           <button class="b b-icono" aria-label="Cerrar" (click)="formBase.set(false)"><ion-icon name="close-outline"></ion-icon></button></div>
         <div class="hoja-body">
-          @if (admin() && !esRecolector()) {
-            <div class="campo"><label for="br">Recolector</label>
-              <select id="br" class="inp" [(ngModel)]="baseRec">
-                @for (x of r()?.recolectores ?? []; track x.id) { <option [ngValue]="x.id">{{ x.nombre }}</option> }
+          @if (admin()) {
+            <div class="campo"><label for="br">¿Para quién es la base?</label>
+              <select id="br" class="inp" [(ngModel)]="baseRec" (ngModelChange)="baseRecSel.set($event)">
+                @for (x of r()?.recolectores ?? []; track x.id) { <option [ngValue]="x.id">{{ x.nombre }}{{ x.id === miId() ? ' (yo)' : '' }}</option> }
               </select>
               @if (!(r()?.recolectores?.length)) { <p class="ayuda">No hay usuarios con el rol Recolector. Asígnalo en Usuarios.</p> }
             </div>
@@ -325,12 +356,12 @@ const normalP = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, ''
           <div class="campo"><label for="bm">Valor</label><input pesos id="bm" class="inp num" [(ngModel)]="baseMonto" /></div>
           <div class="campo"><label for="bn">Nombre de la base</label>
             <input id="bn" class="inp" maxlength="120" [(ngModel)]="baseNombre" placeholder="¿De dónde viene? Ej: caja del local, ventas de la mañana" /></div>
-          @if (admin() && !esRecolector()) { <p class="ayuda" style="margin: 0">Le llega un aviso al recolector; se suma cuando la acepte.</p> }
+          @if (enviaBase()) { <p class="ayuda" style="margin: 0">Le llega un aviso al recolector; se suma cuando la acepte.</p> }
           @if (errorForm()) { <p class="error" role="alert">{{ errorForm() }}</p> }
         </div>
         <div class="hoja-pie">
           <button class="b" (click)="formBase.set(false)">Cancelar</button>
-          <button class="b b-ok" (click)="guardarBase()" [disabled]="ocupado()">{{ ocupado() ? 'Guardando…' : admin() && !esRecolector() ? 'Enviar base' : 'Agregar base' }}</button>
+          <button class="b b-ok" (click)="guardarBase()" [disabled]="ocupado()">{{ ocupado() ? 'Guardando…' : enviaBase() ? 'Enviar base' : 'Agregar base' }}</button>
         </div>
       </div>
     }
@@ -339,10 +370,10 @@ const normalP = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, ''
     @if (recibirDe(); as x) {
       <button class="velo" aria-label="Cerrar" (click)="recibirDe.set(null)"></button>
       <div class="hoja hoja-centro" role="dialog" aria-labelledby="t-rec">
-        <div class="hoja-head"><h2 id="t-rec">Recibir de {{ x.nombre }}</h2>
+        <div class="hoja-head"><h2 id="t-rec">Recibir de {{ x.nombre }}<small class="sub-dia">{{ mayus(diaTexto(recibirDia)) }}</small></h2>
           <button class="b b-icono" aria-label="Cerrar" (click)="recibirDe.set(null)"><ion-icon name="close-outline"></ion-icon></button></div>
         <div class="hoja-body">
-          <p class="ayuda" style="margin: 0">Debe tener <strong>{{ pesos(x.saldo) }}</strong> (bases aceptadas − compras − lo que ya te entregó).</p>
+          <p class="ayuda" style="margin: 0">Plata del <strong>{{ diaTexto(recibirDia) }}</strong>: le falta entregar <strong>{{ pesos(x.saldo) }}</strong> (base − compras − lo que ya te entregó de ese día).</p>
           <div class="campo"><label for="rv">¿Cuánto recibiste?</label><input pesos id="rv" class="inp num" [(ngModel)]="recibirValor" />
             <button type="button" class="b chico" style="margin-top: 6px; align-self: flex-start" (click)="recibirValor = +x.saldo">Todo · {{ pesos(x.saldo) }}</button></div>
           @if ((recibirValor || 0) > 0 && +recibirValor! !== +x.saldo) {
@@ -459,7 +490,12 @@ export class RecolectorPage implements OnInit, OnDestroy {
   /** Cuadres revisa el cuadre del recolector sin enviar bases ni registrar compras */
   soloLectura = computed(() => !this.sb.tiene('admin', 'recolector'));
   esRecolector = computed(() => this.sb.tiene('recolector'));
-  cuadre = computed(() => Number(this.r()?.base ?? 0) - Number(this.r()?.compras ?? 0) - Number(this.r()?.entregado ?? 0));
+  /** Lo que quedó del día: base − compras (lo entregado se resta aparte, en "Falta por entregar") */
+  cuadre = computed(() => Number(this.r()?.base ?? 0) - Number(this.r()?.compras ?? 0));
+  miId = computed(() => this.sb.usuario()?.id ?? null);
+  baseRecSel = signal<number | null>(null);
+  /** El admin manda la base a otro recolector (queda por aceptar); a sí mismo, se suma de una */
+  enviaBase = computed(() => this.admin() && this.baseRecSel() !== this.miId());
   /** Admin (o cuadres) mirando a todos: una tarjeta por recolector en vez de sumarlos */
   vistaTodos = computed(() => this.esAdmin() && !this.filtroSel() && (this.r()?.por_recolector?.length ?? 0) > 0);
   private filtroSel = signal<number | null>(null);
@@ -467,6 +503,8 @@ export class RecolectorPage implements OnInit, OnDestroy {
   recibirDe = signal<{ id: number; nombre: string; saldo: number } | null>(null);
   recibirValor: number | null = null;
   recibirNota = '';
+  recibirDia = '';
+  @ViewChild(DiaComponent) private diaCmp?: DiaComponent;
 
   pesos = pesos;
   numero = numero;
@@ -531,7 +569,8 @@ export class RecolectorPage implements OnInit, OnDestroy {
     void this.cargar();
   }
 
-  abrirRecibir(x: PorRecolector): void {
+  abrirRecibir(x: { id: number; nombre: string; saldo: number }, dia = this.dia): void {
+    this.recibirDia = dia;
     this.recibirValor = Number(x.saldo) > 0 ? Number(x.saldo) : null;
     this.recibirNota = '';
     this.errorForm.set('');
@@ -542,7 +581,7 @@ export class RecolectorPage implements OnInit, OnDestroy {
     const id = this.filtroRec;
     const nombre = this.r()?.recolectores.find((x) => x.id === id)?.nombre ?? 'el recolector';
     if (!id) return;
-    this.abrirRecibir({ id, nombre, base: 0, compras: 0, entregado: 0, pendientes: 0, saldo: Number(this.r()?.saldo ?? 0) });
+    this.abrirRecibir({ id, nombre, saldo: Number(this.r()?.saldo ?? 0) });
   }
 
   async guardarRecibir(): Promise<void> {
@@ -551,13 +590,34 @@ export class RecolectorPage implements OnInit, OnDestroy {
     if (!x) return;
     if (v <= 0) return this.errorForm.set('Escribe cuánto recibiste.');
     this.ocupado.set(true);
-    const { data, error } = await this.sb.client.rpc('recoleccion_recibir', { p_recolector: x.id, p_valor: v, p_nota: this.recibirNota.trim() });
+    const { data, error } = await this.sb.client.rpc('recoleccion_recibir', { p_recolector: x.id, p_valor: v, p_nota: this.recibirNota.trim(), p_dia: this.recibirDia || this.dia });
     this.ocupado.set(false);
     if (error) return this.errorForm.set(mensajeError(error));
     const saldo = Number(data);
-    this.toast.ok(`Recibiste ${pesos(v)} de ${x.nombre}` + (saldo > 0 ? ` · todavía debe tener ${pesos(saldo)}` : saldo === 0 ? ' · quedó en cero ✓' : ''));
+    this.toast.ok(`Recibiste ${pesos(v)} de ${x.nombre}` + (saldo > 0 ? ` · de ese día faltan ${pesos(saldo)}` : saldo === 0 ? ' · ese día quedó en cero ✓' : ''));
     this.recibirDe.set(null);
     await this.cargar();
+  }
+
+  /** "viernes 6 de nov" (o "hoy" / "ayer") */
+  diaTexto(d: string): string {
+    if (!d) return '';
+    const hoy = hoyColombiaISO();
+    if (d === hoy) return 'hoy';
+    if (d === sumarDias(hoy, -1)) return 'ayer';
+    return new Date(d + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'short' });
+  }
+
+  mayus(t: string): string {
+    return t ? t[0].toUpperCase() + t.slice(1) : t;
+  }
+
+  diaDe(iso: string): string {
+    return diaColombiaDe(iso);
+  }
+
+  irADia(d: string): void {
+    this.diaCmp?.poner(d);
   }
 
   readonly urlMini = urlMini;
@@ -590,7 +650,10 @@ export class RecolectorPage implements OnInit, OnDestroy {
   abrirBase(): void {
     this.baseMonto = null;
     this.baseNombre = '';
-    this.baseRec = this.filtroRec ?? this.r()?.recolectores?.[0]?.id ?? null;
+    // El admin elige para quién es; por defecto el recolector que está mirando (o el primero que no sea él)
+    const lista = this.r()?.recolectores ?? [];
+    this.baseRec = this.filtroRec ?? lista.find((x) => x.id !== this.miId())?.id ?? lista[0]?.id ?? null;
+    this.baseRecSel.set(this.admin() ? this.baseRec : this.miId());
     this.errorForm.set('');
     this.formBase.set(true);
   }
@@ -599,11 +662,11 @@ export class RecolectorPage implements OnInit, OnDestroy {
     const monto = Number(this.baseMonto) || 0;
     if (monto <= 0) return this.errorForm.set('Escribe el valor de la base.');
     if (!this.baseNombre.trim()) return this.errorForm.set('Ponle nombre a la base (de dónde viene).');
-    const enviar = this.admin() && !this.esRecolector();
-    if (enviar && !this.baseRec) return this.errorForm.set('Elige el recolector.');
+    if (this.admin() && !this.baseRec) return this.errorForm.set('Elige para quién es la base.');
+    const enviar = this.enviaBase();
     this.ocupado.set(true);
     const { error } = await this.sb.client.rpc('recoleccion_agregar_base', {
-      p_monto: monto, p_nombre: this.baseNombre.trim(), p_recolector: enviar ? this.baseRec : null,
+      p_monto: monto, p_nombre: this.baseNombre.trim(), p_recolector: this.admin() ? this.baseRec : null,
     });
     this.ocupado.set(false);
     if (error) return this.errorForm.set(mensajeError(error));
