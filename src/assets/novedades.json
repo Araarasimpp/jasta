@@ -13,7 +13,7 @@
         "titulo": "Admin",
         "pasos": [
           "Está en el menú, en Finanzas → Gastos personales. Solo la ven los administradores.",
-          "Toca \"Registrar gasto\": escribe cuánto fue, toca la categoría (mercado, comidas fuera, gasolina, salud, hijos, mascotas…), elige la fecha (Hoy o Ayer de un toque) y cómo se pagó. El detalle es opcional.",
+          "Toca \"Registrar gasto\": escribe cuánto fue, toca la categoría (mercado, almuerzos, comidas fuera, gasolina, salud, hijos, mascotas…), elige la fecha (Hoy o Ayer de un toque) y cómo se pagó. El detalle es opcional.",
           "Arriba ves el total, el promedio por día, si gastaste más o menos que el periodo anterior y la categoría que más pesa.",
           "La gráfica de líneas muestra el gasto de cada día; en \"Acumulado\" lo compara con el periodo anterior. En la dona, toca una categoría para ver solo esos gastos.",
           "Estos gastos no restan en la utilidad real del negocio."

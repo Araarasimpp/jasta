@@ -2,7 +2,8 @@ import { Component, ElementRef, OnDestroy, ViewChild, computed, effect, inject, 
 import { FormsModule } from '@angular/forms';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { addCircleOutline, closeOutline, lockClosedOutline, searchOutline, trashOutline } from 'ionicons/icons';
+import { addCircleOutline, closeOutline, lockClosedOutline, searchOutline, trashOutline,
+  airplaneOutline, bulbOutline, busOutline, carOutline, cardOutline, cartOutline, cubeOutline, cutOutline, fastFoodOutline, giftOutline, happyOutline, heartOutline, homeOutline, medkitOutline, pawOutline, phonePortraitOutline, receiptOutline, restaurantOutline, schoolOutline, shirtOutline, speedometerOutline, tvOutline, wineOutline } from 'ionicons/icons';
 import { CategoryScale, Chart, Filler, LineController, LineElement, LinearScale, PointElement, Tooltip } from 'chart.js';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
@@ -15,30 +16,31 @@ import { DonaComponent, Segmento } from '../../shared/dona/dona.component';
 
 Chart.register(LineController, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Filler);
 
-/** Categorías de gastos personales: se eligen tocando el ícono */
+/** Categorías de gastos personales: se eligen tocando el ícono (ionicons) */
 export const CATEGORIAS_PERSONALES = [
-  { id: 'mercado', label: 'Mercado', emoji: '🛒', color: '#22c55e' },
-  { id: 'restaurantes', label: 'Comidas fuera', emoji: '🍔', color: '#f97316' },
-  { id: 'hogar', label: 'Arriendo y hogar', emoji: '🏠', color: '#3b82f6' },
-  { id: 'servicios', label: 'Servicios', emoji: '💡', color: '#eab308' },
-  { id: 'celular', label: 'Celular e internet', emoji: '📱', color: '#06b6d4' },
-  { id: 'transporte', label: 'Transporte', emoji: '🚌', color: '#8b5cf6' },
-  { id: 'gasolina', label: 'Gasolina', emoji: '⛽', color: '#ef4444' },
-  { id: 'vehiculo', label: 'Carro o moto', emoji: '🏍️', color: '#64748b' },
-  { id: 'salud', label: 'Salud y droguería', emoji: '💊', color: '#ec4899' },
-  { id: 'belleza', label: 'Belleza y cuidado', emoji: '💇', color: '#d946ef' },
-  { id: 'ropa', label: 'Ropa y zapatos', emoji: '👕', color: '#0ea5e9' },
-  { id: 'estudio', label: 'Estudio', emoji: '📚', color: '#6366f1' },
-  { id: 'hijos', label: 'Hijos', emoji: '🧸', color: '#f59e0b' },
-  { id: 'mascotas', label: 'Mascotas', emoji: '🐶', color: '#a16207' },
-  { id: 'salidas', label: 'Salidas y diversión', emoji: '🎉', color: '#e11d48' },
-  { id: 'viajes', label: 'Viajes', emoji: '✈️', color: '#14b8a6' },
-  { id: 'regalos', label: 'Regalos', emoji: '🎁', color: '#f43f5e' },
-  { id: 'suscripciones', label: 'Suscripciones', emoji: '📺', color: '#7c3aed' },
-  { id: 'creditos', label: 'Créditos y tarjetas', emoji: '💳', color: '#475569' },
-  { id: 'impuestos', label: 'Impuestos y trámites', emoji: '🧾', color: '#78716c' },
-  { id: 'donaciones', label: 'Ayudas y donaciones', emoji: '🙏', color: '#10b981' },
-  { id: 'otros', label: 'Otros', emoji: '📦', color: '#94a3b8' },
+  { id: 'mercado', label: 'Mercado', icon: 'cart-outline', color: '#22c55e' },
+  { id: 'almuerzos', label: 'Almuerzos', icon: 'restaurant-outline', color: '#84cc16' },
+  { id: 'restaurantes', label: 'Comidas fuera', icon: 'fast-food-outline', color: '#f97316' },
+  { id: 'hogar', label: 'Arriendo y hogar', icon: 'home-outline', color: '#3b82f6' },
+  { id: 'servicios', label: 'Servicios', icon: 'bulb-outline', color: '#eab308' },
+  { id: 'celular', label: 'Celular e internet', icon: 'phone-portrait-outline', color: '#06b6d4' },
+  { id: 'transporte', label: 'Transporte', icon: 'bus-outline', color: '#8b5cf6' },
+  { id: 'gasolina', label: 'Gasolina', icon: 'speedometer-outline', color: '#ef4444' },
+  { id: 'vehiculo', label: 'Carro o moto', icon: 'car-outline', color: '#64748b' },
+  { id: 'salud', label: 'Salud y droguería', icon: 'medkit-outline', color: '#ec4899' },
+  { id: 'belleza', label: 'Belleza y cuidado', icon: 'cut-outline', color: '#d946ef' },
+  { id: 'ropa', label: 'Ropa y zapatos', icon: 'shirt-outline', color: '#0ea5e9' },
+  { id: 'estudio', label: 'Estudio', icon: 'school-outline', color: '#6366f1' },
+  { id: 'hijos', label: 'Hijos', icon: 'happy-outline', color: '#f59e0b' },
+  { id: 'mascotas', label: 'Mascotas', icon: 'paw-outline', color: '#a16207' },
+  { id: 'salidas', label: 'Salidas y diversión', icon: 'wine-outline', color: '#e11d48' },
+  { id: 'viajes', label: 'Viajes', icon: 'airplane-outline', color: '#14b8a6' },
+  { id: 'regalos', label: 'Regalos', icon: 'gift-outline', color: '#f43f5e' },
+  { id: 'suscripciones', label: 'Suscripciones', icon: 'tv-outline', color: '#7c3aed' },
+  { id: 'creditos', label: 'Créditos y tarjetas', icon: 'card-outline', color: '#475569' },
+  { id: 'impuestos', label: 'Impuestos y trámites', icon: 'receipt-outline', color: '#78716c' },
+  { id: 'donaciones', label: 'Ayudas y donaciones', icon: 'heart-outline', color: '#10b981' },
+  { id: 'otros', label: 'Otros', icon: 'cube-outline', color: '#94a3b8' },
 ] as const;
 type Categoria = (typeof CATEGORIAS_PERSONALES)[number];
 
@@ -83,7 +85,7 @@ const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'o
       .kpi-valor.rojo { color: var(--danger); }
       .kpi-valor.verde { color: var(--efectivo-texto); }
       .kpi-top { display: flex; align-items: center; gap: 8px; min-width: 0; }
-      .kpi-top .emo { font-size: 22px; line-height: 1; }
+      .kpi-top .emo { display: grid; font-size: 22px; line-height: 1; }
       .kpi-top strong { font-size: 15px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .dos { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 16px; }
       .seg { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--surface-2); }
@@ -98,7 +100,7 @@ const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'o
         background: transparent; color: var(--text); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
       .cats button:hover { background: var(--hover); }
       .cats button.on { background: var(--selected); }
-      .cats .emo { font-size: 17px; text-align: center; }
+      .cats .emo { display: grid; place-items: center; font-size: 18px; }
       .cats .nom { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .cats .pct { font-size: 11.5px; color: var(--text-muted); }
       .cats .v { font-family: var(--mono-font); font-weight: 650; white-space: nowrap; }
@@ -113,6 +115,7 @@ const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'o
       .gastos-lista { list-style: none; margin: 0; padding: 0; }
       .gasto { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 9px 0; }
       .gasto .ico { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 12px; font-size: 19px; }
+      :host-context(body.dark) .gasto .ico { filter: brightness(1.25); }
       .gasto .t1 { display: block; font-size: 14px; font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .gasto .t2 { display: block; font-size: 12px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .gasto .monto { font-family: var(--mono-font); font-size: 14px; font-weight: 650; white-space: nowrap; }
@@ -124,7 +127,7 @@ const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'o
       .cat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
       .cat-op { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 72px; padding: 8px 4px; border: 1px solid var(--border); border-radius: var(--radius);
         background: var(--surface); color: var(--text-soft); font: inherit; font-size: 11.5px; line-height: 1.2; text-align: center; cursor: pointer; transition: transform 120ms ease, border-color 120ms ease; }
-      .cat-op span { font-size: 22px; line-height: 1; }
+      .cat-op span { display: grid; font-size: 24px; line-height: 1; }
       .cat-op:active { transform: scale(.95); }
       .cat-op.on { border-color: var(--accent); background: var(--accent-wash); color: var(--text); font-weight: 650; }
       .rapido { display: flex; gap: 6px; margin-top: 6px; }
@@ -177,7 +180,7 @@ const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'o
         <div class="kpi">
           <span class="kpi-label">Lo que más pesa</span>
           @if (mayor(); as m) {
-            <span class="kpi-top"><span class="emo">{{ m.cat.emoji }}</span><strong>{{ m.cat.label }}</strong></span>
+            <span class="kpi-top"><span class="emo" [style.color]="m.cat.color"><ion-icon [name]="m.cat.icon"></ion-icon></span><strong>{{ m.cat.label }}</strong></span>
             <span class="kpi-nota">{{ m.pct }}% del total · {{ pesos(m.total) }}</span>
           } @else {
             <span class="kpi-valor">—</span><span class="kpi-nota">Todavía no hay gastos</span>
@@ -211,7 +214,7 @@ const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'o
             <ul class="cats">
               @for (c of categoriasDelPeriodo(); track c.id) {
                 <li><button type="button" [class.on]="filtro() === c.id" (click)="filtro.set(filtro() === c.id ? null : c.id)">
-                  <span class="emo">{{ c.emoji }}</span><span class="nom">{{ c.label }}</span><span class="pct">{{ c.pct }}%</span><span class="v">{{ pesos(c.total) }}</span>
+                  <span class="emo" [style.color]="c.color"><ion-icon [name]="c.icon"></ion-icon></span><span class="nom">{{ c.label }}</span><span class="pct">{{ c.pct }}%</span><span class="v">{{ pesos(c.total) }}</span>
                 </button></li>
               }
             </ul>
@@ -228,7 +231,7 @@ const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'o
           <label class="buscar"><ion-icon name="search-outline"></ion-icon>
             <input type="search" placeholder="Buscar un gasto" aria-label="Buscar un gasto" [ngModel]="busca()" (ngModelChange)="busca.set($event)" /></label>
           @if (filtroCat(); as f) {
-            <button type="button" class="filtro-on" (click)="filtro.set(null)" [attr.aria-label]="'Quitar filtro ' + f.label">{{ f.emoji }} {{ f.label }}<ion-icon name="close-outline"></ion-icon></button>
+            <button type="button" class="filtro-on" (click)="filtro.set(null)" [attr.aria-label]="'Quitar filtro ' + f.label"><ion-icon [name]="f.icon"></ion-icon>{{ f.label }}<ion-icon name="close-outline"></ion-icon></button>
           }
         </div>
         @if (porDia().length) {
@@ -237,7 +240,7 @@ const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'o
             <ul class="gastos-lista">
               @for (g of d.gastos; track g.id) {
                 <li class="gasto">
-                  <span class="ico" [style.background]="color(g.categoria) + '22'">{{ cat(g.categoria).emoji }}</span>
+                  <span class="ico" [style.background]="color(g.categoria) + '22'" [style.color]="color(g.categoria)"><ion-icon [name]="cat(g.categoria).icon"></ion-icon></span>
                   <span style="min-width: 0">
                     <span class="t1">{{ g.descripcion }}</span>
                     <span class="t2">{{ cat(g.categoria).label }} · {{ metodo(g.metodo) }}@if (g.creado_por_nombre) { · {{ g.creado_por_nombre }} }</span>
@@ -266,7 +269,7 @@ const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'o
             <div class="cat-grid" role="radiogroup" aria-label="Categoría">
               @for (c of categorias; track c.id) {
                 <button type="button" class="cat-op" role="radio" [attr.aria-checked]="cat_() === c.id" [class.on]="cat_() === c.id" (click)="cat_.set(c.id)">
-                  <span aria-hidden="true">{{ c.emoji }}</span>{{ c.label }}</button>
+                  <span aria-hidden="true" [style.color]="c.color"><ion-icon [name]="c.icon"></ion-icon></span>{{ c.label }}</button>
               }
             </div>
           </div>
@@ -367,7 +370,8 @@ export class GastosPersonalesPage implements OnDestroy {
   });
 
   constructor() {
-    addIcons({ addCircleOutline, closeOutline, lockClosedOutline, searchOutline, trashOutline });
+    addIcons({ addCircleOutline, closeOutline, lockClosedOutline, searchOutline, trashOutline,
+      airplaneOutline, bulbOutline, busOutline, carOutline, cardOutline, cartOutline, cubeOutline, cutOutline, fastFoodOutline, giftOutline, happyOutline, heartOutline, homeOutline, medkitOutline, pawOutline, phonePortraitOutline, receiptOutline, restaurantOutline, schoolOutline, shirtOutline, speedometerOutline, tvOutline, wineOutline });
     // La gráfica se redibuja cuando llegan datos o se cambia entre diario y acumulado
     effect(() => {
       const r = this.r();
@@ -416,7 +420,7 @@ export class GastosPersonalesPage implements OnDestroy {
     });
     this.ocupado.set(false);
     if (error) return this.error.set(mensajeError(error));
-    this.toast.ok(`${this.cat(this.cat_()).emoji} Gasto de ${pesos(v)} registrado`);
+    this.toast.ok(`${this.cat(this.cat_()).label}: ${pesos(v)} registrado`);
     this.form.set(false);
     await this.cargar();
   }

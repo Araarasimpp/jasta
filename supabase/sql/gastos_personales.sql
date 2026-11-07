@@ -1,4 +1,4 @@
--- PENDIENTE: córrelo en el SQL Editor de Supabase (o dile a Claude "dale").
+-- YA APLICADO en Supabase (2026-11-07).
 -- Gastos personales: solo los administradores los ven, registran y quitan. Sin fotos: solo el registro.
 -- Van en su propia tabla: no se mezclan con los gastos del negocio ni con la utilidad real.
 create table if not exists public.gastos_personales (
