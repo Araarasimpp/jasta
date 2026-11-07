@@ -1,5 +1,26 @@
 [
   {
+    "id": "2026-11-06-gastos-personales",
+    "fecha": "2026-11-06",
+    "hora": "22:50",
+    "titulo": "Nuevo: Gastos personales (solo administradores)",
+    "cuerpo": "Una página aparte para anotar los gastos de la casa y personales, sin que se mezclen con los gastos del negocio ni con la utilidad.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Admin",
+        "pasos": [
+          "Está en el menú, en Finanzas → Gastos personales. Solo la ven los administradores.",
+          "Toca \"Registrar gasto\": valor, fecha, categoría (mercado, hogar, salud…), en qué se gastó y cómo se pagó. La foto del recibo es opcional.",
+          "Arriba ves el total del periodo en una dona por categoría y cuánto fue en efectivo, transferencia o tarjeta.",
+          "Estos gastos no restan en la utilidad real del negocio."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-11-06-recolector-foto-quitar",
     "fecha": "2026-11-06",
     "hora": "13:25",

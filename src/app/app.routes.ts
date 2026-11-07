@@ -106,6 +106,11 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/gastos/gastos.page').then((m) => m.GastosPage),
       },
       {
+        // Gastos personales de los administradores (no cuentan en la utilidad del negocio)
+        path: 'gastos-personales', canActivate: [rolGuard], data: { roles: ['admin'] },
+        loadComponent: () => import('./paginas/gastos-personales/gastos-personales.page').then((m) => m.GastosPersonalesPage),
+      },
+      {
         // Pagos presenciales por transferencia que el admin confirma en el banco
         path: 'transferencias', canActivate: [rolGuard], data: { roles: ['admin'] },
         loadComponent: () => import('./paginas/transferencias/transferencias.page').then((m) => m.TransferenciasPage),
