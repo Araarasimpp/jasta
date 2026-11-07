@@ -57,7 +57,7 @@ function ultimosMeses(): { id: string; label: string }[] {
 /**
  * Ranking como en Home ALS: podio con medallas (2.º, 1.º, 3.º), la lista
  * completa con tu puesto resaltado y el avance hacia la meta de la semana o del mes.
- * Vendedoras por cantidad de ventas entregadas; mensajeros por entregas.
+ * Vendedoras por cantidad de ventas entregadas (domicilio y local); mensajeros por entregas.
  */
 @Component({
   selector: 'app-ranking',
@@ -155,7 +155,7 @@ function ultimosMeses(): { id: string; label: string }[] {
       </div>
 
       <p class="nota">
-        {{ tipo() === 'vendedora' ? 'Quién hizo más ventas a domicilio (pedidos entregados; no cuentan las ventas del local).' : 'Quién hizo más entregas a domicilio.' }}
+        {{ tipo() === 'vendedora' ? 'Quién hizo más ventas: a domicilio (entregadas) y en el local.' : 'Quién hizo más entregas a domicilio.' }}
         @if (miPuesto(); as p) { Vas <strong>#{{ p }}</strong> de {{ lista().length }}. }
       </p>
 
