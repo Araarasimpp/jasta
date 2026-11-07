@@ -1,27 +1,5 @@
 [
   {
-    "id": "2026-11-07-ranking-local",
-    "fecha": "2026-11-07",
-    "hora": "09:00",
-    "titulo": "El ranking ahora cuenta las ventas del local",
-    "cuerpo": "En Ranking, las ventas que haces en el local también suman a tu puesto y a tu meta, junto con las de domicilio.",
-    "roles": [
-      "admin",
-      "vendedora",
-      "venta_local",
-      "cuadres"
-    ],
-    "secciones": [
-      {
-        "titulo": "Vendedoras",
-        "pasos": [
-          "Cada venta del local a tu nombre suma igual que una venta a domicilio entregada.",
-          "Tu avance de la meta del mes y de la semana también las cuenta."
-        ]
-      }
-    ]
-  },
-  {
     "id": "2026-11-06-recolector-foto-quitar",
     "fecha": "2026-11-06",
     "hora": "13:25",
