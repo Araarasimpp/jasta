@@ -18,6 +18,8 @@ export const routes: Routes = [
   { path: 'auth/recuperar', loadComponent: () => import('./auth/recuperar/recuperar.page').then((m) => m.RecuperarPage) },
   // Público (sin sesión): catálogo con pedido directo (general o de una vendedora)
   { path: 'tienda', loadComponent: () => import('./tienda/tienda.page').then((m) => m.TiendaPage) },
+  // Cuenta del cliente de la tienda (va antes de tienda/:codigo)
+  { path: 'tienda/cuenta', loadComponent: () => import('./tienda/cuenta/cuenta.page').then((m) => m.CuentaPage) },
   { path: 'tienda/:codigo', loadComponent: () => import('./tienda/tienda.page').then((m) => m.TiendaPage) },
   // Público (sin sesión): el cliente ve en qué va su pedido con el enlace que le mandaron
   // Público: a donde vuelve el cliente después de pagar en línea (Wompi)

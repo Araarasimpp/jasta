@@ -1,6 +1,7 @@
-import { Component, ElementRef, HostListener, OnInit, ViewChild, computed, effect, inject, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, ViewChild, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ClienteDireccion, ClienteService } from '../core/services/cliente.service';
 import { SupabaseService } from '../core/services/supabase.service';
 import { recargoWompi } from '../shared/recargo-wompi';
 import { mensajeError, pesos, urlImagen, urlMini } from '../shared/formato';
@@ -173,6 +174,11 @@ function parecido(a: string, b: string): number {
         <button type="button" class="t-icono-carrito" (click)="lineas().length && abrirCarrito()" [attr.aria-label]="'Mi pedido: ' + unidades() + ' productos'">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7h12l-1 13H7L6 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
           @if (unidades()) { <span class="t-badge">{{ unidades() }}</span> }
+        </button>
+        <button type="button" class="t-icono-cuenta" [class.dentro]="!!cli.perfil()" (click)="irCuenta()" [attr.aria-label]="cli.perfil() ? 'Mi cuenta' : 'Ingresar o crear cuenta'">
+          @if (cli.perfil(); as p) { {{ iniciales(p.nombre || p.email || '') }} } @else {
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
+          }
         </button>
       </header>
 
@@ -415,6 +421,9 @@ function parecido(a: string, b: string): number {
             }
           </ul>
 
+          @if (cli.listo() && !cli.perfil() && !sb.usuario()) {
+            <div class="t-cuenta-aviso"><span>¿Tienes cuenta? Tus datos y direcciones salen solos.</span><button type="button" (click)="irCuenta()">Ingresar</button></div>
+          }
           <p class="nota" style="margin: 4px 0 0">Los datos con <span class="obl">*</span> son obligatorios.</p>
           <div class="campo"><label for="tn">Tu nombre <span class="obl">*</span></label>
             <input id="tn" autocomplete="name" required [class.mal]="intentado() && errNombre()" [ngModel]="nombre" (ngModelChange)="nombre = limpiar($event)" />
@@ -428,6 +437,22 @@ function parecido(a: string, b: string): number {
             </div>
             @if ((telefono || intentado()) && errTel()) { <p class="error-campo">{{ errTel() }}</p> }
           </div>
+          @if (misDirs().length) {
+            <div class="campo"><span class="etq">¿A dónde te lo llevamos?</span>
+              <div class="t-mis-dirs" role="radiogroup" aria-label="Dirección de entrega">
+                @for (d of misDirs(); track d.id) {
+                  <button type="button" role="radio" [attr.aria-checked]="dirSel() === d.id" [class.on]="dirSel() === d.id" (click)="usarDireccion(d)">
+                    <span class="radio" aria-hidden="true"></span>
+                    <span><strong>{{ d.etiqueta }}{{ d.principal ? ' · principal' : '' }}</strong><small>{{ d.direccion }} · {{ d.barrio }}</small></span>
+                  </button>
+                }
+                <button type="button" role="radio" [attr.aria-checked]="dirSel() === 'otra'" [class.on]="dirSel() === 'otra'" (click)="otraDireccion()">
+                  <span class="radio" aria-hidden="true"></span><span><strong>Otra dirección</strong><small>Escríbela y, si quieres, la guardamos</small></span>
+                </button>
+              </div>
+            </div>
+          }
+          @if (!misDirs().length || dirSel() === 'otra') {
           <div class="campo"><label for="td">Dirección <span class="obl">*</span></label>
             <input id="td" autocomplete="street-address" maxlength="200" required [class.mal]="intentado() && errDir()" [(ngModel)]="direccion" placeholder="Ej: Cra 45 # 12-30 apto 201" />
             @if (intentado() && errDir()) { <p class="error-campo">{{ errDir() }}</p> }</div>
@@ -458,6 +483,10 @@ function parecido(a: string, b: string): number {
               </div>
             } @else if (intentado() && errBarrio() && (!enBarrio() || !sugerencias().length)) { <p class="error-campo">{{ errBarrio() }}</p> }
           </div>
+          @if (cli.perfil()) {
+            <label class="t-guardar-dir"><input type="checkbox" [(ngModel)]="guardarDir" />Guardar esta dirección en mi cuenta</label>
+          }
+          }
           <div class="campo"><label for="to">Observaciones (opcional)</label>
             <input id="to" maxlength="300" [(ngModel)]="observaciones" placeholder="Ej: llamar antes, portería, después de las 3 pm" /></div>
 
@@ -510,8 +539,15 @@ function parecido(a: string, b: string): number {
   `,
 })
 export class TiendaPage implements OnInit {
-  private sb = inject(SupabaseService);
+  sb = inject(SupabaseService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  cli = inject(ClienteService);
+  /** Direcciones guardadas en la cuenta del cliente; cuál eligió para este pedido */
+  misDirs = computed<ClienteDireccion[]>(() => this.cli.perfil()?.direcciones ?? []);
+  dirSel = signal<number | 'otra' | null>(null);
+  guardarDir = true;
+  private datosCuentaPuestos = false;
 
   t = signal<Tienda | null>(null);
   cargando = signal(true);
@@ -755,6 +791,63 @@ export class TiendaPage implements OnInit {
         /* sin almacenamiento */
       }
     });
+    // Cliente con cuenta: sus datos y su dirección principal salen llenos (una vez, ya con la lista de barrios)
+    effect(() => {
+      const p = this.cli.perfil();
+      const t = this.t();
+      if (!p || !t || this.datosCuentaPuestos) return;
+      this.datosCuentaPuestos = true;
+      untracked(() => {
+        if (p.nombre) this.nombre = p.nombre;
+        if (p.telefono) { this.prefijo = p.prefijo || '57'; this.telefono = p.telefono; }
+        const d = p.direcciones.find((x) => x.principal) ?? p.direcciones[0];
+        if (d) this.usarDireccion(d);
+        else this.dirSel.set('otra');
+      });
+    });
+  }
+
+  irCuenta(): void {
+    void this.router.navigate(['/tienda/cuenta'], { queryParams: { volver: location.pathname + location.search } });
+  }
+
+  iniciales(n: string): string {
+    const p = n.trim().split(/\s+/).filter(Boolean);
+    return ((p[0]?.[0] ?? '') + (p[1]?.[0] ?? '')).toUpperCase() || '·';
+  }
+
+  /** Elige una dirección guardada: llena dirección y barrio (las indicaciones van en observaciones) */
+  usarDireccion(d: ClienteDireccion): void {
+    this.dirSel.set(d.id);
+    this.direccion = d.direccion;
+    this.escribirBarrio(d.barrio);
+    this.enBarrio.set(false);
+    if (d.indicaciones && !this.observaciones.includes(d.indicaciones)) this.observaciones = (this.observaciones ? this.observaciones + ' · ' : '') + d.indicaciones;
+  }
+
+  otraDireccion(): void {
+    this.dirSel.set('otra');
+    this.direccion = '';
+    this.barrio.set('');
+    this.barrioElegido.set(null);
+    this.guardarDir = true;
+    setTimeout(() => document.getElementById('td')?.focus(), 50);
+  }
+
+  /** Después del pedido: guarda en la cuenta la dirección nueva y el celular si no lo tenía */
+  private async guardarEnCuenta(): Promise<void> {
+    const p = this.cli.perfil();
+    if (!p) return;
+    try {
+      if (!p.telefono || !p.nombre) {
+        await this.cli.guardarDatos({ nombre: this.nombre.trim(), prefijo: this.prefijo, telefono: this.telefono, tipo_doc: p.tipo_doc, documento: p.documento ?? '' });
+      }
+      const nueva = !this.misDirs().length || this.dirSel() === 'otra';
+      const yaEsta = this.misDirs().some((d) => d.direccion.trim().toLowerCase() === this.direccion.trim().toLowerCase() && d.barrio === this.barrioOficial());
+      if (nueva && this.guardarDir && !yaEsta && this.barrioOficial()) {
+        await this.cli.guardarDireccion({ id: null, etiqueta: this.misDirs().length ? 'Otra' : 'Casa', direccion: this.direccion.trim(), barrio: this.barrioOficial(), indicaciones: '', principal: !this.misDirs().length });
+      }
+    } catch { /* no es grave: el pedido ya quedó */ }
   }
 
   async ngOnInit(): Promise<void> {
@@ -1055,6 +1148,7 @@ export class TiendaPage implements OnInit {
     }
     const r = data as { id: number; codigo: string; subtotal: number; domicilio: number; domicilio_por_confirmar: boolean; pago: string };
     this.guardarUltimo();
+    await this.guardarEnCuenta();
     if (r.pago === 'en_linea') {
       // El pedido ya quedó guardado: se va a Wompi a pagar (y si algo falla, la página del pago deja reintentar)
       this.lineas.set([]);

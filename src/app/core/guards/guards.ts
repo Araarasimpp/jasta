@@ -3,12 +3,20 @@ import { CanActivateFn, Router } from '@angular/router';
 import { SupabaseService } from '../services/supabase.service';
 import { Rol } from '../../shared/modelos';
 
-/** Requiere sesión iniciada */
+/** Sesión de un cliente de la tienda (no es del equipo): su lugar es Mi cuenta, no la app de adentro */
+async function esCliente(sb: SupabaseService): Promise<boolean> {
+  if (!sb.session() || sb.usuario()) return false;
+  const { data } = await sb.client.rpc('cliente_yo');
+  return !!data;
+}
+
+/** Requiere sesión iniciada (del equipo; un cliente va a su cuenta de la tienda) */
 export const sesionGuard: CanActivateFn = async () => {
   const sb = inject(SupabaseService);
   const router = inject(Router);
   await sb.asegurar();
-  return sb.session() ? true : router.parseUrl('/auth/login');
+  if (!sb.session()) return router.parseUrl('/auth/login');
+  return (await esCliente(sb)) ? router.parseUrl('/tienda/cuenta') : true;
 };
 
 /** Requiere alguno de los roles dados (se pasan en data.roles) */
@@ -35,5 +43,6 @@ export const invitadoGuard: CanActivateFn = async () => {
   const sb = inject(SupabaseService);
   const router = inject(Router);
   await sb.asegurar();
-  return sb.session() ? router.parseUrl(sb.inicioSegunRoles()) : true;
+  if (!sb.session()) return true;
+  return router.parseUrl((await esCliente(sb)) ? '/tienda/cuenta' : sb.inicioSegunRoles());
 };

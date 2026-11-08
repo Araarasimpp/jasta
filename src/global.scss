@@ -209,10 +209,28 @@ app-tienda.tv2.tv2.tv2 {
   background: color-mix(in srgb, var(--t-acc) 4%, var(--bg));
 }
 app-tienda.tv2.tv2.tv2 .scroll { background: color-mix(in srgb, var(--t-acc) 4%, var(--bg)); }
-app-tienda.tv2.tv2.tv2 .marca { position: relative; padding-right: 52px; }
+app-tienda.tv2.tv2.tv2 .marca { position: relative; padding-right: 104px; }
 app-tienda.tv2.tv2.tv2 .marca img { border-radius: 14px; box-shadow: var(--t-sombra); }
 app-tienda.tv2.tv2.tv2 .t-icono-carrito { position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; display: grid; place-items: center;
   border: 0; border-radius: 50%; background: var(--surface); color: var(--text); box-shadow: var(--t-sombra); cursor: pointer; }
+/* Mi cuenta (al lado del carrito) */
+app-tienda.tv2.tv2.tv2 .t-icono-cuenta { position: absolute; right: 52px; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; display: grid; place-items: center;
+  border: 0; border-radius: 50%; background: var(--surface); color: var(--text); box-shadow: var(--t-sombra); cursor: pointer; font: inherit; font-size: 14px; font-weight: 700; }
+app-tienda.tv2.tv2.tv2 .t-icono-cuenta.dentro { background: var(--t-acc); color: #fff; }
+/* Direcciones guardadas en el pedido */
+app-tienda.tv2.tv2.tv2 .t-mis-dirs { display: flex; flex-direction: column; gap: 8px; }
+app-tienda.tv2.tv2.tv2 .t-mis-dirs button { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 8px; align-items: start; padding: 12px; border: 1px solid var(--border); border-radius: 14px;
+  background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+app-tienda.tv2.tv2.tv2 .t-mis-dirs button.on { border-color: var(--t-acc); box-shadow: 0 0 0 2px color-mix(in srgb, var(--t-acc) 25%, transparent); }
+app-tienda.tv2.tv2.tv2 .t-mis-dirs strong { display: block; font-size: 14px; }
+app-tienda.tv2.tv2.tv2 .t-mis-dirs small { display: block; font-size: 12.5px; color: var(--text-muted); line-height: 1.35; }
+app-tienda.tv2.tv2.tv2 .t-mis-dirs .radio { width: 18px; height: 18px; margin-top: 1px; border: 2px solid var(--border-strong); border-radius: 50%; }
+app-tienda.tv2.tv2.tv2 .t-mis-dirs button.on .radio { border: 5px solid var(--t-acc); }
+app-tienda.tv2.tv2.tv2 .t-cuenta-aviso { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: 12px;
+  background: color-mix(in srgb, var(--t-acc) 8%, var(--surface)); font-size: 13.5px; }
+app-tienda.tv2.tv2.tv2 .t-cuenta-aviso button { border: 0; background: none; padding: 0; color: var(--t-acc); font: inherit; font-weight: 700; cursor: pointer; white-space: nowrap; }
+app-tienda.tv2.tv2.tv2 .t-guardar-dir { display: flex; align-items: center; gap: 8px; font-size: 13.5px; }
+app-tienda.tv2.tv2.tv2 .t-guardar-dir input { width: 18px; height: 18px; }
 app-tienda.tv2.tv2.tv2 .t-badge { position: absolute; top: -2px; right: -2px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--t-acc);
   color: #fff; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center; }
 

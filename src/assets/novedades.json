@@ -1,5 +1,35 @@
 [
   {
+    "id": "2026-11-08-cuentas-clientes",
+    "fecha": "2026-11-08",
+    "hora": "11:30",
+    "titulo": "Los clientes ya pueden crear su cuenta en la tienda",
+    "cuerpo": "En el catálogo hay un botón de cuenta (al lado del carrito). El cliente crea su cuenta con su correo, guarda sus datos y sus direcciones, y al pedir ya le salen llenos.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo funciona para el cliente",
+        "pasos": [
+          "Toca el ícono de persona arriba en el catálogo → Crear cuenta: nombre, celular, correo y contraseña. Le llega un correo para confirmar.",
+          "En Mi cuenta guarda sus datos (y su cédula para envíos a otras ciudades) y varias direcciones (Casa, Trabajo…), con una principal.",
+          "Al hacer un pedido ya salen su nombre, su celular y su dirección; puede elegir otra o escribir una nueva y guardarla.",
+          "Si olvidó la contraseña, la recupera desde ahí mismo."
+        ]
+      },
+      {
+        "titulo": "Para el equipo",
+        "pasos": [
+          "Los pedidos llegan igual que siempre (por confirmar, a nombre de la vendedora del enlace).",
+          "Los clientes con cuenta no ven nada de la app de adentro: solo su cuenta."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-11-06-gastos-personales",
     "fecha": "2026-11-06",
     "hora": "22:50",
