@@ -46,7 +46,10 @@ export interface ClientePerfil {
   desde: string;
   direcciones: ClienteDireccion[];
   tarjetas?: ClienteTarjeta[];
+  /** Ids de los productos favoritos (el corazón), los más recientes primero */
+  favoritos?: number[];
 }
+export interface Favorito { id: number; nombre: string; precio: number; imagen_url: string | null; agotado: boolean }
 
 /**
  * Cuenta del cliente de la tienda (como en las tiendas en línea): sus datos y sus direcciones.
@@ -199,6 +202,22 @@ export class ClienteService {
     const r = await this.sb.client.rpc('cliente_quitar_tarjeta', { p_id: id });
     if (!r.error) this.perfil.set(r.data as ClientePerfil);
     return r;
+  }
+
+  // ---------------------------------------------------------------- Favoritos
+  /** Marca o desmarca un favorito en la cuenta; devuelve la lista de ids */
+  async favorito(productoId: number, on: boolean): Promise<number[] | null> {
+    const { data, error } = await this.sb.client.rpc('cliente_favorito', { p_producto: productoId, p_on: on });
+    if (error) return null;
+    const ids = (data as number[]) ?? [];
+    const p = this.perfil();
+    if (p) this.perfil.set({ ...p, favoritos: ids });
+    return ids;
+  }
+
+  async misFavoritos(): Promise<Favorito[]> {
+    const { data } = await this.sb.client.rpc('cliente_favoritos');
+    return (data as Favorito[]) ?? [];
   }
 
   async salir(): Promise<void> {

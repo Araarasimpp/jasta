@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, ViewChild, computed, inject, signal } fro
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SupabaseService } from '../../core/services/supabase.service';
-import { ClienteDireccion, ClienteService, Compra } from '../../core/services/cliente.service';
+import { ClienteDireccion, ClienteService, Compra, Favorito } from '../../core/services/cliente.service';
 import { CAPTCHA_ACTIVO, CaptchaComponent } from '../../shared/captcha/captcha.component';
 import { REGLA_CLAVE, problemaClave } from '../../shared/clave';
 import { PAISES, bandera, errorTelefono, limpiarNombre } from '../../shared/paises';
@@ -129,6 +129,19 @@ function normal(s: string): string {
       .cc-tot-fin { font-size: 18px; font-weight: 800; }
       .cc-entrega { margin: 0; font-size: 13.5px; color: #3b3f4c; }
       .cc-a { display: grid; place-items: center; text-decoration: none; }
+      .cc-cuenta-n { padding: 2px 9px; border-radius: 999px; background: #f0ecff; color: #6b4fe0; font-weight: 700; font-size: 12px; }
+      .cc-favs { display: grid; grid-auto-flow: column; grid-auto-columns: 132px; gap: 10px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+      .cc-favs::-webkit-scrollbar { display: none; }
+      .cc-fav { position: relative; display: flex; flex-direction: column; gap: 6px; }
+      .cc-fav-foto { position: relative; width: 132px; height: 132px; padding: 0; border: 0; border-radius: 14px; background: #f0ecff; overflow: hidden; cursor: pointer; }
+      .cc-fav-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .cc-agot .cc-fav-foto img { opacity: .45; }
+      .cc-fav-agot { position: absolute; left: 6px; bottom: 6px; padding: 2px 8px; border-radius: 999px; background: #12141acc; color: #fff; font-size: 11px; font-weight: 700; }
+      .cc-fav-corazon { position: absolute; top: 6px; right: 6px; width: 32px; height: 32px; display: grid; place-items: center; border: 0; border-radius: 50%; background: #fff; color: #e03170;
+        box-shadow: 0 2px 8px rgba(0,0,0,.15); cursor: pointer; }
+      .cc-fav-txt { padding: 0; border: 0; background: none; color: #12141a; font: inherit; text-align: left; cursor: pointer; }
+      .cc-fav-txt span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 13px; line-height: 1.3; }
+      .cc-fav-txt b { display: block; margin-top: 2px; font-size: 14px; }
     `,
   ],
   template: `
@@ -186,6 +199,28 @@ function normal(s: string): string {
             </ul>
           } @else {
             <p class="cc-vacio">Todavía no tienes compras. Cuando pidas con tu cuenta, aquí ves cada pedido y en qué va.</p>
+          }
+        </section>
+
+        <section class="cc-tarjeta" aria-labelledby="t-favs">
+          <div class="cc-seccion-cab"><h2 id="t-favs">Mis favoritos</h2>@if (favoritos().length) { <small class="cc-cuenta-n">{{ favoritos().length }}</small> }</div>
+          @if (favoritos().length) {
+            <div class="cc-favs">
+              @for (f of favoritos(); track f.id) {
+                <div class="cc-fav" [class.cc-agot]="f.agotado">
+                  <button type="button" class="cc-fav-foto" (click)="verProducto(f.id)" [attr.aria-label]="'Ver ' + f.nombre">
+                    @if (urlMini(f.imagen_url); as u) { <img [src]="u" alt="" loading="lazy" /> }
+                    @if (f.agotado) { <span class="cc-fav-agot">Agotado</span> }
+                  </button>
+                  <button type="button" class="cc-fav-corazon" (click)="quitarFavorito(f)" [attr.aria-label]="'Quitar ' + f.nombre + ' de favoritos'">
+                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 21s-7.5-4.6-9.6-9.2C1 8.6 3 5 6.6 5c2 0 3.4 1.1 4.4 2.5C12 6.1 13.4 5 15.4 5 19 5 21 8.6 19.6 11.8 17.5 16.4 12 21 12 21Z"/></svg>
+                  </button>
+                  <button type="button" class="cc-fav-txt" (click)="verProducto(f.id)"><span>{{ f.nombre }}</span><b>{{ pesos(f.precio) }}</b></button>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="cc-vacio">Toca el corazón de los productos que te gusten y aquí los encuentras siempre.</p>
           }
         </section>
 
@@ -473,6 +508,29 @@ export class CuentaPage implements OnInit, OnDestroy {
       .sort((a, b) => Number(!normal(a.barrio).startsWith(q)) - Number(!normal(b.barrio).startsWith(q)) || a.barrio.localeCompare(b.barrio)).slice(0, 6);
   });
 
+  favoritos = signal<Favorito[]>([]);
+
+  private async cargarFavoritos(): Promise<void> {
+    if (!this.c.perfil()) return;
+    this.favoritos.set(await this.c.misFavoritos());
+  }
+
+  async quitarFavorito(f: Favorito): Promise<void> {
+    this.favoritos.update((l) => l.filter((x) => x.id !== f.id));
+    await this.c.favorito(f.id, false);
+    // El celular también lo olvida (la tienda lo lee al abrir)
+    try {
+      const loc = (JSON.parse(localStorage.getItem('tienda-favoritos') ?? '[]') as number[]).filter((x) => x !== f.id);
+      localStorage.setItem('tienda-favoritos', JSON.stringify(loc));
+    } catch { /* sin almacenamiento */ }
+  }
+
+  verProducto(id: number): void {
+    const v = this.ruta.snapshot.queryParamMap.get('volver');
+    const base = v && v.startsWith('/tienda') ? v.split('?')[0] : '/tienda';
+    void this.router.navigate([base], { queryParams: { p: id } });
+  }
+
   compras = signal<Compra[]>([]);
   cargandoCompras = signal(false);
   verTodas = signal(false);
@@ -559,6 +617,17 @@ export class CuentaPage implements OnInit, OnDestroy {
     });
   }
 
+  /** Al volver a Mi cuenta (la app reutiliza la pantalla): datos, compras y favoritos al día */
+  private primera = true;
+  ionViewWillEnter(): void {
+    if (this.primera) { this.primera = false; return; }
+    void this.c.cargar().then(() => {
+      this.llenarDatos();
+      void this.cargarCompras();
+      void this.cargarFavoritos();
+    });
+  }
+
   ngOnDestroy(): void {
     clearInterval(this.reloj);
     this.quitarEscucha?.();
@@ -568,6 +637,7 @@ export class CuentaPage implements OnInit, OnDestroy {
     const p = this.c.perfil();
     if (!p) return;
     if (!this.compras().length && !this.cargandoCompras()) void this.cargarCompras();
+    if (!this.favoritos().length) void this.cargarFavoritos();
     this.nombre = p.nombre;
     this.prefijo = p.prefijo || '57';
     this.telefono = p.telefono ?? '';

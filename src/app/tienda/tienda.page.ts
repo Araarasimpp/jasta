@@ -862,13 +862,35 @@ export class TiendaPage implements OnInit {
 
   alternarFav(p: ProductoTienda): void {
     const n = new Set(this.favs());
-    if (n.has(p.id)) n.delete(p.id);
-    else n.add(p.id);
+    const on = !n.has(p.id);
+    if (on) n.add(p.id);
+    else n.delete(p.id);
     this.favs.set(n);
     if (!n.size) this.soloFavs.set(false);
+    this.guardarFavsLocal(n);
+    // Con cuenta: también queda en la cuenta (así los ve en cualquier celular)
+    if (this.cli.perfil()) void this.cli.favorito(p.id, on);
+    else if (on) this.avisar('♥ Guardado en este celular · ingresa a tu cuenta para tenerlos en cualquier lado');
+  }
+  private guardarFavsLocal(n: Set<number>): void {
     try {
       localStorage.setItem('tienda-favoritos', JSON.stringify([...n]));
     } catch { /* sin almacenamiento */ }
+  }
+  /** Al entrar con cuenta: los favoritos del celular se suben y se unen con los de la cuenta (una vez) */
+  private favsUnidos = false;
+  private async unirFavoritos(enCuenta: number[]): Promise<void> {
+    if (this.favsUnidos) return;
+    this.favsUnidos = true;
+    const cuenta = new Set(enCuenta);
+    const faltan = [...this.favs()].filter((id) => !cuenta.has(id));
+    for (const id of faltan) {
+      const r = await this.cli.favorito(id, true);
+      if (r) r.forEach((x) => cuenta.add(x));
+    }
+    const todos = new Set([...cuenta]);
+    this.favs.set(todos);
+    this.guardarFavsLocal(todos);
   }
 
   irAProductos(): void {
@@ -965,6 +987,11 @@ export class TiendaPage implements OnInit {
       } catch {
         /* sin almacenamiento */
       }
+    });
+    // Con cuenta de cliente: sus favoritos (de la cuenta y de este celular) quedan unidos
+    effect(() => {
+      const p = this.cli.perfil();
+      if (p) void untracked(() => this.unirFavoritos(p.favoritos ?? []));
     });
     // Con cuenta de cliente: ¿está activo el pago con tarjeta aquí mismo?
     effect(() => {
@@ -1104,7 +1131,16 @@ export class TiendaPage implements OnInit {
     this.lineas.update((ls) => ls.filter((l) => porId.has(l.producto_id) && !porId.get(l.producto_id)!.agotado)
       .map((l) => ({ ...l, precio: Number(porId.get(l.producto_id)!.precio), max: this.maximo(porId.get(l.producto_id)!) })));
     document.title = (t.vendedora ? 'Catálogo de ' + this.primerNombre(t.vendedora.nombre) : 'Catálogo') + ' · ' + (t.negocio || 'Jasta');
-    // "Volver a comprar" desde Mis compras: los productos de ese pedido van al carrito
+    this.revisarEntrada();
+  }
+
+  /**
+   * Lo que pide la entrada a la tienda: "Volver a comprar" (desde Mis compras) o un producto directo (?p=<id>).
+   * Se revisa al abrir y cada vez que se vuelve a la tienda (la app reutiliza la pantalla que ya estaba abierta).
+   */
+  private revisarEntrada(): void {
+    const t = this.t();
+    if (!t) return;
     try {
       const rep = JSON.parse(sessionStorage.getItem('tienda-repetir') ?? 'null') as { items?: UltimoPedido['items'] } | null;
       if (rep?.items?.length) {
@@ -1113,11 +1149,16 @@ export class TiendaPage implements OnInit {
         return;
       }
     } catch { /* sin almacenamiento */ }
-    // Enlace directo a un producto (?p=<id>): se abre solo
-    const pid = Number(this.route.snapshot.queryParamMap.get('p'));
-    const directo = pid ? t.productos.find((x) => x.id === pid) : undefined;
+    const pid = Number(new URLSearchParams(location.search).get('p'));
+    if (!pid || this.sel()?.id === pid) return;
+    const directo = t.productos.find((x) => x.id === pid);
     if (directo) void this.abrir(directo);
-    else if (pid) this.avisoProducto.set('Ese producto ya no está disponible. Mira los demás 👇');
+    else this.avisoProducto.set('Ese producto ya no está disponible. Mira los demás 👇');
+  }
+
+  /** Al volver a la tienda desde Mi cuenta (pantalla reutilizada) */
+  ionViewWillEnter(): void {
+    this.revisarEntrada();
   }
 
   primerNombre(n: string): string {

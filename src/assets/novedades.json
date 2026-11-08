@@ -1,5 +1,27 @@
 [
   {
+    "id": "2026-11-08-favoritos-cuenta",
+    "fecha": "2026-11-08",
+    "hora": "12:20",
+    "titulo": "Los favoritos de los clientes quedan en su cuenta",
+    "cuerpo": "El corazón de los productos ahora se guarda en la cuenta del cliente: los ve en cualquier celular y en Mi cuenta → Mis favoritos.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "Para el cliente",
+        "pasos": [
+          "Toca el corazón de un producto y queda en sus favoritos (si no tiene cuenta, se guardan solo en ese celular).",
+          "Al entrar a su cuenta, los favoritos que tenía en el celular se suben solos.",
+          "En Mi cuenta → Mis favoritos los ve con foto y precio (y si se agotó); al tocarlos abre el producto, y con el corazón los quita."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-11-08-tarjetas-guardadas",
     "fecha": "2026-11-08",
     "hora": "12:10",
