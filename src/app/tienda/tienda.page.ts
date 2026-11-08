@@ -393,12 +393,15 @@ function parecido(a: string, b: string): number {
     @if (verCarrito()) {
       <div class="t-pantalla" role="dialog" aria-modal="true" aria-labelledby="t-car">
         <div class="t-barra">
-          <button type="button" class="t-circ" (click)="cerrarPantalla()" aria-label="Volver">
+          <button type="button" class="t-circ" (click)="paso() === 'finalizar' ? volverAlCarrito() : cerrarPantalla()" aria-label="Volver">
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
           </button>
-          <span class="t-barra-tit" id="t-car">Mi pedido</span>
+          <span class="t-barra-tit" id="t-car">{{ paso() === 'finalizar' ? 'Finaliza tu compra' : 'Mi pedido' }}</span>
           <span class="t-barra-der"><span class="t-circ t-circ-num" aria-hidden="true">{{ unidades() }}</span></span>
         </div>
+
+        @if (paso() === 'carrito') {
+        <!-- ===== Paso 1: Mi pedido ===== -->
         <div class="t-pantalla-body t-carro-body">
           <ul class="lineas">
             @for (l of lineas(); track $index) {
@@ -420,39 +423,57 @@ function parecido(a: string, b: string): number {
               <li><span></span><span class="nota">Todavía no has agregado productos.</span><span></span></li>
             }
           </ul>
+          <div class="totales">
+            <div class="fin"><span>Productos ({{ unidades() }})</span><span class="num">{{ pesos(subtotal()) }}</span></div>
+          </div>
+          <p class="nota">En el siguiente paso eliges a dónde te lo llevamos y cómo pagas.</p>
+        </div>
+        <div class="t-pantalla-pie">
+          <button class="b b-pri" (click)="irFinalizar()" [disabled]="!lineas().length">Continuar compra →</button>
+        </div>
+        } @else {
+        <!-- ===== Paso 2: Finaliza tu compra (como en las tiendas en línea) ===== -->
+        <div class="t-pantalla-body t-carro-body fc">
+          <!-- Productos -->
+          <ul class="fc-prods">
+            @for (l of lineas(); track $index) {
+              <li>
+                <span class="fc-foto">@if (urlMini(l.imagen_url); as u) { <img [src]="u" alt="" /> }@if (l.cantidad > 1) { <b>{{ l.cantidad }}</b> }</span>
+                <span class="fc-prod-txt"><span>{{ l.nombre }}</span>@if (l.color || l.talla) { <small>{{ variante(l) }}</small> }</span>
+                <span class="fc-prod-v num">{{ pesos(l.precio * l.cantidad) }}</span>
+              </li>
+            }
+          </ul>
 
           @if (cli.listo() && !cli.perfil() && !sb.usuario()) {
             <div class="t-cuenta-aviso"><span>¿Tienes cuenta? Tus datos y direcciones salen solos.</span><button type="button" (click)="irCuenta()">Ingresar</button></div>
           }
-          <p class="nota" style="margin: 4px 0 0">Los datos con <span class="obl">*</span> son obligatorios.</p>
-          <div class="campo"><label for="tn">Tu nombre <span class="obl">*</span></label>
-            <input id="tn" autocomplete="name" required [class.mal]="intentado() && errNombre()" [ngModel]="nombre" (ngModelChange)="nombre = limpiar($event)" />
-            @if (intentado() && errNombre()) { <p class="error-campo">{{ errNombre() }}</p> }</div>
-          <div class="campo"><label for="tt">Celular <span class="obl">*</span></label>
-            <div class="tel-grupo">
-              <select [(ngModel)]="prefijo" aria-label="Indicativo del país">
-                @for (p of paises; track p.iso) { <option [value]="p.prefijo">{{ bandera(p.iso) }} +{{ p.prefijo }} {{ p.nombre }}</option> }
-              </select>
-              <input id="tt" type="tel" inputmode="numeric" autocomplete="tel-national" required [class.mal]="intentado() && errTel()" [ngModel]="telefono" (ngModelChange)="cambioTel($event)" />
-            </div>
-            @if ((telefono || intentado()) && errTel()) { <p class="error-campo">{{ errTel() }}</p> }
-          </div>
-          @if (misDirs().length) {
-            <div class="campo"><span class="etq">¿A dónde te lo llevamos?</span>
-              <div class="t-mis-dirs" role="radiogroup" aria-label="Dirección de entrega">
-                @for (d of misDirs(); track d.id) {
-                  <button type="button" role="radio" [attr.aria-checked]="dirSel() === d.id" [class.on]="dirSel() === d.id" (click)="usarDireccion(d)">
-                    <span class="radio" aria-hidden="true"></span>
-                    <span><strong>{{ d.etiqueta }}{{ d.principal ? ' · principal' : '' }}</strong><small>{{ d.direccion }} · {{ d.barrio }}</small></span>
-                  </button>
-                }
-                <button type="button" role="radio" [attr.aria-checked]="dirSel() === 'otra'" [class.on]="dirSel() === 'otra'" (click)="otraDireccion()">
-                  <span class="radio" aria-hidden="true"></span><span><strong>Otra dirección</strong><small>Escríbela y, si quieres, la guardamos</small></span>
-                </button>
+
+          <!-- Forma de entrega -->
+          <section class="fc-sec" aria-labelledby="fc-entrega">
+            <h3 id="fc-entrega">Forma de entrega</h3>
+            @if (dirElegida(); as d) {
+              <div class="fc-dir">
+                <svg class="fc-pin" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 2a7.5 7.5 0 0 0-7.5 7.5C4.5 15.1 12 22 12 22s7.5-6.9 7.5-12.5A7.5 7.5 0 0 0 12 2Zm0 10.2a2.7 2.7 0 1 1 0-5.4 2.7 2.7 0 0 1 0 5.4Z"/></svg>
+                <span class="fc-dir-txt"><strong>{{ d.direccion }}</strong><small>{{ d.barrio }} · {{ d.etiqueta }}</small>
+                  <button type="button" class="fc-link" (click)="verDirecciones.set(!verDirecciones())">{{ verDirecciones() ? 'Listo' : 'Cambiar dirección' }}</button></span>
               </div>
-            </div>
-          }
-          @if (!misDirs().length || dirSel() === 'otra') {
+            }
+            @if (verDirecciones() || !dirElegida()) {
+              @if (misDirs().length) {
+                <div class="t-mis-dirs" role="radiogroup" aria-label="Dirección de entrega">
+                  @for (d of misDirs(); track d.id) {
+                    <button type="button" role="radio" [attr.aria-checked]="dirSel() === d.id" [class.on]="dirSel() === d.id" (click)="usarDireccion(d); verDirecciones.set(false)">
+                      <span class="radio" aria-hidden="true"></span>
+                      <span><strong>{{ d.etiqueta }}{{ d.principal ? ' · principal' : '' }}</strong><small>{{ d.direccion }} · {{ d.barrio }}</small></span>
+                    </button>
+                  }
+                  <button type="button" role="radio" [attr.aria-checked]="dirSel() === 'otra'" [class.on]="dirSel() === 'otra'" (click)="otraDireccion()">
+                    <span class="radio" aria-hidden="true"></span><span><strong>Otra dirección</strong><small>Escríbela y, si quieres, la guardamos</small></span>
+                  </button>
+                </div>
+              }
+              @if (!misDirs().length || dirSel() === 'otra') {
           <div class="campo"><label for="td">Dirección <span class="obl">*</span></label>
             <input id="td" autocomplete="street-address" maxlength="200" required [class.mal]="intentado() && errDir()" [(ngModel)]="direccion" placeholder="Ej: Cra 45 # 12-30 apto 201" />
             @if (intentado() && errDir()) { <p class="error-campo">{{ errDir() }}</p> }</div>
@@ -486,20 +507,86 @@ function parecido(a: string, b: string): number {
           @if (cli.perfil()) {
             <label class="t-guardar-dir"><input type="checkbox" [(ngModel)]="guardarDir" />Guardar esta dirección en mi cuenta</label>
           }
+              }
+            }
+          </section>
+
+          <!-- Quién recibe -->
+          <section class="fc-sec" aria-labelledby="fc-recibe">
+            <h3 id="fc-recibe">Quién recibe</h3>
+            @if (contactoListo() && !editarContacto()) {
+              <div class="fc-fila"><span><strong>{{ nombre }}</strong><small>Celular {{ telefonoMostrar() }}</small></span>
+                <button type="button" class="fc-link" (click)="editarContacto.set(true)">Cambiar</button></div>
+            } @else {
+          <div class="campo"><label for="tn">Tu nombre <span class="obl">*</span></label>
+            <input id="tn" autocomplete="name" required [class.mal]="intentado() && errNombre()" [ngModel]="nombre" (ngModelChange)="nombre = limpiar($event)" />
+            @if (intentado() && errNombre()) { <p class="error-campo">{{ errNombre() }}</p> }</div>
+          <div class="campo"><label for="tt">Celular <span class="obl">*</span></label>
+            <div class="tel-grupo">
+              <select [(ngModel)]="prefijo" aria-label="Indicativo del país">
+                @for (p of paises; track p.iso) { <option [value]="p.prefijo">{{ bandera(p.iso) }} +{{ p.prefijo }} {{ p.nombre }}</option> }
+              </select>
+              <input id="tt" type="tel" inputmode="numeric" autocomplete="tel-national" required [class.mal]="intentado() && errTel()" [ngModel]="telefono" (ngModelChange)="cambioTel($event)" />
+            </div>
+            @if ((telefono || intentado()) && errTel()) { <p class="error-campo">{{ errTel() }}</p> }
+          </div>
+            }
+          </section>
+
+          <!-- Envío -->
+          <section class="fc-sec" aria-labelledby="fc-envio">
+            <h3 id="fc-envio">Envío</h3>
+            <div class="fc-opcion on">
+              <span class="fc-radio" aria-hidden="true"></span>
+              <span class="fc-op-txt"><strong>{{ domicilio() !== null ? llegada() : 'Domicilio' }}</strong><small>{{ domicilio() !== null ? 'Domicilio a ' + barrioOficial() : 'Elige tu barrio para ver el valor' }}</small></span>
+              <span class="fc-op-v num">{{ domicilio() !== null ? (domicilio() ? pesos(domicilio()!) : 'Gratis') : '—' }}</span>
+            </div>
+          </section>
+
+          <!-- Medios de pago -->
+          <section class="fc-sec" aria-labelledby="fc-pago">
+            <h3 id="fc-pago">Medios de pago</h3>
+            <div class="fc-pagos" role="radiogroup" aria-label="Medio de pago">
+              <button type="button" role="radio" class="fc-opcion" [attr.aria-checked]="formaPago() === 'contra_entrega'" [class.on]="formaPago() === 'contra_entrega'" (click)="formaPago.set('contra_entrega')">
+                <span class="fc-radio" aria-hidden="true"></span>
+                <span class="fc-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6 9.5v5M18 9.5v5"/></svg></span>
+                <span class="fc-op-txt"><strong>Pagar al recibir</strong><small>Efectivo o transferencia cuando te llegue</small></span>
+              </button>
+              <button type="button" role="radio" class="fc-opcion" [attr.aria-checked]="formaPago() === 'en_linea'" [class.on]="formaPago() === 'en_linea'" (click)="formaPago.set('en_linea')">
+                <span class="fc-radio" aria-hidden="true"></span>
+                <span class="fc-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19M6.5 15h4"/></svg></span>
+                <span class="fc-op-txt"><strong>Pagar ahora en línea</strong><small>Tarjeta de crédito o débito, PSE, Nequi, Daviplata o Bancolombia</small>
+                  <span class="fc-marcas"><i>VISA</i><i>Mastercard</i><i>PSE</i><i>Nequi</i><i>Daviplata</i></span></span>
+              </button>
+            </div>
+            @if (enLinea()) { <p class="nota">Pagas seguro en <strong>Wompi</strong> (de Bancolombia). Con tarjeta de crédito eliges ahí en cuántas cuotas.</p> }
+          </section>
+
+          @if (cli.perfil(); as p) {
+            <!-- Facturación -->
+            <section class="fc-sec" aria-labelledby="fc-fact">
+              <button type="button" class="fc-fila fc-fila-btn" (click)="irCuenta()">
+                <span><strong id="fc-fact" class="fc-h">Facturación</strong>
+                  <small>{{ nombre || p.nombre }}{{ p.documento ? ' - ' + p.tipo_doc + ' ' + p.documento : ' · agrega tu documento (opcional)' }}</small></span>
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+              </button>
+            </section>
           }
+
+          <!-- Indicaciones -->
+          <section class="fc-sec">
           <div class="campo"><label for="to">Observaciones (opcional)</label>
             <input id="to" maxlength="300" [(ngModel)]="observaciones" placeholder="Ej: llamar antes, portería, después de las 3 pm" /></div>
+          </section>
 
-          <div class="campo"><span class="etq">¿Cómo quieres pagar?</span>
-            <div class="formas-pago" role="radiogroup" aria-label="Forma de pago">
-              <button type="button" role="radio" [attr.aria-checked]="formaPago() === 'contra_entrega'" [class.on]="formaPago() === 'contra_entrega'" (click)="formaPago.set('contra_entrega')">
-                <strong>Al recibir</strong><small>Efectivo o transferencia</small></button>
-              <button type="button" role="radio" [attr.aria-checked]="formaPago() === 'en_linea'" [class.on]="formaPago() === 'en_linea'" (click)="formaPago.set('en_linea')">
-                <strong>Pagar ahora</strong><small>Tarjeta débito o crédito, PSE, Nequi, Daviplata</small></button>
-            </div>
-          </div>
-
-          <div class="tienda-cupon">
+          <!-- Resumen -->
+          <section class="fc-sec fc-resumen" aria-labelledby="fc-res">
+            <h3 id="fc-res">Resumen de compra</h3>
+            <div class="fc-r"><span>{{ unidades() === 1 ? 'Producto' : 'Productos (' + unidades() + ')' }}</span><span class="num">{{ pesos(subtotal()) }}</span></div>
+            <div class="fc-r"><span>Envío</span><span class="num">{{ domicilio() !== null ? (domicilio() ? pesos(domicilio()!) : 'Gratis') : '—' }}</span></div>
+            @if (descuento()) { <div class="fc-r fc-desc"><span>Cupón {{ cupon()!.codigo }}</span><span class="num">− {{ pesos(descuento()) }}</span></div> }
+            @if (enLinea()) { <div class="fc-r"><span>Costo del pago en línea</span><span class="num">{{ domicilio() !== null ? pesos(recargo()) : '—' }}</span></div> }
+          <div class="tienda-cupon fc-cupon">
             @if (cupon(); as c) {
               <div class="cupon-ok">
                 <span>🎟️ Cupón <strong>{{ c.codigo }}</strong>{{ c.descripcion ? ' · ' + c.descripcion : '' }}
@@ -513,27 +600,23 @@ function parecido(a: string, b: string): number {
               </div>
               @if (errorCupon()) { <p class="error-campo">{{ errorCupon() }}</p> }
             } @else {
-              <button type="button" class="link" (click)="verCupon.set(true)">¿Tienes un cupón de descuento?</button>
+              <button type="button" class="link" (click)="verCupon.set(true)">Ingresar código de cupón</button>
             }
           </div>
 
-          <div class="totales">
-            <div><span>Productos</span><span class="num">{{ pesos(subtotal()) }}</span></div>
-            @if (descuento()) { <div class="desc-linea"><span>Cupón {{ cupon()!.codigo }}</span><span class="num">− {{ pesos(descuento()) }}</span></div> }
-            <div><span>Domicilio</span><span class="num">{{ domicilio() !== null ? pesos(domicilio()!) : 'Elige tu barrio' }}</span></div>
-            @if (enLinea()) { <div><span>Costo del pago en línea</span><span class="num">{{ domicilio() !== null ? pesos(recargo()) : '—' }}</span></div> }
-            <div class="fin"><span>Total</span><span class="num">{{ pesos(subtotal() - descuento() + (domicilio() ?? 0) + recargo()) }}</span></div>
-          </div>
-          @if (enLinea()) {
-            <p class="nota">Te llevamos a <strong>Wompi</strong> (de Bancolombia) para pagar de forma segura. Cuando se apruebe el pago, {{ t()?.vendedora ? primerNombre(t()!.vendedora!.nombre) : 'la tienda' }} te contacta para coordinar el envío. El costo del pago en línea es lo que cobra Wompi por la transacción.</p>
-          } @else {
-            <p class="nota">Pagas al recibir. Antes de enviarlo, {{ t()?.vendedora ? primerNombre(t()!.vendedora!.nombre) : 'la tienda' }} te contacta para confirmar tu pedido.</p>
-          }
+            <div class="fc-r fc-total"><span>Total</span><span class="num">{{ pesos(total()) }}</span></div>
+            <p class="nota">{{ enLinea() ? 'Cuando se apruebe el pago, ' : 'Pagas al recibir. Antes de enviarlo, ' }}{{ t()?.vendedora ? primerNombre(t()!.vendedora!.nombre) : 'la tienda' }} te contacta para {{ enLinea() ? 'coordinar el envío' : 'confirmar tu pedido' }}.</p>
+          </section>
           @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
         </div>
-        <div class="t-pantalla-pie">
-          <button class="b b-pri" (click)="enviar()" [disabled]="enviando() || !lineas().length">{{ enviando() ? (enLinea() ? 'Abriendo el pago…' : 'Enviando…') : enLinea() ? 'Ir a pagar ' + pesos(subtotal() - descuento() + (domicilio() ?? 0) + recargo()) + ' →' : 'Hacer pedido →' }}</button>
+        <div class="t-pantalla-pie fc-pie">
+          <button type="button" class="fc-pie-total" (click)="irAlResumen()" aria-label="Ver resumen de compra">
+            <span class="num">{{ pesos(total()) }}</span>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>
+          </button>
+          <button class="b b-pri" (click)="enviar()" [disabled]="enviando() || !lineas().length">{{ enviando() ? (enLinea() ? 'Abriendo el pago…' : 'Enviando…') : enLinea() ? 'Pagar y finalizar' : 'Confirmar pedido' }}</button>
         </div>
+        }
       </div>
     }
   `,
@@ -546,6 +629,15 @@ export class TiendaPage implements OnInit {
   /** Direcciones guardadas en la cuenta del cliente; cuál eligió para este pedido */
   misDirs = computed<ClienteDireccion[]>(() => this.cli.perfil()?.direcciones ?? []);
   dirSel = signal<number | 'otra' | null>(null);
+  /** Paso del pedido: la lista de productos, luego "Finaliza tu compra" */
+  paso = signal<'carrito' | 'finalizar'>('carrito');
+  verDirecciones = signal(false);
+  editarContacto = signal(false);
+  dirElegida = computed(() => {
+    const id = this.dirSel();
+    return typeof id === 'number' ? this.misDirs().find((d) => d.id === id) ?? null : null;
+  });
+  total = computed(() => this.subtotal() - this.descuento() + (this.domicilio() ?? 0) + this.recargo());
   guardarDir = true;
   private datosCuentaPuestos = false;
 
@@ -822,10 +914,18 @@ export class TiendaPage implements OnInit {
     this.direccion = d.direccion;
     this.escribirBarrio(d.barrio);
     this.enBarrio.set(false);
-    if (d.indicaciones && !this.observaciones.includes(d.indicaciones)) this.observaciones = (this.observaciones ? this.observaciones + ' · ' : '') + d.indicaciones;
+    // Las indicaciones de la dirección van en observaciones (y se quitan las de la dirección anterior)
+    const sin = this.indicacionesPuestas ? this.observaciones.replace(' · ' + this.indicacionesPuestas, '').replace(this.indicacionesPuestas, '').replace(/^ · /, '').trim() : this.observaciones;
+    this.observaciones = d.indicaciones ? (sin ? sin + ' · ' : '') + d.indicaciones : sin;
+    this.indicacionesPuestas = d.indicaciones ?? '';
   }
+  private indicacionesPuestas = '';
 
   otraDireccion(): void {
+    if (this.indicacionesPuestas) {
+      this.observaciones = this.observaciones.replace(' · ' + this.indicacionesPuestas, '').replace(this.indicacionesPuestas, '').replace(/^ · /, '').trim();
+      this.indicacionesPuestas = '';
+    }
     this.dirSel.set('otra');
     this.direccion = '';
     this.barrio.set('');
@@ -919,7 +1019,41 @@ export class TiendaPage implements OnInit {
     this.enPantalla = true;
     try { history.pushState({ tiendaPantalla: true }, ''); } catch { /* sin historial */ }
   }
+  /** Pasa a "Finaliza tu compra" (con su propio paso en el historial, para el botón atrás del celular) */
+  irFinalizar(): void {
+    if (!this.lineas().length) return;
+    this.paso.set('finalizar');
+    this.verDirecciones.set(false);
+    this.editarContacto.set(!this.contactoListo());
+    try { history.pushState({ tiendaPantalla: true, finalizar: true }, ''); } catch { /* sin historial */ }
+    setTimeout(() => document.querySelector('.fc')?.scrollTo({ top: 0 }), 0);
+  }
+  volverAlCarrito(): void {
+    if (history.state?.finalizar) return history.back();
+    this.paso.set('carrito');
+  }
+  /** Nombre y celular ya están bien: se muestran en una línea con "Cambiar" */
+  contactoListo(): boolean {
+    return !this.errNombre() && !this.errTel();
+  }
+  /** "Llega hoy" si pide antes de las 2 p. m. (no domingo); si no, el siguiente día hábil */
+  llegada(): string {
+    const ahora = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }));
+    const dia = ahora.getDay();
+    if (dia !== 0 && ahora.getHours() < 14) return 'Llega hoy';
+    const sig = (dia + 1) % 7;
+    if (sig === 0) return 'Llega el lunes';
+    return dia === 0 ? 'Llega mañana' : 'Llega mañana';
+  }
+  irAlResumen(): void {
+    document.querySelector('.fc-resumen')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
   cerrarPantalla(): void {
+    if (this.enPantalla && history.state?.finalizar) {
+      // Cierra los dos pasos de una
+      this.paso.set('carrito');
+      return history.go(-2);
+    }
     if (this.enPantalla && history.state?.tiendaPantalla) return history.back();
     this.enPantalla = false;
     this.sel.set(null);
@@ -927,12 +1061,18 @@ export class TiendaPage implements OnInit {
   }
   @HostListener('window:popstate')
   alVolver(): void {
+    // Atrás desde "Finaliza tu compra" vuelve a la lista de productos
+    if (this.verCarrito() && this.paso() === 'finalizar' && history.state?.tiendaPantalla) {
+      this.paso.set('carrito');
+      return;
+    }
     this.enPantalla = false;
     this.sel.set(null);
     this.verCarrito.set(false);
   }
   abrirCarrito(): void {
     this.abrirPantalla();
+    this.paso.set('carrito');
     this.sel.set(null);
     this.verCarrito.set(true);
   }
@@ -1112,7 +1252,7 @@ export class TiendaPage implements OnInit {
   }
 
   /** El barrio como está en la tabla de domicilios (si lo escribió distinto), o tal cual */
-  private barrioOficial(): string {
+  barrioOficial(): string {
     return this.barrioElegido() ?? this.barrio().trim();
   }
 

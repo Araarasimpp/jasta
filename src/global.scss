@@ -213,6 +213,50 @@ app-tienda.tv2.tv2.tv2 .marca { position: relative; padding-right: 104px; }
 app-tienda.tv2.tv2.tv2 .marca img { border-radius: 14px; box-shadow: var(--t-sombra); }
 app-tienda.tv2.tv2.tv2 .t-icono-carrito { position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; display: grid; place-items: center;
   border: 0; border-radius: 50%; background: var(--surface); color: var(--text); box-shadow: var(--t-sombra); cursor: pointer; }
+/* ===== Finaliza tu compra (tienda) ===== */
+app-tienda.tv2.tv2.tv2 .fc { display: flex; flex-direction: column; gap: 12px; padding-bottom: 24px; }
+app-tienda.tv2.tv2.tv2 .fc-prods { list-style: none; margin: 0; padding: 12px; display: flex; flex-direction: column; gap: 10px; border-radius: 18px; background: var(--surface); box-shadow: var(--t-sombra); }
+app-tienda.tv2.tv2.tv2 .fc-prods li { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 12px; align-items: center; }
+app-tienda.tv2.tv2.tv2 .fc-foto { position: relative; width: 56px; height: 56px; border-radius: 12px; background: color-mix(in srgb, var(--t-acc) 7%, var(--surface)); overflow: visible; }
+app-tienda.tv2.tv2.tv2 .fc-foto img { width: 100%; height: 100%; object-fit: cover; border-radius: 12px; }
+app-tienda.tv2.tv2.tv2 .fc-foto b { position: absolute; right: -6px; bottom: -6px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: var(--t-acc); color: #fff;
+  font-size: 12px; line-height: 22px; text-align: center; box-shadow: 0 0 0 2px var(--surface); }
+app-tienda.tv2.tv2.tv2 .fc-prod-txt span { display: block; font-size: 14.5px; font-weight: 600; line-height: 1.3; }
+app-tienda.tv2.tv2.tv2 .fc-prod-txt small { display: block; font-size: 12.5px; color: var(--text-muted); }
+app-tienda.tv2.tv2.tv2 .fc-prod-v { font-weight: 700; white-space: nowrap; }
+app-tienda.tv2.tv2.tv2 .fc-sec { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 18px; background: var(--surface); box-shadow: var(--t-sombra); }
+app-tienda.tv2.tv2.tv2 .fc-sec h3, app-tienda.tv2.tv2.tv2 .fc-h { margin: 0; font-size: 17px; font-weight: 750; color: var(--text); }
+app-tienda.tv2.tv2.tv2 .fc-dir { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 10px; padding: 14px; border: 1.5px solid var(--t-acc); border-radius: 14px; }
+app-tienda.tv2.tv2.tv2 .fc-pin { color: var(--t-acc); }
+app-tienda.tv2.tv2.tv2 .fc-dir-txt strong { display: block; font-size: 16px; }
+app-tienda.tv2.tv2.tv2 .fc-dir-txt small { display: block; margin: 2px 0 6px; font-size: 13px; color: var(--text-muted); }
+app-tienda.tv2.tv2.tv2 .fc-link { padding: 0; border: 0; background: none; color: var(--t-acc); font: inherit; font-size: 14.5px; font-weight: 650; cursor: pointer; }
+app-tienda.tv2.tv2.tv2 .fc-fila { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+app-tienda.tv2.tv2.tv2 .fc-fila strong { display: block; font-size: 15px; }
+app-tienda.tv2.tv2.tv2 .fc-fila small { display: block; font-size: 13px; color: var(--text-muted); }
+app-tienda.tv2.tv2.tv2 .fc-fila-btn { width: 100%; padding: 0; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+app-tienda.tv2.tv2.tv2 .fc-fila-btn svg { color: var(--t-acc); flex-shrink: 0; }
+app-tienda.tv2.tv2.tv2 .fc-pagos { display: flex; flex-direction: column; gap: 8px; }
+app-tienda.tv2.tv2.tv2 .fc-opcion { display: grid; grid-template-columns: 20px auto minmax(0, 1fr) auto; gap: 12px; align-items: center; width: 100%; padding: 12px; border: 1px solid var(--border);
+  border-radius: 14px; background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+app-tienda.tv2.tv2.tv2 div.fc-opcion { grid-template-columns: 20px minmax(0, 1fr) auto; cursor: default; }
+app-tienda.tv2.tv2.tv2 .fc-opcion.on { border-color: var(--t-acc); box-shadow: 0 0 0 2px color-mix(in srgb, var(--t-acc) 22%, transparent); }
+app-tienda.tv2.tv2.tv2 .fc-radio { width: 20px; height: 20px; border: 2px solid var(--border-strong); border-radius: 50%; box-sizing: border-box; }
+app-tienda.tv2.tv2.tv2 .fc-opcion.on .fc-radio { border: 6px solid var(--t-acc); }
+app-tienda.tv2.tv2.tv2 .fc-ico { width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 50%; color: var(--t-acc); }
+app-tienda.tv2.tv2.tv2 .fc-op-txt strong { display: block; font-size: 15px; }
+app-tienda.tv2.tv2.tv2 .fc-op-txt small { display: block; font-size: 12.5px; color: var(--text-muted); line-height: 1.35; }
+app-tienda.tv2.tv2.tv2 .fc-op-v { font-weight: 700; white-space: nowrap; }
+app-tienda.tv2.tv2.tv2 .fc-marcas { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+app-tienda.tv2.tv2.tv2 .fc-marcas i { padding: 2px 7px; border-radius: 6px; background: color-mix(in srgb, var(--efectivo) 14%, var(--surface)); color: var(--efectivo-texto); font-size: 11px; font-style: normal; font-weight: 700; }
+app-tienda.tv2.tv2.tv2 .fc-r { display: flex; justify-content: space-between; gap: 10px; font-size: 15px; }
+app-tienda.tv2.tv2.tv2 .fc-desc { color: var(--efectivo-texto); }
+app-tienda.tv2.tv2.tv2 .fc-total { margin-top: 4px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 20px; font-weight: 800; }
+app-tienda.tv2.tv2.tv2 .fc-cupon { margin: 0; }
+app-tienda.tv2.tv2.tv2 .fc-pie { display: flex; align-items: center; gap: 12px; }
+app-tienda.tv2.tv2.tv2 .fc-pie .b-pri { flex: 1; }
+app-tienda.tv2.tv2.tv2 .fc-pie-total { display: inline-flex; align-items: center; gap: 4px; padding: 0 4px; border: 0; background: none; color: var(--text); font: inherit; font-size: 21px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+app-tienda.tv2.tv2.tv2 .fc-pie-total svg { color: var(--t-acc); }
 /* Mi cuenta (al lado del carrito) */
 app-tienda.tv2.tv2.tv2 .t-icono-cuenta { position: absolute; right: 52px; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; display: grid; place-items: center;
   border: 0; border-radius: 50%; background: var(--surface); color: var(--text); box-shadow: var(--t-sombra); cursor: pointer; font: inherit; font-size: 14px; font-weight: 700; }

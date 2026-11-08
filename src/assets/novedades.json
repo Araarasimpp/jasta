@@ -1,5 +1,35 @@
 [
   {
+    "id": "2026-11-08-finaliza-compra",
+    "fecha": "2026-11-08",
+    "hora": "11:45",
+    "titulo": "Nueva pantalla para terminar el pedido en la tienda",
+    "cuerpo": "Al pedir en el catálogo, el cliente ve primero sus productos y luego \"Finaliza tu compra\", como en las tiendas grandes: entrega, envío, pago, facturación y resumen.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se ve para el cliente",
+        "pasos": [
+          "Mi pedido: los productos y las cantidades → \"Continuar compra\".",
+          "Forma de entrega: su dirección con \"Cambiar dirección\" (si tiene cuenta) o el formulario de siempre.",
+          "Envío: cuánto vale el domicilio y si llega hoy (pidiendo antes de las 2 p. m.) o mañana.",
+          "Medios de pago: al recibir, o en línea con tarjeta, PSE, Nequi o Daviplata (con cuotas en tarjeta de crédito).",
+          "Facturación con su cédula (si tiene cuenta), cupón, resumen y abajo el total con \"Confirmar pedido\" o \"Pagar y finalizar\"."
+        ]
+      },
+      {
+        "titulo": "Para el equipo",
+        "pasos": [
+          "Si el cliente tiene cuenta con su cédula, el pedido llega con la cédula guardada."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-11-08-cuentas-clientes",
     "fecha": "2026-11-08",
     "hora": "11:30",

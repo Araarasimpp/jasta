@@ -151,3 +151,18 @@ returns jsonb language sql stable security definer set search_path = '' as $$
   select coalesce(jsonb_agg(jsonb_build_object('barrio', barrio, 'domicilio', domicilio) order by barrio), '[]')
   from public.tarifas_domicilio where activo
 $$;
+
+-- (Parte 2) El documento de facturación de la cuenta también queda en el pedido
+create or replace function privado.pedido_cliente_cuenta()
+returns trigger language plpgsql security definer set search_path = '' as $$
+declare c record;
+begin
+  if new.cliente_cuenta_id is null and auth.uid() is not null then
+    select id, documento into c from public.clientes_cuentas where auth_id = auth.uid();
+    if found then
+      new.cliente_cuenta_id := c.id;
+      if new.destinatario_cedula is null and c.documento is not null then new.destinatario_cedula := c.documento; end if;
+    end if;
+  end if;
+  return new;
+end $$;
