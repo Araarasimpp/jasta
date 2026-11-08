@@ -166,3 +166,79 @@ begin
   end if;
   return new;
 end $$;
+
+-- ===================== (Parte 3) Mis compras =====================
+-- Los pedidos de la tienda se guardan primero en pedidos_web (por pagar / por confirmar): ahí queda la cuenta del
+-- cliente, y cuando la vendedora lo confirma (pedido_id) la cuenta pasa también al pedido de verdad.
+alter table public.pedidos_web add column if not exists cliente_cuenta_id bigint references public.clientes_cuentas(id);
+create index if not exists pedidos_web_cliente_cuenta_idx on public.pedidos_web (cliente_cuenta_id) where cliente_cuenta_id is not null;
+
+create or replace function privado.pedido_web_cliente_cuenta()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  if new.cliente_cuenta_id is null and auth.uid() is not null then
+    new.cliente_cuenta_id := (select id from public.clientes_cuentas where auth_id = auth.uid());
+  end if;
+  return new;
+end $$;
+create or replace trigger pedido_web_cliente_cuenta before insert on public.pedidos_web for each row execute function privado.pedido_web_cliente_cuenta();
+
+create or replace function privado.pedido_web_confirmado()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  if new.pedido_id is not null and new.cliente_cuenta_id is not null and new.pedido_id is distinct from old.pedido_id then
+    update public.pedidos p set cliente_cuenta_id = new.cliente_cuenta_id,
+      destinatario_cedula = coalesce(p.destinatario_cedula, (select documento from public.clientes_cuentas where id = new.cliente_cuenta_id))
+    where p.id = new.pedido_id and p.cliente_cuenta_id is null;
+  end if;
+  return null;
+end $$;
+create or replace trigger pedido_web_confirmado after update of pedido_id on public.pedidos_web for each row execute function privado.pedido_web_confirmado();
+
+-- Sus compras: las de la tienda (con su cuenta) y las de antes hechas con su mismo correo ya verificado.
+-- Solo datos para el cliente (nada de costos ni de ganancias).
+create or replace function public.cliente_compras()
+returns jsonb language sql stable security definer set search_path = '' as $$
+  with yo as (
+    select c.id, lower(c.email) email,
+      coalesce((select u.email_confirmed_at is not null from auth.users u where u.id = c.auth_id), false) verificado
+    from public.clientes_cuentas c where c.auth_id = auth.uid()
+  ),
+  web as (select pw.* from public.pedidos_web pw join yo on pw.cliente_cuenta_id = yo.id),
+  ped as (
+    select p.* from public.pedidos p, yo
+    where p.cliente_cuenta_id = yo.id or (yo.verificado and yo.email is not null and lower(p.cliente_email) = yo.email)
+  ),
+  filas as (
+    select pw.created_at fecha, pw.codigo::text codigo, 'pago' ruta, p.id pedido,
+      case when p.id is not null then p.estado::text when pw.estado in ('cancelado', 'por_pagar') then pw.estado else 'por_confirmar' end estado,
+      coalesce(p.total, pw.subtotal - coalesce(pw.descuento, 0) + coalesce(pw.valor_domicilio, 0) + coalesce(pw.recargo, 0)) total,
+      coalesce(p.valor_domicilio, pw.valor_domicilio) domicilio,
+      case when pw.estado <> 'cancelado' then pw.atendido_at end confirmado_at,
+      p.alistado_at,
+      case when p.estado in ('despachado', 'entregado') then coalesce(p.enviado_at, p.asignado_at, p.alistado_at) end enviado_at,
+      p.entregado_at,
+      coalesce(p.direccion, pw.direccion) direccion, coalesce(p.barrio, pw.barrio) barrio,
+      pw.pago, pw.pago_estado, coalesce(p.canal, 'domicilio') canal,
+      case when p.id is not null then
+        (select jsonb_agg(jsonb_build_object('producto_id', i.producto_id, 'nombre', i.nombre, 'cantidad', i.cantidad, 'precio', i.precio_venta,
+            'color', i.color, 'talla', i.talla, 'imagen_url', pr.imagen_url) order by i.id)
+         from public.pedido_items i left join public.productos pr on pr.id = i.producto_id where i.pedido_id = p.id)
+      else
+        (select jsonb_agg(jsonb_build_object('producto_id', (x->>'producto_id')::bigint, 'nombre', x->>'nombre', 'cantidad', (x->>'cantidad')::int,
+            'precio', (x->>'precio')::numeric, 'color', x->>'color', 'talla', x->>'talla', 'imagen_url', pr.imagen_url))
+         from jsonb_array_elements(pw.items) x left join public.productos pr on pr.id = (x->>'producto_id')::bigint)
+      end items
+    from web pw left join public.pedidos p on p.id = pw.pedido_id
+    union all
+    select p.created_at, p.seguimiento::text, 'seguimiento', p.id, p.estado::text, p.total, p.valor_domicilio,
+      p.created_at, p.alistado_at,
+      case when p.estado in ('despachado', 'entregado') then coalesce(p.enviado_at, p.asignado_at, p.alistado_at) end,
+      p.entregado_at, p.direccion, p.barrio, null, null, coalesce(p.canal, 'domicilio'),
+      (select jsonb_agg(jsonb_build_object('producto_id', i.producto_id, 'nombre', i.nombre, 'cantidad', i.cantidad, 'precio', i.precio_venta,
+          'color', i.color, 'talla', i.talla, 'imagen_url', pr.imagen_url) order by i.id)
+       from public.pedido_items i left join public.productos pr on pr.id = i.producto_id where i.pedido_id = p.id)
+    from ped p where not exists (select 1 from web w where w.pedido_id = p.id)
+  )
+  select coalesce(jsonb_agg(to_jsonb(f) order by f.fecha desc), '[]') from (select * from filas order by fecha desc limit 100) f
+$$;

@@ -1,5 +1,34 @@
 [
   {
+    "id": "2026-11-08-mis-compras",
+    "fecha": "2026-11-08",
+    "hora": "11:55",
+    "titulo": "Los clientes ven sus compras y en qué va cada pedido",
+    "cuerpo": "En Mi cuenta de la tienda, el cliente ve todos sus pedidos con su estado y una línea de tiempo, y puede volver a comprar con un toque.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "Para el cliente",
+        "pasos": [
+          "Mis compras: cada pedido con fotos, fecha, total y su estado (por confirmar, confirmado, en camino, entregado…).",
+          "Al tocar uno: la línea de tiempo (hiciste el pedido → confirmado → alistado → en camino → entregado) con la hora de cada paso, los productos, la dirección y \"Ver seguimiento\".",
+          "\"Volver a comprar\" pone esos mismos productos en el carrito.",
+          "También le salen los pedidos de antes hechos con su mismo correo."
+        ]
+      },
+      {
+        "titulo": "Para el equipo",
+        "pasos": [
+          "Cuando confirmas un pedido de la tienda de un cliente con cuenta, queda unido a su cuenta (con su cédula si la tiene) y el cliente lo ve avanzar."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-11-08-finaliza-compra",
     "fecha": "2026-11-08",
     "hora": "11:45",

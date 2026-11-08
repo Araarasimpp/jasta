@@ -2,11 +2,11 @@ import { Component, OnDestroy, OnInit, ViewChild, computed, inject, signal } fro
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SupabaseService } from '../../core/services/supabase.service';
-import { ClienteDireccion, ClienteService } from '../../core/services/cliente.service';
+import { ClienteDireccion, ClienteService, Compra } from '../../core/services/cliente.service';
 import { CAPTCHA_ACTIVO, CaptchaComponent } from '../../shared/captcha/captcha.component';
 import { REGLA_CLAVE, problemaClave } from '../../shared/clave';
 import { PAISES, bandera, errorTelefono, limpiarNombre } from '../../shared/paises';
-import { mensajeError, pesos } from '../../shared/formato';
+import { mensajeError, pesos, urlMini } from '../../shared/formato';
 
 type Modo = 'entrar' | 'crear' | 'confirmar' | 'olvide' | 'codigo-clave' | 'nueva-clave';
 
@@ -24,7 +24,8 @@ function normal(s: string): string {
   imports: [FormsModule, CaptchaComponent],
   styles: [
     `
-      :host { display: block; min-height: 100dvh; background: #f4f5f8; color: #12141a; font-family: var(--ui-font, system-ui, sans-serif); overflow-y: auto; height: 100dvh; }
+      :host { display: block; position: relative; height: 100dvh; background: #f4f5f8; color: #12141a; font-family: var(--ui-font, system-ui, sans-serif); }
+      .cc-scroll { height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; }
       .cc-barra { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 12px; padding: calc(12px + env(safe-area-inset-top)) 16px 12px; background: #fff; border-bottom: 1px solid #e6e8ee; }
       .cc-barra button { width: 38px; height: 38px; display: grid; place-items: center; border: 0; border-radius: 50%; background: #f1f2f6; color: inherit; font-size: 20px; cursor: pointer; }
       .cc-barra h1 { margin: 0; font-size: 18px; font-weight: 700; }
@@ -81,9 +82,57 @@ function normal(s: string): string {
       .cc-proximo { display: flex; align-items: center; gap: 12px; color: #5b6070; font-size: 14px; }
       .cc-proximo b { color: #12141a; }
       .cc-salir { color: #c92a2a; }
+      .cc-compras { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+      .cc-compra { width: 100%; display: grid; grid-template-columns: auto minmax(0, 1fr) 18px; gap: 12px; align-items: center; padding: 12px; border: 1px solid #e6e8ee; border-radius: 14px;
+        background: #fff; color: #12141a; font: inherit; text-align: left; cursor: pointer; }
+      .cc-compra svg { color: #8a8f9c; }
+      .cc-compra-fotos { display: flex; }
+      .cc-compra-fotos .cc-mini + .cc-mini { margin-left: -14px; }
+      .cc-mini { width: 46px; height: 46px; flex-shrink: 0; border-radius: 12px; background: #f0ecff; overflow: hidden; box-shadow: 0 0 0 2px #fff; }
+      .cc-mini img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .cc-mini-g { width: 54px; height: 54px; }
+      .cc-compra-txt strong { display: block; font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .cc-compra-txt small { display: block; font-size: 12.5px; color: #5b6070; }
+      .cc-estado { display: inline-block; margin-bottom: 3px; font-size: 12px; font-weight: 700; color: #6b4fe0; }
+      .cc-estado[data-e='entregado'] { color: #1a7f4b; }
+      .cc-estado[data-e='cancelado'] { color: #c92a2a; }
+      .cc-estado[data-e='por_pagar'] { color: #b45309; }
+      .cc-velo { position: absolute; inset: 0; z-index: 40; border: 0; padding: 0; background: rgba(10, 12, 20, .45); }
+      .cc-hoja { position: absolute; z-index: 41; left: 50%; bottom: 0; transform: translateX(-50%); width: min(560px, 100vw); box-sizing: border-box; max-height: 92dvh; overflow-y: auto;
+        padding: 18px 18px calc(20px + env(safe-area-inset-bottom)); border-radius: 24px 24px 0 0; background: #fff; display: flex; flex-direction: column; gap: 16px;
+        animation: cc-sube .28s cubic-bezier(.2, .9, .3, 1.05); }
+      @keyframes cc-sube { from { transform: translate(-50%, 40px); opacity: 0; } }
+      .cc-hoja-cab { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+      .cc-hoja-cab h2 { margin: 0; font-size: 20px; }
+      .cc-hoja-cab small { color: #5b6070; font-size: 13px; }
+      .cc-cerrar { width: 36px; height: 36px; flex-shrink: 0; border: 0; border-radius: 50%; background: #f1f2f6; color: #12141a; font-size: 15px; cursor: pointer; }
+      .cc-linea { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+      .cc-linea li { position: relative; display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 12px; padding-bottom: 16px; }
+      .cc-linea li:last-child { padding-bottom: 0; }
+      .cc-linea li::before { content: ''; position: absolute; left: 10px; top: 22px; bottom: 0; width: 2px; background: #e3e5ec; }
+      .cc-linea li:last-child::before { display: none; }
+      .cc-linea li.cc-hecho::before { background: #6b4fe0; }
+      .cc-punto { width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; border: 2px solid #d6d9e1; background: #fff; color: #fff; box-sizing: border-box; }
+      .cc-hecho .cc-punto { border-color: #6b4fe0; background: #6b4fe0; }
+      .cc-actual .cc-punto { box-shadow: 0 0 0 5px #6b4fe022; }
+      .cc-linea strong { display: block; font-size: 14.5px; color: #8a8f9c; font-weight: 600; }
+      .cc-hecho strong { color: #12141a; }
+      .cc-linea small { display: block; font-size: 12.5px; color: #5b6070; }
+      .cc-cancelado .cc-actual .cc-punto { border-color: #c92a2a; background: #c92a2a; }
+      .cc-items { list-style: none; margin: 0; padding: 12px 0 0; border-top: 1px solid #eceef3; display: flex; flex-direction: column; gap: 10px; }
+      .cc-items li { display: grid; grid-template-columns: 54px minmax(0, 1fr) auto; gap: 12px; align-items: center; }
+      .cc-it-txt span { display: block; font-size: 14px; font-weight: 600; }
+      .cc-it-txt small { display: block; font-size: 12.5px; color: #5b6070; }
+      .cc-it-v { font-weight: 700; font-size: 14px; white-space: nowrap; }
+      .cc-tot { display: flex; flex-direction: column; gap: 6px; padding-top: 12px; border-top: 1px solid #eceef3; font-size: 14.5px; }
+      .cc-tot div { display: flex; justify-content: space-between; }
+      .cc-tot-fin { font-size: 18px; font-weight: 800; }
+      .cc-entrega { margin: 0; font-size: 13.5px; color: #3b3f4c; }
+      .cc-a { display: grid; place-items: center; text-decoration: none; }
     `,
   ],
   template: `
+    <div class="cc-scroll">
     <header class="cc-barra">
       <button type="button" (click)="volver()" aria-label="Volver a la tienda">←</button>
       <h1>{{ c.perfil() ? 'Mi cuenta' : modo() === 'crear' ? 'Crea tu cuenta' : 'Ingresa a tu cuenta' }}</h1>
@@ -111,6 +160,34 @@ function normal(s: string): string {
           <div><strong>Hola, {{ primerNombre(p.nombre) || 'cliente' }}</strong><small>{{ p.email }}</small></div>
         </div>
         @if (aviso()) { <p class="cc-ok" role="status">{{ aviso() }}</p> }
+
+        <section class="cc-tarjeta" aria-labelledby="t-compras">
+          <div class="cc-seccion-cab"><h2 id="t-compras">Mis compras</h2>
+            @if (compras().length > 3) { <button class="cc-link" (click)="verTodas.set(!verTodas())">{{ verTodas() ? 'Ver menos' : 'Ver todas (' + compras().length + ')' }}</button> }</div>
+          @if (cargandoCompras()) {
+            <p class="cc-sub" style="margin: 0">Cargando tus compras…</p>
+          } @else if (compras().length) {
+            <ul class="cc-compras">
+              @for (x of (verTodas() ? compras() : compras().slice(0, 3)); track x.fecha) {
+                <li><button type="button" class="cc-compra" (click)="abrirCompra(x)">
+                  <span class="cc-compra-fotos">
+                    @for (it of (x.items ?? []).slice(0, 3); track $index) {
+                      <span class="cc-mini">@if (urlMini(it.imagen_url); as u) { <img [src]="u" alt="" loading="lazy" /> }</span>
+                    }
+                  </span>
+                  <span class="cc-compra-txt">
+                    <span class="cc-estado" [attr.data-e]="x.estado">{{ estadoTexto(x) }}</span>
+                    <strong>{{ resumenItems(x) }}</strong>
+                    <small>{{ fechaCorta(x.fecha) }} · {{ pesos(x.total) }}</small>
+                  </span>
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+                </button></li>
+              }
+            </ul>
+          } @else {
+            <p class="cc-vacio">Todavía no tienes compras. Cuando pidas con tu cuenta, aquí ves cada pedido y en qué va.</p>
+          }
+        </section>
 
         <section class="cc-tarjeta" aria-labelledby="t-datos">
           <h2 id="t-datos">Mis datos</h2>
@@ -189,7 +266,6 @@ function normal(s: string): string {
           }
         </section>
 
-        <section class="cc-tarjeta cc-proximo"><span class="cc-ico-bolsa" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l-1 13H7L6 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg></span><span><b>Mis compras</b> · muy pronto vas a ver aquí todos tus pedidos y su estado.</span></section>
 
         <button class="cc-pri" (click)="volver()">Seguir comprando</button>
         <button class="cc-sec cc-salir" (click)="salir()">Cerrar sesión</button>
@@ -280,6 +356,47 @@ function normal(s: string): string {
         </div>
       }
     </div>
+    </div>
+
+    <!-- Detalle de una compra (fuera del scroll para que cubra toda la pantalla) -->
+    @if (compraSel(); as x) {
+      <button class="cc-velo" aria-label="Cerrar" (click)="compraSel.set(null)"></button>
+      <div class="cc-hoja" role="dialog" aria-labelledby="t-compra">
+        <div class="cc-hoja-cab">
+          <div><h2 id="t-compra">{{ estadoTexto(x) }}</h2><small>Pedido del {{ fechaLarga(x.fecha) }}</small></div>
+          <button type="button" class="cc-cerrar" (click)="compraSel.set(null)" aria-label="Cerrar">✕</button>
+        </div>
+        <ol class="cc-linea" [class.cc-cancelado]="x.estado === 'cancelado'">
+          @for (p of pasos(x); track p.t) {
+            <li [class.cc-hecho]="p.hecho" [class.cc-actual]="p.actual">
+              <span class="cc-punto" aria-hidden="true">@if (p.hecho) { <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg> }</span>
+              <span><strong>{{ p.t }}</strong>@if (p.cuando) { <small>{{ p.cuando }}</small> } @else if (p.ayuda) { <small>{{ p.ayuda }}</small> }</span>
+            </li>
+          }
+        </ol>
+        <ul class="cc-items">
+          @for (it of x.items ?? []; track $index) {
+            <li>
+              <span class="cc-mini cc-mini-g">@if (urlMini(it.imagen_url); as u) { <img [src]="u" alt="" loading="lazy" /> }</span>
+              <span class="cc-it-txt"><span>{{ it.nombre }}</span><small>{{ it.cantidad }} × {{ pesos(it.precio) }}{{ it.color ? ' · ' + it.color : '' }}{{ it.talla ? ' · ' + it.talla : '' }}</small></span>
+              <span class="cc-it-v">{{ pesos(it.cantidad * it.precio) }}</span>
+            </li>
+          }
+        </ul>
+        <div class="cc-tot">
+          @if (x.domicilio) { <div><span>Envío</span><span>{{ pesos(x.domicilio) }}</span></div> }
+          <div class="cc-tot-fin"><span>Total</span><span>{{ pesos(x.total) }}</span></div>
+        </div>
+        @if (x.direccion) {
+          <p class="cc-entrega"><b>Entrega:</b> {{ x.direccion }}{{ x.barrio ? ' · ' + x.barrio : '' }}</p>
+        }
+        <div class="cc-form">
+          @if (x.estado === 'por_pagar' && x.codigo) { <a class="cc-pri cc-a" [href]="'/pago/' + x.codigo">Pagar ahora</a> }
+          @if (x.codigo) { <a class="cc-sec cc-a" [href]="'/' + x.ruta + '/' + x.codigo">Ver seguimiento</a> }
+          @if ((x.items ?? []).length) { <button class="cc-pri" (click)="volverAComprar(x)">Volver a comprar</button> }
+        </div>
+      </div>
+    }
   `,
 })
 export class CuentaPage implements OnInit, OnDestroy {
@@ -338,6 +455,76 @@ export class CuentaPage implements OnInit, OnDestroy {
       .sort((a, b) => Number(!normal(a.barrio).startsWith(q)) - Number(!normal(b.barrio).startsWith(q)) || a.barrio.localeCompare(b.barrio)).slice(0, 6);
   });
 
+  compras = signal<Compra[]>([]);
+  cargandoCompras = signal(false);
+  verTodas = signal(false);
+  compraSel = signal<Compra | null>(null);
+  readonly urlMini = urlMini;
+
+  private async cargarCompras(): Promise<void> {
+    if (!this.c.perfil()) return;
+    this.cargandoCompras.set(true);
+    try { this.compras.set(await this.c.compras()); } catch { this.compras.set([]); }
+    this.cargandoCompras.set(false);
+  }
+
+  abrirCompra(x: Compra): void {
+    this.compraSel.set(x);
+  }
+
+  volverAComprar(x: Compra): void {
+    this.c.volverAComprar(x);
+    this.compraSel.set(null);
+    this.volver();
+  }
+
+  estadoTexto(x: Compra): string {
+    const m: Record<string, string> = {
+      por_pagar: 'Esperando el pago', por_confirmar: 'Por confirmar', por_alistar: 'Confirmado', alistado: 'Listo para enviar',
+      despachado: x.canal === 'local' ? 'Listo' : 'En camino', entregado: x.canal === 'local' ? 'Comprado en el local' : 'Entregado', cancelado: 'Cancelado',
+    };
+    return m[x.estado] ?? x.estado;
+  }
+
+  resumenItems(x: Compra): string {
+    const it = x.items ?? [];
+    if (!it.length) return 'Pedido';
+    const n = it.reduce((s, i) => s + i.cantidad, 0);
+    return it[0].nombre + (it.length > 1 ? ` y ${it.length - 1} más` : n > 1 ? ` (${n})` : '');
+  }
+
+  fechaCorta(f: string): string {
+    return new Date(f).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'America/Bogota' });
+  }
+  fechaLarga(f: string): string {
+    return new Date(f).toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'America/Bogota' });
+  }
+  private cuando(f: string | null): string {
+    return f ? new Date(f).toLocaleString('es-CO', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'America/Bogota' }) : '';
+  }
+
+  /** Línea de tiempo del pedido: hecho → confirmado → alistado → en camino → entregado */
+  pasos(x: Compra): { t: string; hecho: boolean; actual: boolean; cuando: string; ayuda?: string }[] {
+    if (x.canal === 'local') return [{ t: 'Comprado en el local', hecho: true, actual: true, cuando: this.cuando(x.fecha) }];
+    const orden = ['por_pagar', 'por_confirmar', 'por_alistar', 'alistado', 'despachado', 'entregado'];
+    const i = orden.indexOf(x.estado);
+    const lista = [
+      { t: 'Hiciste el pedido', f: x.fecha, n: 0 },
+      ...(x.estado === 'por_pagar' ? [{ t: 'Pago', f: null, n: 1, ayuda: 'Falta completar el pago en línea' }] : []),
+      { t: 'Confirmado', f: x.confirmado_at, n: 2, ayuda: 'La tienda te contacta para confirmarlo' },
+      { t: 'Alistado', f: x.alistado_at, n: 3 },
+      { t: 'En camino', f: x.enviado_at, n: 4 },
+      { t: 'Entregado', f: x.entregado_at, n: 5 },
+    ];
+    if (x.estado === 'cancelado') {
+      return [{ t: 'Hiciste el pedido', hecho: true, actual: false, cuando: this.cuando(x.fecha) }, { t: 'Cancelado', hecho: true, actual: true, cuando: '' }];
+    }
+    return lista.map((p) => {
+      const hecho = p.n === 0 || i >= p.n;
+      return { t: p.t, hecho, actual: false, cuando: hecho ? this.cuando(p.f) : '', ayuda: hecho ? undefined : (p as { ayuda?: string }).ayuda }
+    }).map((p, k, arr) => ({ ...p, actual: p.hecho && !arr[k + 1]?.hecho }));
+  }
+
   ngOnInit(): void {
     const q = this.ruta.snapshot.queryParamMap;
     if (q.get('crear')) this.modo.set('crear');
@@ -362,6 +549,7 @@ export class CuentaPage implements OnInit, OnDestroy {
   private llenarDatos(): void {
     const p = this.c.perfil();
     if (!p) return;
+    if (!this.compras().length && !this.cargandoCompras()) void this.cargarCompras();
     this.nombre = p.nombre;
     this.prefijo = p.prefijo || '57';
     this.telefono = p.telefono ?? '';

@@ -9,6 +9,27 @@ export interface ClienteDireccion {
   indicaciones: string | null;
   principal: boolean;
 }
+export interface CompraItem { producto_id: number | null; nombre: string; cantidad: number; precio: number; color: string | null; talla: string | null; imagen_url: string | null }
+export interface Compra {
+  fecha: string;
+  codigo: string | null;
+  /** Página pública para ver el pedido: /pago/:codigo (tienda) o /seguimiento/:codigo */
+  ruta: 'pago' | 'seguimiento';
+  pedido: number | null;
+  estado: 'por_pagar' | 'por_confirmar' | 'por_alistar' | 'alistado' | 'despachado' | 'entregado' | 'cancelado';
+  total: number;
+  domicilio: number | null;
+  confirmado_at: string | null;
+  alistado_at: string | null;
+  enviado_at: string | null;
+  entregado_at: string | null;
+  direccion: string | null;
+  barrio: string | null;
+  pago: string | null;
+  pago_estado: string | null;
+  canal: string;
+  items: CompraItem[] | null;
+}
 export interface ClientePerfil {
   id: number;
   nombre: string;
@@ -118,6 +139,19 @@ export class ClienteService {
     const r = await this.sb.client.rpc('cliente_quitar_direccion', { p_id: id });
     if (!r.error) this.perfil.set(r.data as ClientePerfil);
     return r;
+  }
+
+  /** Sus compras (las más recientes primero) */
+  async compras(): Promise<Compra[]> {
+    const { data, error } = await this.sb.client.rpc('cliente_compras');
+    if (error) throw error;
+    return (data as Compra[]) ?? [];
+  }
+
+  /** Volver a comprar: deja los productos listos para que la tienda los ponga en el carrito */
+  volverAComprar(c: Compra): void {
+    const items = (c.items ?? []).filter((i) => i.producto_id).map((i) => ({ producto_id: i.producto_id!, cantidad: i.cantidad, color: i.color, talla: i.talla }));
+    try { sessionStorage.setItem('tienda-repetir', JSON.stringify({ items })); } catch { /* sin almacenamiento */ }
   }
 
   async salir(): Promise<void> {

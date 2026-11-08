@@ -978,6 +978,15 @@ export class TiendaPage implements OnInit {
     this.lineas.update((ls) => ls.filter((l) => porId.has(l.producto_id) && !porId.get(l.producto_id)!.agotado)
       .map((l) => ({ ...l, precio: Number(porId.get(l.producto_id)!.precio), max: this.maximo(porId.get(l.producto_id)!) })));
     document.title = (t.vendedora ? 'Catálogo de ' + this.primerNombre(t.vendedora.nombre) : 'Catálogo') + ' · ' + (t.negocio || 'Jasta');
+    // "Volver a comprar" desde Mis compras: los productos de ese pedido van al carrito
+    try {
+      const rep = JSON.parse(sessionStorage.getItem('tienda-repetir') ?? 'null') as { items?: UltimoPedido['items'] } | null;
+      if (rep?.items?.length) {
+        sessionStorage.removeItem('tienda-repetir');
+        this.repetir({ fecha: '', items: rep.items });
+        return;
+      }
+    } catch { /* sin almacenamiento */ }
     // Enlace directo a un producto (?p=<id>): se abre solo
     const pid = Number(this.route.snapshot.queryParamMap.get('p'));
     const directo = pid ? t.productos.find((x) => x.id === pid) : undefined;
