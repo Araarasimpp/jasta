@@ -212,7 +212,7 @@ returns jsonb language sql stable security definer set search_path = '' as $$
   filas as (
     select pw.created_at fecha, pw.codigo::text codigo, 'pago' ruta, p.id pedido,
       case when p.id is not null then p.estado::text when pw.estado in ('cancelado', 'por_pagar') then pw.estado else 'por_confirmar' end estado,
-      coalesce(p.total, pw.subtotal - coalesce(pw.descuento, 0) + coalesce(pw.valor_domicilio, 0) + coalesce(pw.recargo, 0)) total,
+      coalesce(p.total, pw.subtotal + coalesce(pw.valor_domicilio, 0) + coalesce(pw.recargo, 0)) total,
       coalesce(p.valor_domicilio, pw.valor_domicilio) domicilio,
       case when pw.estado <> 'cancelado' then pw.atendido_at end confirmado_at,
       p.alistado_at,

@@ -1,7 +1,7 @@
 import { Component, ElementRef, HostListener, OnInit, ViewChild, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ClienteDireccion, ClienteService } from '../core/services/cliente.service';
+import { ClienteDireccion, ClienteService, ClienteTarjeta, ConfigTarjeta } from '../core/services/cliente.service';
 import { SupabaseService } from '../core/services/supabase.service';
 import { recargoWompi } from '../shared/recargo-wompi';
 import { mensajeError, pesos, urlImagen, urlMini } from '../shared/formato';
@@ -29,7 +29,28 @@ interface Tienda {
   productos: ProductoTienda[];
 }
 interface Linea { producto_id: number; nombre: string; precio: number; imagen_url: string | null; cantidad: number; color: string | null; talla: string | null; max: number }
-interface Hecho { id: number; total: number; domicilioPendiente: boolean; codigo: string }
+interface Hecho { id: number; total: number; domicilioPendiente: boolean; codigo: string; pagado?: boolean }
+
+/** Marca de la tarjeta por sus primeros números */
+function marcaDe(n: string): string {
+  const d = n.replace(/\D/g, '');
+  if (/^4/.test(d)) return 'VISA';
+  if (/^(5[1-5]|2[2-7])/.test(d)) return 'Mastercard';
+  if (/^3[47]/.test(d)) return 'Amex';
+  if (/^3(0[0-5]|[68])/.test(d)) return 'Diners';
+  return '';
+}
+function luhn(n: string): boolean {
+  const d = n.replace(/\D/g, '');
+  if (d.length < 13 || d.length > 19) return false;
+  let s = 0;
+  for (let i = 0; i < d.length; i++) {
+    let x = Number(d[d.length - 1 - i]);
+    if (i % 2) { x *= 2; if (x > 9) x -= 9; }
+    s += x;
+  }
+  return s % 10 === 0;
+}
 
 function normal(s: string): string {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -185,8 +206,12 @@ function parecido(a: string, b: string): number {
       @if (hecho(); as h) {
         <section class="listo" role="status">
           <div class="ok" aria-hidden="true">✓</div>
-          <h2>¡Recibimos tu pedido!</h2>
+          <h2>{{ h.pagado ? '¡Pago aprobado!' : '¡Recibimos tu pedido!' }}</h2>
+          @if (h.pagado) {
+            <p>Tu pedido quedó pagado. {{ t()?.vendedora ? primerNombre(t()!.vendedora!.nombre) : 'La tienda' }} te contacta al {{ telefonoMostrar() }} para coordinar el envío. Lo puedes seguir en Mi cuenta → Mis compras.</p>
+          } @else {
           <p>{{ t()?.vendedora ? primerNombre(t()!.vendedora!.nombre) : 'La tienda' }} te va a llamar o escribir al {{ telefonoMostrar() }} para confirmarlo. Después de confirmado, te lo enviamos.</p>
+          }
           <p><strong>Total: {{ pesos(h.total) }}</strong>{{ h.domicilioPendiente ? ' + domicilio (te lo confirman)' : ', domicilio incluido' }}</p>
           <a class="wa t-ver-pedido" [href]="'/pago/' + h.codigo">Ver mi pedido y su seguimiento →</a>
           @if (whatsapp(); as w) { <a class="wa" [href]="w" target="_blank" rel="noopener">Escribir por WhatsApp</a> }
@@ -555,11 +580,52 @@ function parecido(a: string, b: string): number {
               <button type="button" role="radio" class="fc-opcion" [attr.aria-checked]="formaPago() === 'en_linea'" [class.on]="formaPago() === 'en_linea'" (click)="formaPago.set('en_linea')">
                 <span class="fc-radio" aria-hidden="true"></span>
                 <span class="fc-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19M6.5 15h4"/></svg></span>
-                <span class="fc-op-txt"><strong>Pagar ahora en línea</strong><small>Tarjeta de crédito o débito, PSE, Nequi, Daviplata o Bancolombia</small>
-                  <span class="fc-marcas"><i>VISA</i><i>Mastercard</i><i>PSE</i><i>Nequi</i><i>Daviplata</i></span></span>
+                <span class="fc-op-txt"><strong>{{ tarjetasOn() ? 'Otros medios en línea' : 'Pagar ahora en línea' }}</strong><small>{{ tarjetasOn() ? 'PSE, Nequi, Daviplata o Bancolombia (en la página de Wompi)' : 'Tarjeta de crédito o débito, PSE, Nequi, Daviplata o Bancolombia' }}</small>
+                  <span class="fc-marcas">@if (!tarjetasOn()) { <i>VISA</i><i>Mastercard</i> }<i>PSE</i><i>Nequi</i><i>Daviplata</i></span></span>
               </button>
+              @if (tarjetasOn()) {
+                @for (tj of misTarjetas(); track tj.id) {
+                  <button type="button" role="radio" class="fc-opcion fc-tj" [attr.aria-checked]="formaPago() === 'tarjeta' && tarjetaSel() === tj.id" [class.on]="formaPago() === 'tarjeta' && tarjetaSel() === tj.id" (click)="elegirTarjeta(tj.id)">
+                    <span class="fc-radio" aria-hidden="true"></span>
+                    <span class="fc-ico fc-marca" aria-hidden="true">{{ abrevMarca(tj.marca) }}</span>
+                    <span class="fc-op-txt"><strong>{{ tj.marca || 'Tarjeta' }} **** {{ tj.ultimos4 }}</strong><small>Vence {{ tj.exp_mes }}/{{ tj.exp_anio }}</small></span>
+                  </button>
+                }
+                <button type="button" role="radio" class="fc-opcion fc-tj" [attr.aria-checked]="formaPago() === 'tarjeta' && tarjetaSel() === 'nueva'" [class.on]="formaPago() === 'tarjeta' && tarjetaSel() === 'nueva'" (click)="elegirTarjeta('nueva')">
+                  <span class="fc-radio" aria-hidden="true"></span>
+                  <span class="fc-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19M6.5 15h4"/></svg></span>
+                  <span class="fc-op-txt"><strong>{{ misTarjetas().length ? 'Nueva tarjeta' : 'Tarjeta de crédito o débito' }}</strong><small>Visa, Mastercard, Amex o Diners · la puedes guardar</small></span>
+                </button>
+              }
             </div>
-            @if (enLinea()) { <p class="nota">Pagas seguro en <strong>Wompi</strong> (de Bancolombia). Con tarjeta de crédito eliges ahí en cuántas cuotas.</p> }
+            @if (formaPago() === 'tarjeta' && tarjetaSel() === 'nueva') {
+              <div class="fc-tarjeta">
+                <div class="campo"><label for="tcn">Número de la tarjeta</label>
+                  <div class="fc-num"><input id="tcn" inputmode="numeric" autocomplete="cc-number" maxlength="23" [ngModel]="tNumero()" (ngModelChange)="escribirNumero($event)" placeholder="0000 0000 0000 0000" />
+                    @if (marcaTarjeta()) { <b>{{ marcaTarjeta() }}</b> }</div></div>
+                <div class="campo"><label for="tct">Nombre como aparece en la tarjeta</label>
+                  <input id="tct" autocomplete="cc-name" maxlength="60" [(ngModel)]="tTitular" /></div>
+                <div class="fc-dos">
+                  <div class="campo"><label for="tcv">Vence (MM/AA)</label>
+                    <input id="tcv" inputmode="numeric" autocomplete="cc-exp" maxlength="5" [ngModel]="tVence" (ngModelChange)="escribirVence($event)" placeholder="08/29" /></div>
+                  <div class="campo"><label for="tcc">Código de seguridad</label>
+                    <input id="tcc" inputmode="numeric" autocomplete="cc-csc" maxlength="4" [(ngModel)]="tCvc" placeholder="CVC" /></div>
+                </div>
+                <label class="t-guardar-dir"><input type="checkbox" [(ngModel)]="tGuardar" />Guardar esta tarjeta para mis próximas compras</label>
+              </div>
+            }
+            @if (formaPago() === 'tarjeta') {
+              <div class="campo fc-cuotas"><label for="tcu">Cuotas</label>
+                <select id="tcu" [ngModel]="cuotas()" (ngModelChange)="cuotas.set(+$event)">
+                  @for (n of opcionesCuotas; track n) { <option [value]="n">{{ n === 1 ? '1 cuota (de contado)' : n + ' cuotas de ' + pesos(cuotaDe(n)) + ' aprox.' }}</option> }
+                </select>
+                <small class="nota">Con tarjeta débito siempre es 1 cuota. El interés de las cuotas lo pone tu banco.</small>
+              </div>
+              <p class="nota">Pagas seguro con <strong>Wompi</strong> (de Bancolombia): los datos de tu tarjeta van directo a Wompi y Jasta nunca los ve. Al pagar aceptas el
+                @if (cfgTarjeta()?.terminos) { <a [href]="cfgTarjeta()!.terminos" target="_blank" rel="noopener">reglamento de Wompi</a> } @else { reglamento de Wompi }
+                y la @if (cfgTarjeta()?.datos) { <a [href]="cfgTarjeta()!.datos" target="_blank" rel="noopener">autorización de datos</a> } @else { autorización de datos }.</p>
+            } @else if (enLinea()) { <p class="nota">Pagas seguro en <strong>Wompi</strong> (de Bancolombia). Con tarjeta de crédito eliges ahí en cuántas cuotas.</p> }
+            @if (pagoMensaje()) { <p class="error" role="alert">{{ pagoMensaje() }}</p> }
           </section>
 
           @if (cli.perfil(); as p) {
@@ -614,7 +680,7 @@ function parecido(a: string, b: string): number {
             <span class="num">{{ pesos(total()) }}</span>
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>
           </button>
-          <button class="b b-pri" (click)="enviar()" [disabled]="enviando() || !lineas().length">{{ enviando() ? (enLinea() ? 'Abriendo el pago…' : 'Enviando…') : enLinea() ? 'Pagar y finalizar' : 'Confirmar pedido' }}</button>
+          <button class="b b-pri" (click)="enviar()" [disabled]="enviando() || !lineas().length">{{ enviando() ? (formaPago() === 'tarjeta' ? 'Procesando el pago…' : enLinea() ? 'Abriendo el pago…' : 'Enviando…') : formaPago() === 'tarjeta' ? 'Pagar ' + pesos(total()) : enLinea() ? 'Pagar y finalizar' : 'Confirmar pedido' }}</button>
         </div>
         }
       </div>
@@ -665,8 +731,25 @@ export class TiendaPage implements OnInit {
   enviando = signal(false);
   hecho = signal<Hecho | null>(null);
   /** Pagar al recibir o pagar ya en línea con Wompi (el cliente paga la comisión de Wompi) */
-  formaPago = signal<'contra_entrega' | 'en_linea'>('contra_entrega');
-  enLinea = computed(() => this.formaPago() === 'en_linea');
+  /** Al recibir, con tarjeta aquí mismo (cuenta de cliente) o en Wompi (PSE, Nequi, Daviplata, tarjeta) */
+  formaPago = signal<'contra_entrega' | 'en_linea' | 'tarjeta'>('contra_entrega');
+  enLinea = computed(() => this.formaPago() !== 'contra_entrega');
+  // ---- Tarjetas (Wompi): guardadas, nueva y cuotas
+  cfgTarjeta = signal<ConfigTarjeta | null>(null);
+  tarjetasOn = computed(() => !!this.cli.perfil() && !!this.cfgTarjeta()?.activo);
+  misTarjetas = computed<ClienteTarjeta[]>(() => this.cli.perfil()?.tarjetas ?? []);
+  tarjetaSel = signal<number | 'nueva' | null>(null);
+  cuotas = signal(1);
+  readonly opcionesCuotas = [1, 2, 3, 4, 6, 9, 12, 18, 24, 36];
+  tNumero = signal('');
+  tTitular = '';
+  tVence = '';
+  tCvc = '';
+  tGuardar = true;
+  pagoMensaje = signal('');
+  /** Si el banco rechaza, el pedido ya quedó creado: el siguiente intento cobra el mismo pedido */
+  private codigoPendiente: string | null = null;
+  marcaTarjeta = computed(() => marcaDe(this.tNumero()));
   recargo = computed(() => (this.enLinea() && this.domicilio() !== null ? recargoWompi(this.subtotal() - this.descuento() + this.domicilio()!) : 0));
   /** Cupón de descuento (el valor final lo calcula el servidor al pedir) */
   cupon = signal<Cupon | null>(null);
@@ -883,6 +966,15 @@ export class TiendaPage implements OnInit {
         /* sin almacenamiento */
       }
     });
+    // Con cuenta de cliente: ¿está activo el pago con tarjeta aquí mismo?
+    effect(() => {
+      if (this.cli.perfil() && !this.cfgTarjeta()) void untracked(() => this.cli.configTarjeta()).then((c) => this.cfgTarjeta.set(c));
+    });
+    // Si cambia el carrito, el pedido que quedó esperando pago ya no sirve: el siguiente intento crea uno nuevo
+    effect(() => {
+      this.lineas();
+      this.codigoPendiente = null;
+    });
     // Cliente con cuenta: sus datos y su dirección principal salen llenos (una vez, ya con la lista de barrios)
     effect(() => {
       const p = this.cli.perfil();
@@ -897,6 +989,40 @@ export class TiendaPage implements OnInit {
         else this.dirSel.set('otra');
       });
     });
+  }
+
+  elegirTarjeta(id: number | 'nueva'): void {
+    this.formaPago.set('tarjeta');
+    this.tarjetaSel.set(id);
+    this.pagoMensaje.set('');
+    if (id === 'nueva') setTimeout(() => document.getElementById('tcn')?.focus(), 50);
+  }
+  escribirNumero(v: string): void {
+    const d = v.replace(/\D/g, '').slice(0, 19);
+    this.tNumero.set(d.replace(/(\d{4})(?=\d)/g, '$1 '));
+  }
+  escribirVence(v: string): void {
+    const d = v.replace(/\D/g, '').slice(0, 4);
+    this.tVence = d.length > 2 ? d.slice(0, 2) + '/' + d.slice(2) : d;
+  }
+  abrevMarca(m: string | null): string {
+    const x = (m || '').toUpperCase();
+    return x.startsWith('VISA') ? 'VISA' : x.startsWith('MASTER') ? 'MC' : x.startsWith('AMEX') || x.startsWith('AMERICAN') ? 'AMEX' : x.startsWith('DINERS') ? 'DC' : '••';
+  }
+  cuotaDe(n: number): number {
+    return Math.ceil(this.total() / n / 100) * 100;
+  }
+  /** Revisa la tarjeta nueva antes de crear el pedido */
+  private errorTarjeta(): string {
+    if (!luhn(this.tNumero())) return 'Revisa el número de la tarjeta.';
+    if (this.tTitular.trim().length < 3) return 'Escribe el nombre como aparece en la tarjeta.';
+    const m = /^(\d{2})\/(\d{2})$/.exec(this.tVence);
+    if (!m || +m[1] < 1 || +m[1] > 12) return 'Escribe el vencimiento así: 08/29.';
+    const hoy = new Date();
+    const fin = new Date(2000 + +m[2], +m[1], 0);
+    if (fin < new Date(hoy.getFullYear(), hoy.getMonth(), 1)) return 'Esa tarjeta ya está vencida.';
+    if (!/^\d{3,4}$/.test(this.tCvc)) return 'Escribe el código de seguridad (3 o 4 números de atrás).';
+    return '';
   }
 
   irCuenta(): void {
@@ -1283,7 +1409,26 @@ export class TiendaPage implements OnInit {
       document.getElementById(id)?.focus();
       return this.error.set('Revisa los datos marcados en rojo.');
     }
+    // Con tarjeta: primero la tarjeta (si es nueva, Wompi la convierte en token) y después el pedido
+    const conTarjeta = this.formaPago() === 'tarjeta';
+    this.pagoMensaje.set('');
+    if (conTarjeta && !this.tarjetaSel()) return this.pagoMensaje.set('Elige una tarjeta.');
+    if (conTarjeta && this.tarjetaSel() === 'nueva') {
+      const malo = this.errorTarjeta();
+      if (malo) return this.pagoMensaje.set(malo);
+    }
     this.enviando.set(true);
+    let token: { id: string; brand: string; last_four: string; exp_month: string; exp_year: string; card_holder: string } | null = null;
+    if (conTarjeta && this.tarjetaSel() === 'nueva') {
+      try {
+        const [mes, anio] = this.tVence.split('/');
+        token = await this.cli.tokenizar({ numero: this.tNumero(), titular: this.tTitular, mes, anio, cvc: this.tCvc });
+      } catch (e) {
+        this.enviando.set(false);
+        return this.pagoMensaje.set((e as Error).message);
+      }
+    }
+    if (conTarjeta && this.codigoPendiente) return this.cobrarTarjeta(this.codigoPendiente, token, null);
     const { data, error } = await this.sb.client.rpc('tienda_pedir', {
       p_vendedora: this.vendedoraId, p_nombre: this.nombre.trim(), p_telefono: unirTelefono(this.prefijo, this.telefono),
       p_direccion: this.direccion.trim(), p_barrio: this.barrioOficial(), p_observaciones: this.observaciones.trim(),
@@ -1298,6 +1443,7 @@ export class TiendaPage implements OnInit {
     const r = data as { id: number; codigo: string; subtotal: number; domicilio: number; domicilio_por_confirmar: boolean; pago: string };
     this.guardarUltimo();
     await this.guardarEnCuenta();
+    if (conTarjeta) return this.cobrarTarjeta(r.codigo, token, r);
     if (r.pago === 'en_linea') {
       // El pedido ya quedó guardado: se va a Wompi a pagar (y si algo falla, la página del pago deja reintentar)
       this.lineas.set([]);
@@ -1313,6 +1459,45 @@ export class TiendaPage implements OnInit {
     this.cupon.set(null);
     this.cerrarPantalla();
     this.scroll?.nativeElement.scrollTo({ top: 0 });
+  }
+
+  /** Cobra el pedido con la tarjeta elegida (guardada o nueva) sin salir de la tienda */
+  private async cobrarTarjeta(codigo: string, token: { id: string; brand: string; last_four: string; exp_month: string; exp_year: string; card_holder: string } | null,
+    r: { id: number; subtotal: number; domicilio: number; domicilio_por_confirmar: boolean } | null): Promise<void> {
+    this.codigoPendiente = codigo;
+    try {
+      const sel = this.tarjetaSel();
+      const res = await this.cli.pagarConTarjeta({
+        codigo, cuotas: this.cuotas(),
+        ...(typeof sel === 'number' ? { tarjeta_id: sel } : {
+          token: token!.id, guardar: this.tGuardar,
+          tarjeta: { marca: token!.brand, ultimos4: token!.last_four, titular: token!.card_holder, exp_mes: token!.exp_month, exp_anio: token!.exp_year },
+        }),
+      });
+      if (res.guardada) void this.cli.cargar();
+      if (res.pagado) {
+        this.codigoPendiente = null;
+        this.enviando.set(false);
+        this.tNumero.set(''); this.tCvc = ''; this.tVence = ''; this.tTitular = '';
+        this.hecho.set({ id: r?.id ?? 0, total: this.total(), domicilioPendiente: !!r?.domicilio_por_confirmar, codigo, pagado: true });
+        this.lineas.set([]);
+        this.cupon.set(null);
+        this.cerrarPantalla();
+        this.scroll?.nativeElement.scrollTo({ top: 0 });
+        return;
+      }
+      if (res.estado === 'PENDING') {
+        // El banco todavía no responde: la página del pedido muestra cuando se apruebe
+        this.lineas.set([]);
+        location.assign(`/pago/${codigo}`);
+        return;
+      }
+      this.enviando.set(false);
+      this.pagoMensaje.set('Tu banco no aprobó el pago' + (res.mensaje ? ` (${res.mensaje})` : '') + '. Intenta con otra tarjeta o elige otro medio de pago.');
+    } catch (e) {
+      this.enviando.set(false);
+      this.pagoMensaje.set((e as Error).message);
+    }
   }
 
   /** WhatsApp de la tienda para que el cliente pida ayuda con su barrio */

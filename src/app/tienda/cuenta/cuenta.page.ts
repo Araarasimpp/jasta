@@ -265,6 +265,24 @@ function normal(s: string): string {
             <p class="cc-vacio">Todavía no tienes direcciones. Agrega una y saldrá lista cuando compres.</p>
           }
         </section>
+        @if (p.tarjetas?.length) {
+          <section class="cc-tarjeta" aria-labelledby="t-tarjetas">
+            <h2 id="t-tarjetas">Mis tarjetas</h2>
+            <p class="cc-sub">Las guarda Wompi (de Bancolombia); aquí solo vemos los últimos 4 números.</p>
+            <ul class="cc-dirs">
+              @for (tj of p.tarjetas!; track tj.id) {
+                <li class="cc-dir">
+                  <span class="cc-pin" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19M6.5 15h4"/></svg></span>
+                  <div>
+                    <strong>{{ tj.marca || 'Tarjeta' }} **** {{ tj.ultimos4 }}</strong>
+                    <span class="cc-lin">Vence {{ tj.exp_mes }}/{{ tj.exp_anio }}</span>
+                    <div class="cc-acciones"><button class="cc-link cc-peligro" (click)="quitarTarjeta(tj.id, tj.ultimos4)">Quitar</button></div>
+                  </div>
+                </li>
+              }
+            </ul>
+          </section>
+        }
 
 
         <button class="cc-pri" (click)="volver()">Seguir comprando</button>
@@ -802,6 +820,12 @@ export class CuentaPage implements OnInit, OnDestroy {
     if (!confirm(`¿Quitar la dirección "${d.etiqueta}" (${d.direccion})?`)) return;
     const { error } = await this.c.quitarDireccion(d.id);
     this.aviso.set(error ? mensajeError(error) : 'Dirección quitada.');
+  }
+
+  async quitarTarjeta(id: number, ultimos: string | null): Promise<void> {
+    if (!confirm(`¿Quitar la tarjeta terminada en ${ultimos ?? ''}? Para volver a usarla tendrás que escribir sus datos otra vez.`)) return;
+    const { error } = await this.c.quitarTarjeta(id);
+    this.aviso.set(error ? mensajeError(error) : 'Tarjeta quitada.');
   }
 
   async salir(): Promise<void> {

@@ -30,6 +30,11 @@ export interface Compra {
   canal: string;
   items: CompraItem[] | null;
 }
+export interface ClienteTarjeta { id: number; marca: string | null; ultimos4: string | null; exp_mes: string | null; exp_anio: string | null }
+export interface ConfigTarjeta { public_key: string; terminos: string | null; datos: string | null; activo: boolean }
+export interface TarjetaNueva { numero: string; titular: string; mes: string; anio: string; cvc: string }
+export interface TokenTarjeta { id: string; brand: string; last_four: string; exp_month: string; exp_year: string; card_holder: string }
+
 export interface ClientePerfil {
   id: number;
   nombre: string;
@@ -40,6 +45,7 @@ export interface ClientePerfil {
   documento: string | null;
   desde: string;
   direcciones: ClienteDireccion[];
+  tarjetas?: ClienteTarjeta[];
 }
 
 /**
@@ -152,6 +158,47 @@ export class ClienteService {
   volverAComprar(c: Compra): void {
     const items = (c.items ?? []).filter((i) => i.producto_id).map((i) => ({ producto_id: i.producto_id!, cantidad: i.cantidad, color: i.color, talla: i.talla }));
     try { sessionStorage.setItem('tienda-repetir', JSON.stringify({ items })); } catch { /* sin almacenamiento */ }
+  }
+
+  // ---------------------------------------------------------------- Tarjetas (Wompi)
+  private config?: Promise<ConfigTarjeta | null>;
+  /** Llave pública de Wompi y si el pago con tarjeta está activo (se pide una vez) */
+  configTarjeta(): Promise<ConfigTarjeta | null> {
+    this.config ??= this.sb.client.functions.invoke('wompi-tarjeta', { body: { accion: 'llave' } })
+      .then(({ data, error }) => (error ? null : (data as ConfigTarjeta)))
+      .catch(() => null);
+    return this.config;
+  }
+
+  /** El número de la tarjeta va directo del celular a Wompi; a Jasta solo llega el token */
+  async tokenizar(t: TarjetaNueva): Promise<TokenTarjeta> {
+    const cfg = await this.configTarjeta();
+    if (!cfg?.public_key) throw new Error('El pago con tarjeta no está disponible ahora.');
+    const r = await fetch('https://production.wompi.co/v1/tokens/cards', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${cfg.public_key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ number: t.numero.replace(/\D/g, ''), cvc: t.cvc, exp_month: t.mes.padStart(2, '0'), exp_year: t.anio.slice(-2), card_holder: t.titular.trim() }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || j?.status !== 'CREATED' || !j?.data?.id) throw new Error('Revisa los datos de la tarjeta (número, vencimiento y código de seguridad).');
+    return j.data as TokenTarjeta;
+  }
+
+  async pagarConTarjeta(b: { codigo: string; cuotas: number; tarjeta_id?: number; token?: string; guardar?: boolean; tarjeta?: Record<string, string> }) {
+    const { data, error } = await this.sb.client.functions.invoke('wompi-tarjeta', { body: { accion: 'pagar', ...b } });
+    if (error) {
+      // El cuerpo del error trae el mensaje para el cliente
+      let msg = 'No se pudo hacer el cobro. Intenta otra vez.';
+      try { msg = (await (error as { context?: Response }).context?.json())?.error ?? msg; } catch { /* sin cuerpo */ }
+      throw new Error(msg);
+    }
+    return data as { estado: string; mensaje: string | null; pagado: boolean; guardada?: boolean };
+  }
+
+  async quitarTarjeta(id: number) {
+    const r = await this.sb.client.rpc('cliente_quitar_tarjeta', { p_id: id });
+    if (!r.error) this.perfil.set(r.data as ClientePerfil);
+    return r;
   }
 
   async salir(): Promise<void> {

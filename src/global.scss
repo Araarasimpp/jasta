@@ -253,7 +253,18 @@ app-tienda.tv2.tv2.tv2 .fc-r { display: flex; justify-content: space-between; ga
 app-tienda.tv2.tv2.tv2 .fc-desc { color: var(--efectivo-texto); }
 app-tienda.tv2.tv2.tv2 .fc-total { margin-top: 4px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 20px; font-weight: 800; }
 app-tienda.tv2.tv2.tv2 .fc-cupon { margin: 0; }
+app-tienda.tv2.tv2.tv2 .fc-marca { font-size: 11px; font-weight: 800; letter-spacing: .02em; color: #1a1f71; background: #fff; }
+app-tienda.tv2.tv2.tv2 .fc-tarjeta { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 14px; background: color-mix(in srgb, var(--t-acc) 5%, var(--surface)); }
+app-tienda.tv2.tv2.tv2 .fc-tarjeta .campo, app-tienda.tv2.tv2.tv2 .fc-cuotas { margin: 0; }
+app-tienda.tv2.tv2.tv2 .fc-num { position: relative; }
+app-tienda.tv2.tv2.tv2 .fc-num input { width: 100%; padding-right: 96px; letter-spacing: .06em; box-sizing: border-box; }
+app-tienda.tv2.tv2.tv2 .fc-num b { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 12px; font-weight: 800; color: var(--t-acc); }
+app-tienda.tv2.tv2.tv2 .fc-dos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+app-tienda.tv2.tv2.tv2 .fc-cuotas select { width: 100%; }
 app-tienda.tv2.tv2.tv2 .fc-pie { display: flex; align-items: center; gap: 12px; }
+/* Tarjetas primero (como en las tiendas grandes) */
+app-tienda.tv2.tv2.tv2 .fc-pagos .fc-tj { order: -1; }
+app-tienda.tv2.tv2.tv2 .t-guardar-dir input { accent-color: var(--t-acc); }
 app-tienda.tv2.tv2.tv2 .fc-pie .b-pri { flex: 1; }
 app-tienda.tv2.tv2.tv2 .fc-pie-total { display: inline-flex; align-items: center; gap: 4px; padding: 0 4px; border: 0; background: none; color: var(--text); font: inherit; font-size: 21px; font-weight: 800; cursor: pointer; white-space: nowrap; }
 app-tienda.tv2.tv2.tv2 .fc-pie-total svg { color: var(--t-acc); }

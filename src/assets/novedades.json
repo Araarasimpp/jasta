@@ -1,5 +1,36 @@
 [
   {
+    "id": "2026-11-08-tarjetas-guardadas",
+    "fecha": "2026-11-08",
+    "hora": "12:10",
+    "titulo": "Pago con tarjeta dentro de la tienda, con tarjetas guardadas y cuotas",
+    "cuerpo": "El cliente con cuenta paga con tarjeta sin salir de la tienda: elige una tarjeta guardada o una nueva, y en cuántas cuotas. Wompi guarda la tarjeta; Jasta solo ve los últimos 4 números.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "Para el cliente",
+        "pasos": [
+          "En Finaliza tu compra → Medios de pago salen sus tarjetas guardadas (ej: Mastercard **** 9149) y \"Nueva tarjeta\".",
+          "Con tarjeta nueva escribe número, nombre, vencimiento y código, y puede guardarla para la próxima.",
+          "Elige las cuotas (1 a 36) y toca \"Pagar\": el pago queda aprobado ahí mismo.",
+          "Si el banco lo rechaza, puede intentar con otra tarjeta sin crear otro pedido. PSE, Nequi y Daviplata siguen en \"Otros medios en línea\".",
+          "En Mi cuenta → Mis tarjetas las puede quitar."
+        ]
+      },
+      {
+        "titulo": "Para el equipo",
+        "pasos": [
+          "El pedido llega como PAGADO, igual que los pagos en línea de antes.",
+          "Se activa cuando el admin pone el Secreto de integridad de Wompi en Supabase."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-11-08-mis-compras",
     "fecha": "2026-11-08",
     "hora": "11:55",

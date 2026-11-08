@@ -33,6 +33,10 @@ Deno.serve(async (req) => {
       if (t?.payment_link_id) {
         const [r] = await sql`select public.wompi_registrar(${t.payment_link_id}, ${t.id}, ${t.status}, ${t.amount_in_cents}, ${t.payment_method_type ?? null}) as r`;
         console.log('Wompi', t.id, t.status, JSON.stringify(r?.r));
+      } else if (typeof t?.reference === 'string' && /^JWC-\d+-\d+$/.test(t.reference)) {
+        // Pago con tarjeta dentro de la tienda (wompi-tarjeta): el pedido quedó amarrado a "tx:<referencia>"
+        const [r] = await sql`select public.wompi_registrar(${'tx:' + t.reference}, ${t.id}, ${t.status}, ${t.amount_in_cents}, ${t.payment_method_type ?? null}) as r`;
+        console.log('Wompi tarjeta', t.id, t.status, JSON.stringify(r?.r));
       }
     }
     return new Response('ok');
