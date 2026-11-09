@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ClienteDireccion, ClienteService, Compra, Favorito } from '../../core/services/cliente.service';
 import { CAPTCHA_ACTIVO, CaptchaComponent } from '../../shared/captcha/captcha.component';
+import { RecortarFotoComponent } from '../../shared/recortar-foto/recortar-foto.component';
 import { REGLA_CLAVE, problemaClave } from '../../shared/clave';
 import { PAISES, bandera, errorTelefono, limpiarNombre } from '../../shared/paises';
 import { mensajeError, pesos, urlMini } from '../../shared/formato';
@@ -21,7 +22,7 @@ function normal(s: string): string {
 @Component({
   selector: 'app-cuenta',
   standalone: true,
-  imports: [FormsModule, CaptchaComponent],
+  imports: [FormsModule, CaptchaComponent, RecortarFotoComponent],
   styles: [
     `
       :host { display: block; position: relative; height: 100dvh; background: #f4f5f8; color: #12141a; font-family: var(--ui-font, system-ui, sans-serif); }
@@ -129,6 +130,33 @@ function normal(s: string): string {
       .cc-tot-fin { font-size: 18px; font-weight: 800; }
       .cc-entrega { margin: 0; font-size: 13.5px; color: #3b3f4c; }
       .cc-a { display: grid; place-items: center; text-decoration: none; }
+      .cc-avatar { overflow: hidden; }
+      .cc-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .cc-hola .cc-link { margin-top: 4px; font-size: 13px; }
+      .cc-avatar-g { width: 72px; height: 72px; font-size: 24px; }
+      .cc-foto-fila { display: flex; align-items: center; gap: 14px; }
+      .cc-foto-acc { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+      .cc-foto-acc small { font-size: 12px; color: #8a8f9c; }
+      .cc-subir { cursor: pointer; }
+      .cc-obl { color: #c92a2a; }
+      .cc-pasos { list-style: none; margin: 0 0 16px; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .cc-pasos li { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 12px; background: #f4f5f8; color: #8a8f9c; font-size: 13.5px; font-weight: 600; }
+      .cc-pasos li b { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: #e3e5ec; color: #5b6070; font-size: 12.5px; }
+      .cc-pasos li.on { background: #f0ecff; color: #12141a; }
+      .cc-pasos li.on b { background: #6b4fe0; color: #fff; }
+      .cc-pasos li.ok b { background: #1a7f4b; color: #fff; }
+      .cc-menu { display: flex; flex-direction: column; gap: 2px; }
+      .cc-menu h2 { margin-bottom: 8px; }
+      .cc-menu button { display: grid; grid-template-columns: 40px minmax(0, 1fr) 18px; gap: 12px; align-items: center; width: 100%; padding: 10px 4px; border: 0; border-top: 1px solid #eceef3;
+        background: none; color: #12141a; font: inherit; text-align: left; cursor: pointer; }
+      .cc-menu button:first-of-type { border-top: 0; }
+      .cc-menu strong { display: block; font-size: 15px; }
+      .cc-menu small { display: block; font-size: 12.5px; color: #5b6070; }
+      .cc-menu-ico { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; background: #f0ecff; color: #6b4fe0; }
+      .cc-menu-fl { color: #8a8f9c; }
+      .cc-menu-salir strong { color: #c92a2a; }
+      .cc-menu-salir .cc-menu-ico { background: #fdecec; color: #c92a2a; }
+      input:disabled { background: #f4f5f8; color: #5b6070; }
       .cc-google { width: 100%; height: 50px; display: flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid #d6d9e1; border-radius: 14px; background: #fff;
         color: #12141a; font: inherit; font-size: 15.5px; font-weight: 650; cursor: pointer; }
       .cc-google:disabled { opacity: .6; }
@@ -153,8 +181,8 @@ function normal(s: string): string {
   template: `
     <div class="cc-scroll">
     <header class="cc-barra">
-      <button type="button" (click)="volver()" aria-label="Volver a la tienda">←</button>
-      <h1>{{ c.perfil() ? 'Mi cuenta' : modo() === 'crear' ? 'Crea tu cuenta' : 'Ingresa a tu cuenta' }}</h1>
+      <button type="button" (click)="atras()" [attr.aria-label]="vista() !== 'inicio' && c.perfil() && !incompleta() ? 'Volver a Mi cuenta' : 'Volver a la tienda'">←</button>
+      <h1>{{ titulo() }}</h1>
     </header>
 
     <div class="cc-caja">
@@ -174,13 +202,87 @@ function normal(s: string): string {
         </div>
       } @else if (c.perfil(); as p) {
         <!-- ===== Adentro ===== -->
-        <div class="cc-tarjeta cc-hola">
-          <span class="cc-avatar" aria-hidden="true">{{ iniciales(p.nombre || p.email || '?') }}</span>
-          <div><strong>Hola, {{ primerNombre(p.nombre) || 'cliente' }}</strong><small>{{ p.email }}</small></div>
-        </div>
+        @if (porRecortar(); as archivo) {
+          <app-recortar-foto [archivo]="archivo" [guardando]="subiendo()" (recortada)="subirFoto($event)" (cancelar)="porRecortar.set(null)"></app-recortar-foto>
+        }
         @if (aviso()) { <p class="cc-ok" role="status">{{ aviso() }}</p> }
-        @if (!p.telefono) { <p class="cc-falta" role="status">Completa tu celular en <b>Mis datos</b> para que te podamos avisar de tus pedidos.</p> }
 
+        @if (incompleta()) {
+          <!-- Recién creada: los datos obligatorios de una vez -->
+          <div class="cc-tarjeta">
+            <ol class="cc-pasos" aria-label="Pasos">
+              <li [class.on]="!datosListos()" [class.ok]="datosListos()"><b>{{ datosListos() ? '✓' : '1' }}</b>Tus datos</li>
+              <li [class.on]="datosListos()"><b>2</b>Tu dirección</li>
+            </ol>
+            @if (!datosListos()) {
+              <h2>Completa tu cuenta</h2>
+              <p class="cc-sub">Una sola vez: así tus pedidos salen listos y te podemos avisar cómo van.</p>
+              <div class="cc-form">
+            <div class="cc-foto-fila">
+              <span class="cc-avatar cc-avatar-g" aria-hidden="true">@if (p.avatar_url) { <img [src]="p.avatar_url" alt="" referrerpolicy="no-referrer" /> } @else { {{ iniciales(p.nombre || p.email || '?') }} }</span>
+              <div class="cc-foto-acc">
+                <label class="cc-link cc-subir">{{ subiendo() ? 'Subiendo…' : p.avatar_url ? 'Cambiar foto' : 'Agregar foto de perfil' }}<input type="file" accept="image/*" (change)="elegirFoto($event)" hidden /></label>
+                @if (p.avatar_url) { <button type="button" class="cc-link cc-peligro" (click)="quitarFoto()">Quitar foto</button> }
+                <small>Opcional · se ve en tu cuenta</small>
+              </div>
+            </div>
+            <label><span>Nombre completo <span class="cc-obl">*</span></span><input autocomplete="name" [ngModel]="nombre" (ngModelChange)="nombre = limpiar($event)" /></label>
+            <label><span>Celular <span class="cc-obl">*</span></span>
+              <div class="cc-tel">
+                <select [(ngModel)]="prefijo" aria-label="Indicativo">
+                  @for (x of paises; track x.iso) { <option [value]="x.prefijo">{{ bandera(x.iso) }} +{{ x.prefijo }}</option> }
+                </select>
+                <input type="tel" inputmode="numeric" autocomplete="tel-national" [(ngModel)]="telefono" />
+              </div>
+            </label>
+            <label><span>Documento <span class="cc-obl">*</span> <small>(para tus facturas y envíos a otras ciudades)</small></span>
+              <div class="cc-tel">
+                <select [(ngModel)]="tipoDoc" aria-label="Tipo de documento">
+                  <option value="CC">CC</option><option value="CE">CE</option><option value="NIT">NIT</option><option value="PP">Pasaporte</option><option value="TI">TI</option>
+                </select>
+                <input inputmode="numeric" [(ngModel)]="documento" placeholder="Número" />
+              </div>
+            </label>
+            @if (errorDatos()) { <p class="cc-error" role="alert">{{ errorDatos() }}</p> }
+                <button class="cc-pri" [disabled]="ocupado()" (click)="guardarDatos()">{{ ocupado() ? 'Guardando…' : 'Continuar' }}</button>
+              </div>
+            } @else {
+              <h2>¿A dónde te llevamos tus pedidos?</h2>
+              <p class="cc-sub">Tu dirección principal. Después puedes agregar más (trabajo, otra casa…).</p>
+              <div class="cc-form">
+              <div class="cc-etiquetas" role="group" aria-label="Nombre de la dirección">
+                @for (e of ['Casa', 'Trabajo', 'Otra']; track e) {
+                  <button type="button" [class.on]="dEtiqueta === e" (click)="dEtiqueta = e">{{ e }}</button>
+                }
+              </div>
+              <label>Dirección<input autocomplete="street-address" maxlength="200" [(ngModel)]="dDireccion" placeholder="Ej: Cra 45 # 12-30 apto 201" /></label>
+              <label class="cc-barrio">Barrio <small>(si no eres de Cali, escribe tu ciudad)</small>
+                <input autocomplete="off" [ngModel]="dBarrio()" (ngModelChange)="escribirBarrio($event)" (focus)="enBarrio.set(true)" (blur)="salirBarrio()" placeholder="Ej: San Fernando" />
+                @if (sugerencias().length) {
+                  <ul class="cc-sug" role="listbox">
+                    @for (b of sugerencias(); track b.barrio) {
+                      <li><button type="button" (mousedown)="$event.preventDefault()" (click)="elegirBarrio(b.barrio)"><span>{{ b.barrio }}</span><small>domicilio {{ pesos(b.domicilio) }}</small></button></li>
+                    }
+                  </ul>
+                }
+                @if (barrioOk()) { <span class="cc-barrio-ok">✓ {{ barrioOk() }}</span> }
+              </label>
+              <label>Indicaciones <small>(opcional)</small><input maxlength="200" [(ngModel)]="dIndicaciones" placeholder="Ej: casa esquinera, portón negro" /></label>
+              <label class="cc-check"><input type="checkbox" [(ngModel)]="dPrincipal" />Usar como dirección principal</label>
+                @if (errorDir()) { <p class="cc-error" role="alert">{{ errorDir() }}</p> }
+                <button class="cc-pri" [disabled]="ocupado()" (click)="guardarDireccion()">{{ ocupado() ? 'Guardando…' : 'Terminar' }}</button>
+                <button class="cc-link cc-centro" (click)="volverADatos()">← Volver a mis datos</button>
+              </div>
+            }
+          </div>
+        } @else {
+          @switch (vista()) {
+            @case ('inicio') {
+              <div class="cc-tarjeta cc-hola">
+                <span class="cc-avatar" aria-hidden="true">@if (p.avatar_url) { <img [src]="p.avatar_url" alt="" referrerpolicy="no-referrer" /> } @else { {{ iniciales(p.nombre || p.email || '?') }} }</span>
+                <div><strong>Hola, {{ primerNombre(p.nombre) || 'cliente' }}</strong><small>{{ p.email }}</small>
+                  <button class="cc-link" (click)="irA('perfil')">Editar perfil</button></div>
+              </div>
         <section class="cc-tarjeta" aria-labelledby="t-compras">
           <div class="cc-seccion-cab"><h2 id="t-compras">Mis compras</h2>
             @if (compras().length > 3) { <button class="cc-link" (click)="verTodas.set(!verTodas())">{{ verTodas() ? 'Ver menos' : 'Ver todas (' + compras().length + ')' }}</button> }</div>
@@ -231,12 +333,32 @@ function normal(s: string): string {
           }
         </section>
 
-        <section class="cc-tarjeta" aria-labelledby="t-datos">
-          <h2 id="t-datos">Mis datos</h2>
-          <p class="cc-sub">Salen llenos cada vez que compras.</p>
-          <div class="cc-form">
-            <label>Nombre completo<input autocomplete="name" [ngModel]="nombre" (ngModelChange)="nombre = limpiar($event)" /></label>
-            <label>Celular
+              <section class="cc-tarjeta cc-menu" aria-labelledby="t-config">
+                <h2 id="t-config">Configuración</h2>
+                <button type="button" (click)="irA('perfil')"><span class="cc-menu-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></span><span><strong>Mi perfil</strong><small>Foto, nombre, celular y documento</small></span><svg class="cc-menu-fl" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+                <button type="button" (click)="irA('direcciones')"><span class="cc-menu-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span><span><strong>Mis direcciones</strong><small>{{ p.direcciones.length }} {{ p.direcciones.length === 1 ? 'guardada' : 'guardadas' }}</small></span><svg class="cc-menu-fl" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+                <button type="button" (click)="irA('tarjetas')"><span class="cc-menu-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19M6.5 15h4"/></svg></span><span><strong>Mis tarjetas</strong><small>{{ (p.tarjetas?.length ?? 0) ? (p.tarjetas!.length + (p.tarjetas!.length === 1 ? ' guardada' : ' guardadas')) : 'Ninguna guardada' }}</small></span><svg class="cc-menu-fl" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+                <button type="button" (click)="irA('seguridad')"><span class="cc-menu-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10" width="15" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span><span><strong>Seguridad</strong><small>Contraseña de tu cuenta</small></span><svg class="cc-menu-fl" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+                <button type="button" class="cc-menu-salir" (click)="salir()"><span class="cc-menu-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 17l-5-5 5-5M5 12h11"/></svg></span><span><strong>Cerrar sesión</strong></span></button>
+              </section>
+
+              <button class="cc-pri" (click)="volver()">Seguir comprando</button>
+            }
+            @case ('perfil') {
+              <section class="cc-tarjeta" aria-labelledby="t-perfil">
+                <h2 id="t-perfil">Mi perfil</h2>
+                <p class="cc-sub">Salen llenos cada vez que compras.</p>
+                <div class="cc-form">
+            <div class="cc-foto-fila">
+              <span class="cc-avatar cc-avatar-g" aria-hidden="true">@if (p.avatar_url) { <img [src]="p.avatar_url" alt="" referrerpolicy="no-referrer" /> } @else { {{ iniciales(p.nombre || p.email || '?') }} }</span>
+              <div class="cc-foto-acc">
+                <label class="cc-link cc-subir">{{ subiendo() ? 'Subiendo…' : p.avatar_url ? 'Cambiar foto' : 'Agregar foto de perfil' }}<input type="file" accept="image/*" (change)="elegirFoto($event)" hidden /></label>
+                @if (p.avatar_url) { <button type="button" class="cc-link cc-peligro" (click)="quitarFoto()">Quitar foto</button> }
+                <small>Opcional · se ve en tu cuenta</small>
+              </div>
+            </div>
+            <label><span>Nombre completo <span class="cc-obl">*</span></span><input autocomplete="name" [ngModel]="nombre" (ngModelChange)="nombre = limpiar($event)" /></label>
+            <label><span>Celular <span class="cc-obl">*</span></span>
               <div class="cc-tel">
                 <select [(ngModel)]="prefijo" aria-label="Indicativo">
                   @for (x of paises; track x.iso) { <option [value]="x.prefijo">{{ bandera(x.iso) }} +{{ x.prefijo }}</option> }
@@ -244,7 +366,7 @@ function normal(s: string): string {
                 <input type="tel" inputmode="numeric" autocomplete="tel-national" [(ngModel)]="telefono" />
               </div>
             </label>
-            <label>Documento <small>(para envíos a otras ciudades y facturas)</small>
+            <label><span>Documento <span class="cc-obl">*</span> <small>(para tus facturas y envíos a otras ciudades)</small></span>
               <div class="cc-tel">
                 <select [(ngModel)]="tipoDoc" aria-label="Tipo de documento">
                   <option value="CC">CC</option><option value="CE">CE</option><option value="NIT">NIT</option><option value="PP">Pasaporte</option><option value="TI">TI</option>
@@ -253,10 +375,12 @@ function normal(s: string): string {
               </div>
             </label>
             @if (errorDatos()) { <p class="cc-error" role="alert">{{ errorDatos() }}</p> }
-            <button class="cc-pri" [disabled]="ocupado()" (click)="guardarDatos()">{{ ocupado() ? 'Guardando…' : 'Guardar mis datos' }}</button>
-          </div>
-        </section>
-
+                  <label>Correo <small>(con el que entras)</small><input [value]="p.email" disabled /></label>
+                  <button class="cc-pri" [disabled]="ocupado()" (click)="guardarDatos()">{{ ocupado() ? 'Guardando…' : 'Guardar cambios' }}</button>
+                </div>
+              </section>
+            }
+            @case ('direcciones') {
         <section class="cc-tarjeta" aria-labelledby="t-dirs">
           <div class="cc-seccion-cab"><h2 id="t-dirs">Mis direcciones</h2>
             @if (!formDir() && p.direcciones.length < 10) { <button class="cc-link" (click)="nuevaDireccion()">+ Agregar</button> }</div>
@@ -307,7 +431,9 @@ function normal(s: string): string {
             <p class="cc-vacio">Todavía no tienes direcciones. Agrega una y saldrá lista cuando compres.</p>
           }
         </section>
-        @if (p.tarjetas?.length) {
+            }
+            @case ('tarjetas') {
+              @if (p.tarjetas?.length) {
           <section class="cc-tarjeta" aria-labelledby="t-tarjetas">
             <h2 id="t-tarjetas">Mis tarjetas</h2>
             <p class="cc-sub">Las guarda Wompi (de Bancolombia); aquí solo vemos los últimos 4 números.</p>
@@ -324,11 +450,25 @@ function normal(s: string): string {
               }
             </ul>
           </section>
+              } @else {
+                <section class="cc-tarjeta"><h2>Mis tarjetas</h2>
+                  <p class="cc-vacio">No tienes tarjetas guardadas. Cuando pagues con tarjeta en la tienda, marca "Guardar esta tarjeta" y la próxima vez pagas con un toque.</p></section>
+              }
+            }
+            @case ('seguridad') {
+              <section class="cc-tarjeta" aria-labelledby="t-seg">
+                <h2 id="t-seg">Seguridad</h2>
+                <p class="cc-sub">Cambia la contraseña con la que entras con tu correo ({{ p.email }}). Si entras con Google, aquí puedes crear una para entrar también con tu correo.</p>
+                <div class="cc-form">
+                  <label>Nueva contraseña <small>({{ regla }})</small><input type="password" autocomplete="new-password" [(ngModel)]="clave" /></label>
+                  <label>Repítela<input type="password" autocomplete="new-password" [(ngModel)]="clave2" /></label>
+                  @if (error()) { <p class="cc-error" role="alert">{{ error() }}</p> }
+                  <button class="cc-pri" [disabled]="ocupado()" (click)="cambiarClaveCuenta()">{{ ocupado() ? 'Guardando…' : 'Cambiar contraseña' }}</button>
+                </div>
+              </section>
+            }
+          }
         }
-
-
-        <button class="cc-pri" (click)="volver()">Seguir comprando</button>
-        <button class="cc-sec cc-salir" (click)="salir()">Cerrar sesión</button>
       } @else if (sb.session() && sb.usuario()) {
         <!-- Sesión del equipo en este celular -->
         <div class="cc-tarjeta">
@@ -505,6 +645,7 @@ export class CuentaPage implements OnInit, OnDestroy {
 
   // Dirección
   formDir = signal(false);
+  private incompletaAntes = false;
   dId: number | null = null;
   dEtiqueta = 'Casa';
   dDireccion = '';
@@ -619,6 +760,107 @@ export class CuentaPage implements OnInit, OnDestroy {
 
   google = signal(false);
 
+  // ---------------------------------------------------------------- Vistas de Mi cuenta
+  vista = signal<'inicio' | 'perfil' | 'direcciones' | 'tarjetas' | 'seguridad'>('inicio');
+  /** Recién creada (o le falta algo obligatorio): nombre, celular, documento y una dirección */
+  incompleta = computed(() => {
+    const p = this.c.perfil();
+    return !!p && !(p.nombre && p.telefono && p.documento && p.direcciones.length);
+  });
+  private corrigiendoDatos = signal(false);
+  datosListos = computed(() => {
+    const p = this.c.perfil();
+    return !!p && !!(p.nombre && p.telefono && p.documento) && !this.corrigiendoDatos();
+  });
+  titulo(): string {
+    const p = this.c.perfil();
+    if (!p) return this.modo() === 'crear' ? 'Crea tu cuenta' : 'Ingresa a tu cuenta';
+    if (this.incompleta()) return 'Completa tu cuenta';
+    return { inicio: 'Mi cuenta', perfil: 'Mi perfil', direcciones: 'Mis direcciones', tarjetas: 'Mis tarjetas', seguridad: 'Seguridad' }[this.vista()];
+  }
+  irA(v: 'perfil' | 'direcciones' | 'tarjetas' | 'seguridad'): void {
+    this.aviso.set('');
+    this.error.set('');
+    this.errorDatos.set('');
+    this.formDir.set(false);
+    this.llenarDatos();
+    this.vista.set(v);
+    document.querySelector('.cc-scroll')?.scrollTo({ top: 0 });
+  }
+  atras(): void {
+    if (this.c.perfil() && !this.incompleta() && this.vista() !== 'inicio') {
+      this.vista.set('inicio');
+      this.formDir.set(false);
+      return;
+    }
+    this.volver();
+  }
+  volverADatos(): void {
+    this.llenarDatos();
+    this.corrigiendoDatos.set(true);
+  }
+  /** Paso 2 del registro: el formulario de la dirección principal, listo */
+  private prepararDireccionAlta(): void {
+    this.dId = null;
+    this.dEtiqueta = 'Casa';
+    this.dDireccion = '';
+    this.dBarrio.set('');
+    this.dIndicaciones = '';
+    this.dPrincipal = true;
+    this.errorDir.set('');
+    void this.cargarBarrios();
+  }
+
+  // ---------------------------------------------------------------- Foto de perfil
+  porRecortar = signal<File | null>(null);
+  subiendo = signal(false);
+  elegirFoto(ev: Event): void {
+    const input = ev.target as HTMLInputElement;
+    const archivo = input.files?.[0];
+    input.value = '';
+    if (!archivo) return;
+    if (!archivo.type.startsWith('image/') && !/\.(heic|heif|jpe?g|png|webp)$/i.test(archivo.name)) {
+      this.aviso.set('Elige una foto (JPG, PNG o HEIC).');
+      return;
+    }
+    this.porRecortar.set(archivo);
+  }
+  async subirFoto(blob: Blob): Promise<void> {
+    this.subiendo.set(true);
+    try {
+      await this.c.subirFoto(blob);
+      this.porRecortar.set(null);
+      this.aviso.set('Foto actualizada.');
+    } catch (e) {
+      this.aviso.set(mensajeError(e));
+    } finally {
+      this.subiendo.set(false);
+    }
+  }
+  async quitarFoto(): Promise<void> {
+    if (!confirm('¿Quitar tu foto de perfil?')) return;
+    try {
+      await this.c.ponerFoto(null);
+      this.aviso.set('Foto quitada.');
+    } catch (e) {
+      this.aviso.set(mensajeError(e));
+    }
+  }
+
+  async cambiarClaveCuenta(): Promise<void> {
+    this.error.set('');
+    const malo = problemaClave(this.clave, this.c.perfil()?.email ?? '');
+    if (malo) return this.error.set(malo);
+    if (this.clave !== this.clave2) return this.error.set('Las dos contraseñas no coinciden.');
+    this.ocupado.set(true);
+    const { error } = await this.c.cambiarClave(this.clave);
+    this.ocupado.set(false);
+    if (error) return this.error.set(this.traducir(error.message, error.status));
+    this.clave = this.clave2 = '';
+    this.vista.set('inicio');
+    this.aviso.set('Listo, tu contraseña quedó cambiada.');
+  }
+
   async conGoogle(): Promise<void> {
     this.ocupado.set(true);
     this.error.set('');
@@ -667,6 +909,7 @@ export class CuentaPage implements OnInit, OnDestroy {
   private llenarDatos(): void {
     const p = this.c.perfil();
     if (!p) return;
+    if (this.incompleta() && this.datosListos() && !this.barrios().length) this.prepararDireccionAlta();
     if (!this.compras().length && !this.cargandoCompras()) void this.cargarCompras();
     if (!this.favoritos().length) void this.cargarFavoritos();
     this.nombre = p.nombre;
@@ -844,10 +1087,19 @@ export class CuentaPage implements OnInit, OnDestroy {
     const tel = this.telefono.replace(/\D/g, '');
     const malTel = !tel ? 'Escribe tu celular.' : errorTelefono(this.prefijo, tel);
     if (malTel) return this.errorDatos.set(malTel);
+    if (this.documento.replace(/[^0-9A-Za-z]/g, '').length < 5) return this.errorDatos.set('Escribe tu número de documento.');
+    const enAlta = this.incompleta();
     this.ocupado.set(true);
     const { error } = await this.c.guardarDatos({ nombre: this.nombre, prefijo: this.prefijo, telefono: tel, tipo_doc: this.tipoDoc, documento: this.documento });
     this.ocupado.set(false);
     if (error) return this.errorDatos.set(mensajeError(error));
+    this.corrigiendoDatos.set(false);
+    if (enAlta) {
+      this.prepararDireccionAlta();
+      document.querySelector('.cc-scroll')?.scrollTo({ top: 0 });
+      return;
+    }
+    this.vista.set('inicio');
     this.aviso.set('Tus datos quedaron guardados.');
   }
 
@@ -904,12 +1156,15 @@ export class CuentaPage implements OnInit, OnDestroy {
     if (this.dDireccion.trim().length < 5) return this.errorDir.set('Escribe la dirección completa (calle, número y apto o casa).');
     const barrio = this.barrioOk();
     if (!barrio) return this.errorDir.set('Elige tu barrio de la lista. Si no eres de Cali, escribe solo el nombre de tu ciudad y elígela.');
+    this.incompletaAntes = this.incompleta();
     this.ocupado.set(true);
     const { error } = await this.c.guardarDireccion({ id: this.dId, etiqueta: this.dEtiqueta, direccion: this.dDireccion, barrio, indicaciones: this.dIndicaciones, principal: this.dPrincipal });
     this.ocupado.set(false);
     if (error) return this.errorDir.set(mensajeError(error));
+    const eraAlta = this.incompletaAntes;
     this.formDir.set(false);
-    this.aviso.set('Dirección guardada.');
+    this.aviso.set(eraAlta ? '¡Listo! Tu cuenta quedó completa.' : 'Dirección guardada.');
+    if (eraAlta) document.querySelector('.cc-scroll')?.scrollTo({ top: 0 });
   }
 
   async hacerPrincipal(d: ClienteDireccion): Promise<void> {

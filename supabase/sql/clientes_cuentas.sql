@@ -242,3 +242,19 @@ returns jsonb language sql stable security definer set search_path = '' as $$
   )
   select coalesce(jsonb_agg(to_jsonb(f) order by f.fecha desc), '[]') from (select * from filas order by fecha desc limit 100) f
 $$;
+
+-- ===================== Foto de perfil del cliente (2026-11-09, YA APLICADO) =====================
+alter table public.clientes_cuentas add column if not exists avatar_url text;
+-- vincular_usuario() ahora guarda también la foto de Google (avatar_url / picture) al crear la cuenta de cliente.
+-- cliente_yo() devuelve 'avatar_url'. Cambiar o quitar la foto (solo una subida a su propia carpeta de avatars):
+create or replace function public.cliente_foto(p_url text)
+returns jsonb language plpgsql security definer set search_path = '' as $$
+declare v_cli bigint := (select id from public.clientes_cuentas where auth_id = auth.uid());
+begin
+  if v_cli is null then raise exception 'Inicia sesión con tu cuenta de cliente'; end if;
+  if p_url is not null and p_url not like 'https://ktksdoedeazkvohewqzx.supabase.co/storage/v1/object/public/avatars/' || auth.uid()::text || '/%' then
+    raise exception 'Foto inválida';
+  end if;
+  update public.clientes_cuentas set avatar_url = p_url, updated_at = now() where id = v_cli;
+  return public.cliente_yo();
+end $$;

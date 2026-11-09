@@ -1,5 +1,33 @@
 [
   {
+    "id": "2026-11-09-cuenta-cliente-config",
+    "fecha": "2026-11-09",
+    "hora": "00:20",
+    "titulo": "Cuenta del cliente: foto, datos completos al registrarse y Configuración",
+    "cuerpo": "Al crear su cuenta en la tienda, el cliente completa de una vez sus datos (celular, documento) y su dirección. Puede poner foto de perfil, y en Configuración edita todo.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "Para el cliente",
+        "pasos": [
+          "Al crear la cuenta (con correo o Google) le sale \"Completa tu cuenta\": 1) nombre, celular, documento y foto (opcional); 2) su dirección principal.",
+          "Si entra con Google, su foto de Google queda de una vez; la puede cambiar o quitar.",
+          "En Mi cuenta → Configuración: Mi perfil, Mis direcciones, Mis tarjetas, Seguridad (cambiar o crear contraseña) y Cerrar sesión."
+        ]
+      },
+      {
+        "titulo": "Para el equipo",
+        "pasos": [
+          "Los pedidos de clientes con cuenta llegan con su cédula y su celular siempre completos."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-11-09-google-clientes",
     "fecha": "2026-11-08",
     "hora": "23:55",

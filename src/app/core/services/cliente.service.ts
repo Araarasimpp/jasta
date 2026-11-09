@@ -44,6 +44,7 @@ export interface ClientePerfil {
   telefono: string | null;
   tipo_doc: string;
   documento: string | null;
+  avatar_url?: string | null;
   desde: string;
   direcciones: ClienteDireccion[];
   tarjetas?: ClienteTarjeta[];
@@ -203,6 +204,24 @@ export class ClienteService {
     const r = await this.sb.client.rpc('cliente_quitar_tarjeta', { p_id: id });
     if (!r.error) this.perfil.set(r.data as ClientePerfil);
     return r;
+  }
+
+  // ---------------------------------------------------------------- Foto de perfil
+  /** Sube la foto (ya recortada) a su carpeta y la deja en su cuenta */
+  async subirFoto(blob: Blob): Promise<void> {
+    const uid = this.sb.session()?.user.id;
+    if (!uid) throw new Error('Inicia sesión otra vez');
+    const ruta = `${uid}/foto-${Date.now()}.jpg`;
+    const { error } = await this.sb.client.storage.from('avatars').upload(ruta, blob, { contentType: 'image/jpeg', upsert: false });
+    if (error) throw error;
+    const url = this.sb.client.storage.from('avatars').getPublicUrl(ruta).data.publicUrl;
+    await this.ponerFoto(url);
+  }
+
+  async ponerFoto(url: string | null): Promise<void> {
+    const r = await this.sb.client.rpc('cliente_foto', { p_url: url });
+    if (r.error) throw r.error;
+    this.perfil.set(r.data as ClientePerfil);
   }
 
   // ---------------------------------------------------------------- Google

@@ -197,7 +197,7 @@ function parecido(a: string, b: string): number {
           @if (unidades()) { <span class="t-badge">{{ unidades() }}</span> }
         </button>
         <button type="button" class="t-icono-cuenta" [class.dentro]="!!cli.perfil()" (click)="irCuenta()" [attr.aria-label]="cli.perfil() ? 'Mi cuenta' : 'Ingresar o crear cuenta'">
-          @if (cli.perfil(); as p) { {{ iniciales(p.nombre || p.email || '') }} } @else {
+          @if (cli.perfil(); as p) { @if (p.avatar_url) { <img class="t-cuenta-foto" [src]="p.avatar_url" alt="" referrerpolicy="no-referrer" /> } @else { {{ iniciales(p.nombre || p.email || '') }} } } @else {
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
           }
         </button>
