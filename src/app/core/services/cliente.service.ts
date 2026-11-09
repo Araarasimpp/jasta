@@ -11,7 +11,7 @@ export interface ClienteDireccion {
   principal: boolean;
 }
 export interface CompraItem { producto_id: number | null; nombre: string; cantidad: number; precio: number; color: string | null; talla: string | null; imagen_url: string | null; mi_resena?: number | null }
-export interface CompraAyuda { motivo: string; mensaje: string | null; estado: string; fecha: string }
+export interface CompraAyuda { motivo: string; mensaje: string | null; estado: string; fecha: string; respuesta?: string | null; resuelta_por?: string | null }
 export interface Compra {
   fecha: string;
   codigo: string | null;

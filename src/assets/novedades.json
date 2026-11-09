@@ -1,5 +1,27 @@
 [
   {
+    "id": "2026-11-09-ayuda-clientes",
+    "fecha": "2026-11-09",
+    "hora": "00:35",
+    "titulo": "Nueva página: Ayuda a clientes",
+    "cuerpo": "Todo lo que los clientes reportan desde su cuenta (llegó dañado, garantía, ¿cuándo me llega?…) queda en una lista para atenderlo y marcarlo como resuelto.",
+    "roles": [
+      "admin",
+      "vendedora"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se usa",
+        "pasos": [
+          "Menú → Ventas → Ayuda a clientes (el admin ve todo; cada vendedora, lo de sus pedidos). El aviso 🆘 también abre esta página.",
+          "Cada reporte muestra el cliente, qué pasó, su mensaje, el pedido (se abre con un toque), los productos y el total.",
+          "Botones para escribirle por WhatsApp (con el mensaje ya escrito) o llamarlo.",
+          "\"Resolver\": escribe una respuesta corta (ej: \"Te cambiamos el producto mañana\") y el cliente la ve en su pedido con un ✓ Resuelto. Si hace falta, \"Reabrir\"."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-11-09-calificar-ayuda",
     "fecha": "2026-11-09",
     "hora": "00:30",

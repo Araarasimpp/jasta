@@ -156,6 +156,9 @@ function normal(s: string): string {
       textarea { width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1px solid #d6d9e1; border-radius: 12px; font: inherit; font-size: 15px; resize: vertical; }
       .cc-reporte { margin: 0; padding: 10px 12px; border-radius: 12px; background: #fff4e5; font-size: 13.5px; line-height: 1.4; }
       .cc-reporte small { display: block; margin-top: 2px; color: #8a4b00; font-size: 12px; }
+      .cc-reporte.cc-resuelto { background: #e6f7ee; }
+      .cc-reporte.cc-resuelto small { color: #1a7f4b; }
+      .cc-respuesta { display: block; margin-top: 6px; padding-top: 6px; border-top: 1px solid #00000014; font-size: 13.5px; }
       .cc-avatar { overflow: hidden; }
       .cc-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
       .cc-hola .cc-link { margin-top: 4px; font-size: 13px; }
@@ -670,7 +673,8 @@ function normal(s: string): string {
         <section class="cc-bloque" aria-labelledby="t-ayuda">
           <h3 id="t-ayuda">¿Necesitas ayuda con este pedido?</h3>
           @for (a of x.ayudas ?? []; track a.fecha) {
-            <p class="cc-reporte"><b>{{ a.motivo }}</b>{{ a.mensaje ? ' · "' + a.mensaje + '"' : '' }}<small>{{ fechaCorta(a.fecha) }} · {{ a.estado === 'abierta' ? 'Recibido: te contactamos pronto' : 'Resuelto' }}</small></p>
+            <p class="cc-reporte" [class.cc-resuelto]="a.estado !== 'abierta'"><b>{{ a.motivo }}</b>{{ a.mensaje ? ' · "' + a.mensaje + '"' : '' }}<small>{{ fechaCorta(a.fecha) }} · {{ a.estado === 'abierta' ? 'Recibido: te contactamos pronto' : '✓ Resuelto' }}</small>
+              @if (a.respuesta) { <span class="cc-respuesta"><b>{{ a.resuelta_por || 'Jasta' }}:</b> {{ a.respuesta }}</span> }</p>
           }
           @if (hojaModo() === 'ayuda') {
             <div class="cc-motivos" role="radiogroup" aria-label="¿Qué pasó?">

@@ -152,6 +152,11 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/pedidos-web/pedidos-web.page').then((m) => m.PedidosWebPage),
       },
       {
+        // Lo que reportan los clientes desde su cuenta de la tienda (Mis compras → pedir ayuda)
+        path: 'ayuda-clientes', canActivate: [rolGuard], data: { roles: ['admin', 'vendedora'] },
+        loadComponent: () => import('./paginas/ayuda-clientes/ayuda-clientes.page').then((m) => m.AyudaClientesPage),
+      },
+      {
         // Clientes que ya compraron y llevan un tiempo sin volver
         path: 'recontactar', canActivate: [rolGuard], data: { roles: ['admin', 'vendedora'] },
         loadComponent: () => import('./paginas/recontactar/recontactar.page').then((m) => m.RecontactarPage),

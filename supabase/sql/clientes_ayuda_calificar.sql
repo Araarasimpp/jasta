@@ -51,3 +51,12 @@ begin
     case when v_ped is not null then '/app/pedidos?id=' || v_ped else '/app/pedidos-web' end, v_ped);
   return jsonb_build_object('ok', true);
 end $$;
+
+-- ===================== Página "Ayuda a clientes" (2026-11-09, YA APLICADO) =====================
+alter table public.clientes_ayuda add column if not exists respuesta text;
+alter table public.clientes_ayuda add column if not exists resuelta_at timestamptz;
+alter table public.clientes_ayuda add column if not exists resuelta_por text;
+-- ayuda_clientes_lista(p_estado: 'abierta' | 'resuelta' | 'todas'): el admin ve todas; la vendedora, las de sus pedidos.
+-- ayuda_cliente_resolver(p_id, p_respuesta): la marca resuelta; el cliente ve la respuesta en su pedido (cliente_compras → ayudas[].respuesta).
+-- ayuda_cliente_reabrir(p_id). El aviso 🆘 al equipo ahora abre /app/ayuda-clientes.
+-- (Definiciones vigentes: select pg_get_functiondef('public.ayuda_clientes_lista(text)'::regprocedure); etc.)

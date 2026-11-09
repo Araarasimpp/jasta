@@ -52,6 +52,7 @@ import {
   sparklesOutline,
   globeOutline,
   chatbubblesOutline,
+  helpBuoyOutline,
   analyticsOutline,
 } from 'ionicons/icons';
 import { SupabaseService } from '../core/services/supabase.service';
@@ -111,6 +112,7 @@ const MENU: ItemMenu[] = [
   { label: 'Catálogo', path: '/app/catalogo', icon: 'book-outline', roles: ['admin', 'vendedora'], grupo: 'Ventas' },
   { label: 'Cupones', path: '/app/cupones', icon: 'ticket-outline', roles: ['admin'], grupo: 'Ventas', buscar: 'descuento promocion codigo oferta' },
   { label: 'Pedidos de la tienda', path: '/app/pedidos-web', icon: 'globe-outline', roles: ['admin', 'vendedora'], grupo: 'Ventas' , buscar: 'web catalogo publico enlace link' },
+  { label: 'Ayuda a clientes', path: '/app/ayuda-clientes', icon: 'help-buoy-outline', roles: ['admin', 'vendedora'], grupo: 'Ventas', buscar: 'reclamo garantia problema soporte danado cliente reporte' },
   { label: 'Recontactar', path: '/app/recontactar', icon: 'chatbubbles-outline', roles: ['admin', 'vendedora'], grupo: 'Ventas' , buscar: 'clientes dormidos whatsapp' },
   { label: 'Clientes', path: '/app/clientes', icon: 'people-circle-outline', roles: ['admin', 'venta_local'], grupo: 'Ventas' },
   { label: 'Cuadres', path: '/app/cuadres', icon: 'wallet-outline', roles: ['admin', 'cuadres', 'mensajero'], grupo: 'Entregas' , buscar: 'plata efectivo mensajeros' },
@@ -458,7 +460,7 @@ export class ShellComponent implements OnInit, OnDestroy {
 
   constructor() {
     addIcons({ homeOutline, colorPaletteOutline, calendarOutline, hourglassOutline, swapHorizontalOutline, searchOutline, 
-      sparklesOutline, globeOutline, chatbubblesOutline, analyticsOutline, add, close, chevronDownOutline, layersOutline, pricetagsOutline, returnDownBackOutline, pieChartOutline, alertCircleOutline, cardOutline, trendingDownOutline, barChartOutline, chevronBackOutline, chevronForwardOutline, cubeOutline, ellipsisHorizontal,
+      sparklesOutline, globeOutline, helpBuoyOutline, chatbubblesOutline, analyticsOutline, add, close, chevronDownOutline, layersOutline, pricetagsOutline, returnDownBackOutline, pieChartOutline, alertCircleOutline, cardOutline, trendingDownOutline, barChartOutline, chevronBackOutline, chevronForwardOutline, cubeOutline, ellipsisHorizontal,
       logOutOutline, moonOutline, peopleOutline, receiptOutline, bicycleOutline, clipboardOutline, sunnyOutline, walletOutline, ticketOutline, statsChartOutline, settingsOutline,
       storefrontOutline, listOutline, trophyOutline, bookOutline, gridOutline, cashOutline, bagHandleOutline, peopleCircleOutline, timeOutline, personCircleOutline, notificationsOutline, locationOutline,
     });
