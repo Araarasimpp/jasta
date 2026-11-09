@@ -20,7 +20,7 @@ interface Deuda {
   id: number; proveedor: string; concepto: string | null; total: number; fecha: string; vence: string | null;
   estado: 'abierta' | 'pagada' | 'anulada'; compra_id: number | null; creado_por: string | null; contar_desde: string | null;
   abonado: number; saldo: number; costo_vendido: number | null; unidades: number | null; vendidas: number | null; por_apartar: number;
-  items: Item[] | null; abonos: Abono[];
+  items: Item[] | null; abonos: Abono[]; comprobantes: string[] | null;
 }
 interface CompraLibre { id: number; fecha: string; proveedor: string; total: number; productos: string | null }
 type Filtro = 'abiertas' | 'pagadas' | 'todas';
@@ -80,6 +80,8 @@ const METODOS: { id: Metodo; label: string }[] = [
       .vendido .fila { display: flex; justify-content: space-between; gap: 10px; }
       .vendido .num { font-family: var(--mono-font); font-weight: 650; }
       .apartar { color: var(--oro-texto); font-weight: 700; }
+      .docs { display: flex; gap: 8px; flex-wrap: wrap; }
+      .docs .b { height: 36px; font-size: 13.5px; }
       .items { width: 100%; border-collapse: collapse; font-size: 13px; }
       .items th { text-align: left; font-size: 11px; color: var(--text-muted); font-weight: 650; padding: 4px; border-bottom: 1px solid var(--border); }
       .items td { padding: 6px 4px; border-bottom: var(--perfora); }
@@ -168,18 +170,30 @@ const METODOS: { id: Metodo; label: string }[] = [
                 @if (d.estado === 'abierta') {
                   <div class="fila apartar"><span>Aparta y abona</span><span class="num">{{ pesos(d.por_apartar) }}</span></div>
                 }
-                <button type="button" class="link" style="align-self: flex-start" (click)="alternar(d.id)">{{ abierta() === d.id ? 'Ocultar productos' : 'Ver productos' }}</button>
-                @if (abierta() === d.id) {
-                  <table class="items">
-                    <thead><tr><th>Producto</th><th class="der">Compradas</th><th class="der">Vendidas</th><th class="der">Quedan</th><th class="der costo">Costo c/u</th></tr></thead>
-                    <tbody>
-                      @for (i of d.items ?? []; track i.producto_id) {
-                        <tr><td>{{ i.nombre }}</td><td class="der">{{ i.cantidad }}</td><td class="der">{{ i.vendidas }}</td><td class="der">{{ i.quedan }}</td><td class="der costo">{{ pesos(i.costo) }}</td></tr>
-                      }
-                    </tbody>
-                  </table>
+              </div>
+            }
+
+            @if (d.estado !== 'anulada') {
+              <div class="docs">
+                @if (d.unidades) {
+                  <button type="button" class="b" (click)="alternar(d.id)" [attr.aria-expanded]="abierta() === d.id">{{ abierta() === d.id ? 'Ocultar productos' : 'Ver productos (' + (d.items?.length ?? 0) + ')' }}</button>
+                }
+                @if (d.comprobantes?.length) {
+                  <button type="button" class="b" (click)="verFactura(d)">Ver factura{{ d.comprobantes!.length > 1 ? ' (' + d.comprobantes!.length + ' fotos)' : '' }}</button>
+                } @else {
+                  <button type="button" class="b" (click)="abrirEditar(d)">Agregar foto de la factura</button>
                 }
               </div>
+            @if (d.unidades && abierta() === d.id) {
+              <table class="items">
+                <thead><tr><th>Producto</th><th class="der">Compradas</th><th class="der">Vendidas</th><th class="der">Quedan</th><th class="der costo">Costo c/u</th></tr></thead>
+                <tbody>
+                  @for (i of d.items ?? []; track i.producto_id) {
+                    <tr><td>{{ i.nombre }}</td><td class="der">{{ i.cantidad }}</td><td class="der">{{ i.vendidas }}</td><td class="der">{{ i.quedan }}</td><td class="der costo">{{ pesos(i.costo) }}</td></tr>
+                  }
+                </tbody>
+              </table>
+            }
             }
 
             @if (d.estado === 'abierta') {
@@ -264,6 +278,7 @@ const METODOS: { id: Metodo; label: string }[] = [
             <div class="campo"><label for="ed-cd">Contar lo vendido desde</label><input id="ed-cd" type="date" [max]="hoy" [(ngModel)]="eContar" />
               <small class="suave">{{ d.compra_id ? 'Vacío: desde que se registró la compra en Inventario.' : 'Vacío: desde la fecha de la deuda.' }} Se cuentan las unidades entregadas desde ese día, hasta la cantidad comprada.</small></div>
           }
+          <app-comprobantes-input [obligatorio]="false" titulo="Foto de la factura" [rutas]="eFactura()" (cambio)="eFactura.set($event)"></app-comprobantes-input>
           @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
         </div>
         <div class="hoja-pie">
@@ -409,6 +424,7 @@ export class DeudasPage implements OnInit {
   eFecha = '';
   eVence = '';
   eContar = '';
+  eFactura = signal<string[]>([]);
   sumarInv = signal(true);
   comprasLibres = signal<CompraLibre[]>([]);
   compraSel = signal<CompraLibre | null>(null);
@@ -594,6 +610,7 @@ export class DeudasPage implements OnInit {
     this.eFecha = d.fecha;
     this.eVence = d.vence ?? '';
     this.eContar = d.contar_desde ?? '';
+    this.eFactura.set([...(d.comprobantes ?? [])]);
     this.editando.set(d);
   }
 
@@ -608,8 +625,12 @@ export class DeudasPage implements OnInit {
       p_deuda: d.id, p_proveedor: this.eProveedor.trim(), p_concepto: this.eConcepto.trim(), p_total: Number(this.eTotal),
       p_fecha: this.eFecha, p_vence: this.eVence || null, p_contar_desde: this.eContar || null,
     });
+    let errorFoto: unknown = null;
+    if (!error && this.eFactura().join('|') !== (d.comprobantes ?? []).join('|')) {
+      errorFoto = (await this.sb.client.rpc('deuda_factura', { p_deuda: d.id, p_comprobantes: this.eFactura() })).error;
+    }
     this.ocupado.set(false);
-    if (error) return this.error.set(mensajeError(error));
+    if (error || errorFoto) return this.error.set(mensajeError(error || errorFoto));
     this.toast.ok('Deuda actualizada');
     this.editando.set(null);
     await this.cargar();
@@ -642,9 +663,15 @@ export class DeudasPage implements OnInit {
           p_vence: this.nVence || null, p_items: lineas.map((l) => ({ producto_id: l.id, cantidad: Math.round(Number(l.cantidad)), costo: Number(l.costo) })),
           p_contar_desde: fecha,
         });
+        // La foto de la factura queda guardada en la deuda
+        let fotoMal = false;
+        if (!r0.error && r0.data && this.facturaF().length) {
+          fotoMal = !!(await this.sb.client.rpc('deuda_factura', { p_deuda: r0.data as number, p_comprobantes: this.facturaF() })).error;
+        }
         this.ocupado.set(false);
         if (r0.error) return this.error.set(mensajeError(r0.error));
-        this.toast.ok(`Deuda con ${this.nProveedor.trim()} registrada`);
+        if (fotoMal) this.toast.error('La deuda quedó registrada, pero la foto no se guardó. Agrégala desde Editar.');
+        else this.toast.ok(`Deuda con ${this.nProveedor.trim()} registrada`);
         this.nueva.set(false);
         if (this.filtro() !== 'abiertas') this.filtro.set('abiertas');
         await this.cargar();
@@ -688,6 +715,11 @@ export class DeudasPage implements OnInit {
     this.nueva.set(false);
     if (this.filtro() !== 'abiertas') this.filtro.set('abiertas');
     await this.cargar();
+  }
+
+  verFactura(d: Deuda): void {
+    void urlsComprobantes(this.sb.client, d.comprobantes ?? []).then((urls) =>
+      this.visor.abrir(urls.map((url) => ({ url, titulo: `Factura · ${d.proveedor} · ${this.fecha(d.fecha)}` })), 0));
   }
 
   verSoporte(a: Abono): void {

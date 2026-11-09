@@ -2,8 +2,10 @@ import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 
 /**
  * Aviso de "hay una actualización": cada tanto (y al volver a la app) se revisa si se
- * publicó una versión nueva comparando el archivo principal de index.html con el que
- * está cargado. Si cambió, aparece arriba un aviso con el botón para actualizar.
+ * publicó una versión con novedades, comparando la marca <meta name="jasta-aviso"> de
+ * index.html (la última novedad, puesta al publicar) con la que está cargada. Si cambió,
+ * aparece arriba un aviso con el botón para actualizar. Las publicaciones sin novedad
+ * no cambian la marca y no avisan.
  */
 @Component({
   selector: 'app-nueva-version',
@@ -38,7 +40,7 @@ export class NuevaVersionComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     document.addEventListener('visibilitychange', this.alOcultarVolver);
-    // Solo en la app publicada (en desarrollo el archivo no lleva huella)
+    // Solo en la app publicada (en desarrollo la marca no se pone)
     if (!this.actual) return;
     this.reloj = setInterval(() => void this.revisar(), 5 * 60 * 1000);
     document.addEventListener('visibilitychange', this.alVolver);
@@ -71,8 +73,8 @@ export class NuevaVersionComponent implements OnInit, OnDestroy {
   };
 
   private static principalCargado(): string | null {
-    const s = document.querySelector<HTMLScriptElement>('script[src*="main-"]');
-    return s?.getAttribute('src')?.match(/main-[\w-]+\.js/)?.[0] ?? null;
+    const marca = document.querySelector<HTMLMetaElement>('meta[name="jasta-aviso"]')?.content;
+    return marca && marca !== 'dev' ? marca : null;
   }
 
   private async revisar(): Promise<void> {
@@ -80,8 +82,8 @@ export class NuevaVersionComponent implements OnInit, OnDestroy {
     try {
       const r = await fetch('/index.html?v=' + Date.now(), { cache: 'no-store' });
       const html = await r.text();
-      const nuevo = html.match(/main-[\w-]+\.js/)?.[0];
-      if (nuevo && nuevo !== this.actual) this.hay.set(true);
+      const nuevo = html.match(/name="jasta-aviso" content="([^"]+)"/)?.[1];
+      if (nuevo && nuevo !== 'dev' && nuevo !== this.actual) this.hay.set(true);
     } catch {
       /* sin internet: se revisa la próxima vez */
     }

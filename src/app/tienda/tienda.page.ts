@@ -86,9 +86,6 @@ function parecido(a: string, b: string): number {
       .scroll { position: absolute; inset: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior-y: contain; }
       .caja { max-width: 1080px; margin: 0 auto; padding: calc(16px + env(safe-area-inset-top)) 16px calc(96px + env(safe-area-inset-bottom)); }
       .marca { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-      .marca img { width: 44px; height: 44px; border-radius: 12px; background: #fff; object-fit: contain; }
-      .marca h1 { margin: 0; font-size: 19px; line-height: 1.2; }
-      .marca small { display: block; font-size: 13px; color: var(--text-soft); }
       .filtros { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 0 12px; background: var(--bg); }
       .precio-fila { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
       .compartir-p { height: 36px; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface); color: var(--text-soft);
@@ -187,19 +184,18 @@ function parecido(a: string, b: string): number {
     <div class="scroll" #scroll>
     <div class="caja">
       <header class="marca">
-        <img src="assets/icon/logo.png" alt="" />
-        <div>
-          <h1>{{ t()?.negocio || 'Jasta' }}</h1>
-          <small>{{ t()?.vendedora ? 'Catálogo de ' + primerNombre(t()!.vendedora!.nombre) : 'Catálogo' }} · Pide aquí y te lo llevamos</small>
-        </div>
+        <button type="button" class="t-yo" (click)="irCuenta()">
+          @if (cli.perfil(); as p) {
+            <span class="t-yo-foto dentro" aria-hidden="true">@if (p.avatar_url) { <img [src]="p.avatar_url" alt="" referrerpolicy="no-referrer" /> } @else { {{ iniciales(p.nombre || p.email || '') }} }</span>
+            <span class="t-yo-txt"><strong>Hola, {{ primerNombre(p.nombre || '') || 'bienvenido' }}</strong><small>Mi cuenta</small></span>
+          } @else {
+            <span class="t-yo-foto" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></span>
+            <span class="t-yo-txt"><strong>Ingresar</strong><small>Entra o crea tu cuenta</small></span>
+          }
+        </button>
         <button type="button" class="t-icono-carrito" (click)="lineas().length && abrirCarrito()" [attr.aria-label]="'Mi pedido: ' + unidades() + ' productos'">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7h12l-1 13H7L6 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
           @if (unidades()) { <span class="t-badge">{{ unidades() }}</span> }
-        </button>
-        <button type="button" class="t-icono-cuenta" [class.dentro]="!!cli.perfil()" (click)="irCuenta()" [attr.aria-label]="cli.perfil() ? 'Mi cuenta' : 'Ingresar o crear cuenta'">
-          @if (cli.perfil(); as p) { @if (p.avatar_url) { <img class="t-cuenta-foto" [src]="p.avatar_url" alt="" referrerpolicy="no-referrer" /> } @else { {{ iniciales(p.nombre || p.email || '') }} } } @else {
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
-          }
         </button>
       </header>
 

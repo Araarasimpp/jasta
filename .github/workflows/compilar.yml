@@ -26,6 +26,8 @@ jobs:
           node-version: 22
       - run: npm install --no-audit --no-fund
       - run: npx ng build
+      # El aviso de "Nueva versión" solo sale cuando hay una novedad nueva
+      - run: node scripts/marca-aviso.mjs
 
       - name: Publicar en la rama hostinger
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'

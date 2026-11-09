@@ -209,8 +209,7 @@ app-tienda.tv2.tv2.tv2 {
   background: color-mix(in srgb, var(--t-acc) 4%, var(--bg));
 }
 app-tienda.tv2.tv2.tv2 .scroll { background: color-mix(in srgb, var(--t-acc) 4%, var(--bg)); }
-app-tienda.tv2.tv2.tv2 .marca { position: relative; padding-right: 104px; }
-app-tienda.tv2.tv2.tv2 .marca img { border-radius: 14px; box-shadow: var(--t-sombra); }
+app-tienda.tv2.tv2.tv2 .marca { position: relative; padding-right: 56px; min-height: 44px; }
 app-tienda.tv2.tv2.tv2 .t-icono-carrito { position: absolute; right: 0; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; display: grid; place-items: center;
   border: 0; border-radius: 50%; background: var(--surface); color: var(--text); box-shadow: var(--t-sombra); cursor: pointer; }
 /* ===== Finaliza tu compra (tienda) ===== */
@@ -268,12 +267,15 @@ app-tienda.tv2.tv2.tv2 .t-guardar-dir input { accent-color: var(--t-acc); }
 app-tienda.tv2.tv2.tv2 .fc-pie .b-pri { flex: 1; }
 app-tienda.tv2.tv2.tv2 .fc-pie-total { display: inline-flex; align-items: center; gap: 4px; padding: 0 4px; border: 0; background: none; color: var(--text); font: inherit; font-size: 21px; font-weight: 800; cursor: pointer; white-space: nowrap; }
 app-tienda.tv2.tv2.tv2 .fc-pie-total svg { color: var(--t-acc); }
-/* Mi cuenta (al lado del carrito) */
-app-tienda.tv2.tv2.tv2 .t-icono-cuenta { position: absolute; right: 52px; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; display: grid; place-items: center;
-  border: 0; border-radius: 50%; background: var(--surface); color: var(--text); box-shadow: var(--t-sombra); cursor: pointer; font: inherit; font-size: 14px; font-weight: 700; }
-app-tienda.tv2.tv2.tv2 .t-icono-cuenta.dentro { background: var(--t-acc); color: #fff; }
-app-tienda.tv2.tv2.tv2 .t-icono-cuenta { overflow: hidden; padding: 0; }
-app-tienda.tv2.tv2.tv2 .t-cuenta-foto { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Quién soy (arriba a la izquierda): foto o iniciales y saludo; lleva a Mi cuenta */
+app-tienda.tv2.tv2.tv2 .t-yo { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+app-tienda.tv2.tv2.tv2 .t-yo-foto { flex-shrink: 0; width: 44px; height: 44px; display: grid; place-items: center; overflow: hidden; border-radius: 50%;
+  background: var(--surface); color: var(--text); box-shadow: var(--t-sombra); font-size: 14px; font-weight: 700; }
+app-tienda.tv2.tv2.tv2 .t-yo-foto.dentro { background: var(--t-acc); color: #fff; }
+app-tienda.tv2.tv2.tv2 .t-yo-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+app-tienda.tv2.tv2.tv2 .t-yo-txt { min-width: 0; display: flex; flex-direction: column; }
+app-tienda.tv2.tv2.tv2 .t-yo-txt strong { font-size: 17px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+app-tienda.tv2.tv2.tv2 .t-yo-txt small { font-size: 13px; color: var(--text-soft); }
 /* Direcciones guardadas en el pedido */
 app-tienda.tv2.tv2.tv2 .t-mis-dirs { display: flex; flex-direction: column; gap: 8px; }
 app-tienda.tv2.tv2.tv2 .t-mis-dirs button { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 8px; align-items: start; padding: 12px; border: 1px solid var(--border); border-radius: 14px;
