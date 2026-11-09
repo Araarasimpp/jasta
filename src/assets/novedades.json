@@ -1,5 +1,27 @@
 [
   {
+    "id": "2026-11-09-google-clientes",
+    "fecha": "2026-11-08",
+    "hora": "23:55",
+    "titulo": "Los clientes pueden entrar a la tienda con Google",
+    "cuerpo": "En Mi cuenta de la tienda ahora está el botón \"Continuar con Google\": el cliente entra o crea su cuenta con un toque, sin escribir correo ni contraseña.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "Para el cliente",
+        "pasos": [
+          "Toca el ícono de persona en el catálogo → \"Continuar con Google\" → elige su cuenta de Google.",
+          "Si es nuevo, se le crea su cuenta con su nombre; solo le pedimos el celular (en Mis datos o en su primera compra).",
+          "Después puede seguir entrando con Google o con su correo."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-11-08-favoritos-cuenta",
     "fecha": "2026-11-08",
     "hora": "12:20",
