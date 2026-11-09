@@ -1,4 +1,4 @@
--- PENDIENTE: córrelo en el SQL Editor de Supabase (o dile a Claude "dale").
+-- YA APLICADO en Supabase (2026-11-08).
 -- Recolector: cada día cuadra por su cuenta.
 --   Lo que el admin recibe queda a nombre del DÍA al que pertenece esa plata (no del día en que se registra).
 --   Por día: base − compras − lo entregado de ese día = falta por entregar. No se arrastra nada de un día a otro.
