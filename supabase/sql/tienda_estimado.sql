@@ -1,0 +1,8 @@
+-- YA APLICADO en Supabase (2026-11-09).
+-- Tiempo estimado de entrega en la tienda, aprendido de las entregas a domicilio de los últimos 120 días:
+--   · ¿llega hoy?  solo si a esta hora (por la hora en que se hace el pedido) 75%+ se entregan el mismo día
+--   · espera (pedido → despacho): mediana y p75 de los pedidos hechos a esta hora (±1 h)
+--   · viaje (despacho → entrega): mediana y p75 del barrio si tiene 5+ entregas; si no, de todos
+--   · si no llega hoy: mañana, en la franja en que se entregan los pedidos de primera hora (p25–p75)
+-- Devuelve { cuando: 'hoy' | 'manana', desde: 'HH24:MI', hasta: 'HH24:MI', base: n entregas del barrio }.
+-- (Definición vigente: select pg_get_functiondef('public.tienda_estimado(text)'::regprocedure);)

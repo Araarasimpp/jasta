@@ -563,7 +563,7 @@ function parecido(a: string, b: string): number {
             <h3 id="fc-envio">Envío</h3>
             <div class="fc-opcion on">
               <span class="fc-radio" aria-hidden="true"></span>
-              <span class="fc-op-txt"><strong>{{ domicilio() !== null ? llegada() : 'Domicilio' }}</strong><small>{{ domicilio() !== null ? 'Domicilio a ' + barrioOficial() : 'Elige tu barrio para ver el valor' }}</small></span>
+              <span class="fc-op-txt"><strong>{{ domicilio() !== null ? textoLlegada() : 'Domicilio' }}</strong><small>{{ domicilio() !== null ? 'Domicilio a ' + barrioOficial() : 'Elige tu barrio para ver el valor' }}</small></span>
               <span class="fc-op-v num">{{ domicilio() !== null ? (domicilio() ? pesos(domicilio()!) : 'Gratis') : '—' }}</span>
             </div>
           </section>
@@ -988,6 +988,11 @@ export class TiendaPage implements OnInit {
         /* sin almacenamiento */
       }
     });
+    // Estimado de entrega cada vez que cambia el barrio
+    effect(() => {
+      const b = this.barrioElegido();
+      untracked(() => this.pedirEstimado(b));
+    });
     // Con cuenta de cliente: sus favoritos (de la cuenta y de este celular) quedan unidos
     effect(() => {
       const p = this.cli.perfil();
@@ -1212,7 +1217,29 @@ export class TiendaPage implements OnInit {
   contactoListo(): boolean {
     return !this.errNombre() && !this.errTel();
   }
-  /** "Llega hoy" si pide antes de las 2 p. m. (no domingo); si no, el siguiente día hábil */
+  /** Estimado de entrega aprendido de las entregas anteriores (por hora y barrio) */
+  estimado = signal<{ cuando: 'hoy' | 'manana'; desde?: string; hasta?: string } | null>(null);
+  private barrioEstimado = '';
+  textoLlegada(): string {
+    const e = this.estimado();
+    if (!e?.desde || !e.hasta) return e?.cuando === 'manana' ? 'Llega mañana' : this.llegada();
+    const [d, a] = [this.hora12(e.desde), this.hora12(e.hasta)];
+    const rango = d.sufijo === a.sufijo ? `${d.h} y ${a.h} ${a.sufijo}` : `${d.h} ${d.sufijo} y ${a.h} ${a.sufijo}`;
+    return `Llega ${e.cuando === 'hoy' ? 'hoy' : 'mañana'} entre ${rango}`;
+  }
+  private hora12(hhmm: string): { h: string; sufijo: string } {
+    const [H, M] = hhmm.split(':').map(Number);
+    return { h: `${H % 12 || 12}:${String(M).padStart(2, '0')}`, sufijo: H < 12 ? 'a. m.' : 'p. m.' };
+  }
+  private pedirEstimado(barrio: string | null): void {
+    if (!barrio || barrio === this.barrioEstimado) return;
+    this.barrioEstimado = barrio;
+    void this.sb.client.rpc('tienda_estimado', { p_barrio: barrio }).then(({ data, error }) => {
+      if (!error && this.barrioEstimado === barrio) this.estimado.set(data as { cuando: 'hoy' | 'manana'; desde?: string; hasta?: string });
+    });
+  }
+
+  /** "Llega hoy" si pide antes de las 2 p. m. (no domingo); si no, el siguiente día hábil (si no hay estimado) */
   llegada(): string {
     const ahora = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }));
     const dia = ahora.getDay();
