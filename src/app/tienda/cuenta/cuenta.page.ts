@@ -129,6 +129,12 @@ function normal(s: string): string {
       .cc-tot-fin { font-size: 18px; font-weight: 800; }
       .cc-entrega { margin: 0; font-size: 13.5px; color: #3b3f4c; }
       .cc-a { display: grid; place-items: center; text-decoration: none; }
+      .cc-google { width: 100%; height: 50px; display: flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid #d6d9e1; border-radius: 14px; background: #fff;
+        color: #12141a; font: inherit; font-size: 15.5px; font-weight: 650; cursor: pointer; }
+      .cc-google:disabled { opacity: .6; }
+      .cc-o { display: flex; align-items: center; gap: 10px; margin: 14px 0; color: #8a8f9c; font-size: 12.5px; }
+      .cc-o::before, .cc-o::after { content: ''; flex: 1; height: 1px; background: #e6e8ee; }
+      .cc-falta { margin: 0; padding: 10px 12px; border-radius: 10px; background: #fff4e5; color: #8a4b00; font-size: 13.5px; line-height: 1.45; }
       .cc-cuenta-n { padding: 2px 9px; border-radius: 999px; background: #f0ecff; color: #6b4fe0; font-weight: 700; font-size: 12px; }
       .cc-favs { display: grid; grid-auto-flow: column; grid-auto-columns: 132px; gap: 10px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
       .cc-favs::-webkit-scrollbar { display: none; }
@@ -173,6 +179,7 @@ function normal(s: string): string {
           <div><strong>Hola, {{ primerNombre(p.nombre) || 'cliente' }}</strong><small>{{ p.email }}</small></div>
         </div>
         @if (aviso()) { <p class="cc-ok" role="status">{{ aviso() }}</p> }
+        @if (!p.telefono) { <p class="cc-falta" role="status">Completa tu celular en <b>Mis datos</b> para que te podamos avisar de tus pedidos.</p> }
 
         <section class="cc-tarjeta" aria-labelledby="t-compras">
           <div class="cc-seccion-cab"><h2 id="t-compras">Mis compras</h2>
@@ -339,6 +346,15 @@ function normal(s: string): string {
             </div>
           }
 
+          @if (modo() === 'entrar' || modo() === 'crear') {
+            @if (google()) {
+              <button type="button" class="cc-google" (click)="conGoogle()" [disabled]="ocupado()">
+                <svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+                Continuar con Google
+              </button>
+              <div class="cc-o"><span>o con tu correo</span></div>
+            }
+          }
           @switch (modo()) {
             @case ('entrar') {
               <form (ngSubmit)="entrar()">
@@ -601,7 +617,22 @@ export class CuentaPage implements OnInit, OnDestroy {
     }).map((p, k, arr) => ({ ...p, actual: p.hecho && !arr[k + 1]?.hecho }));
   }
 
+  google = signal(false);
+
+  async conGoogle(): Promise<void> {
+    this.ocupado.set(true);
+    this.error.set('');
+    const v = this.ruta.snapshot.queryParamMap.get('volver');
+    const { error } = await this.c.entrarConGoogle(v && v.startsWith('/tienda') ? v : null);
+    // Si todo va bien, el navegador se va a Google; si no, se queda aquí con el aviso
+    if (error) {
+      this.ocupado.set(false);
+      this.error.set('No se pudo abrir Google. Intenta otra vez o entra con tu correo.');
+    }
+  }
+
   ngOnInit(): void {
+    void this.c.googleDisponible().then((si) => this.google.set(si));
     const q = this.ruta.snapshot.queryParamMap;
     if (q.get('crear')) this.modo.set('crear');
     // Viene del correo para cambiar la contraseña

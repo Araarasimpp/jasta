@@ -1,5 +1,6 @@
 import { Injectable, effect, inject, signal, untracked } from '@angular/core';
 import { SupabaseService } from './supabase.service';
+import { environment } from '../../../environments/environment';
 
 export interface ClienteDireccion {
   id: number;
@@ -202,6 +203,24 @@ export class ClienteService {
     const r = await this.sb.client.rpc('cliente_quitar_tarjeta', { p_id: id });
     if (!r.error) this.perfil.set(r.data as ClientePerfil);
     return r;
+  }
+
+  // ---------------------------------------------------------------- Google
+  private google?: Promise<boolean>;
+  /** ¿Está activado "Continuar con Google" en Supabase? (Authentication → Providers → Google) */
+  googleDisponible(): Promise<boolean> {
+    this.google ??= fetch(`${environment.supabaseUrl}/auth/v1/settings`, { headers: { apikey: environment.supabaseKey } })
+      .then((r) => r.json())
+      .then((j) => !!j?.external?.google)
+      .catch(() => false);
+    return this.google;
+  }
+
+  /** Va a Google y vuelve a Mi cuenta ya con la sesión (si es nuevo, se crea su cuenta de cliente) */
+  entrarConGoogle(volver: string | null) {
+    const destino = new URL('/tienda/cuenta', location.origin);
+    if (volver) destino.searchParams.set('volver', volver);
+    return this.sb.client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: destino.href, queryParams: { prompt: 'select_account' } } });
   }
 
   // ---------------------------------------------------------------- Favoritos
