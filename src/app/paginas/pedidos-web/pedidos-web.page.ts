@@ -18,6 +18,8 @@ interface PedidoWeb {
   cliente_nombre: string; cliente_telefono: string; direccion: string; barrio: string; observaciones: string | null;
   valor_domicilio: number; domicilio_por_confirmar: boolean; items: ItemWeb[]; subtotal: number; pedido_id: number | null;
   motivo: string | null; atendido_por: string | null; atendido_at: string | null; created_at: string; riesgo: Riesgo | null;
+  /** Señales del pedido para revisar antes de confirmar (varios pedidos seguidos, misma conexión, dirección con rechazos…) */
+  sospecha?: { nivel: 'alto' | 'medio'; razones: string[] } | null;
   pago?: 'contra_entrega' | 'en_linea'; pago_estado?: 'pendiente' | 'aprobado' | 'rechazado' | null; pago_metodo?: string | null; recargo?: number; cupon?: string | null; descuento?: number;
 }
 
@@ -61,6 +63,7 @@ export function enlaceTienda(u: { id: number; nombre: string } | null): string {
       .riesgo { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--oro-wash); color: var(--oro-texto); font-size: 13px; }
       .pagado-linea { margin: 0; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--ok-wash); color: var(--efectivo-texto); font-size: 13.5px; }
       .riesgo.alto { background: var(--danger-wash); color: var(--danger); }
+      .riesgo-tip { margin-top: 2px; font-size: 12px; opacity: .85; }
       .obs { margin: 0; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--surface-2); font-size: 13.5px; }
       .check { display: flex; gap: 8px; align-items: flex-start; font-size: 13.5px; line-height: 1.4; }
       .check input { margin-top: 3px; }
@@ -107,6 +110,13 @@ export function enlaceTienda(u: { id: number; nombre: string } | null): string {
               <div class="riesgo" [class.alto]="w.riesgo!.nivel === 'alto'">
                 <strong>⚠️ {{ w.riesgo!.marca ? 'Cliente marcado: "' + w.riesgo!.marca!.nota + '"' : 'Este cliente ha tenido problemas' }}</strong>
                 <span>{{ w.riesgo!.rechazados }} cancelados después de salir · {{ w.riesgo!.devoluciones }} devoluciones · {{ w.riesgo!.entregados }} de {{ w.riesgo!.pedidos }} entregados</span>
+              </div>
+            }
+            @if (w.sospecha; as s) {
+              <div class="riesgo" [class.alto]="s.nivel === 'alto'">
+                <strong>🔎 {{ s.nivel === 'alto' ? 'Revisa este pedido antes de confirmarlo' : 'Ojo con este pedido' }}</strong>
+                @for (r of s.razones; track r) { <span>· {{ r }}</span> }
+                <span class="riesgo-tip">Llama al cliente para confirmar antes de despacharlo.</span>
               </div>
             }
             <p class="dir"><a [href]="'tel:' + w.cliente_telefono">{{ w.cliente_telefono }}</a> · {{ w.direccion }} · <strong>{{ w.barrio }}</strong></p>
