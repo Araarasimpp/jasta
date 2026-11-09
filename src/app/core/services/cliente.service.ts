@@ -10,7 +10,8 @@ export interface ClienteDireccion {
   indicaciones: string | null;
   principal: boolean;
 }
-export interface CompraItem { producto_id: number | null; nombre: string; cantidad: number; precio: number; color: string | null; talla: string | null; imagen_url: string | null }
+export interface CompraItem { producto_id: number | null; nombre: string; cantidad: number; precio: number; color: string | null; talla: string | null; imagen_url: string | null; mi_resena?: number | null }
+export interface CompraAyuda { motivo: string; mensaje: string | null; estado: string; fecha: string }
 export interface Compra {
   fecha: string;
   codigo: string | null;
@@ -30,6 +31,13 @@ export interface Compra {
   pago_estado: string | null;
   canal: string;
   items: CompraItem[] | null;
+  /** Código de seguimiento del pedido (para calificar); null si todavía no está confirmado */
+  seguimiento?: string | null;
+  /** Estrellas que le dio a la entrega (null si no ha calificado) */
+  calif?: number | null;
+  /** WhatsApp de la vendedora del pedido (o de la tienda) */
+  whatsapp?: string | null;
+  ayudas?: CompraAyuda[];
 }
 export interface ClienteTarjeta { id: number; marca: string | null; ultimos4: string | null; exp_mes: string | null; exp_anio: string | null }
 export interface ConfigTarjeta { public_key: string; terminos: string | null; datos: string | null; activo: boolean }
@@ -157,6 +165,25 @@ export class ClienteService {
     const { data, error } = await this.sb.client.rpc('cliente_compras');
     if (error) throw error;
     return (data as Compra[]) ?? [];
+  }
+
+  /** Calificar la compra: la entrega (una vez) y cada producto (se puede cambiar) */
+  async calificar(c: Compra, entrega: { estrellas: number; comentario: string } | null, productos: { producto_id: number; estrellas: number; comentario: string }[]): Promise<void> {
+    if (!c.seguimiento) throw new Error('Este pedido todavía no se puede calificar');
+    if (entrega && !c.calif) {
+      const r = await this.sb.client.rpc('calificar_entrega', { p_codigo: c.seguimiento, p_estrellas: entrega.estrellas, p_comentario: entrega.comentario });
+      if (r.error && !/ya calificaste/i.test(r.error.message)) throw r.error;
+    }
+    if (productos.length) {
+      const r = await this.sb.client.rpc('calificar_productos', { p_codigo: c.seguimiento, p_resenas: productos });
+      if (r.error) throw r.error;
+    }
+  }
+
+  /** Pedir ayuda con un pedido: le llega al equipo (admin y la vendedora) */
+  async pedirAyuda(c: Compra, motivo: string, mensaje: string): Promise<void> {
+    const { error } = await this.sb.client.rpc('cliente_pedir_ayuda', { p_codigo: c.codigo, p_ruta: c.ruta, p_motivo: motivo, p_mensaje: mensaje });
+    if (error) throw error;
   }
 
   /** Volver a comprar: deja los productos listos para que la tienda los ponga en el carrito */

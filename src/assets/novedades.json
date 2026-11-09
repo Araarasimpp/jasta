@@ -1,5 +1,33 @@
 [
   {
+    "id": "2026-11-09-calificar-ayuda",
+    "fecha": "2026-11-09",
+    "hora": "00:30",
+    "titulo": "Los clientes califican sus compras y piden ayuda desde el pedido",
+    "cuerpo": "En Mis compras, el cliente califica la entrega y cada producto (las reseñas salen en la tienda), y si algo pasa con un pedido escribe por WhatsApp o reporta el problema desde ahí mismo.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "Para el cliente",
+        "pasos": [
+          "Cuando el pedido está entregado le sale \"Califica tu compra\": estrellas a la entrega y a cada producto, con comentario opcional.",
+          "En cada pedido: \"Escribir por WhatsApp\" (a la vendedora del pedido, con el número y los productos ya escritos) o \"Reportar un problema\" eligiendo qué pasó."
+        ]
+      },
+      {
+        "titulo": "Para el equipo",
+        "pasos": [
+          "Cuando un cliente reporta un problema, al admin y a la vendedora del pedido les llega un aviso rojo 🆘 con lo que pasó y su celular; al tocarlo abre el pedido.",
+          "Las calificaciones de 3 estrellas o menos le avisan al admin, y las de 5 al mensajero (como en el seguimiento)."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-11-09-cuenta-cliente-config",
     "fecha": "2026-11-09",
     "hora": "00:20",

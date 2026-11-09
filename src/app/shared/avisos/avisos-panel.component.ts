@@ -108,7 +108,7 @@ import { NotificacionesService, Aviso } from '../../core/services/notificaciones
       .aviso.nuevo { background: var(--accent-wash); }
       .punto { width: 8px; height: 8px; margin-top: 6px; flex-shrink: 0; border-radius: 50%; background: var(--border-strong); }
       .aviso.nuevo .punto { background: var(--accent); }
-      .punto[data-tipo='pedido_cancelado'], .punto[data-tipo='novedad'], .punto[data-tipo='agotado'], .punto[data-tipo='calificacion_baja'] { background: var(--danger) !important; }
+      .punto[data-tipo='pedido_cancelado'], .punto[data-tipo='novedad'], .punto[data-tipo='agotado'], .punto[data-tipo='calificacion_baja'], .punto[data-tipo='ayuda_cliente'] { background: var(--danger) !important; }
       .punto[data-tipo='pedido_entregado'], .punto[data-tipo='cuadre_confirmado'], .punto[data-tipo='liquidacion'] { background: var(--st-entregado) !important; }
       .punto[data-tipo='cuadre_por_confirmar'], .punto[data-tipo='stock_bajo'], .punto[data-tipo='pedido_web'], .punto[data-tipo='cuadre_pendiente'], .punto[data-tipo='calificacion_buena'] { background: var(--oro) !important; }
       .punto[data-tipo='pedido_asignado'] { background: var(--st-ruta) !important; }

@@ -130,6 +130,32 @@ function normal(s: string): string {
       .cc-tot-fin { font-size: 18px; font-weight: 800; }
       .cc-entrega { margin: 0; font-size: 13.5px; color: #3b3f4c; }
       .cc-a { display: grid; place-items: center; text-decoration: none; }
+      .cc-bloque { display: flex; flex-direction: column; gap: 10px; padding-top: 14px; border-top: 1px solid #eceef3; }
+      .cc-bloque h3 { margin: 0; font-size: 16px; }
+      .cc-calif { display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 14px; background: #f7f6fc; }
+      .cc-calif strong { font-size: 14px; }
+      .cc-calif-prod { display: flex; align-items: center; gap: 10px; }
+      .cc-calif-prod .cc-mini { width: 40px; height: 40px; border-radius: 10px; box-shadow: none; }
+      .cc-estrellas { display: flex; gap: 4px; }
+      .cc-estrellas button { width: 40px; height: 40px; padding: 0; border: 0; background: none; color: #d6d9e1; font-size: 30px; line-height: 1; cursor: pointer; transition: transform 120ms ease; }
+      .cc-estrellas button.on { color: #f5a524; }
+      .cc-estrellas button:active { transform: scale(.85); }
+      .cc-cta-calif { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px; border: 1.5px solid #f5a524; border-radius: 14px; background: #fff8eb; color: #12141a; font: inherit; text-align: left; cursor: pointer; }
+      .cc-cta-est { color: #f5a524; font-size: 18px; letter-spacing: 1px; white-space: nowrap; }
+      .cc-cta-calif strong { display: block; font-size: 15px; }
+      .cc-cta-calif small { display: block; font-size: 12.5px; color: #5b6070; }
+      .cc-ya-calif { margin: 0; font-size: 13.5px; color: #3b3f4c; }
+      .cc-ya-calif b, .cc-mis-est { color: #f5a524; letter-spacing: 1px; }
+      .cc-falta-calif { color: #b45309; font-weight: 700; }
+      .cc-it-txt .cc-mis-est { color: #f5a524; letter-spacing: 1px; }
+      .cc-ayuda-btns { display: flex; flex-direction: column; gap: 8px; }
+      .cc-wa { display: flex; align-items: center; justify-content: center; gap: 8px; height: 48px; border-radius: 14px; background: #25d366; color: #fff; font-weight: 700; text-decoration: none; }
+      .cc-motivos { display: flex; flex-wrap: wrap; gap: 8px; }
+      .cc-motivos button { min-height: 38px; padding: 6px 14px; border: 1px solid #d6d9e1; border-radius: 999px; background: #fff; color: #3b3f4c; font: inherit; font-size: 13.5px; cursor: pointer; }
+      .cc-motivos button.on { border-color: #6b4fe0; background: #f0ecff; color: #6b4fe0; font-weight: 700; }
+      textarea { width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1px solid #d6d9e1; border-radius: 12px; font: inherit; font-size: 15px; resize: vertical; }
+      .cc-reporte { margin: 0; padding: 10px 12px; border-radius: 12px; background: #fff4e5; font-size: 13.5px; line-height: 1.4; }
+      .cc-reporte small { display: block; margin-top: 2px; color: #8a4b00; font-size: 12px; }
       .cc-avatar { overflow: hidden; }
       .cc-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
       .cc-hola .cc-link { margin-top: 4px; font-size: 13px; }
@@ -298,7 +324,7 @@ function normal(s: string): string {
                     }
                   </span>
                   <span class="cc-compra-txt">
-                    <span class="cc-estado" [attr.data-e]="x.estado">{{ estadoTexto(x) }}</span>
+                    <span class="cc-estado" [attr.data-e]="x.estado">{{ estadoTexto(x) }}@if (puedeCalificar(x)) { <span class="cc-falta-calif"> · Califícala</span> }</span>
                     <strong>{{ resumenItems(x) }}</strong>
                     <small>{{ fechaCorta(x.fecha) }} · {{ pesos(x.total) }}</small>
                   </span>
@@ -587,7 +613,8 @@ function normal(s: string): string {
           @for (it of x.items ?? []; track $index) {
             <li>
               <span class="cc-mini cc-mini-g">@if (urlMini(it.imagen_url); as u) { <img [src]="u" alt="" loading="lazy" /> }</span>
-              <span class="cc-it-txt"><span>{{ it.nombre }}</span><small>{{ it.cantidad }} × {{ pesos(it.precio) }}{{ it.color ? ' · ' + it.color : '' }}{{ it.talla ? ' · ' + it.talla : '' }}</small></span>
+              <span class="cc-it-txt"><span>{{ it.nombre }}</span><small>{{ it.cantidad }} × {{ pesos(it.precio) }}{{ it.color ? ' · ' + it.color : '' }}{{ it.talla ? ' · ' + it.talla : '' }}</small>
+                @if (it.mi_resena) { <small class="cc-mis-est" [attr.aria-label]="'Lo calificaste con ' + it.mi_resena + ' estrellas'">{{ estrellasTexto(it.mi_resena) }}</small> }</span>
               <span class="cc-it-v">{{ pesos(it.cantidad * it.precio) }}</span>
             </li>
           }
@@ -599,6 +626,74 @@ function normal(s: string): string {
         @if (x.direccion) {
           <p class="cc-entrega"><b>Entrega:</b> {{ x.direccion }}{{ x.barrio ? ' · ' + x.barrio : '' }}</p>
         }
+        <!-- Calificar la compra -->
+        @if (puedeCalificar(x)) {
+          @if (hojaModo() === 'calificar') {
+            <section class="cc-bloque" aria-labelledby="t-calif">
+              <h3 id="t-calif">Califica tu compra</h3>
+              @if (!x.calif) {
+                <div class="cc-calif">
+                  <strong>¿Cómo te fue con la entrega?</strong>
+                  <div class="cc-estrellas" role="radiogroup" aria-label="Estrellas de la entrega">
+                    @for (n of [1, 2, 3, 4, 5]; track n) {
+                      <button type="button" role="radio" [attr.aria-checked]="calEntrega() === n" [class.on]="n <= calEntrega()" (click)="calEntrega.set(n)" [attr.aria-label]="n + (n === 1 ? ' estrella' : ' estrellas')">★</button>
+                    }
+                  </div>
+                  <input maxlength="300" [(ngModel)]="calEntregaTxt" placeholder="Cuéntanos (opcional)" aria-label="Comentario de la entrega" />
+                </div>
+              }
+              @for (it of productosCalificables(x); track it.producto_id) {
+                <div class="cc-calif">
+                  <span class="cc-calif-prod"><span class="cc-mini">@if (urlMini(it.imagen_url); as u) { <img [src]="u" alt="" /> }</span><strong>{{ it.nombre }}</strong></span>
+                  <div class="cc-estrellas" role="radiogroup" [attr.aria-label]="'Estrellas de ' + it.nombre">
+                    @for (n of [1, 2, 3, 4, 5]; track n) {
+                      <button type="button" role="radio" [attr.aria-checked]="calProd()[it.producto_id!] === n" [class.on]="n <= (calProd()[it.producto_id!] || 0)" (click)="ponerEstrellas(it.producto_id!, n)" [attr.aria-label]="n + (n === 1 ? ' estrella' : ' estrellas')">★</button>
+                    }
+                  </div>
+                  <input maxlength="400" [ngModel]="calProdTxt[it.producto_id!] || ''" (ngModelChange)="calProdTxt[it.producto_id!] = $event" placeholder="¿Qué te pareció? (opcional, sale en la tienda)" [attr.aria-label]="'Opinión de ' + it.nombre" />
+                </div>
+              }
+              @if (errorHoja()) { <p class="cc-error" role="alert">{{ errorHoja() }}</p> }
+              <button class="cc-pri" [disabled]="ocupado()" (click)="enviarCalificacion(x)">{{ ocupado() ? 'Enviando…' : 'Enviar calificación' }}</button>
+              <button class="cc-link cc-centro" (click)="hojaModo.set('detalle')">Cancelar</button>
+            </section>
+          } @else {
+            <button type="button" class="cc-cta-calif" (click)="abrirCalificar(x)">
+              <span class="cc-cta-est" aria-hidden="true">★★★★★</span><span><strong>{{ x.calif ? 'Califica tus productos' : 'Califica tu compra' }}</strong><small>{{ x.calif ? 'Ya calificaste la entrega (' + estrellasTexto(x.calif) + '). Faltan ' + productosCalificables(x).length + (productosCalificables(x).length === 1 ? ' producto' : ' productos') : 'Tu opinión ayuda a otros clientes' }}</small></span>
+            </button>
+          }
+        } @else if (x.calif) {
+          <p class="cc-ya-calif">Calificaste la entrega: <b>{{ estrellasTexto(x.calif) }}</b> · ¡Gracias!</p>
+        }
+
+        <!-- Pedir ayuda -->
+        <section class="cc-bloque" aria-labelledby="t-ayuda">
+          <h3 id="t-ayuda">¿Necesitas ayuda con este pedido?</h3>
+          @for (a of x.ayudas ?? []; track a.fecha) {
+            <p class="cc-reporte"><b>{{ a.motivo }}</b>{{ a.mensaje ? ' · "' + a.mensaje + '"' : '' }}<small>{{ fechaCorta(a.fecha) }} · {{ a.estado === 'abierta' ? 'Recibido: te contactamos pronto' : 'Resuelto' }}</small></p>
+          }
+          @if (hojaModo() === 'ayuda') {
+            <div class="cc-motivos" role="radiogroup" aria-label="¿Qué pasó?">
+              @for (m of motivosAyuda(x); track m) {
+                <button type="button" role="radio" [attr.aria-checked]="ayudaMotivo() === m" [class.on]="ayudaMotivo() === m" (click)="ayudaMotivo.set(m)">{{ m }}</button>
+              }
+            </div>
+            <textarea rows="3" maxlength="600" [(ngModel)]="ayudaTxt" placeholder="Cuéntanos qué pasó (si es algo dañado, descríbelo)" aria-label="Mensaje"></textarea>
+            @if (errorHoja()) { <p class="cc-error" role="alert">{{ errorHoja() }}</p> }
+            <button class="cc-pri" [disabled]="ocupado()" (click)="enviarAyuda(x)">{{ ocupado() ? 'Enviando…' : 'Enviar' }}</button>
+            <button class="cc-link cc-centro" (click)="hojaModo.set('detalle')">Cancelar</button>
+          } @else {
+            <div class="cc-ayuda-btns">
+              @if (whatsappAyuda(x); as w) {
+                <a class="cc-wa" [href]="w" target="_blank" rel="noopener">
+                  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.5l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.2s1 2.6 1.1 2.7c.1.2 1.9 2.9 4.6 4 1.7.7 2.4.8 3.2.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.5-.3Z"/></svg>
+                  Escribir por WhatsApp</a>
+              }
+              <button type="button" class="cc-sec" (click)="abrirAyuda()">Reportar un problema</button>
+            </div>
+          }
+        </section>
+
         <div class="cc-form">
           @if (x.estado === 'por_pagar' && x.codigo) { <a class="cc-pri cc-a" [href]="'/pago/' + x.codigo">Pagar ahora</a> }
           @if (x.codigo) { <a class="cc-sec cc-a" [href]="'/' + x.ruta + '/' + x.codigo">Ver seguimiento</a> }
@@ -702,7 +797,100 @@ export class CuentaPage implements OnInit, OnDestroy {
   }
 
   abrirCompra(x: Compra): void {
+    this.hojaModo.set('detalle');
+    this.errorHoja.set('');
     this.compraSel.set(x);
+  }
+
+  // ---------------------------------------------------------------- Calificar y pedir ayuda
+  hojaModo = signal<'detalle' | 'calificar' | 'ayuda'>('detalle');
+  errorHoja = signal('');
+  calEntrega = signal(0);
+  calEntregaTxt = '';
+  calProd = signal<Record<number, number>>({});
+  calProdTxt: Record<number, string> = {};
+  ayudaMotivo = signal('');
+  ayudaTxt = '';
+
+  estrellasTexto(n: number): string {
+    return '★'.repeat(n) + '☆'.repeat(5 - n);
+  }
+  productosCalificables(x: Compra) {
+    const vistos = new Set<number>();
+    return (x.items ?? []).filter((i) => i.producto_id && !i.mi_resena && !vistos.has(i.producto_id) && vistos.add(i.producto_id));
+  }
+  /** Entregado y le falta calificar la entrega o algún producto */
+  puedeCalificar(x: Compra): boolean {
+    return x.estado === 'entregado' && x.canal !== 'local' && !!x.seguimiento && (!x.calif || this.productosCalificables(x).length > 0);
+  }
+  abrirCalificar(x: Compra): void {
+    this.calEntrega.set(0);
+    this.calEntregaTxt = '';
+    this.calProd.set({});
+    this.calProdTxt = {};
+    this.errorHoja.set('');
+    this.hojaModo.set('calificar');
+    void x;
+  }
+  ponerEstrellas(id: number, n: number): void {
+    this.calProd.update((m) => ({ ...m, [id]: n }));
+  }
+  async enviarCalificacion(x: Compra): Promise<void> {
+    const entrega = !x.calif ? (this.calEntrega() ? { estrellas: this.calEntrega(), comentario: this.calEntregaTxt.trim() } : null) : null;
+    const productos = Object.entries(this.calProd()).filter(([, e]) => e > 0).map(([id, e]) => ({ producto_id: +id, estrellas: e, comentario: (this.calProdTxt[+id] ?? '').trim() }));
+    if (!entrega && !productos.length) return this.errorHoja.set('Toca las estrellas para calificar.');
+    this.ocupado.set(true);
+    try {
+      await this.c.calificar(x, entrega, productos);
+      await this.cargarCompras();
+      const nueva = this.compras().find((c) => c.codigo === x.codigo && c.fecha === x.fecha) ?? null;
+      this.compraSel.set(nueva);
+      this.hojaModo.set('detalle');
+      this.aviso.set('¡Gracias por calificar tu compra!');
+    } catch (e) {
+      this.errorHoja.set(mensajeError(e));
+    } finally {
+      this.ocupado.set(false);
+    }
+  }
+
+  motivosAyuda(x: Compra): string[] {
+    if (x.estado === 'entregado') return ['Llegó dañado o incompleto', 'No funciona / garantía', 'Quiero cambiarlo o devolverlo', 'Me cobraron mal', 'Otro'];
+    if (x.estado === 'cancelado') return ['¿Por qué lo cancelaron?', 'Me cobraron y se canceló', 'Otro'];
+    return ['¿Cuándo me llega?', 'Quiero cambiar la dirección', 'Quiero cambiar o agregar productos', 'Quiero cancelarlo', 'Otro'];
+  }
+  abrirAyuda(): void {
+    this.ayudaMotivo.set('');
+    this.ayudaTxt = '';
+    this.errorHoja.set('');
+    this.hojaModo.set('ayuda');
+  }
+  async enviarAyuda(x: Compra): Promise<void> {
+    if (!this.ayudaMotivo()) return this.errorHoja.set('Elige qué pasó.');
+    if (this.ayudaMotivo() === 'Otro' && !this.ayudaTxt.trim()) return this.errorHoja.set('Cuéntanos qué pasó.');
+    this.ocupado.set(true);
+    try {
+      await this.c.pedirAyuda(x, this.ayudaMotivo(), this.ayudaTxt.trim());
+      await this.cargarCompras();
+      const nueva = this.compras().find((c) => c.codigo === x.codigo && c.fecha === x.fecha) ?? null;
+      this.compraSel.set(nueva);
+      this.hojaModo.set('detalle');
+      this.aviso.set('Recibimos tu mensaje. Te contactamos pronto por WhatsApp o llamada.');
+    } catch (e) {
+      this.errorHoja.set(mensajeError(e));
+    } finally {
+      this.ocupado.set(false);
+    }
+  }
+  /** WhatsApp con el pedido ya escrito */
+  whatsappAyuda(x: Compra): string | null {
+    const n = (x.whatsapp ?? '').replace(/\D/g, '');
+    if (n.length < 10) return null;
+    const num = n.length === 10 ? '57' + n : n;
+    const nombre = this.primerNombre(this.c.perfil()?.nombre ?? '');
+    const prods = (x.items ?? []).map((i) => `${i.cantidad} × ${i.nombre}`).join(', ');
+    const txt = `Hola, soy ${nombre || 'cliente'}. Necesito ayuda con mi pedido${x.pedido ? ' #' + x.pedido : ''} del ${this.fechaCorta(x.fecha)} (${prods}).`;
+    return `https://wa.me/${num}?text=${encodeURIComponent(txt)}`;
   }
 
   volverAComprar(x: Compra): void {
