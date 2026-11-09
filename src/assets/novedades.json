@@ -1,5 +1,14 @@
 [
   {
+    "id": "2026-11-09-horas-ventas",
+    "fecha": "2026-11-09",
+    "hora": "11:39",
+    "titulo": "Reportes: horas y días con más ventas",
+    "cuerpo": "Un mapa de calor muestra a qué hora y qué día de la semana se vende más, con una sugerencia de cuándo publicar estados y promociones.",
+    "roles": ["admin"],
+    "secciones": [{"titulo": "Dónde está", "pasos": ["Abre Reportes y elige el periodo.", "Toca la pestaña \"Horas y días\".", "Cambia entre Pedidos y Ventas $; pasa el dedo o el mouse por una casilla para ver el detalle."]}]
+  },
+  {
     "id": "2026-11-09-ayuda-clientes",
     "fecha": "2026-11-09",
     "hora": "00:35",

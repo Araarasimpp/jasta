@@ -6,6 +6,7 @@ import { downloadOutline, searchOutline } from 'ionicons/icons';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detalle.component';
+import { HorasVentasComponent } from './horas-ventas.component';
 import { RangoFechas, diaCorto, diaLargo } from '../../shared/rango/rango.component';
 import { PedidosService } from '../../core/services/pedidos.service';
 import { Usuario } from '../../shared/modelos';
@@ -35,7 +36,7 @@ interface PedidoVenta {
   tipo_recaudo: string | null; valor_efectivo: number | null; valor_transferencia: number | null;
 }
 
-type Pestana = 'detalle' | 'pedidos' | 'vendedoras' | 'productos' | 'mensajeros' | 'barrios' | 'dias';
+type Pestana = 'detalle' | 'pedidos' | 'vendedoras' | 'productos' | 'mensajeros' | 'barrios' | 'dias' | 'horas';
 
 const POR_PAGINA = 100;
 const suma = <T>(filas: T[], f: (x: T) => number) => filas.reduce((a, x) => a + Number(f(x) || 0), 0);
@@ -59,7 +60,7 @@ const ESTADOS: { id: EstadoFiltro; label: string }[] = [
 @Component({
   selector: 'app-reportes',
   standalone: true,
-  imports: [EsqueletoComponent, FormsModule, IonIcon, PedidoDetalleComponent],
+  imports: [EsqueletoComponent, FormsModule, IonIcon, PedidoDetalleComponent, HorasVentasComponent],
   styles: [
     `
       .periodo { margin: 0 0 0 auto; font-size: 13px; color: var(--text-soft); }
@@ -104,7 +105,7 @@ const ESTADOS: { id: EstadoFiltro; label: string }[] = [
     <div class="vista">
       <div class="vista-head">
         <h1>{{ veTodo() ? 'Reportes' : 'Mis ventas' }}</h1>
-        <button class="b" (click)="exportar()" [disabled]="exportando() || !rango">
+        <button class="b" (click)="exportar()" [disabled]="exportando() || !rango || pestana() === 'horas'">
           <ion-icon name="download-outline"></ion-icon>{{ exportando() ? 'Preparando…' : 'Descargar Excel' }}
         </button>
       </div>
@@ -392,6 +393,9 @@ const ESTADOS: { id: EstadoFiltro; label: string }[] = [
               }
             </table>
           }
+          @case ('horas') {
+            <div style="padding: 16px 20px"><app-horas-ventas [desde]="rango?.desde" [hasta]="rango?.hasta"></app-horas-ventas></div>
+          }
         }
       </div>
 
@@ -432,6 +436,7 @@ export class ReportesPage implements OnInit {
     { id: 'mensajeros', label: 'Por mensajero', todo: true },
     { id: 'barrios', label: 'Por barrio', todo: true },
     { id: 'dias', label: 'Por día' },
+    { id: 'horas', label: 'Horas y días', todo: true },
   ];
   pestanasVisibles = computed(() => this.pestanas.filter((p) => this.veTodo() || !p.todo));
 
