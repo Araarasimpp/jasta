@@ -10,6 +10,7 @@ import { enlaceWhatsapp } from '../../shared/whatsapp';
 import { EstadisticasTiendaComponent } from './estadisticas-tienda.component';
 import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 import { EnlacesProductosComponent } from './enlaces-productos.component';
+import { MiCatalogoComponent } from './mi-catalogo.component';
 import { PesosDirective } from '../../shared/pesos/pesos.directive';
 
 interface ItemWeb { producto_id: number; nombre: string; cantidad: number; precio: number; color: string | null; talla: string | null }
@@ -37,7 +38,7 @@ export function enlaceTienda(u: { id: number; nombre: string } | null): string {
 @Component({
   selector: 'app-pedidos-web',
   standalone: true,
-  imports: [PesosDirective, EnlacesProductosComponent, EsqueletoComponent, FormsModule, RouterLink, EstadisticasTiendaComponent],
+  imports: [PesosDirective, EnlacesProductosComponent, MiCatalogoComponent, EsqueletoComponent, FormsModule, RouterLink, EstadisticasTiendaComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -88,6 +89,10 @@ export function enlaceTienda(u: { id: number; nombre: string } | null): string {
           ? 'Compártelo en tus estados, Instagram o grupos. Lo que pidan por ahí te llega aquí a tu nombre, con tu comisión normal.'
           : 'Los pedidos de este enlace llegan sin vendedora y los atiende el admin. Cada vendedora ve el suyo en esta misma página.' }}</p>
       </section>
+
+      @if (esVendedora()) {
+        <section class="panel"><app-mi-catalogo></app-mi-catalogo></section>
+      }
 
       <section class="panel">
         <app-enlaces-productos [base]="enlace()"></app-enlaces-productos>

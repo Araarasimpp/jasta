@@ -388,6 +388,17 @@ app-tienda.tv2.tv2.tv2 .t-cats button.on { background: none; color: var(--t-acc)
 app-tienda.tv2.tv2.tv2 .t-cats button.on .t-cat-ico { background: var(--t-acc); box-shadow: 0 6px 16px color-mix(in srgb, var(--t-acc) 40%, transparent); }
 app-tienda.tv2.tv2.tv2 .t-cats button:active .t-cat-ico { transform: scale(.94); }
 
+/* La vendedora del catálogo: foto, frase y WhatsApp */
+app-tienda.tv2.tv2.tv2 .t-vend { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; padding: 12px 14px; border-radius: 18px; background: var(--surface); box-shadow: var(--t-sombra); }
+app-tienda.tv2.tv2.tv2 .t-vend-foto { width: 52px; height: 52px; flex-shrink: 0; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--t-acc); }
+app-tienda.tv2.tv2.tv2 .t-vend-ini { display: grid; place-items: center; background: var(--t-wash-2); color: var(--t-acc); font-weight: 800; }
+app-tienda.tv2.tv2.tv2 .t-vend-txt { min-width: 0; flex: 1; }
+app-tienda.tv2.tv2.tv2 .t-vend-txt strong { display: block; font-size: 15px; }
+app-tienda.tv2.tv2.tv2 .t-vend-txt small { font-weight: 500; color: var(--text-muted); font-size: 12.5px; }
+app-tienda.tv2.tv2.tv2 .t-vend-txt p { margin: 2px 0 0; font-size: 13px; line-height: 1.4; color: var(--text-soft); }
+app-tienda.tv2.tv2.tv2 .t-vend-wa { flex-shrink: 0; padding: 8px 12px; border-radius: 999px; background: #1fa855; color: #fff; font-size: 12.5px; font-weight: 700; text-decoration: none; }
+app-tienda.tv2.tv2.tv2 .t-dest .tienda-mini { border-color: color-mix(in srgb, var(--t-acc) 35%, var(--border)); }
+
 /* Repetir el último pedido */
 app-tienda.tv2.tv2.tv2 .t-repetir { display: flex; align-items: center; gap: 12px; width: 100%; margin: 0 0 12px; padding: 12px 14px; border: 0; border-radius: 18px;
   background: var(--surface); box-shadow: var(--t-sombra); color: var(--text); font: inherit; text-align: left; cursor: pointer; }

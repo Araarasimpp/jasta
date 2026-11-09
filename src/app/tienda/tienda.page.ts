@@ -24,7 +24,7 @@ interface UltimoPedido { items: { producto_id: number; cantidad: number; color: 
 interface Cupon { codigo: string; tipo: 'porcentaje' | 'valor'; valor: number; minimo: number; descripcion: string | null }
 interface Tienda {
   negocio: string | null; telefonos: string | null;
-  vendedora: { id: number; nombre: string; telefono: string | null } | null;
+  vendedora: { id: number; nombre: string; telefono: string | null; foto_url?: string | null; bio?: string | null; destacados?: number[] } | null;
   barrios: { barrio: string; domicilio: number }[];
   productos: ProductoTienda[];
 }
@@ -219,6 +219,18 @@ function parecido(a: string, b: string): number {
         </section>
       } @else if (t(); as tienda) {
         @if (avisoProducto()) { <p class="aviso-prod" role="status">{{ avisoProducto() }}</p> }
+        @if (tienda.vendedora; as v) {
+          @if ((v.foto_url || v.bio) && !q().trim() && !categoria() && !soloFavs()) {
+            <section class="t-vend" aria-label="Tu asesora">
+              @if (v.foto_url) { <img class="t-vend-foto" [src]="v.foto_url" alt="" referrerpolicy="no-referrer" /> } @else { <span class="t-vend-foto t-vend-ini" aria-hidden="true">{{ iniciales(v.nombre) }}</span> }
+              <div class="t-vend-txt">
+                <strong>{{ primerNombre(v.nombre) }} <small>· tu asesora</small></strong>
+                @if (v.bio) { <p>{{ v.bio }}</p> }
+              </div>
+              @if (whatsappVendedora(); as w) { <a class="t-vend-wa" [href]="w" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp">WhatsApp</a> }
+            </section>
+          }
+        }
         @if (!q().trim() && !categoria() && !soloFavs()) {
           <section class="t-hero">
             <div class="t-hero-txt">
@@ -254,6 +266,19 @@ function parecido(a: string, b: string): number {
             </div>
           }
         </div>
+        @if (!q().trim() && !categoria() && !soloFavs() && destacados().length) {
+          <section class="tienda-top t-dest" aria-labelledby="t-dest">
+            <h2 id="t-dest">⭐ Recomendados por {{ primerNombre(tienda.vendedora!.nombre) }}</h2>
+            <div class="tienda-carrusel">
+              @for (p of destacados(); track p.id) {
+                <button type="button" class="tienda-mini" (click)="abrir(p)">
+                  @if (urlMini(p.imagen_url); as u) { <img [src]="u" alt="" loading="lazy" /> } @else { <span class="ini">{{ p.nombre.charAt(0) }}</span> }
+                  <span class="nom">{{ p.nombre }}</span><strong>{{ pesos(p.precio) }}</strong>
+                </button>
+              }
+            </div>
+          </section>
+        }
         @if (!q().trim() && !categoria() && masVendidos().length >= 3) {
           <section class="tienda-top" aria-labelledby="t-top">
             <h2 id="t-top">🔥 Lo más vendido</h2>
@@ -764,6 +789,12 @@ export class TiendaPage implements OnInit {
     return c.tipo === 'porcentaje' ? Math.round((sub * Math.min(Number(c.valor), 90)) / 100) : Math.min(Number(c.valor), sub);
   });
   /** Los 10 más vendidos (de los últimos 30 días) que hay disponibles */
+  /** Los que eligió la vendedora para su catálogo (sin los agotados), en su orden */
+  destacados = computed(() => {
+    const t = this.t();
+    const porId = new Map((t?.productos ?? []).map((p) => [Number(p.id), p]));
+    return (t?.vendedora?.destacados ?? []).map((id) => porId.get(Number(id))).filter((p): p is ProductoTienda => !!p && !p.agotado);
+  });
   masVendidos = computed(() => (this.t()?.productos ?? []).filter((p) => p.top && !p.agotado).sort((a, b) => a.top! - b.top!).slice(0, 10));
   /** Productos de la misma categoría (los más vendidos primero) */
   relacionados = computed(() => {
@@ -1583,5 +1614,14 @@ export class TiendaPage implements OnInit {
     if (tel.length < 7) return null;
     const num = tel.length === 10 ? '57' + tel : tel;
     return `https://wa.me/${num}?text=${encodeURIComponent(`Hola, acabo de hacer un pedido en el catálogo a nombre de ${this.nombre.trim()}.`)}`;
+  }
+
+  /** WhatsApp de la vendedora para preguntarle algo desde su catálogo */
+  whatsappVendedora(): string | null {
+    const v = this.t()?.vendedora;
+    const tel = (v?.telefono ?? '').replace(/\D/g, '');
+    if (!v || tel.length < 7) return null;
+    const num = tel.length === 10 ? '57' + tel : tel;
+    return `https://wa.me/${num}?text=${encodeURIComponent(`Hola ${this.primerNombre(v.nombre)}, vi tu catálogo y tengo una pregunta.`)}`;
   }
 }

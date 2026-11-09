@@ -1,12 +1,44 @@
 [
   {
+    "id": "2026-11-09-mi-catalogo",
+    "fecha": "2026-11-09",
+    "hora": "11:43",
+    "titulo": "Personaliza tu catálogo",
+    "cuerpo": "Ahora tu enlace de la tienda muestra tu foto, una frase tuya y hasta 8 productos que tú escoges, de primeros. Los clientes también te pueden escribir por WhatsApp desde ahí.",
+    "roles": [
+      "vendedora"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se usa",
+        "pasos": [
+          "Abre Pedidos de la tienda.",
+          "En \"Personaliza tu catálogo\" pon tu foto (si no, sale la de tu perfil) y escribe tu frase.",
+          "Busca productos y toca Destacar; ordénalos con las flechas.",
+          "Toca Guardar mi catálogo y abre \"Ver como cliente\" para ver cómo quedó."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-11-09-horas-ventas",
     "fecha": "2026-11-09",
     "hora": "11:39",
     "titulo": "Reportes: horas y días con más ventas",
     "cuerpo": "Un mapa de calor muestra a qué hora y qué día de la semana se vende más, con una sugerencia de cuándo publicar estados y promociones.",
-    "roles": ["admin"],
-    "secciones": [{"titulo": "Dónde está", "pasos": ["Abre Reportes y elige el periodo.", "Toca la pestaña \"Horas y días\".", "Cambia entre Pedidos y Ventas $; pasa el dedo o el mouse por una casilla para ver el detalle."]}]
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Dónde está",
+        "pasos": [
+          "Abre Reportes y elige el periodo.",
+          "Toca la pestaña \"Horas y días\".",
+          "Cambia entre Pedidos y Ventas $; pasa el dedo o el mouse por una casilla para ver el detalle."
+        ]
+      }
+    ]
   },
   {
     "id": "2026-11-09-ayuda-clientes",
