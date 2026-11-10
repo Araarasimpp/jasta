@@ -82,3 +82,10 @@ begin
   return v_id;
 end $function$;
 grant execute on function public.enviar_mensaje2(bigint, text, bigint, text, text, int) to authenticated;
+
+-- Corrección (2026-11-10): la tabla exigía texto en todos los mensajes y por eso no
+-- dejaba enviar fotos ni notas de voz sin texto.
+alter table public.pedido_mensajes
+  drop constraint pedido_mensajes_texto_check,
+  add constraint pedido_mensajes_texto_check check (length(texto) <= 1000
+    and (length(trim(texto)) >= 1 or (tipo in ('foto', 'audio') and adjunto is not null)));
