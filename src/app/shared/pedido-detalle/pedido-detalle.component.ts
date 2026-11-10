@@ -83,7 +83,12 @@ import { mensajeGuia } from '../envio-nacional/envio-nacional';
       .abrir-chat:active { background: var(--accent-soft); }
       @media (hover: hover) { .abrir-chat:hover { background: var(--accent-soft); } }
       /* En el celular la ventana de chat usa casi toda la pantalla */
-      @media (max-width: 760px) { .hoja-chat { height: 92dvh; } }
+      /* En el celular el chat ocupa toda la pantalla, como una app de mensajes */
+      @media (max-width: 760px) {
+        .hoja-chat { top: 0; height: 100dvh; max-height: none; border-top: 0; border-radius: 0; padding-top: env(safe-area-inset-top); }
+        .hoja-chat::before { display: none; }
+        .hoja-chat .hoja-head { touch-action: auto; }
+      }
       /* Cabecera del chat como en WhatsApp: foto y nombre de con quién se habla */
       .hoja-chat .hoja-head { padding-left: 10px; gap: 8px; }
       .wa { display: flex; align-items: center; gap: 10px; min-width: 0; margin-right: auto; }
