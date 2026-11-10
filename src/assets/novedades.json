@@ -1,5 +1,30 @@
 [
   {
+    "id": "2026-11-10-chat-nuevo",
+    "fecha": "2026-11-10",
+    "hora": "21:45",
+    "titulo": "El chat del pedido ahora es como WhatsApp",
+    "cuerpo": "El chat de cada pedido cambió de cara y ya puedes responder un mensaje en particular, mandar fotos y grabar notas de voz.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "mensajero",
+      "alistador"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se usa",
+        "pasos": [
+          "Para responder un mensaje, deslízalo hacia la derecha (en el computador, doble clic).",
+          "Toca el micrófono para grabar una nota de voz; la puedes pausar, botar o enviar.",
+          "Toca la cámara para tomar una foto, o el + para escoger una de tus fotos.",
+          "Los mensajes rápidos (\"Voy en camino\", \"El cliente no contesta\"…) ahora están en el +.",
+          "Toca un mensaje tuyo para ver a quién le llegó y quién lo leyó."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-11-09-mi-catalogo",
     "fecha": "2026-11-09",
     "hora": "11:43",

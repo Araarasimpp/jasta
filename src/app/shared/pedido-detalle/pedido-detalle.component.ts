@@ -94,14 +94,12 @@ import { mensajeGuia } from '../envio-nacional/envio-nacional';
       .wa-txt strong { font-size: 16px; font-weight: 650; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .wa-txt span { font-size: 12.5px; color: var(--text-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .wa-txt span.escribe { color: var(--accent); font-weight: 600; }
-      .chat-cab { display: flex; flex-direction: column; gap: 4px; padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
-      .chat-cli { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-      .chat-cli strong { font-size: 15.5px; font-weight: 650; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .chat-sub { margin: 0; font-size: 13px; color: var(--text-soft); }
-      .chat-sub .fuerte { color: var(--text); font-weight: 650; }
-      .chat-items { margin: 0; font-size: 12.5px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .ver-pedido { align-self: flex-start; display: inline-flex; align-items: center; gap: 2px; margin-top: 2px; padding: 0; border: 0; background: none;
-        color: var(--accent); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+      .chat-cab { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 14px; border: 0; border-bottom: 1px solid var(--border); background: var(--surface-2);
+        color: var(--text-soft); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
+      .chat-cli { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .chat-cli strong { font-weight: 650; color: var(--text); }
+      .chat-cab ion-icon { flex-shrink: 0; color: var(--text-muted); }
+      .chat-cab .estado { flex-shrink: 0; }
     `,
   ],
   template: `
@@ -134,20 +132,11 @@ import { mensajeGuia } from '../envio-nacional/envio-nacional';
       @if (pedido(); as p) {
         @if (enChat()) {
           <!-- Ventana de chat: solo lo justo del pedido arriba y la conversación ocupa el resto -->
-          <div class="chat-cab">
-            <div class="chat-cli">
-              <strong>{{ p.cliente_nombre }}</strong>
-              <span class="estado {{ p.estado }}">{{ estadoLabel(p.estado) }}</span>
-            </div>
-            <p class="chat-sub">
-              <span class="num fuerte">{{ pesos(p.total) }}</span>
-              @if (p.barrio) { · {{ p.barrio }} }
-            </p>
-            @if (p.pedido_items?.length) {
-              <p class="chat-items">{{ resumenItems(p) }}</p>
-            }
-            <button type="button" class="ver-pedido" (click)="vista.set('pedido')">Ver pedido completo<ion-icon name="chevron-forward-outline" aria-hidden="true"></ion-icon></button>
-          </div>
+          <button type="button" class="chat-cab" (click)="vista.set('pedido')" aria-label="Ver pedido completo">
+            <span class="chat-cli"><strong>{{ p.cliente_nombre }}</strong> · <span class="num">{{ pesos(p.total) }}</span>@if (p.barrio) { · {{ p.barrio }} }</span>
+            <span class="estado {{ p.estado }}">{{ estadoLabel(p.estado) }}</span>
+            <ion-icon name="chevron-forward-outline" aria-hidden="true"></ion-icon>
+          </button>
           @for (id of [pedidoId]; track id) {
             <app-chat-pedido [pedidoId]="id" [completo]="true" (escribiendo)="escribe.set($event)"></app-chat-pedido>
           }
@@ -606,10 +595,6 @@ export class PedidoDetalleComponent implements OnChanges {
     if (p?.mensajero_id === yo && p?.vendedora_id !== yo) return 'la vendedora y la tienda';
     if (p?.vendedora_id === yo && p?.mensajero_id !== yo) return p?.mensajero?.nombre ? `${p.mensajero.nombre.split(' ')[0]} y la tienda` : 'la tienda';
     return 'la vendedora y el mensajero';
-  }
-
-  resumenItems(p: Pedido): string {
-    return (p.pedido_items ?? []).map((i) => `${i.cantidad}× ${nombreConVariante(i)}`).join(' · ');
   }
 
   fecha(iso: string): string {
