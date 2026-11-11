@@ -4,7 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import {
-  add, searchOutline, printOutline, cubeOutline, checkmarkCircle, close, ellipsisHorizontal, chatbubbleEllipses, alertCircleOutline,
+  add, searchOutline, printOutline, cubeOutline, checkmarkCircle, close, ellipsisHorizontal, chatbubbleEllipses, alertCircleOutline, documentTextOutline,
 } from 'ionicons/icons';
 import { PedidosService } from '../../core/services/pedidos.service';
 import { SupabaseService } from '../../core/services/supabase.service';
@@ -179,7 +179,7 @@ export class PedidosPage implements OnInit, OnDestroy {
   private enCarga = false;
 
   constructor() {
-    addIcons({ add, searchOutline, printOutline, cubeOutline, checkmarkCircle, close, ellipsisHorizontal, chatbubbleEllipses, alertCircleOutline });
+    addIcons({ add, searchOutline, printOutline, cubeOutline, checkmarkCircle, close, ellipsisHorizontal, chatbubbleEllipses, alertCircleOutline, documentTextOutline });
   }
 
   ngOnInit(): void {

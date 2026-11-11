@@ -1308,6 +1308,29 @@ select.inp,
   white-space: nowrap;
 }
 
+/* Pedidos: la observación (ej. "entregar antes de las 3 pm") a la vista sin abrir el pedido */
+.obs-pedido {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  max-width: 100%;
+  margin-top: 4px;
+  padding: 4px 8px;
+  border-radius: var(--radius-xs);
+  background: color-mix(in srgb, var(--st-pendiente) 14%, transparent);
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 550;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.obs-pedido ion-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--st-pendiente-text);
+}
+
 /* Pedidos: cantidad junto al nombre del producto (sobre la foto a veces no se leía) */
 .prod-cant {
   display: inline-block;
