@@ -1,0 +1,6 @@
+-- YA APLICADO (2026-11-11). Queda aquí como registro.
+-- La semana del ranking y de las metas va de sábado a viernes, como el pago.
+-- En public.mi_meta y privado.revisar_metas se cambió (con pg_get_functiondef + replace):
+--   v_sem date := date_trunc('week', v_hoy)::date;
+-- por:
+--   v_sem date := v_hoy - ((extract(dow from v_hoy)::int + 1) % 7);

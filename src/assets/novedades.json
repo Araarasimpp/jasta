@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-11-11-ranking-semana",
+    "fecha": "2026-11-11",
+    "hora": "09:00",
+    "titulo": "Ranking: la semana va de sábado a viernes",
+    "cuerpo": "En el ranking, \"Semana\" ahora cuenta de sábado a viernes, igual que el pago. La meta de la semana también se cuenta así.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "mensajero"
+    ]
+  },
+  {
     "id": "2026-11-10-chat-nuevo",
     "fecha": "2026-11-10",
     "hora": "21:45",
