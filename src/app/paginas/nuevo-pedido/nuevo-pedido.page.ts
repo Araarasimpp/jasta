@@ -17,6 +17,7 @@ import { PAISES, bandera, errorTelefono, limpiarNombre, separarTelefono, unirTel
 import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 import { BotonTicketComponent } from '../../shared/ticket/boton-ticket.component';
 import { PesosDirective } from '../../shared/pesos/pesos.directive';
+import { UbicarMapaComponent, UbicacionElegida } from '../../shared/mapa/ubicar-mapa.component';
 
 interface Linea {
   /** Para seguir la línea en la lista aunque se repita el producto */
@@ -46,7 +47,7 @@ function normal(s: string): string {
 @Component({
   selector: 'app-nuevo-pedido',
   standalone: true,
-  imports: [PesosDirective, EsqueletoComponent, FormsModule, IonIcon, ComprobantesInputComponent, BotonTicketComponent],
+  imports: [PesosDirective, UbicarMapaComponent, EsqueletoComponent, FormsModule, IonIcon, ComprobantesInputComponent, BotonTicketComponent],
   styles: [
     `
       .vendida { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-bottom: 16px; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--efectivo-texto) 35%, transparent);
@@ -200,6 +201,10 @@ function normal(s: string): string {
               <div class="campo">
                 <label for="dir">Dirección</label>
                 <input id="dir" autocomplete="off" [(ngModel)]="direccion" [placeholder]="nacional() ? 'Dirección completa con barrio' : ''" />
+                @if (!nacional()) {
+                  <app-ubicar-mapa [direccion]="direccion" [barrio]="barrio" [lat]="ubic()?.lat ?? null" [lng]="ubic()?.lng ?? null"
+                    (elegido)="usarUbicacion($event)" (quitar)="ubic.set(null)"></app-ubicar-mapa>
+                }
               </div>
               @if (nacional()) {
                 <div class="fila-campos">
@@ -462,6 +467,9 @@ export class NuevoPedidoPage implements OnInit {
   }
   nombre = '';
   direccion = '';
+  /** Punto exacto de la entrega elegido en el mapa */
+  ubic = signal<{ lat: number; lng: number } | null>(null);
+  private ubicAntes: { lat: number; lng: number } | null = null;
   barrio = '';
   /** Envío a otra ciudad por transportadora (pago anticipado) */
   nacional = signal(false);
@@ -526,6 +534,8 @@ export class NuevoPedidoPage implements OnInit {
       this.nombre = p.cliente_nombre;
       this.direccion = p.direccion ?? '';
       this.barrio = p.barrio ?? '';
+      this.ubicAntes = p.lat != null && p.lng != null ? { lat: p.lat, lng: p.lng } : null;
+      this.ubic.set(this.ubicAntes);
       this.nacional.set(!!p.envio_nacional);
       this.ciudad = p.destino_ciudad ?? '';
       this.departamento = p.destino_departamento ?? '';
@@ -805,6 +815,23 @@ export class NuevoPedidoPage implements OnInit {
     this.router.navigate([this.sb.rutaPedidos()], { queryParams: { id: this.editId() } });
   }
 
+  usarUbicacion(u: UbicacionElegida): void {
+    this.ubic.set({ lat: u.lat, lng: u.lng });
+    if (u.direccion) {
+      // Se conserva lo que va después (apto, casa, torre…) si ya estaba escrito
+      const extra = this.direccion.match(/\b(apto|apartamento|casa|torre|bloque|piso|interior|int|local|of|oficina)\b.*$/i)?.[0];
+      this.direccion = extra ? `${u.direccion} ${extra}` : u.direccion;
+    }
+  }
+
+  /** Guarda el punto del mapa si cambió (un error aquí no deshace el pedido) */
+  private async guardarUbicacion(id: number, nacional: boolean): Promise<void> {
+    const u = nacional ? null : this.ubic();
+    if (u?.lat === this.ubicAntes?.lat && u?.lng === this.ubicAntes?.lng) return;
+    const { error } = await this.sb.client.rpc('pedido_ubicacion', { p_pedido: id, p_lat: u?.lat ?? null, p_lng: u?.lng ?? null });
+    if (error) this.toast.error('El pedido quedó, pero no se guardó la ubicación del mapa: ' + mensajeError(error));
+  }
+
   async guardar(): Promise<void> {
     this.error.set('');
     const local = this.local();
@@ -861,6 +888,7 @@ export class NuevoPedidoPage implements OnInit {
           items,
         });
         if (nacional) await this.marcarNacional(this.editId()!);
+        await this.guardarUbicacion(this.editId()!, nacional);
         this.toast.ok(`Pedido #${this.editId()} actualizado`);
         this.volver();
       } else if (local) {
@@ -893,6 +921,7 @@ export class NuevoPedidoPage implements OnInit {
           items,
         });
         if (nacional) await this.marcarNacional(id);
+        await this.guardarUbicacion(id, nacional);
         this.toast.ok(nacional ? `Pedido #${id} creado · envío a ${this.ciudad.trim()}` : `Pedido #${id} creado`);
         this.router.navigate([this.sb.rutaPedidos()], { queryParams: { id } });
       }

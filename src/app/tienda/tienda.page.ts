@@ -1,3 +1,4 @@
+import { UbicarMapaComponent, UbicacionElegida } from '../shared/mapa/ubicar-mapa.component';
 import { Component, ElementRef, HostListener, OnInit, ViewChild, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -77,7 +78,7 @@ function parecido(a: string, b: string): number {
   standalone: true,
   // El diseño de la tienda (tarjetas, banner, carrito) está en global.scss bajo app-tienda.tv2
   host: { class: 'tv2' },
-  imports: [EsqueletoComponent, FormsModule],
+  imports: [EsqueletoComponent, FormsModule, UbicarMapaComponent],
   styles: [
     `
       /* Ionic deja el body fijo y le pone contain: layout a la página (lo "fijo" queda pegado a ella):
@@ -522,7 +523,9 @@ function parecido(a: string, b: string): number {
               @if (!misDirs().length || dirSel() === 'otra') {
           <div class="campo"><label for="td">Dirección <span class="obl">*</span></label>
             <input id="td" autocomplete="street-address" maxlength="200" required [class.mal]="intentado() && errDir()" [(ngModel)]="direccion" placeholder="Ej: Cra 45 # 12-30 apto 201" />
-            @if (intentado() && errDir()) { <p class="error-campo">{{ errDir() }}</p> }</div>
+            @if (intentado() && errDir()) { <p class="error-campo">{{ errDir() }}</p> }
+            <app-ubicar-mapa [direccion]="direccion" [barrio]="barrio()" [lat]="ubic()?.lat ?? null" [lng]="ubic()?.lng ?? null"
+              (elegido)="usarUbicacion($event)" (quitar)="ubic.set(null)"></app-ubicar-mapa></div>
           <div class="campo barrio-campo"><label for="tb">Barrio <span class="obl">*</span></label>
             <small class="pista-barrio">Escribe tu barrio y elígelo de la lista. <strong>Si no eres de Cali, escribe solo el nombre de tu ciudad</strong> (ej: Jamundí, Palmira, Yumbo), no el barrio.</small>
             <input id="tb" maxlength="120" autocomplete="off" required role="combobox" aria-autocomplete="list" [attr.aria-expanded]="sugerencias().length > 0"
@@ -825,6 +828,16 @@ export class TiendaPage implements OnInit {
   telefono = '';
   prefijo = '57';
   direccion = '';
+  /** Punto exacto de la entrega elegido en el mapa (solo con "otra dirección") */
+  ubic = signal<{ lat: number; lng: number } | null>(null);
+
+  usarUbicacion(u: UbicacionElegida): void {
+    this.ubic.set({ lat: u.lat, lng: u.lng });
+    if (u.direccion) {
+      const extra = this.direccion.match(/\b(apto|apartamento|casa|torre|bloque|piso|interior|int|local|of|oficina)\b.*$/i)?.[0];
+      this.direccion = extra ? `${u.direccion} ${extra}` : u.direccion;
+    }
+  }
   observaciones = '';
   paises = PAISES;
   bandera = bandera;
@@ -1536,6 +1549,11 @@ export class TiendaPage implements OnInit {
       return this.error.set(mensajeError(error));
     }
     const r = data as { id: number; codigo: string; subtotal: number; domicilio: number; domicilio_por_confirmar: boolean; pago: string };
+    // El punto del mapa va aparte (si falla, el pedido igual queda con la dirección escrita)
+    const u = this.ubic();
+    if (u && (!this.misDirs().length || this.dirSel() === 'otra')) {
+      await this.sb.client.rpc('tienda_ubicacion', { p_codigo: r.codigo, p_lat: u.lat, p_lng: u.lng }).then(() => undefined, () => undefined);
+    }
     this.guardarUltimo();
     await this.guardarEnCuenta();
     if (conTarjeta) return this.cobrarTarjeta(r.codigo, token, r);
