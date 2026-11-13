@@ -1,4 +1,3 @@
-import { enlaceMapa } from '../mapa/mapas.service';
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -106,7 +105,6 @@ import { mensajeGuia } from '../envio-nacional/envio-nacional';
       .chat-cli strong { font-weight: 650; color: var(--text); }
       .chat-cab ion-icon { flex-shrink: 0; color: var(--text-muted); }
       .chat-cab .estado { flex-shrink: 0; }
-      .ver-mapa { display: block; margin-top: 2px; font-size: 13px; font-weight: 600; color: var(--accent); }
     `,
   ],
   template: `
@@ -197,9 +195,7 @@ import { mensajeGuia } from '../envio-nacional/envio-nacional';
                   </span>
                 </dd>
               }
-              <dt>Dirección</dt><dd>{{ p.direccion || '—' }}@if (p.direccion || p.lat != null) {
-                <a class="ver-mapa" [href]="enlaceMapa(p)" target="_blank" rel="noopener">{{ p.lat != null ? '📍 Ver ubicación exacta' : 'Ver en el mapa' }}</a>
-              }</dd>
+              <dt>Dirección</dt><dd>{{ p.direccion || '—' }}</dd>
               @if (p.envio_nacional) {
                 <dt>Envío a</dt><dd><strong>{{ p.destino_ciudad }}</strong>{{ p.destino_departamento ? ', ' + p.destino_departamento : '' }} · por transportadora</dd>
                 <dt>Cédula</dt><dd>{{ p.destinatario_cedula || '—' }}</dd>
@@ -342,7 +338,6 @@ import { mensajeGuia } from '../envio-nacional/envio-nacional';
   `,
 })
 export class PedidoDetalleComponent implements OnChanges {
-  enlaceMapa = enlaceMapa;
   @Input({ required: true }) pedidoId!: number;
   /** Abre el pedido directo en la conversación (desde un aviso de mensaje) */
   @Input() chat = false;

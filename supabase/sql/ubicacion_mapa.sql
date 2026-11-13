@@ -1,4 +1,6 @@
 -- YA APLICADO (2026-11-12). Queda aquí como registro.
+-- 2026-11-13: se quitó el mapa de la app (Google no dejó activar la facturación).
+-- Estas columnas y funciones quedaron en la base pero la app ya no las usa.
 -- Ubicación exacta (punto en el mapa) de la dirección de entrega.
 
 alter table public.pedidos add column if not exists lat double precision, add column if not exists lng double precision;

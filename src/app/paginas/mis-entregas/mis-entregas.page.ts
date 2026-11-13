@@ -1,4 +1,3 @@
-import { enlaceMapa } from '../../shared/mapa/mapas.service';
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
@@ -929,8 +928,7 @@ export class MisEntregasPage implements OnInit, OnDestroy {
     );
   }
 
-  /** Con el punto exacto del mapa, si lo tiene; si no, la dirección escrita */
-  mapa(p: { direccion: string | null; barrio: string | null; lat?: number | null; lng?: number | null }): string {
-    return enlaceMapa(p);
+  mapa(p: { direccion: string | null; barrio: string | null }): string {
+    return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(`${p.direccion ?? ''}, ${p.barrio ?? ''}, Cali`);
   }
 }

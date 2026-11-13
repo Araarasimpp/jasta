@@ -78,9 +78,6 @@ export interface Pedido {
   direccion: string | null;
   barrio: string | null;
   observaciones: string | null;
-  /** Punto exacto de la entrega (elegido en el mapa) */
-  lat?: number | null;
-  lng?: number | null;
   valor_domicilio: number;
   /** Lo que el cliente transfirió de más: propina del mensajero (se le descuenta en el cuadre) */
   propina?: number;
