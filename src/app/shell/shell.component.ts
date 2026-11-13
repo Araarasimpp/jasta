@@ -6,6 +6,7 @@ import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import {
   add,
+  lockClosedOutline,
   barChartOutline,
   calendarOutline,
   homeOutline,
@@ -127,6 +128,7 @@ const MENU: ItemMenu[] = [
   { label: 'Devoluciones', path: '/app/devoluciones', icon: 'return-down-back-outline', roles: ['admin', 'alistador', 'venta_local', 'cuadres'], grupo: 'Bodega' },
   { label: 'Reportes', path: '/app/reportes', icon: 'stats-chart-outline', roles: ['admin', 'vendedora'], grupo: 'Finanzas' },
   { label: 'Comisiones', path: '/app/comisiones', icon: 'card-outline', roles: ['admin', 'vendedora'], grupo: 'Finanzas' , buscar: 'liquidacion pagar vendedoras ganancia' },
+  { label: 'Mi cierre del día', path: '/app/cierre-dia', icon: 'lock-closed-outline', roles: ['admin'], grupo: 'Finanzas', buscar: 'cierre ahorro separar comisiones plata recibi cuadre' },
   { label: 'Gastos', path: '/app/gastos', icon: 'trending-down-outline', roles: ['admin'], grupo: 'Finanzas' , buscar: 'arriendo nomina utilidad' },
   { label: 'Gastos personales', path: '/app/gastos-personales', icon: 'wallet-outline', roles: ['admin'], grupo: 'Finanzas', buscar: 'personal casa mercado mis gastos privado' },
   { label: 'Transferencias', path: '/app/transferencias', icon: 'swap-horizontal-outline', roles: ['admin'], grupo: 'Finanzas', buscar: 'confirmar banco transferencia nequi pagos verificar' },
@@ -459,7 +461,7 @@ export class ShellComponent implements OnInit, OnDestroy {
   );
 
   constructor() {
-    addIcons({ homeOutline, colorPaletteOutline, calendarOutline, hourglassOutline, swapHorizontalOutline, searchOutline, 
+    addIcons({ lockClosedOutline, homeOutline, colorPaletteOutline, calendarOutline, hourglassOutline, swapHorizontalOutline, searchOutline, 
       sparklesOutline, globeOutline, helpBuoyOutline, chatbubblesOutline, analyticsOutline, add, close, chevronDownOutline, layersOutline, pricetagsOutline, returnDownBackOutline, pieChartOutline, alertCircleOutline, cardOutline, trendingDownOutline, barChartOutline, chevronBackOutline, chevronForwardOutline, cubeOutline, ellipsisHorizontal,
       logOutOutline, moonOutline, peopleOutline, receiptOutline, bicycleOutline, clipboardOutline, sunnyOutline, walletOutline, ticketOutline, statsChartOutline, settingsOutline,
       storefrontOutline, listOutline, trophyOutline, bookOutline, gridOutline, cashOutline, bagHandleOutline, peopleCircleOutline, timeOutline, personCircleOutline, notificationsOutline, locationOutline,

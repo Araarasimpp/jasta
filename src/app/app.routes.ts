@@ -104,6 +104,11 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/rentabilidad/rentabilidad.page').then((m) => m.RentabilidadPage),
       },
       {
+        // Cierre del día de cada administrador: la plata que recibió, comisiones y ahorro
+        path: 'cierre-dia', canActivate: [rolGuard], data: { roles: ['admin'] },
+        loadComponent: () => import('./paginas/cierre-dia/cierre-dia.page').then((m) => m.CierreDiaPage),
+      },
+      {
         path: 'gastos', canActivate: [rolGuard], data: { roles: ['admin'] },
         loadComponent: () => import('./paginas/gastos/gastos.page').then((m) => m.GastosPage),
       },

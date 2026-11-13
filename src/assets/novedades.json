@@ -1,5 +1,26 @@
 [
   {
+    "id": "2026-11-13-cierre-dia",
+    "fecha": "2026-11-13",
+    "hora": "22:30",
+    "titulo": "Nuevo: Mi cierre del día",
+    "cuerpo": "Cada administrador cierra su propio día: marca la plata que de verdad recibió (cuadres de mensajeros y caja del local) y la app le dice cuánto separar para las comisiones de las vendedoras y cuánto guardar de ahorro (10 % de la ganancia).",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se usa",
+        "pasos": [
+          "Abre Finanzas → Mi cierre del día.",
+          "Quedan marcados los cuadres que la app dice que recibiste tú; marca o desmarca según la plata que de verdad tienes.",
+          "Mira los tres sobres: comisiones, ahorro y lo que te queda libre. El % de ahorro lo puedes cambiar.",
+          "Toca Cerrar mi día. Si te equivocaste, anúlalo y ciérralo de nuevo."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-11-11-observacion-pedidos",
     "fecha": "2026-11-11",
     "hora": "21:30",
