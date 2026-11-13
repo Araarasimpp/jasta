@@ -1,5 +1,15 @@
 [
   {
+    "id": "2026-11-13-cierre-sobres",
+    "fecha": "2026-11-13",
+    "hora": "22:50",
+    "titulo": "Mi cierre del día: mercancía, meta de ahorro y comisiones de la semana",
+    "cuerpo": "El cierre ahora también separa la mercancía (lo que costó lo vendido, para volver a comprar), muestra el sobre de comisiones de la semana de sábado a viernes y tiene una meta de ahorro con barra de avance. También puedes registrar cuando se saca plata del ahorro.",
+    "roles": [
+      "admin"
+    ]
+  },
+  {
     "id": "2026-11-13-cierre-dia",
     "fecha": "2026-11-13",
     "hora": "22:30",
