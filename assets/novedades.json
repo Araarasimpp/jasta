@@ -1,0 +1,2470 @@
+[
+  {
+    "id": "2026-11-13-cierre-sobres",
+    "fecha": "2026-11-13",
+    "hora": "22:50",
+    "titulo": "Mi cierre del día: mercancía, meta de ahorro y comisiones de la semana",
+    "cuerpo": "El cierre ahora también separa la mercancía (lo que costó lo vendido, para volver a comprar), muestra el sobre de comisiones de la semana de sábado a viernes y tiene una meta de ahorro con barra de avance. También puedes registrar cuando se saca plata del ahorro.",
+    "roles": [
+      "admin"
+    ]
+  },
+  {
+    "id": "2026-11-13-cierre-dia",
+    "fecha": "2026-11-13",
+    "hora": "22:30",
+    "titulo": "Nuevo: Mi cierre del día",
+    "cuerpo": "Cada administrador cierra su propio día: marca la plata que de verdad recibió (cuadres de mensajeros y caja del local) y la app le dice cuánto separar para las comisiones de las vendedoras y cuánto guardar de ahorro (10 % de la ganancia).",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se usa",
+        "pasos": [
+          "Abre Finanzas → Mi cierre del día.",
+          "Quedan marcados los cuadres que la app dice que recibiste tú; marca o desmarca según la plata que de verdad tienes.",
+          "Mira los tres sobres: comisiones, ahorro y lo que te queda libre. El % de ahorro lo puedes cambiar.",
+          "Toca Cerrar mi día. Si te equivocaste, anúlalo y ciérralo de nuevo."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-11-11-observacion-pedidos",
+    "fecha": "2026-11-11",
+    "hora": "21:30",
+    "titulo": "La observación del pedido, a la vista",
+    "cuerpo": "En Pedidos, cada pedido muestra su observación (por ejemplo \"entregar antes de las 2 pm\") en un recuadro amarillo, sin tener que abrirlo ni esperar a imprimir el rótulo.",
+    "roles": [
+      "admin",
+      "alistador"
+    ]
+  },
+  {
+    "id": "2026-11-11-ranking-semana",
+    "fecha": "2026-11-11",
+    "hora": "09:00",
+    "titulo": "Ranking: la semana va de sábado a viernes",
+    "cuerpo": "En el ranking, \"Semana\" ahora cuenta de sábado a viernes, igual que el pago. La meta de la semana también se cuenta así.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "mensajero"
+    ]
+  },
+  {
+    "id": "2026-11-10-chat-nuevo",
+    "fecha": "2026-11-10",
+    "hora": "21:45",
+    "titulo": "El chat del pedido ahora es como WhatsApp",
+    "cuerpo": "El chat de cada pedido cambió de cara y ya puedes responder un mensaje en particular, mandar fotos y grabar notas de voz.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "mensajero",
+      "alistador"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se usa",
+        "pasos": [
+          "Para responder un mensaje, deslízalo hacia la derecha (en el computador, doble clic).",
+          "Toca el micrófono para grabar una nota de voz; la puedes pausar, botar o enviar.",
+          "Toca la cámara para tomar una foto, o el + para escoger una de tus fotos.",
+          "Los mensajes rápidos (\"Voy en camino\", \"El cliente no contesta\"…) ahora están en el +.",
+          "Toca un mensaje tuyo para ver a quién le llegó y quién lo leyó."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-11-09-mi-catalogo",
+    "fecha": "2026-11-09",
+    "hora": "11:43",
+    "titulo": "Personaliza tu catálogo",
+    "cuerpo": "Ahora tu enlace de la tienda muestra tu foto, una frase tuya y hasta 8 productos que tú escoges, de primeros. Los clientes también te pueden escribir por WhatsApp desde ahí.",
+    "roles": [
+      "vendedora"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se usa",
+        "pasos": [
+          "Abre Pedidos de la tienda.",
+          "En \"Personaliza tu catálogo\" pon tu foto (si no, sale la de tu perfil) y escribe tu frase.",
+          "Busca productos y toca Destacar; ordénalos con las flechas.",
+          "Toca Guardar mi catálogo y abre \"Ver como cliente\" para ver cómo quedó."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-11-09-horas-ventas",
+    "fecha": "2026-11-09",
+    "hora": "11:39",
+    "titulo": "Reportes: horas y días con más ventas",
+    "cuerpo": "Un mapa de calor muestra a qué hora y qué día de la semana se vende más, con una sugerencia de cuándo publicar estados y promociones.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Dónde está",
+        "pasos": [
+          "Abre Reportes y elige el periodo.",
+          "Toca la pestaña \"Horas y días\".",
+          "Cambia entre Pedidos y Ventas $; pasa el dedo o el mouse por una casilla para ver el detalle."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-11-09-ayuda-clientes",
+    "fecha": "2026-11-09",
+    "hora": "00:35",
+    "titulo": "Nueva página: Ayuda a clientes",
+    "cuerpo": "Todo lo que los clientes reportan desde su cuenta (llegó dañado, garantía, ¿cuándo me llega?…) queda en una lista para atenderlo y marcarlo como resuelto.",
+    "roles": [
+      "admin",
+      "vendedora"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se usa",
+        "pasos": [
+          "Menú → Ventas → Ayuda a clientes (el admin ve todo; cada vendedora, lo de sus pedidos). El aviso 🆘 también abre esta página.",
+          "Cada reporte muestra el cliente, qué pasó, su mensaje, el pedido (se abre con un toque), los productos y el total.",
+          "Botones para escribirle por WhatsApp (con el mensaje ya escrito) o llamarlo.",
+          "\"Resolver\": escribe una respuesta corta (ej: \"Te cambiamos el producto mañana\") y el cliente la ve en su pedido con un ✓ Resuelto. Si hace falta, \"Reabrir\"."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-11-09-calificar-ayuda",
+    "fecha": "2026-11-09",
+    "hora": "00:30",
+    "titulo": "Los clientes califican sus compras y piden ayuda desde el pedido",
+    "cuerpo": "En Mis compras, el cliente califica la entrega y cada producto (las reseñas salen en la tienda), y si algo pasa con un pedido escribe por WhatsApp o reporta el problema desde ahí mismo.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "Para el cliente",
+        "pasos": [
+          "Cuando el pedido está entregado le sale \"Califica tu compra\": estrellas a la entrega y a cada producto, con comentario opcional.",
+          "En cada pedido: \"Escribir por WhatsApp\" (a la vendedora del pedido, con el número y los productos ya escritos) o \"Reportar un problema\" eligiendo qué pasó."
+        ]
+      },
+      {
+        "titulo": "Para el equipo",
+        "pasos": [
+          "Cuando un cliente reporta un problema, al admin y a la vendedora del pedido les llega un aviso rojo 🆘 con lo que pasó y su celular; al tocarlo abre el pedido.",
+          "Las calificaciones de 3 estrellas o menos le avisan al admin, y las de 5 al mensajero (como en el seguimiento)."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-11-09-cuenta-cliente-config",
+    "fecha": "2026-11-09",
+    "hora": "00:20",
+    "titulo": "Cuenta del cliente: foto, datos completos al registrarse y Configuración",
+    "cuerpo": "Al crear su cuenta en la tienda, el cliente completa de una vez sus datos (celular, documento) y su dirección. Puede poner foto de perfil, y en Configuración edita todo.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "Para el cliente",
+        "pasos": [
+          "Al crear la cuenta (con correo o Google) le sale \"Completa tu cuenta\": 1) nombre, celular, documento y foto (opcional); 2) su dirección principal.",
+          "Si entra con Google, su foto de Google queda de una vez; la puede cambiar o quitar.",
+          "En Mi cuenta → Configuración: Mi perfil, Mis direcciones, Mis tarjetas, Seguridad (cambiar o crear contraseña) y Cerrar sesión."
+        ]
+      },
+      {
+        "titulo": "Para el equipo",
+        "pasos": [
+          "Los pedidos de clientes con cuenta llegan con su cédula y su celular siempre completos."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-11-09-google-clientes",
+    "fecha": "2026-11-08",
+    "hora": "23:55",
+    "titulo": "Los clientes pueden entrar a la tienda con Google",
+    "cuerpo": "En Mi cuenta de la tienda ahora está el botón \"Continuar con Google\": el cliente entra o crea su cuenta con un toque, sin escribir correo ni contraseña.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "Para el cliente",
+        "pasos": [
+          "Toca el ícono de persona en el catálogo → \"Continuar con Google\" → elige su cuenta de Google.",
+          "Si es nuevo, se le crea su cuenta con su nombre; solo le pedimos el celular (en Mis datos o en su primera compra).",
+          "Después puede seguir entrando con Google o con su correo."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-11-08-favoritos-cuenta",
+    "fecha": "2026-11-08",
+    "hora": "12:20",
+    "titulo": "Los favoritos de los clientes quedan en su cuenta",
+    "cuerpo": "El corazón de los productos ahora se guarda en la cuenta del cliente: los ve en cualquier celular y en Mi cuenta → Mis favoritos.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "Para el cliente",
+        "pasos": [
+          "Toca el corazón de un producto y queda en sus favoritos (si no tiene cuenta, se guardan solo en ese celular).",
+          "Al entrar a su cuenta, los favoritos que tenía en el celular se suben solos.",
+          "En Mi cuenta → Mis favoritos los ve con foto y precio (y si se agotó); al tocarlos abre el producto, y con el corazón los quita."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-11-08-tarjetas-guardadas",
+    "fecha": "2026-11-08",
+    "hora": "12:10",
+    "titulo": "Pago con tarjeta dentro de la tienda, con tarjetas guardadas y cuotas",
+    "cuerpo": "El cliente con cuenta paga con tarjeta sin salir de la tienda: elige una tarjeta guardada o una nueva, y en cuántas cuotas. Wompi guarda la tarjeta; Jasta solo ve los últimos 4 números.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "Para el cliente",
+        "pasos": [
+          "En Finaliza tu compra → Medios de pago salen sus tarjetas guardadas (ej: Mastercard **** 9149) y \"Nueva tarjeta\".",
+          "Con tarjeta nueva escribe número, nombre, vencimiento y código, y puede guardarla para la próxima.",
+          "Elige las cuotas (1 a 36) y toca \"Pagar\": el pago queda aprobado ahí mismo.",
+          "Si el banco lo rechaza, puede intentar con otra tarjeta sin crear otro pedido. PSE, Nequi y Daviplata siguen en \"Otros medios en línea\".",
+          "En Mi cuenta → Mis tarjetas las puede quitar."
+        ]
+      },
+      {
+        "titulo": "Para el equipo",
+        "pasos": [
+          "El pedido llega como PAGADO, igual que los pagos en línea de antes.",
+          "Se activa cuando el admin pone el Secreto de integridad de Wompi en Supabase."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-11-08-mis-compras",
+    "fecha": "2026-11-08",
+    "hora": "11:55",
+    "titulo": "Los clientes ven sus compras y en qué va cada pedido",
+    "cuerpo": "En Mi cuenta de la tienda, el cliente ve todos sus pedidos con su estado y una línea de tiempo, y puede volver a comprar con un toque.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "Para el cliente",
+        "pasos": [
+          "Mis compras: cada pedido con fotos, fecha, total y su estado (por confirmar, confirmado, en camino, entregado…).",
+          "Al tocar uno: la línea de tiempo (hiciste el pedido → confirmado → alistado → en camino → entregado) con la hora de cada paso, los productos, la dirección y \"Ver seguimiento\".",
+          "\"Volver a comprar\" pone esos mismos productos en el carrito.",
+          "También le salen los pedidos de antes hechos con su mismo correo."
+        ]
+      },
+      {
+        "titulo": "Para el equipo",
+        "pasos": [
+          "Cuando confirmas un pedido de la tienda de un cliente con cuenta, queda unido a su cuenta (con su cédula si la tiene) y el cliente lo ve avanzar."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-11-08-finaliza-compra",
+    "fecha": "2026-11-08",
+    "hora": "11:45",
+    "titulo": "Nueva pantalla para terminar el pedido en la tienda",
+    "cuerpo": "Al pedir en el catálogo, el cliente ve primero sus productos y luego \"Finaliza tu compra\", como en las tiendas grandes: entrega, envío, pago, facturación y resumen.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se ve para el cliente",
+        "pasos": [
+          "Mi pedido: los productos y las cantidades → \"Continuar compra\".",
+          "Forma de entrega: su dirección con \"Cambiar dirección\" (si tiene cuenta) o el formulario de siempre.",
+          "Envío: cuánto vale el domicilio y si llega hoy (pidiendo antes de las 2 p. m.) o mañana.",
+          "Medios de pago: al recibir, o en línea con tarjeta, PSE, Nequi o Daviplata (con cuotas en tarjeta de crédito).",
+          "Facturación con su cédula (si tiene cuenta), cupón, resumen y abajo el total con \"Confirmar pedido\" o \"Pagar y finalizar\"."
+        ]
+      },
+      {
+        "titulo": "Para el equipo",
+        "pasos": [
+          "Si el cliente tiene cuenta con su cédula, el pedido llega con la cédula guardada."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-11-08-cuentas-clientes",
+    "fecha": "2026-11-08",
+    "hora": "11:30",
+    "titulo": "Los clientes ya pueden crear su cuenta en la tienda",
+    "cuerpo": "En el catálogo hay un botón de cuenta (al lado del carrito). El cliente crea su cuenta con su correo, guarda sus datos y sus direcciones, y al pedir ya le salen llenos.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo funciona para el cliente",
+        "pasos": [
+          "Toca el ícono de persona arriba en el catálogo → Crear cuenta: nombre, celular, correo y contraseña. Le llega un correo para confirmar.",
+          "En Mi cuenta guarda sus datos (y su cédula para envíos a otras ciudades) y varias direcciones (Casa, Trabajo…), con una principal.",
+          "Al hacer un pedido ya salen su nombre, su celular y su dirección; puede elegir otra o escribir una nueva y guardarla.",
+          "Si olvidó la contraseña, la recupera desde ahí mismo."
+        ]
+      },
+      {
+        "titulo": "Para el equipo",
+        "pasos": [
+          "Los pedidos llegan igual que siempre (por confirmar, a nombre de la vendedora del enlace).",
+          "Los clientes con cuenta no ven nada de la app de adentro: solo su cuenta."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-11-06-gastos-personales",
+    "fecha": "2026-11-06",
+    "hora": "22:50",
+    "titulo": "Nuevo: Gastos personales (solo administradores)",
+    "cuerpo": "Una página aparte para anotar los gastos de la casa y personales, sin que se mezclen con los gastos del negocio ni con la utilidad.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Admin",
+        "pasos": [
+          "Está en el menú, en Finanzas → Gastos personales. Solo la ven los administradores.",
+          "Toca \"Registrar gasto\": escribe cuánto fue, toca la categoría (mercado, almuerzos, comidas fuera, gasolina, salud, hijos, mascotas…), elige la fecha (Hoy o Ayer de un toque) y cómo se pagó. El detalle es opcional.",
+          "Arriba ves el total, el promedio por día, si gastaste más o menos que el periodo anterior y la categoría que más pesa.",
+          "La gráfica de líneas muestra el gasto de cada día; en \"Acumulado\" lo compara con el periodo anterior. En la dona, toca una categoría para ver solo esos gastos.",
+          "Estos gastos no restan en la utilidad real del negocio."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-11-06-recolector-foto-quitar",
+    "fecha": "2026-11-06",
+    "hora": "13:25",
+    "titulo": "Recolector: foto del producto al comprar y quitar compras",
+    "cuerpo": "Al registrar una compra del inventario ahora ves la foto de cada producto, y una compra mal registrada se puede quitar.",
+    "roles": [
+      "admin",
+      "recolector"
+    ],
+    "secciones": [
+      {
+        "titulo": "Recolector",
+        "pasos": [
+          "En Registrar compra → Producto del inventario, cada producto de la búsqueda sale con su foto. Al elegirlo, toca la foto para verla grande.",
+          "Si te equivocaste en una compra, toca \"Quitar\" al lado del valor en Movimientos del día. Solo puedes quitar las de hoy, y al admin le llega un aviso."
+        ]
+      },
+      {
+        "titulo": "Admin",
+        "pasos": [
+          "Puedes quitar cualquier compra de cualquier día con \"Quitar\". Si esa compra había cambiado el costo del producto, el costo vuelve al de antes."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-11-06-optimizacion-animaciones",
+    "fecha": "2026-11-06",
+    "hora": "09:30",
+    "titulo": "La app más rápida y con animación al cambiar de página",
+    "cuerpo": "Ahora la app carga más liviana y al pasar de una página a otra la anterior se desenfoca y las tarjetas de la nueva aparecen una tras otra.",
+    "roles": [
+      "admin",
+      "cuadres",
+      "vendedor",
+      "vendedora",
+      "venta_local",
+      "recolector",
+      "bodega",
+      "alistador",
+      "domiciliario",
+      "mensajero",
+      "tecnico"
+    ],
+    "secciones": [
+      {
+        "titulo": "Qué cambió",
+        "pasos": [
+          "Las pantallas se bajan en segundo plano cuando el celular está libre, y solo las que puedes abrir según tu rol.",
+          "Los fondos pesan cerca de un 40% menos.",
+          "Al cambiar de página, la que sale se desenfoca y se desvanece, y las tarjetas de la nueva entran una por una, de borrosas a nítidas. Las barras, el menú y el fondo se quedan quietos.",
+          "Si tienes activado \"reducir movimiento\" en el celular, la página cambia sin animación."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-11-06-recolector-recibir",
+    "fecha": "2026-11-05",
+    "hora": "22:01",
+    "titulo": "Recolectores: cada uno con su base y recibir la plata",
+    "cuerpo": "En Recolector ahora ves una tarjeta por cada recolector, con su base, sus compras y lo que debe tener, y puedes registrar lo que te entrega.",
+    "roles": [
+      "admin",
+      "cuadres",
+      "recolector"
+    ],
+    "secciones": [
+      {
+        "titulo": "Admin",
+        "pasos": [
+          "En Recolector, con \"Todos los recolectores\", sale una tarjeta por cada uno: base del día, compras del día y lo que debe tener ahora (sumando todos los días).",
+          "Toca \"Recibir\" cuando te entregue la plata: puede ser todo o una parte. Le llega un aviso con lo que le queda.",
+          "\"Ver detalle\" muestra sus movimientos del día."
+        ]
+      },
+      {
+        "titulo": "Recolector",
+        "pasos": [
+          "En tu resumen ves lo que entregaste al admin y \"Debe tener ahora\": tus bases menos tus compras menos lo ya entregado."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-11-06-diseno-vidrio-tema",
+    "fecha": "2026-11-05",
+    "hora": "20:16",
+    "titulo": "Nuevo diseño de vidrio y fondo personalizable",
+    "cuerpo": "La app ahora tiene una foto de fondo y todo encima es de vidrio esmerilado. El fondo lo eliges tú en Ajustes → Tema.",
+    "roles": [
+      "admin",
+      "cuadres",
+      "vendedora",
+      "mensajero",
+      "alistador",
+      "venta_local",
+      "recolector"
+    ],
+    "secciones": [
+      {
+        "titulo": "Tema",
+        "pasos": [
+          "En el menú → Ajustes → Tema (o el botón de la paleta arriba a la derecha en el computador).",
+          "Elige uno de los 10 fondos que vienen con la app o sube tu propia imagen.",
+          "Puedes oscurecer o desenfocar el fondo y hacer el vidrio más sólido si te cuesta leer.",
+          "Escoge vidrio oscuro o vidrio claro. Todo se guarda en ese celular o computador."
+        ]
+      },
+      {
+        "titulo": "En el computador",
+        "pasos": [
+          "Arriba hay una barra con un saludo, tus secciones principales y los avisos.",
+          "El menú de la izquierda es una barra flotante de íconos: al tocar un grupo se abre completo."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-11-06-cambio-otro-producto",
+    "fecha": "2026-11-05",
+    "hora": "19:44",
+    "titulo": "Cambio por otro producto más caro",
+    "cuerpo": "En un cambio, el cliente puede llevarse otro producto más caro y pagar la diferencia.",
+    "roles": [
+      "admin",
+      "alistador",
+      "venta_local",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se hace",
+        "pasos": [
+          "En el pedido entregado: \"Devolución o garantía\" → Cambio → \"Por otro producto\".",
+          "Busca el producto nuevo y elige cuántas unidades. La app muestra lo que valía lo devuelto, lo que vale el nuevo y cuánto paga el cliente.",
+          "Elige cómo pagó la diferencia. Si fue en efectivo, entra sola a la caja del local.",
+          "Si el producto nuevo vale menos, usa Devolución."
+        ]
+      },
+      {
+        "titulo": "Inventario y ganancia",
+        "pasos": [
+          "Lo que devuelve vuelve al inventario (o queda dañado) y el producto nuevo sale del inventario.",
+          "La ganancia del cambio suma en la utilidad real de Inicio y Gastos."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-11-06-garantias-tecnico",
+    "fecha": "2026-11-05",
+    "hora": "19:31",
+    "titulo": "Garantías: sin tocar inventario y con técnico",
+    "cuerpo": "Al registrar una garantía ya no se mueve el inventario: se escribe por qué se deja y después se le pone el técnico.",
+    "roles": [
+      "admin",
+      "alistador",
+      "venta_local",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "Registrar la garantía",
+        "pasos": [
+          "En el pedido entregado, toca \"Devolución o garantía\" y elige Garantía.",
+          "Elige el producto y escribe por qué se deja en garantía. El inventario no cambia."
+        ]
+      },
+      {
+        "titulo": "Técnico",
+        "pasos": [
+          "En Devoluciones, cada garantía dice si falta técnico, si está con el técnico o si ya se resolvió.",
+          "Toca \"Poner técnico\": nombre del técnico, fecha y observaciones.",
+          "Cuando se le entregue al cliente, marca \"Ya está resuelta\". Todo queda también en las notas del pedido."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-11-05-calendario",
+    "fecha": "2026-11-05",
+    "hora": "12:48",
+    "titulo": "Nuevo: Calendario",
+    "cuerpo": "En el menú hay un Calendario nuevo con diseño de vidrio: fechas especiales, festivos, quincenas y tus recordatorios, que te avisan al celular.",
+    "roles": [
+      "admin",
+      "cuadres",
+      "vendedora",
+      "mensajero",
+      "alistador",
+      "venta_local",
+      "recolector"
+    ],
+    "secciones": [
+      {
+        "titulo": "Qué muestra",
+        "pasos": [
+          "Festivos de Colombia (en rojo), quincenas y primas.",
+          "Fechas buenas para vender (Día de la Madre, Amor y Amistad, Black Friday, Navidad…) con un consejo unos días antes.",
+          "Admin: las ventas de cada día (más verde = más ventas), la caja del local, los pagos (deudas que vencen, abonos, comisiones pagadas) y lo pendiente.",
+          "Ventas del local: las ventas y la caja de cada día."
+        ]
+      },
+      {
+        "titulo": "Recordatorios",
+        "pasos": [
+          "Toca un día y luego \"+ Recordatorio\". Puede ser una vez, cada semana, cada mes o cada año.",
+          "Te llega un aviso al celular ese día (a las 7 a. m. o a la hora que pongas).",
+          "Márcalo como hecho con el círculo. El admin puede ponerlos para todo el equipo."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-11-05-caja-base-fija-movimientos",
+    "fecha": "2026-11-05",
+    "hora": "12:04",
+    "titulo": "Caja del local: base fija, gastos de caja y entrega del efectivo",
+    "cuerpo": "La caja del local ahora tiene una base fija, se registran las salidas y entradas de plata y al cerrar se entrega el efectivo sin tocar la base.",
+    "roles": [
+      "admin",
+      "venta_local"
+    ],
+    "secciones": [
+      {
+        "titulo": "Base fija",
+        "pasos": [
+          "La base de la caja la pone solo el admin (en Ventas del local, junto a la caja, \"Cambiar\").",
+          "Es la misma todos los días: siempre se queda en la caja para dar vueltas."
+        ]
+      },
+      {
+        "titulo": "Movimiento de caja",
+        "pasos": [
+          "Si pagas algo con plata de la caja (domicilio, bolsas, aseo, almuerzo…), regístralo como Salida. Queda como gasto del negocio.",
+          "Si entra plata que no es una venta (cambio, un abono), regístrala como Entrada.",
+          "Puedes tomarle foto al recibo. El admin recibe un aviso de cada movimiento."
+        ]
+      },
+      {
+        "titulo": "Al cerrar",
+        "pasos": [
+          "Toca \"Cuadrar caja\" y escribe todo el efectivo que contaste, con la base.",
+          "La app te dice si cuadra y cuánto recoger: deja la base y recoge el resto.",
+          "Cuando le entregues la plata al admin, toca \"Entregué\". El admin confirma con \"Recibí\"."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-11-05-quietos-cuentas-aumento-seguimiento",
+    "fecha": "2026-11-05",
+    "hora": "11:31",
+    "titulo": "Productos quietos, cuentas con ganancia y seguimiento al pagar",
+    "cuerpo": "Ahora ves qué productos no se están vendiendo, puedes cobrar con aumento en Cuentas por cobrar y el cliente que paga en línea recibe el enlace para seguir su pedido.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Productos quietos (menú Bodega)",
+        "pasos": [
+          "Lista de productos que llevan más de 30, 60, 90 o 180 días sin venderse, y los que nunca se han vendido.",
+          "Si el producto lleva conteo de unidades, te muestra la plata que tienes ahí metida (unidades × costo).",
+          "Desde ahí copias el enlace del producto para promocionarlo, creas un cupón o lo quitas del catálogo."
+        ]
+      },
+      {
+        "titulo": "Cuentas por cobrar con aumento",
+        "pasos": [
+          "Al crear o editar una cuenta pones el aumento sobre tu costo (por ejemplo 20%). 0% es a tu costo, como con tu hermano.",
+          "Al entregar mercancía ves \"Tu costo\" y \"Le cobras\": se llena solo con el aumento y lo puedes cambiar.",
+          "La diferencia es tu ganancia: sale en la cuenta, en cada entrega y suma en Inicio (Este mes) y en la utilidad real de Gastos."
+        ]
+      },
+      {
+        "titulo": "Seguimiento al pagar en línea",
+        "pasos": [
+          "Cuando el cliente paga, la pantalla de pago le muestra los pasos de su pedido y un botón para guardar el enlace o escribir por WhatsApp.",
+          "Apenas confirmes el pedido, en esa misma pantalla le aparece \"Ver el seguimiento de mi pedido\".",
+          "Los que piden para pagar al recibir también tienen el botón \"Ver mi pedido y su seguimiento\"."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-11-05-tienda-pantalla-completa-resenas",
+    "fecha": "2026-11-05",
+    "hora": "10:25",
+    "titulo": "Catálogo: detalle en pantalla completa, reseñas y repetir pedido",
+    "cuerpo": "El catálogo público ahora funciona como una app de tienda: cada producto se abre en pantalla completa y los clientes pueden calificar lo que compraron.",
+    "roles": [
+      "admin",
+      "vendedora"
+    ],
+    "secciones": [
+      {
+        "titulo": "Qué cambió",
+        "pasos": [
+          "Los productos solo se agregan desde su detalle: se toca el producto, se elige color, talla y cantidad, y luego \"Agregar al carrito\" o \"Comprar ahora\".",
+          "El detalle y \"Mi pedido\" ocupan toda la pantalla, con botón para volver (también sirve el botón atrás del celular).",
+          "Las categorías salen con su ícono redondo.",
+          "Los productos agregados en los últimos 15 días llevan la etiqueta \"Nuevo\"."
+        ]
+      },
+      {
+        "titulo": "Reseñas con estrellas",
+        "pasos": [
+          "Cuando un pedido se entrega, en la página de seguimiento el cliente puede calificar cada producto de 1 a 5 estrellas y dejar un comentario.",
+          "El catálogo muestra el promedio de estrellas y las reseñas en el detalle del producto."
+        ]
+      },
+      {
+        "titulo": "Repetir mi último pedido",
+        "pasos": [
+          "Si el cliente ya pidió desde su celular, le sale \"Repetir mi último pedido\": con un toque agrega lo mismo y sus datos de entrega ya quedan llenos."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-11-05-tienda-nuevo-diseno",
+    "fecha": "2026-11-05",
+    "hora": "10:12",
+    "titulo": "El catálogo público tiene diseño nuevo",
+    "cuerpo": "El catálogo que les compartes a los clientes ahora se ve como una tienda moderna: banner de bienvenida, tarjetas redondeadas con botón para agregar, favoritos y un carrito más claro.",
+    "roles": [
+      "admin",
+      "vendedora"
+    ],
+    "secciones": [
+      {
+        "titulo": "Qué cambió",
+        "pasos": [
+          "Arriba sale un banner con el producto más pedido y el botón \"Ver productos\".",
+          "Cada producto tiene un botón redondo + para agregarlo de una y un corazón ♡ para guardarlo en favoritos. Los 3 más vendidos llevan la etiqueta \"Más vendido\".",
+          "Al abrir un producto hay dos botones: \"Agregar\" (sigue comprando) y \"Pedir ya\" (abre el pedido de una vez).",
+          "El carrito muestra cada producto en su tarjeta con la foto, el cupón y el resumen del total."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "Los favoritos se guardan en el celular del cliente: si marca alguno, le aparece el filtro \"♥ Favoritos\". Todo lo demás funciona igual: barrios, pago al recibir o en línea y cupones."
+      }
+    ]
+  },
+  {
+    "id": "2026-11-05-cupones",
+    "fecha": "2026-11-05",
+    "hora": "02:56",
+    "titulo": "Cupones de descuento para el catálogo",
+    "cuerpo": "Ahora puedes crear cupones (por ejemplo BIENVENIDO10) para que los clientes tengan descuento al pedir en el catálogo público.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Crear un cupón",
+        "pasos": [
+          "Ve a Más → Ventas → Cupones y toca \"Nuevo cupón\".",
+          "Escribe el código, elige si es porcentaje (ej: 10%) o valor fijo (ej: $5.000) y, si quieres, una compra mínima, un máximo de usos y una fecha de vencimiento.",
+          "Toca \"Copiar mensaje para clientes\" y compártelo por WhatsApp, estados o redes."
+        ]
+      },
+      {
+        "titulo": "Qué ve el cliente",
+        "texto": "En su pedido toca \"¿Tienes un cupón de descuento?\", escribe el código y ve cuánto se ahorra. El descuento es sobre los productos (no sobre el domicilio)."
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "El descuento se reparte en los precios de los productos del pedido, así que la ganancia de la tienda y la comisión de la vendedora bajan en la misma proporción. En Pedidos de la tienda sale qué cupón usó cada cliente, y en Cupones ves cuántas veces se ha usado y cuánto se ha descontado. Puedes pausar o eliminar un cupón cuando quieras."
+      }
+    ]
+  },
+  {
+    "id": "2026-11-05-mas-vendido",
+    "fecha": "2026-11-05",
+    "hora": "02:56",
+    "titulo": "El catálogo muestra lo más vendido y productos que te pueden gustar",
+    "cuerpo": "Arriba del catálogo público sale \"🔥 Lo más vendido\" con los 10 productos que más se han vendido en el último mes. Y al abrir un producto, abajo aparecen otros de la misma categoría en \"Te puede gustar\".",
+    "roles": [
+      "admin",
+      "vendedora"
+    ],
+    "secciones": [
+      {
+        "titulo": "Bueno saber",
+        "texto": "Se actualiza solo con las ventas de los últimos 30 días. Los productos agotados no aparecen ahí. Así los clientes encuentran rápido lo que más se vende y ven más productos antes de pedir."
+      }
+    ]
+  },
+  {
+    "id": "2026-11-05-borrar-cuentas",
+    "fecha": "2026-11-05",
+    "hora": "01:33",
+    "titulo": "Ya se pueden borrar cuentas",
+    "cuerpo": "Cualquier persona puede borrar su propia cuenta desde Mi perfil, y el admin puede borrar las cuentas que ya no se usan.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "mensajero",
+      "alistador",
+      "venta_local",
+      "recolector",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "Borrar tu cuenta",
+        "pasos": [
+          "Ve a Más → Mi perfil → \"Borrar mi cuenta\".",
+          "Escribe BORRAR para confirmar.",
+          "Se borra tu acceso (correo, contraseña y Face ID) y tus datos personales: celular, foto, cédula y cuenta bancaria. Los pedidos, comisiones y cuadres en los que participaste quedan con tu nombre, porque son registros del negocio."
+        ]
+      },
+      {
+        "titulo": "Para el admin",
+        "texto": "En Usuarios hay un filtro nuevo, \"Sin usar (+60 días)\": muestra las cuentas que no entran hace más de 60 días y las autorizaciones que nunca se usaron. Al abrir una cuenta ves su último ingreso y el botón \"Borrar la cuenta\". Si solo quieres que alguien no entre por un tiempo, mejor desmarca \"Activo\". No se puede borrar al único admin."
+      }
+    ]
+  },
+  {
+    "id": "2026-11-05-face-id",
+    "fecha": "2026-11-05",
+    "hora": "01:21",
+    "titulo": "Entra a la app con Face ID o huella",
+    "cuerpo": "Ya no tienes que escribir la contraseña cada vez: activa Face ID (iPhone) o la huella (Android) en tu celular y entra con un toque.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "mensajero",
+      "alistador",
+      "venta_local",
+      "recolector",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se activa (una sola vez por celular)",
+        "pasos": [
+          "En la pantalla de inicio toca \"Entrar con Face ID o huella\".",
+          "Si es la primera vez en ese celular, la app te dice que entres una vez con tu correo y contraseña.",
+          "Entra con tu contraseña: el celular te pide la cara o la huella y queda activado para siempre.",
+          "Desde ahí entras siempre tocando \"Entrar con Face ID o huella\"."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "En el iPhone usa Safari (o la app instalada desde Safari); en Android, Chrome. Se activa una vez por celular y queda para siempre."
+      }
+    ]
+  },
+  {
+    "id": "2026-11-05-colores-tallas-agotados",
+    "fecha": "2026-11-04",
+    "hora": "23:30",
+    "titulo": "Marca colores y tallas agotados",
+    "cuerpo": "Cuando se acaba un color o una talla de un producto, ahora lo puedes marcar como agotado. Deja de salir en el catálogo y nadie lo puede pedir, pero el producto sigue a la venta con lo que sí hay.",
+    "roles": [
+      "admin",
+      "alistador",
+      "vendedora"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se hace (admin y alistamiento)",
+        "pasos": [
+          "Ve a Inventario y busca el producto (si no lleva inventario, míralo en \"Todos\").",
+          "Toca \"Colores/tallas\".",
+          "Toca cada color o talla que se acabó: pasa de \"Hay\" a \"Agotado\". Tócalo otra vez cuando vuelva a llegar.",
+          "Toca Guardar. En la lista el botón queda en rojo con cuántos hay agotados.",
+          "También puedes hacerlo desde Productos: al editar el producto, abajo de sus colores, toca \"Colores y tallas agotados\" (solo admins)."
+        ]
+      },
+      {
+        "titulo": "Qué cambia",
+        "texto": "En el catálogo público ese color o talla ya no aparece; si se agotan todos, el producto sale como agotado. En Nuevo pedido sale tachado y no se puede elegir. Si alguien intenta pedirlo igual, la app no lo deja."
+      }
+    ]
+  },
+  {
+    "id": "2026-11-05-cobro-link",
+    "fecha": "2026-11-04",
+    "hora": "23:20",
+    "titulo": "Cobra cualquier pedido con un link de pago",
+    "cuerpo": "Ahora puedes mandarle al cliente un link para que pague su pedido con tarjeta, PSE, Nequi o Daviplata. Cuando paga, el pedido queda pagado solo: no hay que revisar pantallazos y el domiciliario no le cobra.",
+    "roles": [
+      "admin",
+      "vendedora"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se hace",
+        "pasos": [
+          "Abre el pedido y toca \"Cobrar por link\".",
+          "Deja marcado \"El cliente paga el costo del pago en línea\" para que te llegue completo el valor del pedido (o desmárcalo si quieres asumir tú la comisión de Wompi).",
+          "Toca \"Crear link de pago\" y luego \"Mandar por WhatsApp\". El mensaje ya lleva el valor y el link.",
+          "Cuando el cliente paga, te llega el aviso \"💳 Pagó el pedido por link\" y el pedido queda marcado como pagado."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "El link vale 3 días. El cliente también puede pagar desde la página de seguimiento de su pedido, con el botón \"Pagar ahora\". Sirve muy bien para los envíos a otras ciudades: al despachar ya no hay que subir el comprobante."
+      }
+    ]
+  },
+  {
+    "id": "2026-11-05-recolector-costo",
+    "fecha": "2026-11-04",
+    "hora": "23:09",
+    "titulo": "Al registrar una compra, el costo del producto se actualiza solo",
+    "cuerpo": "En Recolector → Registrar compra ahora eliges el producto del inventario que compraste y cuánto te costó cada uno. El precio de compra de ese producto queda actualizado con ese valor.",
+    "roles": [
+      "recolector",
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se hace",
+        "pasos": [
+          "Toca Registrar compra y deja marcado \"Producto del inventario\".",
+          "Busca el producto por nombre o SKU y elígelo. Ves su costo actual.",
+          "Escribe cuántos compraste y cuánto te costó cada uno. El total de la compra se calcula solo.",
+          "Escribe el proveedor, sube la foto de la factura y toca Registrar compra.",
+          "Si compraste algo que no está en el inventario (bolsas, cinta…), elige \"Otra cosa\" y escríbelo como antes."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "Si el costo cambia, el admin recibe un aviso con el costo anterior y el nuevo. Ese costo es el que se usa desde ahí para calcular las ganancias."
+      }
+    ]
+  },
+  {
+    "id": "2026-11-04-cuentas-por-cobrar",
+    "fecha": "2026-11-04",
+    "hora": "13:02",
+    "titulo": "Cuentas por cobrar: lo que entregas al costo y sus abonos",
+    "cuerpo": "Lo que le entregas a tu precio de compra a alguien de confianza (por ejemplo, tu hermano) ya no se registra como venta del local. Ahora tiene su propio apartado, donde ves cuánto te debe y lo que te va abonando.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se hace",
+        "pasos": [
+          "Ve a Más → Finanzas → Cuentas por cobrar.",
+          "La primera vez toca \"Nueva cuenta\" y escribe el nombre (y el celular, si quieres mandarle el estado de cuenta).",
+          "Cuando le pases mercancía toca \"Entregar mercancía\" y agrega los productos: cada uno sale a tu precio de compra.",
+          "Cuando te pague toca \"Registrar abono\": escribe cuánto, cómo te pagó y, si quieres, sube el comprobante. \"Pagó todo\" pone el saldo completo.",
+          "Arriba ves en grande cuánto te debe. En \"Ver movimientos\" está todo lo que le has entregado y lo que te ha abonado.",
+          "Todo se puede editar: el nombre y el celular de la cuenta (Editar, arriba), y cada entrega (productos, cantidades, costos, fecha y nota) o abono (valor, forma de pago, fecha y nota) con Editar en Ver movimientos."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "Estas entregas no suman en Ventas del local, caja, reportes ni ganancias. Sí descuentan del inventario y cuentan como vendido en Deudas, para que sepas cuánto apartar para el proveedor. La casilla \"Venta al costo\" de Venta del local se quitó y las ventas al costo que ya habías subido se pasaron a la cuenta \"Mi hermano\" (le puedes cambiar el nombre con Editar)."
+      }
+    ]
+  },
+  {
+    "id": "2026-11-04-costo-pago-linea",
+    "fecha": "2026-11-04",
+    "hora": "12:25",
+    "titulo": "El pago en línea ahora cubre exacto la comisión de Wompi",
+    "cuerpo": "Antes al cliente se le sumaba un 5%, pero en pedidos pequeños no alcanzaba para la comisión de Wompi (2,65% + $700 fijos, más IVA). Ahora se le cobra lo justo para que a ti te llegue completo el valor del pedido.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Ejemplos",
+        "pasos": [
+          "Pedido de $14.000: el cliente paga $15.400 y te quedan $14.081.",
+          "Pedido de $50.000: el cliente paga $52.500.",
+          "Pedido de $164.000: el cliente paga $170.300 (antes con el 5% pagaba $172.200)."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "El valor se redondea a $100 hacia arriba. En el catálogo aparece como \"Costo del pago en línea\"."
+      }
+    ]
+  },
+  {
+    "id": "2026-11-04-envios-nacionales",
+    "fecha": "2026-11-04",
+    "hora": "10:00",
+    "titulo": "Envíos a otras ciudades por transportadora",
+    "cuerpo": "Ahora puedes hacer pedidos para otras ciudades que se mandan por Servientrega, Interrapidísimo u otra transportadora, siempre con pago anticipado.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "alistador"
+    ],
+    "secciones": [
+      {
+        "titulo": "Crear el pedido",
+        "pasos": [
+          "En Nuevo pedido marca \"Envío a otra ciudad\".",
+          "Escribe la dirección completa, la ciudad, el departamento, la cédula de quien recibe (la pide la transportadora) y el valor del envío que paga el cliente.",
+          "El cliente paga antes: pídele el pantallazo de la transferencia o mándale a pagar en línea."
+        ]
+      },
+      {
+        "titulo": "Despacharlo",
+        "pasos": [
+          "Imprime el rótulo: sale \"ENVÍO NACIONAL · PAGADO · NO COBRAR\" con los datos de quien recibe, la ciudad y el remitente. Pégalo en el paquete y llévalo al punto de la transportadora.",
+          "En el punto te dan el tiquete con el número de guía.",
+          "En el pedido toca \"Despachar por transportadora\": elige la transportadora, escribe el número de guía y lo que pagaste del envío, y sube el comprobante del pago del cliente.",
+          "El pedido queda entregado, a la vendedora le llega el aviso y el pago entra a Transferencias por revisar.",
+          "Toca \"Mandar la guía por WhatsApp\" para que el cliente tenga su número de guía y el enlace para rastrearlo."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "En la página de seguimiento el cliente ve su número de guía con un botón para rastrear el paquete. Para que el rótulo muestre la dirección del negocio como remitente, ponla en Configuración → Datos fiscales."
+      }
+    ]
+  },
+  {
+    "id": "2026-11-04-compras-viejas-al-costo",
+    "fecha": "2026-11-04",
+    "hora": "00:53",
+    "titulo": "Compras de otras fechas en Deudas",
+    "cuerpo": "Ahora puedes registrar en Deudas las compras que no habías subido, con su fecha real, y la app cuenta lo vendido desde ese día.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Compras de otras fechas",
+        "pasos": [
+          "En Deudas toca Nueva deuda → Factura nueva y agrega los productos con su cantidad y costo.",
+          "En \"Fecha de la factura\" pon el día en que compraste. Al poner una fecha pasada se desmarca \"Sumar estas unidades al inventario\", porque esa mercancía ya está en el local.",
+          "La app cuenta como vendidas todas las unidades de esos productos entregadas desde esa fecha, hasta la cantidad que compraste. Así sabes cuánto apartar para abonar.",
+          "Si quieres cambiar desde cuándo se cuenta, toca Editar en la deuda y cambia \"Contar lo vendido desde\"."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-11-04-eliminar-registros",
+    "fecha": "2026-11-04",
+    "hora": "00:53",
+    "titulo": "Ya puedes eliminar deudas, compras y conteos subidos por error",
+    "cuerpo": "Si algo se registró mal, ahora lo puedes borrar del todo en vez de solo anularlo.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Dónde",
+        "pasos": [
+          "Deudas: en la tarjeta de la deuda toca Eliminar. Se borra con sus abonos. Si venía de una compra de Inventario, la compra no se toca.",
+          "Inventario → Compras: toca Eliminar en la compra. Se restan del inventario las unidades que sumó (si no estaba anulada) y, si tenía una deuda, también se borra.",
+          "Inventario → historial de un producto: en los conteos toca Eliminar. Se deshace esa diferencia en el stock."
+        ]
+      },
+      {
+        "titulo": "Ojo",
+        "texto": "Eliminar no se puede deshacer. Si solo quieres dejar constancia de que algo no va, usa Anular en las compras."
+      }
+    ]
+  },
+  {
+    "id": "2026-11-04-deudas-factura",
+    "fecha": "2026-11-04",
+    "hora": "00:34",
+    "titulo": "Deudas: factura con varios productos y fechas editables",
+    "cuerpo": "Ahora en Deudas puedes registrar una factura fiada con todos sus productos, escoger la fecha de la deuda y cambiarla después.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Factura con varios productos",
+        "pasos": [
+          "En Deudas toca Nueva deuda → Factura nueva.",
+          "Busca y agrega cada producto de la factura, con su cantidad y su costo por unidad. Se van sumando y ves el total.",
+          "Escribe a quién se le debe, la fecha de la factura y, si quieres, cuándo vence. También puedes subir la foto de la factura.",
+          "Toca Registrar deuda: la compra entra a Inventario (suma las unidades) y queda la deuda, con el conteo de lo vendido producto por producto."
+        ]
+      },
+      {
+        "titulo": "Cambiar la fecha",
+        "texto": "Al crear cualquier deuda ya puedes escoger la fecha (por ejemplo, una factura de la semana pasada). Si ya la creaste, toca \"Editar (fecha, valor, proveedor)\" en la tarjeta de la deuda. El valor total no puede quedar por debajo de lo que ya abonaste."
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "Si la compra ya la registraste en Inventario, usa \"Compra ya registrada\" para no sumar las unidades dos veces."
+      }
+    ]
+  },
+  {
+    "id": "2026-11-04-transferencias",
+    "fecha": "2026-11-04",
+    "hora": "00:27",
+    "titulo": "Confirma en el banco cada transferencia presencial",
+    "cuerpo": "Cada pago por transferencia que registran al entregar un domicilio o en una venta del local queda \"por revisar\" hasta que confirmas en el banco que sí llegó. Así no se cuela ningún comprobante falso.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se hace",
+        "pasos": [
+          "Cuando registran un pago por transferencia te llega al instante el aviso \"💸 Revisa una transferencia de $…\".",
+          "Entra a Más → Finanzas → Transferencias, o toca la franja roja de arriba.",
+          "Cada tarjeta muestra el valor que debió llegar (con la propina, si hubo), quién la registró, hace cuánto y la foto del comprobante.",
+          "Abre tu banco, búscala por valor y hora, y toca \"✓ Sí llegó\". Si no aparece, toca \"✗ No llegó\" y escribe qué pasó: le avisamos a quien la registró."
+        ]
+      },
+      {
+        "titulo": "Avisos insistentes",
+        "texto": "Mientras quede alguna sin revisar: arriba de todas las páginas sale una franja roja; cada 30 minutos (de 7 a. m. a 10 p. m.) te llega un aviso al celular con cuántas faltan y hace cuánto esperan; y la app vibra y pita cuando entra una nueva. Las tarjetas que llevan más de 2 horas parpadean."
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "Los pagos en línea con Wompi no entran aquí porque esos los confirma Wompi solo. Los pagos en efectivo tampoco."
+      }
+    ]
+  },
+  {
+    "id": "2026-11-04-barrio-obligatorio",
+    "fecha": "2026-11-04",
+    "hora": "00:14",
+    "titulo": "En el catálogo el barrio tiene que estar en la lista",
+    "cuerpo": "Ahora el cliente solo puede hacer el pedido si elige un barrio de la tabla de domicilios. Así cada pedido llega con el valor del domicilio exacto y ya no hay que definirlo por teléfono.",
+    "roles": [
+      "admin",
+      "vendedora"
+    ],
+    "secciones": [
+      {
+        "titulo": "Qué ve el cliente",
+        "pasos": [
+          "Debajo de \"Barrio\" le decimos: si no eres de Cali, escribe solo el nombre de tu ciudad (Jamundí, Palmira, Yumbo…), no el barrio.",
+          "Si escribe algo que no está, le mostramos barrios parecidos y un botón para escribirle por WhatsApp a la tienda o a la vendedora.",
+          "Ya no existe la opción \"Mi barrio no está en la lista\"."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "Si un cliente te escribe porque no encuentra su barrio, pídele al admin que lo agregue en Más → Barrios con su valor de domicilio. Desde ese momento ya le sale en el catálogo."
+      }
+    ]
+  },
+  {
+    "id": "2026-11-04-pagos-en-linea",
+    "fecha": "2026-11-04",
+    "hora": "00:05",
+    "titulo": "Los clientes ya pueden pagar en línea desde el catálogo",
+    "cuerpo": "En el catálogo público el cliente ahora elige: pagar al recibir, como siempre, o pagar ya con tarjeta débito o crédito, PSE, Nequi o Daviplata a través de Wompi. El cliente paga además la comisión de Wompi, así que a ti te llega completo el pedido.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "mensajero"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo funciona",
+        "pasos": [
+          "El cliente arma su pedido y en \"¿Cómo quieres pagar?\" elige \"Pagar ahora\". Ve el costo del pago en línea y el total antes de pagar.",
+          "Lo llevamos a Wompi (de Bancolombia) y paga ahí. Nosotros nunca vemos los datos de su tarjeta.",
+          "Apenas se aprueba el pago te llega el aviso \"💳 Pedido PAGADO de la tienda\". En Pedidos de la tienda sale con la marca \"Ya pagó en línea\".",
+          "Llámalo para coordinar la entrega y confírmalo como siempre. El pedido sale marcado como pagado.",
+          "Si no termina de pagar, el pedido no te aparece y se cancela solo a los 90 minutos. Si el pago falla, el cliente puede intentarlo otra vez o cambiar a pagar al recibir."
+        ]
+      },
+      {
+        "titulo": "Domiciliarios",
+        "texto": "Si la tarjeta del pedido dice \"💳 Ya pagó en línea: no le cobres\", no le cobras nada al cliente. Solo entrégalo y toca Confirmar entrega: no hay que escoger forma de pago ni subir comprobante."
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "El pago en línea solo sale cuando el barrio del cliente está en la tabla de domicilios (así se sabe el total exacto). La plata llega a la cuenta de Wompi del negocio. Si cancelas un pedido que ya se pagó, devuélvele la plata desde el panel de Wompi (Transacciones → Reembolsar)."
+      }
+    ]
+  },
+  {
+    "id": "2026-11-03-comisiones-vendedora",
+    "fecha": "2026-11-03",
+    "hora": "17:49",
+    "titulo": "Mira cuánto te deben y el comprobante de cada pago",
+    "cuerpo": "En Comisiones ahora ves arriba cuánto te deben en total, y en cada pago que te hicieron puedes ver el comprobante que subió el admin y los pedidos que cubre.",
+    "roles": [
+      "vendedora"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se hace",
+        "pasos": [
+          "Toca Más → Comisiones.",
+          "Arriba ves \"En total te deben\": todo lo entregado que no te han pagado, de cualquier semana. Abajo, lo de la semana que elijas.",
+          "En \"Pagos que te han hecho\" toca \"Ver pago\": ves cuánto te pagaron, cómo, quién pagó, la foto del comprobante (tócala para verla grande) y los pedidos de ese pago.",
+          "Toca \"Descargar PDF\" si quieres guardar el comprobante."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "Cuando te paguen te llega un aviso que abre ese pago directo. Si el admin sube el comprobante después, te llega otro aviso."
+      }
+    ]
+  },
+  {
+    "id": "2026-11-03-datos-pago",
+    "fecha": "2026-11-03",
+    "hora": "17:37",
+    "titulo": "Pon tu cédula y tu cuenta para que te paguen",
+    "cuerpo": "En Mi perfil hay una sección nueva, Datos para tus pagos: pon tu cédula y la cuenta (banco, Nequi o Daviplata) donde quieres recibir tus pagos.",
+    "roles": [
+      "vendedora",
+      "mensajero",
+      "venta_local",
+      "alistador",
+      "recolector",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se hace",
+        "pasos": [
+          "Toca Más → Mi perfil.",
+          "En Datos para tus pagos escribe tu cédula.",
+          "Elige el tipo de cuenta (ahorros, corriente, Nequi o Daviplata) y escribe el número. Si la cuenta está a nombre de otra persona, escríbelo en \"A nombre de\".",
+          "Toca Guardar datos."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "Estos datos son privados: solo los ves tú y el admin. Tu cédula sale en el comprobante de cada pago de comisiones."
+      }
+    ]
+  },
+  {
+    "id": "2026-11-03-deudas",
+    "fecha": "2026-11-03",
+    "hora": "17:37",
+    "titulo": "Nuevo: Deudas con proveedores",
+    "cuerpo": "Una página para llevar lo que se le debe a proveedores: mercancía fiada, préstamos y demás. De la mercancía fiada ves cuánto ya se vendió y cuánto conviene abonar.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Registrar mercancía fiada",
+        "pasos": [
+          "Al registrar la compra en Inventario → Registrar compra, marca \"Fiado\" y, si quieres, la fecha en que hay que pagarla.",
+          "La compra queda en Más → Deudas con el valor total.",
+          "También puedes tocar Nueva deuda en Deudas y elegir una compra ya registrada, o registrar otra deuda (un préstamo, un arriendo atrasado)."
+        ]
+      },
+      {
+        "titulo": "Qué te muestra cada deuda",
+        "puntos": [
+          "Cuánto se debe, cuánto se ha abonado y una barra de avance.",
+          "De la mercancía fiada: cuántas unidades ya se vendieron (ej. 34 de 60), producto por producto, y el costo de lo vendido.",
+          "\"Aparta y abona\": el costo de lo que ya se vendió y todavía no le has abonado al proveedor. Esa plata ya entró por esa mercancía.",
+          "Si tiene fecha, avisa cuándo vence; las vencidas salen en rojo. Te llega un aviso cuando falten 3 días."
+        ]
+      },
+      {
+        "titulo": "Botones",
+        "puntos": [
+          "Abonar: el valor que quieras, con forma de pago, fecha, foto del soporte y nota.",
+          "Abonar lo vendido: abona justo el costo de lo que ya se vendió.",
+          "Pagar todo: abona el saldo y la deuda queda pagada.",
+          "Cada abono se puede anular si se registró mal; también se puede anular una deuda registrada por error."
+        ]
+      },
+      {
+        "titulo": "Cómo se calcula lo vendido",
+        "texto": "Se cuentan las unidades de cada producto entregadas después de la compra, descontando el stock que ya había antes (se vende primero lo viejo). Para que sea exacto, los productos deben tener \"Controlar inventario\" activado."
+      }
+    ]
+  },
+  {
+    "id": "2026-11-03-cuenta-al-pagar",
+    "fecha": "2026-11-03",
+    "hora": "17:37",
+    "titulo": "Comisiones: la cuenta de cada vendedora al pagar",
+    "cuerpo": "Al registrar el pago de comisiones ves la cuenta de la vendedora (banco, tipo y número) con un botón para copiar el número.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Bueno saber",
+        "texto": "Si una vendedora no ha puesto su cuenta, la app te avisa para que se la pidas: la agrega ella misma en Mi perfil → Datos para tus pagos. Su cédula también sale sola en el comprobante de egreso."
+      }
+    ]
+  },
+  {
+    "id": "2026-11-01-comprobante-egreso",
+    "fecha": "2026-10-31",
+    "hora": "20:04",
+    "titulo": "Comprobante de egreso de cada pago de comisiones (para la DIAN)",
+    "cuerpo": "Cada pago a una vendedora ahora se descarga como comprobante de egreso en PDF, numerado, con NIT, cédula, detalle, valor en letras, firmas y el soporte.",
+    "roles": [
+      "admin",
+      "vendedora"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se descarga",
+        "pasos": [
+          "Entra a Comisiones → Pagos hechos.",
+          "En cada pago toca el botón CE-000123 · PDF.",
+          "Se descarga el comprobante. Guárdalo o imprímelo para la contabilidad."
+        ]
+      },
+      {
+        "titulo": "Qué lleva",
+        "puntos": [
+          "Número consecutivo (CE-000123) y fecha del pago.",
+          "Nombre, NIT y dirección del negocio.",
+          "A quién se le pagó, con su cédula, y el concepto: comisiones de las entregas de esa semana.",
+          "Valor en números y en letras (ej. CUATROCIENTOS VEINTINUEVE MIL PESOS M/CTE).",
+          "Detalle de cada pedido con su comisión, y las devoluciones que se descontaron.",
+          "Firmas de quien pagó y de quien recibe, y en hojas aparte las fotos del soporte (transferencia o recibo)."
+        ]
+      },
+      {
+        "titulo": "Antes de empezar (admin)",
+        "puntos": [
+          "Pon el NIT y la dirección del negocio en Configuración → Datos para la DIAN.",
+          "La primera vez que descargues el comprobante de una vendedora, la app te pide su cédula y la guarda para los próximos.",
+          "Si un pago quedó sin soporte, en Pagos hechos sale el botón Subir soporte para agregarlo después."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-11-01-comisiones-semana",
+    "fecha": "2026-10-31",
+    "hora": "19:50",
+    "titulo": "Comisiones por semana, de sábado a viernes",
+    "cuerpo": "La página de Comisiones ahora muestra lo de cada semana de sábado a viernes, con fechas Desde y Hasta. Siempre arranca en la última semana completa.",
+    "roles": [
+      "admin",
+      "vendedora"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo funciona",
+        "puntos": [
+          "Arriba están Desde y Hasta. Al entrar, siempre sale la última semana completa de sábado a viernes (por ejemplo, del sábado 24 al viernes 30 de octubre).",
+          "Con las flechas ◀ ▶ pasas a la semana anterior o a la siguiente. También puedes poner cualquier rango de fechas.",
+          "Cada vendedora muestra la suma de su comisión por los pedidos CREADOS en esas fechas que ya se entregaron. Un pedido creado el viernes y entregado el sábado es de la semana del viernes.",
+          "Si alguna tiene comisiones sin pagar de semanas anteriores, sale un aviso amarillo con el valor."
+        ]
+      },
+      {
+        "titulo": "Pagar (admin)",
+        "texto": "\"Registrar pago\" paga exactamente las entregas de las fechas que estás viendo, y la nota queda como \"Semana del 24 de octubre al 30 de octubre\". Lo de otras semanas queda pendiente hasta que lo pagues en su semana."
+      }
+    ]
+  },
+  {
+    "id": "2026-10-31-formato-pesos",
+    "fecha": "2026-10-31",
+    "hora": "00:57",
+    "titulo": "Los valores se escriben con formato de pesos",
+    "cuerpo": "Cuando escribes un valor de plata, la app pone sola el signo y los puntos de miles: escribes 85000 y ves $ 85.000.",
+    "roles": [
+      "admin",
+      "cuadres",
+      "vendedora",
+      "mensajero",
+      "alistador",
+      "venta_local",
+      "recolector"
+    ],
+    "secciones": [
+      {
+        "titulo": "Dónde",
+        "puntos": [
+          "Precios de productos, domicilios, precios en el pedido, efectivo y transferencia en pagos mixtos, propinas, gastos, devoluciones, costos de compras, recolector, alcancía y el cuadre de caja.",
+          "Solo escribe los números: los puntos y el $ salen solos. Se abre el teclado numérico.",
+          "Las cantidades y el stock siguen como números normales."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-10-31-domicilio-propinas",
+    "fecha": "2026-10-31",
+    "hora": "00:27",
+    "titulo": "Mis entregas: tu domicilio en cada pedido y propinas por transferencia",
+    "cuerpo": "Cada pedido muestra cuánto te ganas de domicilio. Y si el cliente transfiere de más, ahora lo registras como propina: es tuya y se te descuenta en el cuadre.",
+    "roles": [
+      "mensajero",
+      "admin",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "Tu domicilio en cada tarjeta",
+        "texto": "Debajo del total del pedido sale en verde \"Tu domicilio: $8.000\", para que sepas cuánto te ganas con cada entrega antes de salir."
+      },
+      {
+        "titulo": "Propina por transferencia: cómo se registra",
+        "pasos": [
+          "Al entregar, elige Transferencia o Mixto como siempre.",
+          "Toca \"+ El cliente transfirió de más (propina)\".",
+          "Escribe solo lo que sobró. Ej: si el pedido es de $79.000 y el cliente transfirió $81.000, la propina es $2.000.",
+          "Sube el comprobante y confirma la entrega."
+        ]
+      },
+      {
+        "titulo": "Qué pasa con esa plata",
+        "puntos": [
+          "La propina llegó a la cuenta del negocio, pero es del mensajero: en el cuadre se le descuenta de lo que entrega en efectivo, igual que sus domicilios.",
+          "El total del pedido no cambia: ventas, reportes y ganancias siguen igual.",
+          "En Cuadres, la oficina ve las propinas en cada cuadre y el efectivo a recibir ya viene con ellas descontadas.",
+          "La propina en efectivo no se registra: esa ya te la quedas tú en la mano."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-10-31-copiar-texto-fechas-local",
+    "fecha": "2026-10-31",
+    "hora": "00:16",
+    "titulo": "Ya puedes seleccionar y copiar texto en el celular",
+    "cuerpo": "En toda la app puedes dejar presionado un texto (un nombre, un teléfono, una dirección, un valor) para seleccionarlo y copiarlo.",
+    "roles": [
+      "admin",
+      "cuadres",
+      "vendedora",
+      "mensajero",
+      "alistador",
+      "venta_local",
+      "recolector"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se copia",
+        "pasos": [
+          "Deja presionado el texto que quieres copiar.",
+          "Ajusta la selección con los puntos de los extremos si hace falta.",
+          "Toca Copiar y pégalo donde lo necesites (WhatsApp, notas…)."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "puntos": [
+          "Los botones no se seleccionan, para que al tocarlos no se marque el texto por error.",
+          "En Mis entregas, las tarjetas de los pedidos no se seleccionan porque al dejarlas presionadas se arrastran para ordenar la ruta. Para copiar un dato de ahí, abre el pedido."
+        ]
+      },
+      {
+        "titulo": "Admins: ventas del local en Inicio",
+        "texto": "El recuadro de Ventas del local ahora tiene Desde y Hasta. Siempre arranca en el mes en curso, del día 1 al último día (30 o 31), y puedes cambiar las fechas. Si las cambias, sale el botón Este mes para volver."
+      }
+    ]
+  },
+  {
+    "id": "2026-10-30-menu-buscar",
+    "fecha": "2026-10-30",
+    "hora": "12:32",
+    "titulo": "Menú más fácil: buscador y lo que más usas",
+    "cuerpo": "En el menú del celular (Más) ahora puedes buscar la página escribiendo, arriba salen las que más usas y el resto está ordenado por secciones.",
+    "roles": [
+      "admin",
+      "cuadres",
+      "vendedora",
+      "mensajero",
+      "alistador",
+      "venta_local",
+      "recolector"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo encontrar tu página rápido",
+        "puntos": [
+          "Buscador: toca Más y escribe arriba. Sirve con el nombre o con palabras relacionadas: \"caja\" muestra Venta en local, Ventas del local y Servicio local; \"QR\" muestra Configuración.",
+          "Lo que más usas: las páginas que más abres en tu celular aparecen de primeras. Se arma solo a medida que usas la app.",
+          "El resto está agrupado por secciones con su título: Ventas, Entregas, Bodega e inventario, Finanzas, Equipo y Ajustes."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-10-30-local-inicio-reportes",
+    "fecha": "2026-10-30",
+    "hora": "10:27",
+    "titulo": "Inicio: recuadro de ventas del local · Reportes sin cancelados",
+    "cuerpo": "En Inicio hay un recuadro con todo lo de las ventas del local (hoy o este mes). Y en Reportes ya no salen ni suman los pedidos cancelados.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Ventas del local en Inicio",
+        "puntos": [
+          "Ganancia tienda: solo lo que gana la tienda en las ventas del local (con vendedora, precio base − compra; sin vendedora, venta − compra).",
+          "Vendido: el total, con cuántas ventas y unidades.",
+          "Efectivo (lo que entró a la caja) y Transferencias (a las cuentas).",
+          "Alcancía: lo que se apartó para el servicio local.",
+          "Ticket promedio: cuánto se vende en promedio por venta.",
+          "Arriba eliges Hoy o Este mes. Tocando Ganancia o Vendido vas a Ventas del local."
+        ]
+      },
+      {
+        "titulo": "Reportes sin cancelados",
+        "texto": "Se quitó la opción \"Cancelados\" del filtro de estado, y \"Todos\" ya no incluye los pedidos cancelados. Así ninguna suma de Reportes (ventas, productos, vendedoras, mensajeros, Excel) cuenta pedidos que no se vendieron."
+      }
+    ]
+  },
+  {
+    "id": "2026-10-30-ganancia-local",
+    "fecha": "2026-10-29",
+    "hora": "21:37",
+    "titulo": "Ganancia de la tienda: ahora cuenta todo lo del local",
+    "cuerpo": "En las ventas del local sin vendedora, la ganancia completa (precio de venta − compra) ahora se suma como ganancia de la tienda. Antes se perdía la parte de encima del precio base.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Qué cambió",
+        "puntos": [
+          "Las ventas del local con vendedora siguen igual: la tienda gana precio base − compra, y lo de encima es de la vendedora.",
+          "En las ventas del local sin vendedora (\"venta de la tienda\"), lo cobrado por encima del precio base no es de nadie más, así que ahora se suma a la ganancia de la tienda. Este mes eran unos $223.000 que no aparecían.",
+          "La alcancía (servicio local) sigue aparte: sale de la ganancia de las vendedoras del local."
+        ]
+      },
+      {
+        "titulo": "Dónde se ve",
+        "puntos": [
+          "Inicio: Ganancia tienda hoy, la gráfica de ganancia, y en Este mes la Ganancia tienda y la Utilidad real.",
+          "El cierre del día por Telegram.",
+          "Reportes (ganancia de la tienda) y Rentabilidad por producto.",
+          "En la ganancia de las vendedoras ya no se cuentan esas ventas, porque no tienen vendedora."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "Rentabilidad cuenta los pedidos por el día en que se entregaron; Inicio y Reportes, por el día en que se crearon. Por eso Rentabilidad puede dar un poco distinto."
+      }
+    ]
+  },
+  {
+    "id": "2026-10-29-barrios-tienda",
+    "fecha": "2026-10-29",
+    "hora": "16:36",
+    "titulo": "Catálogo: datos obligatorios y barrio con lista",
+    "cuerpo": "En el catálogo público el cliente ahora debe llenar nombre, celular, dirección y barrio, y elige el barrio de una lista con el valor del domicilio. Si su barrio no está, lo indica y tú le confirmas el valor.",
+    "roles": [
+      "admin",
+      "vendedora"
+    ],
+    "secciones": [
+      {
+        "titulo": "Qué cambió para el cliente",
+        "puntos": [
+          "Nombre, celular, dirección y barrio son obligatorios (salen con *). Si falta algo, se marca en rojo y le dice qué escribir. Observaciones sigue siendo opcional.",
+          "El barrio se busca mientras escribe y sale con el valor del domicilio. No importan tildes ni mayúsculas: \"belen\" encuentra Belén.",
+          "Si escribe un barrio que no está, la app le muestra los más parecidos por si lo escribió distinto. Si de verdad no está, toca \"Mi barrio no está en la lista\" y le avisamos que el domicilio se lo confirmas al llamarlo."
+        ]
+      },
+      {
+        "titulo": "Qué hacer con un barrio que no está",
+        "pasos": [
+          "En Pedidos de la tienda, el pedido sale con \"Domicilio: Por definir\".",
+          "Llama al cliente, pregúntale bien dónde queda y escribe lo que vas a cobrar de domicilio al confirmar.",
+          "Deja marcada la casilla del barrio: si eres admin se guarda en la tabla de domicilios con ese valor; si eres vendedora, le llega un aviso al admin para que lo agregue. Así la próxima vez sale solo."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-10-29-enlace-producto",
+    "fecha": "2026-10-29",
+    "hora": "16:20",
+    "titulo": "Nuevo: comparte el enlace de un producto",
+    "cuerpo": "En Pedidos de la tienda busca un producto y comparte su enlace: al cliente le abre ese producto directo, listo para pedirlo. El pedido te llega a ti.",
+    "roles": [
+      "vendedora",
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se usa",
+        "pasos": [
+          "Entra a Pedidos de la tienda.",
+          "En \"Enlace a un producto\" escribe el nombre (por ejemplo, freidora).",
+          "Toca Compartir para mandarlo por WhatsApp, Instagram o donde quieras, o Copiar para pegarlo."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "puntos": [
+          "El enlace lleva tu catálogo: lo que el cliente pida por ahí te llega a tu nombre, con tu comisión.",
+          "Si el cliente quiere ver más cosas, cierra el producto y sigue en tu catálogo.",
+          "Dentro del catálogo, cada producto también tiene un botón Compartir, para que el cliente se lo mande a otra persona.",
+          "Si el producto se desactiva, el enlace abre el catálogo con un aviso de que ya no está."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-10-29-qr-pago-admin",
+    "fecha": "2026-10-29",
+    "hora": "15:23",
+    "titulo": "Nuevo: QR de pago para los mensajeros",
+    "cuerpo": "Pon el QR de tus cuentas en Configuración y los mensajeros se lo muestran al cliente en Mis entregas, con el valor a pagar en grande.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se configura",
+        "pasos": [
+          "En la app de tu banco (Bancolombia, Nequi, Daviplata…) busca la opción de recibir con QR y toma un pantallazo.",
+          "Entra a Configuración → Cuentas para recibir transferencias.",
+          "Escribe el banco o la app, a nombre de quién está y el número de cuenta o celular, y sube la foto del QR.",
+          "Toca Guardar. Puedes agregar varias cuentas; el mensajero elige cuál mostrar.",
+          "Con \"Ver como lo ve el mensajero\" revisas cómo queda."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "puntos": [
+          "Si desactivas una cuenta, los mensajeros dejan de verla.",
+          "Solo sale en los pedidos de Jasta, no en los de Variedades JYB.",
+          "El comprobante sigue siendo obligatorio al entregar con transferencia."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-10-29-qr-pago-mensajero",
+    "fecha": "2026-10-29",
+    "hora": "15:23",
+    "titulo": "Nuevo: muéstrale el QR al cliente para que pague",
+    "cuerpo": "Si el cliente paga por transferencia, toca QR en el pedido: sale el QR de la cuenta y el valor a pagar en grande, para que lo escanee.",
+    "roles": [
+      "mensajero"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se usa",
+        "pasos": [
+          "En Mis entregas, toca QR en el pedido (o, al entregar, elige Transferencia y toca \"Mostrar QR para que pague\").",
+          "El cliente escanea el QR con la app de su banco. Si hay varias cuentas, toca la que el cliente prefiera (Nequi, Bancolombia…).",
+          "Si no puede escanear, tócale Copiar al número y díctaselo.",
+          "Cuando pague, pídele el comprobante y súbelo al entregar."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "Mientras el QR está abierto la pantalla no se apaga. También está el botón \"QR de pago\" arriba en Mis entregas para mostrarlo sin un pedido."
+      }
+    ]
+  },
+  {
+    "id": "2026-10-29-caja-duplicados-quietos",
+    "fecha": "2026-10-29",
+    "hora": "15:17",
+    "titulo": "Nuevo: cuadre de caja, pedidos repetidos y pedidos quietos",
+    "cuerpo": "Ahora se cuenta la caja del local y te avisa si falta o sobra plata. Además, la app avisa antes de crear un pedido repetido y cuando un pedido lleva más de un día sin moverse.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cuadre de caja del local",
+        "puntos": [
+          "En Ventas del local, con el día de hoy, sale la tarjeta \"Caja sin cuadrar\". Al cerrar, quien vende toca Cuadrar caja, escribe la base con la que abrió y el efectivo que contó.",
+          "La app calcula lo que debería haber (base + efectivo de las ventas) y muestra si cuadra, falta o sobra. Puede dejar una nota, por ejemplo si se pagó algo de la caja.",
+          "Te llega un aviso con el resultado: \"Caja cuadrada ✓\", \"Faltan $X\" o \"Sobran $X\", con quién contó y la nota.",
+          "Si a las 9 p. m. nadie ha contado la caja, el aviso del cierre lo recuerda."
+        ]
+      },
+      {
+        "titulo": "Pedidos repetidos",
+        "texto": "Al crear un pedido a domicilio, si ese mismo teléfono ya hizo un pedido en las últimas 24 horas, la app muestra cuál (número, estado, quién lo vendió y qué lleva) y pregunta si de verdad es otro pedido. Así no se despacha dos veces lo mismo. En el último mes pasó 2 veces."
+      },
+      {
+        "titulo": "Pedidos quietos",
+        "texto": "Cada hora, de 8 a. m. a 6 p. m., la app revisa los pedidos que llevan más de un día en el mismo estado: por alistar, alistados sin salir o en ruta sin entregar. Le avisa una vez a quien le toca (alistamiento, o el mensajero y la vendedora si va en ruta) y a ti te llega un resumen."
+      }
+    ]
+  },
+  {
+    "id": "2026-10-29-cuadrar-caja",
+    "fecha": "2026-10-29",
+    "hora": "15:17",
+    "titulo": "Nuevo: cuadra la caja al cerrar",
+    "cuerpo": "En Ventas del local toca Cuadrar caja, escribe la base y el efectivo que contaste, y la app te dice si cuadra, falta o sobra.",
+    "roles": [
+      "venta_local"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se usa",
+        "pasos": [
+          "Al cerrar, entra a Ventas del local (con el día de hoy).",
+          "Toca Cuadrar caja.",
+          "Escribe la base con la que abriste la caja (la app recuerda la del último día) y el efectivo que contaste.",
+          "Mira el resultado. Si falta o sobra, escribe en la nota qué pasó (por ejemplo, \"se pagó un domicilio de la caja\") y toca Guardar cuadre."
+        ]
+      },
+      {
+        "titulo": "Bueno saber",
+        "texto": "Las transferencias no se cuentan: no están en la caja. Si te equivocaste, toca Volver a contar y se corrige."
+      }
+    ]
+  },
+  {
+    "id": "2026-10-29-pedido-repetido",
+    "fecha": "2026-10-29",
+    "hora": "15:17",
+    "titulo": "Nuevo: aviso de pedido repetido",
+    "cuerpo": "Si el cliente ya hizo un pedido en las últimas 24 horas, la app te lo muestra antes de crear otro, para no despachar dos veces lo mismo.",
+    "roles": [
+      "vendedora"
+    ],
+    "secciones": [
+      {
+        "titulo": "Qué hacer cuando sale",
+        "puntos": [
+          "Si es el mismo pedido repetido (por ejemplo, el cliente te escribió dos veces), toca Cancelar y no se crea.",
+          "Si de verdad es otro pedido, toca Aceptar y se crea normal."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-10-29-pedidos-quietos",
+    "fecha": "2026-10-29",
+    "hora": "15:17",
+    "titulo": "Nuevo: aviso de pedidos quietos",
+    "cuerpo": "Si un pedido lleva más de un día sin moverse (sin alistar, alistado sin salir o en ruta sin entregar), te llega un aviso para revisarlo.",
+    "roles": [
+      "alistador",
+      "mensajero"
+    ],
+    "secciones": [
+      {
+        "titulo": "Qué hacer",
+        "puntos": [
+          "Alistamiento: revisa si al pedido le falta algo para alistarlo o si falta asignarle mensajero.",
+          "Mensajeros: si ya lo entregaste, márcalo como entregado; si no se pudo, reporta la novedad."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-10-29-automatico-admin",
+    "fecha": "2026-10-29",
+    "hora": "14:25",
+    "titulo": "Nuevo: más avisos automáticos para el negocio",
+    "cuerpo": "Pedidos de la tienda sin confirmar, cierre de caja del local, lista de compras de los lunes, avisos de metas y QR de garantía en el ticket.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "Pedidos de la tienda sin confirmar",
+        "texto": "Si un pedido del catálogo público lleva 15 minutos sin confirmar, a la vendedora le llega un recordatorio. Si a la hora sigue igual, te avisa a ti, con el cliente, el valor y de qué catálogo vino. De 9 p. m. a 7 a. m. no se avisa a nadie: lo pendiente llega a las 7 a. m."
+      },
+      {
+        "titulo": "Cierre de caja del local",
+        "texto": "Todos los días a las 9 p. m., si hubo ventas en el local, te llega un aviso (a ti y a quien vende en el local) con el efectivo que debe haber en caja y lo que entró por transferencia. El cierre del día de Telegram ahora trae también la sección del local, con lo de la alcancía y cuánto vendió cada vendedora."
+      },
+      {
+        "titulo": "Lista de compras (Inventario → Qué comprar)",
+        "puntos": [
+          "Calcula qué se va a acabar según lo vendido en los últimos 60 días y cuánto pedir para tener inventario de 2, 3, 4 o 6 semanas.",
+          "Los lunes a las 7:40 a. m. te llega un aviso con lo más urgente (y la lista completa por Telegram, con el costo aproximado).",
+          "\"Copiar lista\" la deja lista para pegarla en WhatsApp al proveedor, y \"Registrar esta compra\" abre la compra con todo ya puesto: solo ajustas lo que de verdad llegó.",
+          "Importante: solo cuenta los productos con \"Controlar inventario\" activado. Hoy son muy pocos; actívalo en Productos y registra el stock para que la lista salga completa."
+        ]
+      },
+      {
+        "titulo": "Metas",
+        "texto": "Las metas que pones en Ranking ahora se ven en el panel de cada vendedora y en Mi resumen de cada mensajero, con barra de avance, lo que le falta y a qué ritmo va. Les llega un aviso al pasar el 50 %, el 80 % y el 100 % de la meta del mes, y al cumplir la de la semana. Cuando alguien cumple, también te avisa a ti."
+      },
+      {
+        "titulo": "QR de garantía en el ticket",
+        "texto": "El ticket del local trae un código QR. El cliente lo escanea con la cámara y ve su compra, la fecha y el texto de garantía de Configuración, sin guardar el papel."
+      }
+    ]
+  },
+  {
+    "id": "2026-10-29-metas-equipo",
+    "fecha": "2026-10-29",
+    "hora": "14:25",
+    "titulo": "Nuevo: tu meta en tu panel",
+    "cuerpo": "Ahora ves cuánto llevas de tu meta del mes y de la semana, lo que te falta y a qué ritmo vas. Te avisamos al llegar al 50 %, 80 % y 100 %.",
+    "roles": [
+      "vendedora",
+      "mensajero"
+    ],
+    "secciones": [
+      {
+        "titulo": "Dónde la ves",
+        "puntos": [
+          "Vendedoras: arriba en Mi panel.",
+          "Mensajeros: en Más → Mi resumen.",
+          "Si no te sale, es porque todavía no tienes meta: la pone el admin en Ranking."
+        ]
+      },
+      {
+        "titulo": "Qué te muestra",
+        "texto": "Cuántas ventas o entregas llevas contra tu meta, el porcentaje, cuántas te faltan, cuántas al día necesitas para llegar y con cuántas cerrarías el mes si sigues a este ritmo."
+      },
+      {
+        "titulo": "Pedidos de la tienda (vendedoras)",
+        "texto": "Si un cliente te pide por tu catálogo y en 15 minutos no lo has confirmado, te llega un recordatorio para que lo llames antes de que se enfríe."
+      }
+    ]
+  },
+  {
+    "id": "2026-10-29-caja-local",
+    "fecha": "2026-10-29",
+    "hora": "14:25",
+    "titulo": "Nuevo: cierre de caja y QR en el ticket",
+    "cuerpo": "A las 9 p. m. te llega el cierre de caja del local con el efectivo que debe haber. Y el ticket ahora trae un QR para que el cliente vea su compra y su garantía.",
+    "roles": [
+      "venta_local"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cierre de caja",
+        "texto": "Si hubo ventas en el local, a las 9 p. m. te llega un aviso con el total del día, el efectivo que debe haber en caja y lo que entró por transferencia. Sirve para cuadrar la caja sin sacar cuentas."
+      },
+      {
+        "titulo": "QR de garantía",
+        "texto": "Al final del ticket sale un código QR. El cliente lo escanea con la cámara del celular y ve lo que compró, la fecha y la garantía. Así no depende de guardar el papel."
+      }
+    ]
+  },
+  {
+    "id": "2026-10-29-que-comprar",
+    "fecha": "2026-10-29",
+    "hora": "14:25",
+    "titulo": "Nuevo: Inventario → Qué comprar",
+    "cuerpo": "Una lista de lo que se va a acabar y cuánto pedir, según lo que se vende. Los lunes llega un aviso con lo más urgente.",
+    "roles": [
+      "alistador"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se usa",
+        "pasos": [
+          "Entra a Inventario → Qué comprar.",
+          "Elige para cuántas semanas quieres tener inventario (2, 3, 4 o 6).",
+          "Toca \"Copiar lista\" para mandarla al proveedor, o \"Registrar esta compra\" cuando llegue la mercancía: la compra se abre con todo puesto y solo ajustas lo que llegó."
+        ]
+      },
+      {
+        "titulo": "Ojo",
+        "texto": "Solo cuenta los productos con \"Controlar inventario\" activado y con su stock al día."
+      }
+    ]
+  },
+  {
+    "id": "2026-10-29-ticket-local",
+    "fecha": "2026-10-29",
+    "hora": "13:23",
+    "titulo": "Nuevo: imprime el ticket de las ventas del local (Android)",
+    "cuerpo": "Al registrar una venta en el local aparece el botón Imprimir ticket. En Android sale por Bluetooth en la impresora portátil Goojprt (58 mm), directo desde el celular. En iPhone la impresión por Bluetooth no funciona: abajo están las alternativas.",
+    "roles": [
+      "admin",
+      "venta_local"
+    ],
+    "secciones": [
+      {
+        "titulo": "¿Para qué sirve?",
+        "texto": "Para entregarle al cliente un ticket con lo que compró, el total, cómo pagó y la garantía, sin papeles a mano."
+      },
+      {
+        "titulo": "Solo funciona en Android",
+        "texto": "La impresión directa por Bluetooth funciona en celulares Android con Chrome (o con la app instalada desde Chrome). En iPhone no se puede: Apple no deja que las páginas web ni las apps instaladas desde el navegador usen Bluetooth, y en iPhone todos los navegadores (Safari, Chrome, Edge) tienen ese mismo bloqueo. Si en el local hay un Android, aunque sea uno sencillo, úsalo para registrar las ventas: imprime al instante."
+      },
+      {
+        "titulo": "Cómo se usa en Android",
+        "pasos": [
+          "Prende la impresora y activa el Bluetooth y la ubicación del celular.",
+          "Registra la venta como siempre. Arriba sale el aviso \"Venta registrada\" con el botón Imprimir ticket.",
+          "La primera vez se abre la lista de dispositivos: elige la impresora (sale como PT-210, MTP-II o parecido). Mientras la app siga abierta ya no vuelve a preguntar.",
+          "También puedes imprimir cualquier venta anterior: Ventas del local → toca la venta → Imprimir ticket."
+        ]
+      },
+      {
+        "titulo": "Si la impresora no aparece en la lista (Android)",
+        "puntos": [
+          "Algunas impresoras solo tienen Bluetooth clásico y Chrome no las ve. Instala la app gratis RawBT de Play Store, vincula ahí la impresora una vez, y en la app toca los tres puntos al lado de Imprimir ticket → Imprimir con la app RawBT.",
+          "Los datos del encabezado (nombre, teléfonos, redes y texto de garantía) son los de Configuración."
+        ]
+      },
+      {
+        "titulo": "En iPhone: qué se puede hacer",
+        "texto": "En iPhone, al tocar Imprimir ticket se abre el ticket como imagen dentro de la app, con el botón Compartir / imprimir. Desde ahí hay estas opciones:",
+        "puntos": [
+          "Impresora con AirPrint (wifi): es la forma más cómoda en iPhone. Tocas Compartir / imprimir → Imprimir, eliges la impresora y sale el ticket. Ojo: no sirve cualquier impresora wifi, tiene que decir \"AirPrint\" en la caja o en la ficha del producto. Las impresoras térmicas wifi baratas (las que solo dicen ESC/POS) no le reciben al iPhone.",
+          "Impresoras de tickets con AirPrint que se consiguen: Epson TM-m30III y Star Micronics mC-Print3 o TSP143IV (son de 80 mm, de mostrador, y el ticket sale bien en ese papel). Antes de comprar, confirma con el vendedor que el modelo exacto diga AirPrint.",
+          "Navegador Bluefy (gratis en la App Store): es de los pocos navegadores de iPhone que dejan usar Bluetooth. Abres Jasta en Bluefy (no en la app instalada) y Imprimir ticket funciona igual que en Android, siempre que la impresora tenga Bluetooth de bajo consumo (BLE). Muchas Goojprt PT-210 lo tienen; hay que probar con la tuya.",
+          "La app de la impresora: tocas Compartir / imprimir → Guardar imagen, y la imprimes desde la app de Goojprt o de tu marca. Funciona, pero son más pasos por venta.",
+          "Mandarlo por WhatsApp: en Compartir / imprimir eliges WhatsApp y el cliente recibe el ticket como imagen, sin imprimir nada."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-10-28-mi-resumen",
+    "fecha": "2026-10-28",
+    "hora": "09:40",
+    "titulo": "Nuevo: tu resumen de domicilios",
+    "cuerpo": "En Más → Mi resumen ves cuánto has ganado en domicilios (hoy, esta semana, este mes o el mes pasado), tus entregas por día, los barrios a los que más vas y cómo te califican los clientes.",
+    "roles": [
+      "mensajero",
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "¿Para qué sirve?",
+        "texto": "Para que sepas en todo momento cuánto llevas ganado en domicilios y cómo vas comparado con antes, sin tener que sacar cuentas."
+      },
+      {
+        "titulo": "Qué vas a ver",
+        "puntos": [
+          "Ganaste en domicilios: la suma de los domicilios de tus pedidos entregados en el periodo, cuánto es por día y por entrega, y si vas por encima o por debajo del periodo anterior.",
+          "Si tienes efectivo por cuadrar, un aviso amarillo con el valor y un acceso directo a Cuadres.",
+          "Ganancias por día: toca cada barra para ver lo de ese día.",
+          "Zonas a las que más vas: tus 8 barrios con más entregas y lo que ganaste en cada uno.",
+          "Cómo te fue: qué porcentaje entregaste a la primera, tu hora con más entregas, novedades reportadas y pedidos cancelados en ruta.",
+          "Tu calificación promedio y los últimos comentarios de los clientes."
+        ]
+      },
+      {
+        "titulo": "Cómo se usa",
+        "pasos": [
+          "Entra a Más → Mi resumen.",
+          "Arriba elige el periodo: Hoy, Esta semana, Este mes o Mes pasado."
+        ]
+      },
+      {
+        "titulo": "Ten en cuenta",
+        "puntos": [
+          "Solo cuenta los pedidos de Jasta entregados (no los de Variedades JYB).",
+          "El admin lo ve en Más → Resumen de mensajeros y puede elegir a cualquier domiciliario."
+        ]
+      }
+    ],
+    "enlace": {
+      "texto": "Ver mi resumen",
+      "url": "/app/mi-resumen"
+    }
+  },
+  {
+    "id": "2026-10-28-calificaciones",
+    "fecha": "2026-10-28",
+    "hora": "09:32",
+    "titulo": "Nuevo: los clientes califican la entrega",
+    "cuerpo": "Cuando el pedido se entrega, el cliente puede calificar de 1 a 5 estrellas desde su enlace de seguimiento y dejar un comentario. Así sabemos cómo nos ven y dónde mejorar.",
+    "roles": [
+      "admin",
+      "mensajero"
+    ],
+    "secciones": [
+      {
+        "titulo": "¿Para qué sirve?",
+        "texto": "Para saber de primera mano cómo le fue al cliente con la entrega, reconocer a los mensajeros que lo hacen bien y enterarnos rápido cuando algo sale mal."
+      },
+      {
+        "titulo": "Cómo funciona",
+        "pasos": [
+          "El cliente abre el enlace de seguimiento que le llegó (por WhatsApp o el que le pasó la vendedora).",
+          "Cuando el pedido ya está entregado, abajo le aparece \"¿Cómo te fue con la entrega?\" con 5 estrellas.",
+          "Toca las estrellas, si quiere escribe un comentario y envía. Solo puede calificar una vez por pedido.",
+          "Si califica con 3 estrellas o menos, a los admins les llega un aviso con el comentario para revisar qué pasó.",
+          "Si califica con 5 estrellas, al mensajero que lo entregó le llega un aviso de felicitación."
+        ]
+      },
+      {
+        "titulo": "Dónde ver los resultados (admin)",
+        "pasos": [
+          "Entra a Más → Reportes y elige las fechas.",
+          "Abre la pestaña \"Por mensajero\": debajo de la tabla está el promedio general, el de cada mensajero, cuántas calificaciones de 3 o menos tuvo y los últimos comentarios."
+        ]
+      },
+      {
+        "titulo": "Ten en cuenta",
+        "puntos": [
+          "Entre más clientes reciban el enlace de seguimiento, más calificaciones llegan: compártelo siempre.",
+          "La calificación no se puede cambiar después de enviada."
+        ]
+      }
+    ],
+    "enlace": {
+      "texto": "Ir a Reportes",
+      "url": "/app/reportes"
+    }
+  },
+  {
+    "id": "2026-10-28-recordatorio-cuadres",
+    "fecha": "2026-10-28",
+    "hora": "09:32",
+    "titulo": "Nuevo: recordatorio de cuadres sin cerrar",
+    "cuerpo": "Todos los días a las 8:10 a. m., si quedaron pedidos entregados de días anteriores sin cuadrar, al mensajero le llega un aviso con los días, los pedidos y el efectivo pendiente. A los admins y a cuadres, el resumen.",
+    "roles": [
+      "mensajero",
+      "admin",
+      "cuadres"
+    ],
+    "secciones": [
+      {
+        "titulo": "¿Para qué sirve?",
+        "texto": "Para que ningún día quede sin cuadrar y la plata del efectivo llegue a tiempo, sin tener que estar preguntando."
+      },
+      {
+        "titulo": "Cómo funciona",
+        "puntos": [
+          "Mensajero: si tienes entregas de días anteriores sin cerrar, a las 8:10 a. m. te llega \"Tienes cuadres sin cerrar\" con los días, cuántos pedidos son y cuánto efectivo tienes. Al tocarlo se abre Cuadres para cerrarlo.",
+          "Admins y cuadres: les llega el resumen de qué mensajeros tienen cuadres sin cerrar (y de qué días), más los cuadres que ya se cerraron pero nadie ha recibido.",
+          "Si todo está al día, no llega nada."
+        ]
+      },
+      {
+        "titulo": "Ten en cuenta",
+        "puntos": [
+          "Solo cuenta lo entregado antes de hoy: lo de hoy se cierra en la tarde como siempre.",
+          "El aviso se repite cada mañana mientras el cuadre siga sin cerrar."
+        ]
+      }
+    ],
+    "enlace": {
+      "texto": "Ir a Cuadres",
+      "url": "/app/cuadres"
+    }
+  },
+  {
+    "id": "2026-10-28-recontactar",
+    "fecha": "2026-10-28",
+    "hora": "08:46",
+    "titulo": "Nuevo: clientes para recontactar, con tu catálogo en el mensaje",
+    "cuerpo": "En Más → Recontactar están tus clientes que ya compraron y llevan un tiempo sin volver. Con un toque les escribes por WhatsApp con un mensaje listo que lleva el enlace de tu catálogo.",
+    "roles": [
+      "vendedora",
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "¿Para qué sirve?",
+        "texto": "Un cliente que ya te compró es el más fácil de volver a vender. Esta lista te muestra a quién escribirle hoy, empezando por los que más te han comprado, para que no se te olvide ninguno."
+      },
+      {
+        "titulo": "Cómo se usa",
+        "pasos": [
+          "Entra a Más → Recontactar.",
+          "Arriba elige hace cuánto compraron: 1 a 2 meses, 2 a 3 meses, 3 a 6 meses o más de 6 meses. El número al lado dice cuántos clientes hay en cada grupo.",
+          "En cada cliente ves su barrio, hace cuántos días compró, cuántas compras lleva, cuánto ha comprado y lo último que se llevó.",
+          "Toca WhatsApp: se abre la conversación con un saludo, una pregunta por lo que compró y el enlace de tu catálogo. Revísalo y envíalo.",
+          "Ese cliente queda marcado \"Le escribiste hoy\" y pasa al final de la lista, para que no le escribas dos veces."
+        ]
+      },
+      {
+        "titulo": "Ten en cuenta",
+        "puntos": [
+          "Ves solo los clientes cuyo último pedido fue contigo. El admin ve todos.",
+          "Se muestran hasta 150 por grupo, los que más han comprado primero. Usa el buscador para encontrar a alguien por nombre, barrio o producto.",
+          "Si el cliente tiene la etiqueta \"Cliente marcado\", el admin lo marcó como problemático: piénsalo antes de venderle.",
+          "La marca de \"Le escribiste\" dura 30 días."
+        ]
+      }
+    ],
+    "enlace": {
+      "texto": "Ir a Recontactar",
+      "url": "/app/recontactar"
+    }
+  },
+  {
+    "id": "2026-10-28-estadisticas-tienda",
+    "fecha": "2026-10-28",
+    "hora": "08:46",
+    "titulo": "Nuevo: mira cómo le va a tu catálogo",
+    "cuerpo": "En Pedidos de la tienda ahora ves cuántas personas abrieron tu catálogo, cuántas agregaron algo, cuántas pidieron y cuánto vendiste, además de los productos que más miran.",
+    "roles": [
+      "vendedora",
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "¿Para qué sirve?",
+        "texto": "Para saber si compartir el enlace te está funcionando: cuánta gente lo abre y cuánta termina pidiendo. Si muchos miran un producto y pocos lo piden, quizás vale la pena escribirles o publicarlo de nuevo."
+      },
+      {
+        "titulo": "Qué vas a ver",
+        "puntos": [
+          "Abrieron el catálogo: cuántas personas (celulares distintos) entraron a tu enlace.",
+          "Agregaron algo, Hicieron el pedido y Confirmados, con el porcentaje de las visitas que llegó a cada paso.",
+          "Cuánto vendiste con los pedidos del catálogo que confirmaste.",
+          "Visitas por día: pasa el dedo o el mouse por cada barra para ver las visitas y los pedidos de ese día.",
+          "Lo que más miran: los productos que más abren y agregan en tu catálogo."
+        ]
+      },
+      {
+        "titulo": "Ten en cuenta",
+        "puntos": [
+          "Puedes ver los últimos 7 o 30 días.",
+          "Si una misma persona abre tu enlace varias veces el mismo día, cuenta una sola visita.",
+          "No se guarda ningún dato personal de quien solo mira: solo se cuenta.",
+          "El admin ve todos los catálogos y una tabla por vendedora."
+        ]
+      }
+    ],
+    "enlace": {
+      "texto": "Ir a Pedidos de la tienda",
+      "url": "/app/pedidos-web"
+    }
+  },
+  {
+    "id": "2026-10-27-avisos-obligatorios",
+    "fecha": "2026-10-27",
+    "hora": "14:02",
+    "titulo": "Importante: Jasta ahora se usa instalada y con los avisos activos",
+    "cuerpo": "Para que a todos nos lleguen los pedidos y los mensajes del domiciliario aunque el celular esté bloqueado, ahora la app pide estar instalada en el celular y con los avisos activados. Si te sale la pantalla de instalar, sigue los pasos: toma un minuto.",
+    "roles": [],
+    "secciones": [
+      {
+        "titulo": "¿Por qué?",
+        "texto": "Muchos mensajes del domiciliario a la vendedora (por ejemplo: \"el cliente no contesta\" o \"llegué\") no se veían a tiempo porque la app estaba cerrada y los avisos apagados. Con la app instalada y los avisos activos, te llegan como cualquier notificación del celular, al instante."
+      },
+      {
+        "titulo": "En iPhone",
+        "pasos": [
+          "Abre app.jastatechnology.com en Safari (no en WhatsApp, Chrome ni Brave).",
+          "Toca Compartir (el cuadrito con la flecha hacia arriba).",
+          "Toca \"Agregar a pantalla de inicio\" y luego Agregar.",
+          "Abre Jasta desde el ícono nuevo y toca \"Activar avisos\" → Permitir."
+        ]
+      },
+      {
+        "titulo": "En Android",
+        "pasos": [
+          "Abre la app en Chrome y toca \"Instalar Jasta\" (o menú ⋮ → Instalar app).",
+          "Abre Jasta desde el ícono nuevo.",
+          "Toca \"Activar avisos\" → Permitir."
+        ]
+      },
+      {
+        "titulo": "En el computador",
+        "texto": "No hay que instalar nada: solo toca \"Activar avisos\" y permite las notificaciones en el navegador."
+      },
+      {
+        "titulo": "Ten en cuenta",
+        "puntos": [
+          "Si alguna vez tocaste \"No permitir\", la app te muestra cómo activarlos desde los ajustes del celular.",
+          "Los avisos ya no se pueden apagar desde la campana.",
+          "Abre siempre Jasta desde el ícono, no desde el navegador."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-10-27-whatsapp-seguimiento",
+    "fecha": "2026-10-27",
+    "hora": "14:13",
+    "titulo": "WhatsApp automático: el cliente recibe el enlace de su pedido cuando sale en ruta",
+    "cuerpo": "Jasta puede mandarle al cliente, por WhatsApp y sin que nadie lo escriba, el enlace para ver en qué va su pedido apenas sale con el domiciliario. Usa la API oficial de WhatsApp (Meta) y cuesta unos 3 a 4 pesos por mensaje. Aquí está cómo configurarlo paso a paso.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "¿Para qué sirve?",
+        "texto": "Cuando un pedido a domicilio pasa a \"En ruta\" por primera vez, al cliente le llega este mensaje desde el número de WhatsApp de la tienda: \"Hola María, tu pedido #4812 de Jasta Technology va en camino 🛵 Míralo aquí: (enlace)\". En el enlace ve si ya salió, quién se lo lleva y puede escribirle a su vendedora. Así llegan menos preguntas de \"¿y mi pedido?\" y el cliente está pendiente para recibir, lo que reduce las novedades de \"no estaba\" o \"no contesta\"."
+      },
+      {
+        "titulo": "¿Cuánto cuesta?",
+        "puntos": [
+          "Es un mensaje de categoría Utilidad. Meta cobra US$ 0,0008 por mensaje entregado a un celular colombiano, unos 3 a 4 pesos colombianos (con el dólar entre $4.000 y $4.500).",
+          "Ejemplo: 1.000 pedidos en ruta al mes ≈ $3.200 a $3.600 COP. 5.000 pedidos ≈ $16.000 a $18.000 COP.",
+          "Meta no cobra mensualidad: solo se paga lo que se envía. Se cobra a la tarjeta que pongas en la cuenta de WhatsApp de Meta, en dólares o en pesos según la moneda que elijas al crear la cuenta (después no se puede cambiar).",
+          "Jasta manda un solo mensaje por pedido y solo a celulares colombianos.",
+          "Las tarifas las fija Meta y pueden cambiar; la tabla oficial está en developers.facebook.com/docs/whatsapp/pricing (busca Colombia, categoría Utility)."
+        ]
+      },
+      {
+        "titulo": "Antes de empezar necesitas",
+        "puntos": [
+          "Una cuenta de Meta Business (business.facebook.com) de la tienda.",
+          "Un número de celular para la tienda que NO esté usando WhatsApp normal ni WhatsApp Business en un celular (o estar dispuesto a pasarlo a la API: ese número ya no se podrá usar en la app del celular).",
+          "Una tarjeta de crédito o débito para los cobros de Meta."
+        ]
+      },
+      {
+        "titulo": "Paso 1: crear la app y el número en Meta",
+        "pasos": [
+          "Entra a developers.facebook.com con la cuenta de Facebook del negocio y toca \"Mis apps\" → \"Crear app\".",
+          "Elige el tipo \"Empresa\" (Business), ponle un nombre (por ejemplo, Jasta) y asóciala a la cuenta de Meta Business de la tienda.",
+          "Dentro de la app, agrega el producto \"WhatsApp\" y toca \"Configurar\".",
+          "En WhatsApp → \"Configuración de la API\", toca \"Agregar número de teléfono\": escribe el nombre que verán los clientes (por ejemplo, Jasta Technology), el número de la tienda y verifícalo con el código que llega por SMS o llamada.",
+          "En esa misma pantalla copia el \"Identificador del número de teléfono\" (Phone number ID). Lo vas a pegar en Jasta."
+        ]
+      },
+      {
+        "titulo": "Paso 2: poner el método de pago",
+        "pasos": [
+          "Entra a business.facebook.com → Configuración del negocio → Cuentas → Cuentas de WhatsApp.",
+          "Abre la cuenta de la tienda → \"Configuración de pago\" y agrega la tarjeta. Si te deja elegir la moneda, elige pesos colombianos (COP).",
+          "Sin método de pago, Meta no deja enviar las plantillas."
+        ]
+      },
+      {
+        "titulo": "Paso 3: crear la plantilla del mensaje",
+        "pasos": [
+          "Abre el Administrador de WhatsApp (business.facebook.com/wa/manage) → \"Plantillas de mensajes\" → \"Crear plantilla\".",
+          "Categoría: Utilidad. Nombre: seguimiento_pedido (así, en minúsculas y con guion bajo). Idioma: Español.",
+          "En el cuerpo escribe exactamente: Hola {{1}}, tu pedido #{{2}} de Jasta Technology va en camino 🛵 Míralo aquí: {{3}}",
+          "Meta pide ejemplos de las variables: {{1}} = María, {{2}} = 4812, {{3}} = https://app.jastatechnology.com/seguimiento/ejemplo",
+          "Envíala a revisión. Normalmente la aprueban en minutos (a veces hasta 24 horas). Debe quedar en estado \"Activa\"."
+        ]
+      },
+      {
+        "titulo": "Paso 4: crear el token permanente",
+        "pasos": [
+          "En business.facebook.com → Configuración del negocio → Usuarios → \"Usuarios del sistema\" → \"Agregar\". Ponle un nombre (por ejemplo, jasta-api) y rol Administrador.",
+          "Toca \"Asignar activos\": agrega la app que creaste (control total) y la cuenta de WhatsApp de la tienda (control total).",
+          "Toca \"Generar token\": elige la app, caducidad \"Nunca\" y marca los permisos whatsapp_business_messaging y whatsapp_business_management.",
+          "Copia el token que aparece (solo se muestra una vez) y guárdalo en un lugar seguro. No lo mandes por chat a nadie."
+        ]
+      },
+      {
+        "titulo": "Paso 5: configurarlo en Jasta",
+        "pasos": [
+          "Entra a Más → Configuración → \"Seguimiento automático por WhatsApp\".",
+          "Phone number ID: pega el identificador del Paso 1.",
+          "Token de acceso permanente: pega el token del Paso 4 (queda guardado de forma privada; nadie lo puede volver a ver desde la app).",
+          "Nombre de la plantilla: seguimiento_pedido. Idioma de la plantilla: es.",
+          "Dirección de la app: https://app.jastatechnology.com",
+          "Toca Guardar (todavía sin marcar la casilla de envío automático).",
+          "Escribe tu celular en \"Celular para probar\" y toca \"Enviar prueba\". En unos segundos aparece el resultado en la tabla de abajo y te debe llegar el mensaje.",
+          "Si dice \"Enviado\", marca \"Mandar el enlace automáticamente cuando el pedido sale en ruta\" y toca Guardar. Desde ese momento funciona solo."
+        ]
+      },
+      {
+        "titulo": "Si algo falla",
+        "puntos": [
+          "La tabla de Configuración muestra cada envío y el error que devolvió Meta.",
+          "\"Template name does not exist\" o similar: la plantilla aún no está aprobada, o el nombre o el idioma no coinciden (revisa que el idioma sea es).",
+          "Error de pago o de cuenta: falta el método de pago en el Paso 2.",
+          "Error de token (401 o \"OAuth\"): el token se copió incompleto o no tiene los permisos del Paso 4; genera uno nuevo y pégalo.",
+          "Si el cliente no tiene WhatsApp en ese número, el mensaje no se cobra."
+        ]
+      }
+    ],
+    "enlace": {
+      "texto": "Ir a Configuración",
+      "url": "/app/configuracion"
+    }
+  },
+  {
+    "id": "2026-10-27-tienda-web",
+    "fecha": "2026-10-27",
+    "hora": "13:38",
+    "titulo": "Nuevo: tu propio catálogo para que los clientes pidan solos",
+    "cuerpo": "Ahora tienes un enlace de catálogo con todos los productos y sus precios. Lo compartes en tus estados, Instagram o grupos, el cliente arma su pedido desde el celular y te llega aquí para que lo confirmes. Queda a tu nombre, con tu comisión normal.",
+    "roles": [
+      "vendedora",
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "¿Para qué sirve?",
+        "texto": "Para vender más sin tener que escribir cada pedido. El cliente ve las fotos, los precios y lo que hay disponible, elige lo que quiere y deja su dirección. Tú solo lo llamas o le escribes para confirmar."
+      },
+      {
+        "titulo": "Cómo compartir tu enlace",
+        "pasos": [
+          "Entra a Más → Pedidos de la tienda.",
+          "Arriba está tu enlace. Toca \"Compartir enlace\" para mandarlo por WhatsApp, Instagram o donde quieras, o \"Copiar\" para pegarlo en tus estados.",
+          "Con \"Ver como cliente\" puedes ver exactamente lo que ve tu cliente."
+        ]
+      },
+      {
+        "titulo": "Lo que hace el cliente",
+        "pasos": [
+          "Abre tu enlace (no necesita cuenta ni contraseña).",
+          "Busca productos, elige color o talla si tiene, y los agrega a su pedido.",
+          "Escribe su nombre, celular, dirección y barrio. El domicilio se calcula solo según el barrio.",
+          "Toca \"Hacer pedido\" y le sale que tú lo vas a contactar para confirmar."
+        ]
+      },
+      {
+        "titulo": "Cómo confirmar un pedido",
+        "pasos": [
+          "Cuando un cliente pide, te llega una notificación \"Pedido de la tienda\".",
+          "Ábrela: ves al cliente, lo que pidió, el total y, si ha tenido problemas antes, el aviso en amarillo o rojo.",
+          "Llámalo o toca WhatsApp (el mensaje ya va escrito con el resumen del pedido).",
+          "Si todo está bien, toca \"Confirmar\". Puedes ajustar el domicilio y dejar una nota para alistamiento. El pedido pasa a Pedidos por alistar a tu nombre y sigue como cualquier otro.",
+          "Si no contesta o no lo quiere, toca \"Cancelar\" y escribe el motivo."
+        ]
+      },
+      {
+        "titulo": "Ten en cuenta",
+        "puntos": [
+          "Los precios son los de venta sugeridos de cada producto y nadie los puede cambiar en el catálogo.",
+          "Los productos agotados aparecen con la etiqueta \"Agotado\" y no se pueden pedir.",
+          "Nada pasa a alistamiento hasta que tú lo confirmes, así se evitan pedidos falsos o de broma.",
+          "Si el barrio del cliente no está en la tabla de domicilios, te sale \"Por definir\" y tú pones el valor al confirmar.",
+          "El admin también tiene un enlace general de la tienda; esos pedidos los atiende el admin."
+        ]
+      }
+    ],
+    "enlace": {
+      "texto": "Ir a Pedidos de la tienda",
+      "url": "/app/pedidos-web"
+    }
+  },
+  {
+    "id": "2026-10-27-respaldo-semanal",
+    "fecha": "2026-10-27",
+    "hora": "13:38",
+    "titulo": "Nuevo: respaldo de la semana en Excel por Telegram",
+    "cuerpo": "Cada domingo a las 9:15 p. m. te llega al chat del bot de Telegram un Excel con toda la semana: pedidos, lo vendido con sus ganancias, cuadres, gastos, comisiones, devoluciones e inventario. Así tienes una copia de todo fuera de la app.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "¿Para qué sirve?",
+        "texto": "Para tener una copia de seguridad de la información del negocio y poder revisarla o compartirla con tu contador sin entrar a la app."
+      },
+      {
+        "titulo": "Qué trae el Excel",
+        "puntos": [
+          "Pedidos: todos los creados en la semana, con cliente, vendedora, mensajero, productos, total y forma de pago.",
+          "Vendido: cada producto entregado con precio de venta, base y compra, y la ganancia de la tienda y de la vendedora.",
+          "Cuadres: cada cierre de mensajero, quién lo cerró y quién lo recibió.",
+          "Gastos, comisiones pagadas y devoluciones de la semana.",
+          "Movimientos de inventario y cómo quedó el inventario ese día, con su valor a precio de compra."
+        ]
+      },
+      {
+        "titulo": "Cómo recibirlo",
+        "pasos": [
+          "Llega solo cada domingo a los admins que tienen su cuenta vinculada al bot de Telegram (la misma vinculación del cierre del día).",
+          "Si lo necesitas antes, entra a Más → Configuración → Respaldo semanal en Excel y toca \"Mandar el de esta semana ahora\"."
+        ]
+      },
+      {
+        "titulo": "Ten en cuenta",
+        "puntos": [
+          "La semana va de lunes a domingo (los últimos 7 días hasta el día en que se envía).",
+          "Las columnas de plata son números, así que en Excel puedes sumarlas y filtrarlas."
+        ]
+      }
+    ],
+    "enlace": {
+      "texto": "Ir a Configuración",
+      "url": "/app/configuracion"
+    }
+  },
+  {
+    "id": "2026-10-27-alertas-inventario",
+    "fecha": "2026-10-27",
+    "hora": "13:12",
+    "titulo": "Nuevo: te avisamos cuando un producto se esté acabando",
+    "cuerpo": "Ya no tienes que revisar el inventario a cada rato: cuando un producto llegue a su cantidad mínima o se agote, te llega una notificación con cuántas unidades quedan.",
+    "roles": [
+      "admin"
+    ],
+    "secciones": [
+      {
+        "titulo": "¿Para qué sirve?",
+        "texto": "Para pedir mercancía a tiempo y no vender algo que ya no hay. La app vigila el inventario de cada producto y te avisa en el momento en que baja de lo que tú consideras normal."
+      },
+      {
+        "titulo": "Cómo funciona",
+        "pasos": [
+          "Cada producto que lleva control de inventario tiene una cantidad mínima (hoy todos tienen 3).",
+          "Cuando por una venta, un alistamiento o un ajuste el producto llega a ese mínimo, te llega el aviso \"Por acabarse\" con las unidades que quedan.",
+          "Si llega a 0, te llega \"Se agotó\".",
+          "Al tocar el aviso se abre Inventario para que revises o registres una compra."
+        ]
+      },
+      {
+        "titulo": "Cómo cambiar el mínimo de un producto",
+        "pasos": [
+          "Entra a Más → Inventario.",
+          "Toca el producto.",
+          "Cambia el campo \"Mínimo\" y guarda. Por ejemplo, a lo que más se vende ponle 10 para que el aviso llegue con tiempo."
+        ]
+      },
+      {
+        "titulo": "Ten en cuenta",
+        "puntos": [
+          "Llega una sola vez cada vez que cruza el mínimo, no con cada venta.",
+          "Le llega a todos los admins, también al que hizo el movimiento.",
+          "Los productos sin control de inventario o desactivados no generan avisos."
+        ]
+      }
+    ],
+    "enlace": {
+      "texto": "Ir a Inventario",
+      "url": "/app/inventario"
+    }
+  },
+  {
+    "id": "2026-10-27-clientes-alerta",
+    "fecha": "2026-10-27",
+    "hora": "13:12",
+    "titulo": "Nuevo: la app te avisa si un cliente ha tenido problemas",
+    "cuerpo": "Cuando escribas el teléfono en Nuevo pedido, si ese cliente ya canceló pedidos que habían salido, hizo devoluciones o tuvo varias novedades de entrega, te sale un aviso en amarillo o rojo para que confirmes con él antes de despachar.",
+    "roles": [],
+    "secciones": [
+      {
+        "titulo": "¿Para qué sirve?",
+        "texto": "Para no perder plata ni viajes del mensajero con clientes que no reciben. Antes de enviar el pedido sabes si ese cliente ha fallado antes, y puedes llamarlo para confirmar o pedirle el pago por adelantado."
+      },
+      {
+        "titulo": "Cómo funciona",
+        "pasos": [
+          "En Nuevo pedido, escribe el teléfono del cliente.",
+          "Si tiene historial de problemas, debajo del teléfono aparece un recuadro con el resumen: cuántos pedidos salieron y se cancelaron, devoluciones, novedades de entrega y cuántos ha recibido.",
+          "Amarillo: tuvo un problema (por ejemplo, un pedido cancelado en ruta). Confírmale el pedido.",
+          "Rojo: tuvo varios problemas, nunca ha recibido, o el admin lo marcó. Llámalo antes de despachar y, si es posible, pídele el pago anticipado."
+        ]
+      },
+      {
+        "titulo": "Marcar a un cliente (solo admin)",
+        "pasos": [
+          "Entra a Más → Clientes y abre el cliente.",
+          "Toca \"Marcar como cliente problemático\" y escribe por qué (por ejemplo: \"no contesta, pedir pago anticipado\").",
+          "Desde ese momento, a quien le haga un pedido le sale ese mensaje en rojo. La marca se puede quitar cuando quieras."
+        ]
+      },
+      {
+        "titulo": "Ten en cuenta",
+        "puntos": [
+          "El aviso no bloquea el pedido: solo te informa para que decidas.",
+          "Un pedido cuenta como \"cancelado en ruta\" si ya tenía mensajero cuando se canceló; a veces es por un error interno y no por el cliente."
+        ]
+      }
+    ],
+    "enlace": {
+      "texto": "Hacer un pedido",
+      "url": "/app/pedidos/nuevo"
+    }
+  },
+  {
+    "id": "2026-10-27-telefono-y-avisos",
+    "fecha": "2026-10-27",
+    "hora": "12:59",
+    "titulo": "Nuevo en Jasta: indicativo de país",
+    "cuerpo": "Al crear un pedido ya puedes elegir el indicativo del país (+57 por defecto). El nombre solo acepta letras y el teléfono solo números. Además, desde ahora te avisamos aquí cada vez que la app tenga algo nuevo.",
+    "roles": [],
+    "secciones": [
+      {
+        "titulo": "¿Para qué sirve?",
+        "texto": "Para que los datos del cliente queden bien escritos desde el principio: el WhatsApp, la llamada del mensajero y el enlace de seguimiento funcionan solo si el teléfono es correcto."
+      },
+      {
+        "titulo": "Cómo se usa",
+        "pasos": [
+          "En Nuevo pedido, al lado del teléfono está el indicativo del país. Viene en 🇨🇴 +57 Colombia; si el cliente es de otro país, cámbialo.",
+          "Para Colombia el número debe tener 10 dígitos y empezar por 3 (celular) o 60 (fijo). Si está mal, te sale el error debajo y no deja guardar.",
+          "Si pegas un número con espacios, guiones o con +57 adelante, la app lo limpia sola.",
+          "En el nombre solo se pueden escribir letras: los números y símbolos se borran solos."
+        ]
+      },
+      {
+        "titulo": "Ten en cuenta",
+        "puntos": [
+          "En los pedidos a domicilio el teléfono es obligatorio.",
+          "Cuando haya una versión nueva de la app, arriba te sale \"✨ Nueva versión de Jasta\": toca Actualizar para cargarla.",
+          "Todo lo nuevo queda explicado en Más → Actualizaciones."
+        ]
+      }
+    ],
+    "enlace": {
+      "texto": "Hacer un pedido",
+      "url": "/app/pedidos/nuevo"
+    }
+  }
+]

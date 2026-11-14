@@ -1,0 +1,1 @@
+var o=[{id:"ahorros",label:"Cuenta de ahorros"},{id:"corriente",label:"Cuenta corriente"},{id:"nequi",label:"Nequi"},{id:"daviplata",label:"Daviplata"},{id:"otro",label:"Otro"}];function t(e){if(!e?.numero_cuenta)return "";let a=o.find(n=>n.id===e.tipo_cuenta)?.label;return [e.banco,a,e.numero_cuenta].filter(Boolean).join(" \xB7 ")}export{o,t};
