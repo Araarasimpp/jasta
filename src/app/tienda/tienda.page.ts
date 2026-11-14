@@ -366,9 +366,6 @@ function parecido(a: string, b: string): number {
             <h1 class="t-det-nom">{{ p.nombre }}</h1>
             <span class="precio">{{ pesos(p.precio) }}</span>
             @if (avisoCopiado()) { <p class="t-copiado" role="status">¡Enlace copiado!</p> }
-            @if (descripcion()) {
-              <div class="t-bloque"><h3>Descripción</h3><p class="desc">{{ descripcion() }}</p></div>
-            }
             @if (p.colores.length) {
               <div class="t-bloque"><h3>Color{{ color() ? ': ' + color() : '' }}</h3>
                 <div class="opciones">
@@ -396,6 +393,10 @@ function parecido(a: string, b: string): number {
               </div>
             }
             @if (errorSel()) { <p class="error" role="alert">{{ errorSel() }}</p> }
+            <!-- La descripción va después de color, talla y cantidad para que lo que hay que elegir quede pegado al precio -->
+            @if (descripcion()) {
+              <div class="t-bloque"><h3>Descripción</h3><p class="desc">{{ descripcion() }}</p></div>
+            }
             @if (resenas().length) {
               <div class="t-bloque"><h3>Reseñas</h3>
                 <ul class="t-resenas">
