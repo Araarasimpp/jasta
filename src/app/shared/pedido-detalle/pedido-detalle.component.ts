@@ -230,7 +230,7 @@ import { mensajeGuia } from '../envio-nacional/envio-nacional';
             <h3 class="seccion-titulo">Seguimiento</h3>
             <dl class="datos">
               <dt>Canal</dt><dd>{{ p.canal === 'local' ? 'Venta en el local' : 'Domicilio' }}</dd>
-              <dt>Creado</dt><dd>{{ fecha(p.created_at) }}</dd>
+              <dt>Creado</dt><dd>{{ fecha(p.subido_at || p.created_at) }}@if (p.subido_at) { <small class="suave">(subido después de las 8 p. m.: cuenta para el día siguiente)</small> }</dd>
               <dt>Vendedora</dt><dd>{{ p.vendedora?.nombre || '—' }}</dd>
               <dt>Mensajero</dt><dd>{{ p.mensajero?.nombre || 'Sin asignar' }}</dd>
               @if (p.entregado_at) {

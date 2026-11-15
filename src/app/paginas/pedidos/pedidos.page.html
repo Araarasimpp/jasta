@@ -113,7 +113,7 @@
                     }
                     <span class="meta-mobile"><span class="num">#{{ p.id }}</span>@if (p.envio_nacional) {, 📦 envío a {{ p.destino_ciudad }}} @else if (p.barrio) {, {{ p.barrio }}}</span>
                   </div>
-                  <span class="subido" [title]="'Vendió ' + (p.vendedora?.nombre || 'desconocido')">Subido {{ fecha(p.created_at) }}</span>
+                  <span class="subido" [title]="'Vendió ' + (p.vendedora?.nombre || 'desconocido')">Subido {{ fecha(p.subido_at || p.created_at) }}@if (p.subido_at) { · cuenta para el día siguiente }</span>
                   @if (p.observaciones?.trim()) {
                     <span class="obs-pedido" [title]="'Observación: ' + p.observaciones"><ion-icon name="document-text-outline" aria-hidden="true"></ion-icon>{{ p.observaciones }}</span>
                   }

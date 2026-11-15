@@ -67,6 +67,8 @@ export interface Pedido {
   id: number;
   estado: EstadoPedido;
   created_at: string;
+  /** Hora real en que se subió, si se subió desde las 8 p. m. (created_at queda en el día siguiente) */
+  subido_at?: string | null;
   updated_at: string;
   entregado_at: string | null;
   vendedora_id: number | null;
