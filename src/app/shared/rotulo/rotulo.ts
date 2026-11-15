@@ -125,7 +125,7 @@ export function rotuloHtml(p: PedidoRotulo, n: DatosNegocio): string {
   return `
   <section class="rotulo">
     <header class="cabecera">
-      <div class="marca"><img class="logo" src="${urlLogo()}" alt="" /><span class="nombre">${esc(n.nombre_negocio)}</span></div>
+      <div class="marca"><img class="logo" src="${urlLogo()}" alt="${esc(n.nombre_negocio)}" /></div>
 
       <div class="qr">${qrPedido(p.numero)}<span>#${esc(p.numero)}</span></div>
 
@@ -226,8 +226,8 @@ export const ROTULO_CSS = `
   .qr svg { display: block; width: 24mm; height: 24mm; margin: -2mm; }
   .qr span { font-size: 7pt; font-weight: bold; letter-spacing: 0.04em; }
   .marca { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-start; gap: 1mm; max-width: 44mm; }
-  .logo { width: 22mm; height: 22mm; object-fit: contain; }
-  .nombre { font-size: 11pt; font-weight: bold; line-height: 1.1; }
+  /* Sin el nombre debajo, el logo ocupa ese espacio: la cabecera queda casi del mismo alto */
+  .logo { width: 28mm; height: 28mm; object-fit: contain; }
   .contacto {
     flex: 1;
     min-width: 0;
