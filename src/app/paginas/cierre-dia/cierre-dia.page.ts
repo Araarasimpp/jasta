@@ -3,7 +3,8 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { cash, documentTextOutline, trophy } from 'ionicons/icons';
+import { cash, documentTextOutline, trophy, warning } from 'ionicons/icons';
+import { RouterLink } from '@angular/router';
 import { PesosDirective } from '../../shared/pesos/pesos.directive';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
@@ -14,9 +15,10 @@ import { formatoFechaCO, formatoHoraCO, hoyColombiaISO } from '../../shared/fech
 interface PlataCuadre {
   id: number; mensajero: string | null; pedidos: number; fecha_entrega: string; efectivo: number; transferencia: number;
   recibio: string | null; recibio_id: number | null; hora: string; comisiones: number; ganancia: number; costo: number; en_cierre: string | null;
+  estado?: 'confirmado' | 'pendiente';
 }
 interface PlataCaja {
-  fecha: string; efectivo: number; recibio: string | null; hora: string; comisiones: number; ganancia: number; costo: number; en_cierre: string | null;
+  fecha: string; efectivo: number; recibio: string | null; hora: string; comisiones: number; ganancia: number; costo: number; en_cierre: string | null; recibida?: boolean;
 }
 interface Cierre {
   id: number; fecha: string; admin_id: number; admin_nombre: string; cuadres: number[]; cajas: string[]; efectivo: number; transferencia: number;
@@ -25,7 +27,11 @@ interface Cierre {
 interface Datos {
   cuadres: PlataCuadre[];
   cajas: PlataCaja[];
-  dia: { pedidos: number; ventas: number; ganancia: number; comisiones: number };
+  dia: { pedidos: number; ventas: number; ganancia: number; comisiones: number; costo?: number };
+  /** Pedidos de ese día que todavía no se entregan: no dejan cerrar */
+  pendientes?: Pendiente[];
+  /** Otro admin ya separó comisiones, ahorro y mercancía de ese día */
+  separado_por?: string | null;
   gastos: number;
   mi_cierre: Cierre | null;
   ahorro_total: number;
@@ -33,12 +39,15 @@ interface Datos {
   ahorro: { guardado: number; retirado: number; meta: number | null; retiros: Retiro[] };
   semana: { desde: string; hasta: string; a_pagar: number; atrasadas: number; separado: number };
 }
+interface Pendiente { id: number; estado: string; cliente: string; barrio: string | null; total: number; mensajero: string | null }
 interface Retiro { id: number; fecha: string; valor: number; motivo: string; admin_nombre: string }
 
 /** Una fila para elegir: un cuadre de un mensajero o la caja del local */
 interface Fila {
   clave: string; titulo: string; detalle: string; recibio: string; hora: string; esMio: boolean;
   efectivo: number; transferencia: number; comisiones: number; ganancia: number; costo: number; bloqueada: string | null;
+  /** Todavía no se confirma (no se puede marcar) */
+  falta?: string;
 }
 
 const normal = (s: string | null | undefined) => (s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase();
@@ -51,7 +60,7 @@ const normal = (s: string | null | undefined) => (s ?? '').normalize('NFD').repl
 @Component({
   selector: 'app-cierre-dia',
   standalone: true,
-  imports: [FormsModule, EsqueletoComponent, PesosDirective, CuentaDirective, IonIcon],
+  imports: [FormsModule, EsqueletoComponent, PesosDirective, CuentaDirective, IonIcon, RouterLink],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -143,6 +152,21 @@ const normal = (s: string | null | undefined) => (s ?? '').normalize('NFD').repl
       .hist .v { text-align: right; font-family: var(--mono-font); font-weight: 650; white-space: nowrap; }
       .hist .v small { display: block; font-family: inherit; font-size: 11.5px; font-weight: 500; color: var(--st-pendiente-text); }
       textarea.inp { width: 100%; min-height: 60px; resize: vertical; }
+      .alerta-pend { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border: 1px solid var(--danger); border-radius: var(--radius-lg);
+        background: color-mix(in srgb, var(--danger) 8%, var(--surface)); animation: alerta-entra .4s ease-out; }
+      @keyframes alerta-entra { from { opacity: 0; transform: translateY(-6px); } }
+      .ap-cab { display: flex; gap: 10px; align-items: flex-start; }
+      .ap-cab > ion-icon { flex-shrink: 0; font-size: 24px; color: var(--danger); }
+      .ap-cab strong { display: block; font-size: 15px; color: var(--danger); }
+      .ap-cab small { display: block; font-size: 13px; color: var(--text-soft); margin-top: 2px; }
+      .alerta-pend ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+      .alerta-pend li { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding: 10px 12px; border-radius: var(--radius); background: var(--surface); }
+      .alerta-pend li small { display: block; font-size: 12.5px; color: var(--text-muted); }
+      .ap-acc { display: flex; gap: 6px; flex-wrap: wrap; }
+      .ap-acc .b { height: 34px; font-size: 13px; }
+      .renglon.total.neg .val { color: var(--danger); }
+      .falta-plata { display: flex; gap: 6px; align-items: flex-start; margin: 10px 0 0; font-size: 13px; color: var(--danger); line-height: 1.4; }
+      .falta-plata ion-icon { flex-shrink: 0; margin-top: 2px; }
       .vacio-txt { margin: 0; padding: 12px 0; text-align: center; font-size: 13.5px; color: var(--text-soft); }
       @media (max-width: 640px) {
         .renglon.total .val { font-size: 21px; } .recibo { padding: 16px; }
@@ -185,21 +209,42 @@ const normal = (s: string | null | undefined) => (s ?? '').normalize('NFD').repl
           </div>
           <div class="botones"><button class="b" type="button" [disabled]="guardando()" (click)="anular(c)">Anular y volver a cerrar</button></div>
         } @else {
+          @if (datos.pendientes?.length) {
+            <section class="alerta-pend" role="alert">
+              <div class="ap-cab"><ion-icon name="warning" aria-hidden="true"></ion-icon>
+                <div><strong>{{ datos.pendientes!.length === 1 ? 'Hay 1 pedido de este día sin entregar' : 'Hay ' + datos.pendientes!.length + ' pedidos de este día sin entregar' }}</strong>
+                  <small>No puedes cerrar el día hasta gestionarlos: entrégalos o cancélalos en Pedidos, o pásalos al día siguiente (ahí se suman).</small></div></div>
+              <ul>
+                @for (x of datos.pendientes; track x.id) {
+                  <li>
+                    <span><b>#{{ x.id }}</b> {{ x.cliente }}<small>{{ estadoTexto(x.estado) }}{{ x.mensajero ? ' · ' + x.mensajero : '' }}{{ x.barrio ? ' · ' + x.barrio : '' }} · {{ pesos(x.total) }}</small></span>
+                    <span class="ap-acc">
+                      <a class="b" [routerLink]="'/app/pedidos'" [queryParams]="{ id: x.id }">Gestionar</a>
+                      <button class="b" type="button" [disabled]="guardando()" (click)="pasarAlSiguiente(x)">Pasar al día siguiente</button>
+                    </span>
+                  </li>
+                }
+              </ul>
+            </section>
+          }
+
           <section class="panel" aria-labelledby="t-plata">
             <div class="panel-head"><div>
               <h2 id="t-plata">¿Qué plata recibiste tú?</h2>
-              <p class="ayuda">Marca solo lo que te entregaron a ti en la mano o a tu cuenta. Lo que recibió otra persona lo cierra ella.</p>
+              <p class="ayuda">Los cuadres de los pedidos entregados ese día y la caja del local de ese día. Marca solo lo que te entregaron a ti; lo que recibió otra persona lo cierra ella.</p>
             </div></div>
             @if (filas().length) {
               <ul class="lista">
                 @for (f of filas(); track f.clave) {
                   <li>
                     <label class="fila" [class.on]="elegidas().has(f.clave)" [class.bloq]="!!f.bloqueada">
-                      <input type="checkbox" [checked]="elegidas().has(f.clave)" [disabled]="!!f.bloqueada" (change)="alternar(f.clave)" />
+                      <input type="checkbox" [checked]="elegidas().has(f.clave)" [disabled]="!!f.bloqueada || !!f.falta" (change)="alternar(f.clave)" />
                       <span>
                         <span class="t1">{{ f.titulo }}</span>
                         <span class="t2">{{ f.detalle }}</span>
-                        @if (f.bloqueada) {
+                        @if (f.falta) {
+                          <span class="t2 otro">{{ f.falta }}</span>
+                        } @else if (f.bloqueada) {
                           <span class="t2 otro">Ya está en el cierre de {{ f.bloqueada }}</span>
                         } @else {
                           <span class="t2" [class.otro]="!f.esMio">Recibió {{ f.esMio ? 'tú' : f.recibio }} · {{ hora(f.hora) }}</span>
@@ -207,7 +252,6 @@ const normal = (s: string | null | undefined) => (s ?? '').normalize('NFD').repl
                       </span>
                       <span class="cifras">{{ pesos(f.efectivo + f.transferencia) }}
                         @if (f.transferencia) { <small>{{ pesos(f.efectivo) }} efectivo · {{ pesos(f.transferencia) }} transf.</small> }
-                        <small>comisión {{ pesos(f.comisiones) }}</small>
                       </span>
                     </label>
                   </li>
@@ -215,7 +259,7 @@ const normal = (s: string | null | undefined) => (s ?? '').normalize('NFD').repl
               </ul>
               <div class="botones"><button type="button" class="link" (click)="soloMios()">Marcar solo lo que dice que recibí yo</button></div>
             } @else {
-              <p class="vacio-txt">Ese día no se confirmó ningún cuadre ni caja del local.</p>
+              <p class="vacio-txt">Ese día no hay cuadres ni caja del local.</p>
             }
           </section>
 
@@ -224,7 +268,8 @@ const normal = (s: string | null | undefined) => (s ?? '').normalize('NFD').repl
             <div class="renglon"><span class="lbl">Efectivo</span><span class="punteado"></span><span class="val">{{ pesos(suma().efectivo) }}</span></div>
             <div class="renglon"><span class="lbl">Transferencias</span><span class="punteado"></span><span class="val">{{ pesos(suma().transferencia) }}</span></div>
             <div class="renglon sub"><span class="lbl">Total que recibiste</span><span class="punteado"></span><span class="val">{{ pesos(suma().total) }}</span></div>
-            <div class="renglon separa"><span class="lbl">Separa: comisiones de las vendedoras<small>Se les paga el viernes</small></span><span class="punteado"></span><span class="val">− {{ pesos(suma().comisiones) }}</span></div>
+            @if (datos.separado_por) { <p class="ayuda" style="margin: 2px 0 6px">Las comisiones, el ahorro y la mercancía de este día ya los separó {{ datos.separado_por }} en su cierre.</p> }
+            <div class="renglon separa"><span class="lbl">Separa: comisiones de las vendedoras<small>De los {{ datos.dia.pedidos }} pedidos entregados del día · se pagan el viernes</small></span><span class="punteado"></span><span class="val">− {{ pesos(suma().comisiones) }}</span></div>
             <div class="renglon ahorro"><span class="lbl">Separa: ahorro
                 <span class="pct"><input class="inp" type="number" min="0" max="100" step="1" [ngModel]="pct()" (ngModelChange)="pct.set(+$event || 0)" aria-label="Porcentaje de ahorro" /> %</span>
                 <small>de {{ pesos(suma().ganancia) }} de ganancia de la tienda</small></span>
@@ -233,7 +278,11 @@ const normal = (s: string | null | undefined) => (s ?? '').normalize('NFD').repl
                 <label class="chk"><input type="checkbox" [ngModel]="conMercancia()" (ngModelChange)="conMercancia.set($event)" />Separa: mercancía</label>
                 <small>Lo que costó lo que se vendió, para volver a comprar</small></span>
               <span class="punteado"></span><span class="val">− {{ pesos(conMercancia() ? suma().costo : 0) }}</span></div>
-            <div class="renglon total"><span class="lbl">Te queda libre</span><span class="punteado"></span><span class="val" [cuenta]="libre()" cuentaFormato="pesos"></span></div>
+            <div class="renglon total" [class.neg]="libre() < 0"><span class="lbl">Te queda libre</span><span class="punteado"></span><span class="val" [cuenta]="libre()" cuentaFormato="pesos"></span></div>
+            @if (libre() < 0) {
+              <p class="falta-plata"><ion-icon name="warning" aria-hidden="true"></ion-icon>Lo que recibiste no alcanza para separar todo lo del día: faltan {{ pesos(-libre()) }}.
+                Sale de la plata que recibió otra persona (otro cuadre o la caja) o de transferencias que aún no marcas.</p>
+            }
           </section>
 
           @if (suma().total > 0) {
@@ -250,8 +299,8 @@ const normal = (s: string | null | undefined) => (s ?? '').normalize('NFD').repl
           <section class="panel">
             <label class="campo"><span>Nota (opcional)</span>
               <textarea class="inp" maxlength="500" [(ngModel)]="nota" placeholder="Ej: faltaron 5.000 de Andrés, me los da mañana"></textarea></label>
-            <button class="b b-pri b-grande" type="button" [disabled]="guardando() || !elegidas().size" (click)="cerrar()">
-              {{ guardando() ? 'Cerrando…' : elegidas().size ? 'Cerrar mi día' : 'Marca la plata que recibiste' }}</button>
+            <button class="b b-pri b-grande" type="button" [disabled]="guardando() || !elegidas().size || !!datos.pendientes?.length" (click)="cerrar()">
+              {{ guardando() ? 'Cerrando…' : datos.pendientes?.length ? 'Gestiona los pedidos sin entregar' : elegidas().size ? 'Cerrar mi día' : 'Marca la plata que recibiste' }}</button>
           </section>
         }
 
@@ -368,29 +417,32 @@ export class CierreDiaPage {
     const cu: Fila[] = d.cuadres.map((c) => ({
       clave: 'c' + c.id,
       titulo: 'Cuadre de ' + (c.mensajero ?? 'mensajero'),
-      detalle: `${c.pedidos} ${c.pedidos === 1 ? 'pedido' : 'pedidos'} · entregas del ${this.diaCorto(c.fecha_entrega)}`,
+      detalle: `${c.pedidos} ${c.pedidos === 1 ? 'pedido' : 'pedidos'} entregados`,
+      falta: c.estado === 'pendiente' ? 'Falta confirmarlo en Cuadres' : undefined,
       recibio: c.recibio ?? 'alguien', hora: c.hora, esMio: c.recibio_id === yo?.id,
       efectivo: +c.efectivo, transferencia: +c.transferencia, comisiones: +c.comisiones, ganancia: +c.ganancia, costo: +c.costo, bloqueada: c.en_cierre,
     }));
     const ca: Fila[] = d.cajas.map((k) => ({
       clave: 'k' + k.fecha,
       titulo: 'Caja del local',
-      detalle: 'Ventas del ' + this.diaCorto(k.fecha),
+      detalle: 'Ventas del local de ese día',
+      falta: k.recibida === false ? 'Falta recibir la caja' : undefined,
       recibio: k.recibio ?? 'alguien', hora: k.hora, esMio: !!miNombre && normal(k.recibio) === miNombre,
       efectivo: +k.efectivo, transferencia: 0, comisiones: +k.comisiones, ganancia: +k.ganancia, costo: +k.costo, bloqueada: k.en_cierre,
     }));
-    return [...cu, ...ca].sort((a, b) => a.hora.localeCompare(b.hora));
+    return [...cu, ...ca].sort((a, b) => (a.hora ?? '').localeCompare(b.hora ?? ''));
   });
 
   suma = computed(() => {
-    const s = { efectivo: 0, transferencia: 0, comisiones: 0, ganancia: 0, costo: 0, total: 0 };
+    // La plata es la de lo que marcaste; comisiones, ganancia y mercancía son de todos los pedidos del día
+    const d = this.d();
+    const yaSeparado = !!d?.separado_por;
+    const s = { efectivo: 0, transferencia: 0, comisiones: yaSeparado ? 0 : +(d?.dia.comisiones ?? 0), ganancia: yaSeparado ? 0 : +(d?.dia.ganancia ?? 0),
+      costo: yaSeparado ? 0 : +(d?.dia.costo ?? 0), total: 0 };
     for (const f of this.filas()) {
       if (!this.elegidas().has(f.clave)) continue;
       s.efectivo += f.efectivo;
       s.transferencia += f.transferencia;
-      s.comisiones += f.comisiones;
-      s.ganancia += f.ganancia;
-      s.costo += f.costo;
     }
     s.total = s.efectivo + s.transferencia;
     return s;
@@ -423,7 +475,7 @@ export class CierreDiaPage {
   });
 
   constructor() {
-    addIcons({ cash, documentTextOutline, trophy });
+    addIcons({ cash, documentTextOutline, trophy, warning });
     void this.cargar();
   }
 
@@ -466,7 +518,7 @@ export class CierreDiaPage {
     const ajenas = this.filas().filter((f) => this.elegidas().has(f.clave) && !f.esMio).length;
     if (ajenas && !confirm(`Marcaste ${ajenas === 1 ? 'una entrega que la app dice que recibió otra persona' : ajenas + ' entregas que la app dice que recibió otra persona'}. ¿De verdad esa plata la tienes tú?`)) return;
     this.guardando.set(true);
-    const { error } = await this.sb.client.rpc('cerrar_dia2', {
+    const { error } = await this.sb.client.rpc('cerrar_dia3', {
       p_fecha: this.fecha(),
       p_cuadres: sel.filter((c) => c.startsWith('c')).map((c) => Number(c.slice(1))),
       p_cajas: sel.filter((c) => c.startsWith('k')).map((c) => c.slice(1)),
@@ -518,6 +570,21 @@ export class CierreDiaPage {
     const { error } = await this.sb.client.rpc('anular_retiro_ahorro', { p_id: r.id });
     if (error) return this.toast.error(mensajeError(error));
     await this.cargar();
+  }
+
+  /** El pedido pasa al día siguiente: cuenta para ese día (comisiones, reportes y su cierre) */
+  async pasarAlSiguiente(x: Pendiente): Promise<void> {
+    if (!confirm(`¿Pasar el pedido #${x.id} de ${x.cliente} al día siguiente? Va a contar para ese día.`)) return;
+    this.guardando.set(true);
+    const { error } = await this.sb.client.rpc('pasar_pedido_dia_siguiente', { p_pedido: x.id });
+    this.guardando.set(false);
+    if (error) return this.toast.error(mensajeError(error));
+    this.toast.ok(`Pedido #${x.id} pasado al día siguiente`);
+    await this.cargar();
+  }
+
+  estadoTexto(e: string): string {
+    return e === 'por_alistar' ? 'Por alistar' : e === 'alistado' ? 'Alistado' : e === 'despachado' ? 'En ruta' : e;
   }
 
   hora(iso: string): string {

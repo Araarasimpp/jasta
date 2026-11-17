@@ -1,5 +1,15 @@
 [
   {
+    "id": "2026-11-17-cierre-por-dia",
+    "fecha": "2026-11-17",
+    "hora": "08:40",
+    "titulo": "Mi cierre del día ahora va por el día de los pedidos",
+    "cuerpo": "Al escoger un día salen los cuadres de las entregas de ese día. Las comisiones, el ahorro y la mercancía se sacan de todos los pedidos de ese día. Si queda un pedido sin entregar, no deja cerrar hasta que lo gestiones o lo pases al día siguiente.",
+    "roles": [
+      "admin"
+    ]
+  },
+  {
     "id": "2026-11-17-pedido-proveedor",
     "fecha": "2026-11-17",
     "hora": "07:25",
