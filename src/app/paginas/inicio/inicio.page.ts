@@ -769,7 +769,8 @@ export class InicioPage implements OnInit, OnDestroy {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        animation: { duration: 250 },
+        // Las barras crecen desde abajo, una tras otra
+        animation: { duration: 650, easing: 'easeOutQuart', delay: (c: { type: string; mode: string; dataIndex: number }) => (c.type === 'data' && c.mode === 'default' ? c.dataIndex * 35 : 0) },
         interaction: { mode: 'index', intersect: false },
         plugins: {
           legend: { display: false },

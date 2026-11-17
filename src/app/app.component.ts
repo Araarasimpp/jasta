@@ -5,6 +5,7 @@ import { VisorComponent } from './shared/visor/visor.component';
 import { NuevaVersionComponent } from './shared/version/nueva-version.component';
 import { activarArrastreDeHojas } from './shared/arrastrar-hojas';
 import { registrarIconos } from './shared/iconos';
+import { activarCopiadoVisual } from './shared/animar/animar';
 
 @Component({
   selector: 'app-root',
@@ -14,6 +15,7 @@ import { registrarIconos } from './shared/iconos';
 export class AppComponent implements OnInit, OnDestroy {
   constructor() {
     registrarIconos();
+    activarCopiadoVisual();
   }
 
   private timer?: ReturnType<typeof setTimeout>;

@@ -1,4 +1,4 @@
-<div class="pedidos-page">
+<div class="pedidos-page" jalarRecargar (recargar)="cargar()">
   <header class="page-header">
     <div class="title">
       <h1>Pedidos</h1>
@@ -17,7 +17,8 @@
   </header>
 
   <div class="toolbar">
-    <nav class="tabs" aria-label="Filtrar por estado">
+    <nav class="tabs" #tabs aria-label="Filtrar por estado">
+      <span class="tab-linea" aria-hidden="true" [style.left.px]="linea().x" [style.width.px]="linea().w"></span>
       @for (f of filtros; track f.id) {
         <button class="tab" [attr.data-tab]="f.id" [class.active]="filtro() === f.id" [attr.aria-pressed]="filtro() === f.id" (click)="cambiarFiltro(f.id)">
           {{ f.label }}

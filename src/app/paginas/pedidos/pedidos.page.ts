@@ -1,5 +1,5 @@
-import { movimientoReducido, saltar } from '../../shared/animar/animar';
-import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { JalarRecargarDirective, movimientoReducido, saltar } from '../../shared/animar/animar';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
@@ -59,7 +59,7 @@ const ETIQUETA_GRUPO: Record<EstadoPedido, string> = {
 @Component({
   selector: 'app-pedidos',
   standalone: true,
-  imports: [FormsModule, RouterLink, IonIcon, PedidoDetalleComponent, NovedadComponent, AvatarComponent, EstadoIconComponent, ProductoDetalleComponent],
+  imports: [FormsModule, RouterLink, IonIcon, PedidoDetalleComponent, NovedadComponent, AvatarComponent, EstadoIconComponent, ProductoDetalleComponent, JalarRecargarDirective],
   templateUrl: './pedidos.page.html',
   styleUrls: ['./pedidos.page.scss'],
 })
@@ -184,10 +184,25 @@ export class PedidosPage implements OnInit, OnDestroy {
   private cargaPendiente = false;
   private enCarga = false;
 
+  /** Rayita de la pestaña activa: se desliza de una pestaña a la otra */
+  @ViewChild('tabs') tabsRef?: ElementRef<HTMLElement>;
+  linea = signal({ x: 0, w: 0 });
+  @HostListener('window:resize')
+  moverLinea(): void {
+    const nav = this.tabsRef?.nativeElement;
+    const act = nav?.querySelector<HTMLElement>('.tab.active');
+    if (act) this.linea.set({ x: act.offsetLeft + 10, w: act.offsetWidth - 20 });
+  }
+
   /** Conteos anteriores: el número de la pestaña que cambia da un saltico */
   private conteosAntes: Record<string, number> | null = null;
 
   constructor() {
+    effect(() => {
+      this.filtro();
+      this.conteos();
+      setTimeout(() => this.moverLinea());
+    });
     effect(() => {
       const c = this.conteos();
       const antes = this.conteosAntes;

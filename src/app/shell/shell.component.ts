@@ -1,4 +1,4 @@
-import { campanita } from '../shared/animar/animar';
+import { cambiarTemaConCirculo, campanita } from '../shared/animar/animar';
 import { GuiaComponent } from '../shared/guia/guia.component';
 import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { entradaEnCascada } from '../core/cascada';
@@ -196,7 +196,7 @@ const MENU: ItemMenu[] = [
             }
           </nav>
           <div class="vd-der">
-            <button class="vd-circ" (click)="theme.toggle()" [attr.aria-label]="theme.isDark() ? 'Modo claro' : 'Modo oscuro'" [title]="theme.isDark() ? 'Modo claro' : 'Modo oscuro'">
+            <button class="vd-circ" (click)="cambiarTemaConCirculo($event, () => theme.toggle())" [attr.aria-label]="theme.isDark() ? 'Modo claro' : 'Modo oscuro'" [title]="theme.isDark() ? 'Modo claro' : 'Modo oscuro'">
               <ion-icon [name]="theme.isDark() ? 'sunny-outline' : 'moon-outline'"></ion-icon></button>
             <a class="vd-circ" routerLink="/app/tema" aria-label="Tema y fondo" title="Tema y fondo"><ion-icon name="color-palette-outline"></ion-icon></a>
             <button class="vd-circ" (click)="avisos.toggle()" [attr.aria-label]="'Avisos' + (avisos.noLeidas() ? ', ' + avisos.noLeidas() + ' sin leer' : '')">
@@ -307,7 +307,7 @@ const MENU: ItemMenu[] = [
             }
           }
           <div class="more-pie">
-            <button class="more-btn" (click)="theme.toggle()">
+            <button class="more-btn" (click)="cambiarTemaConCirculo($event, () => theme.toggle())">
               <ion-icon [name]="theme.isDark() ? 'sunny-outline' : 'moon-outline'"></ion-icon>
               {{ theme.isDark() ? 'Modo claro' : 'Modo oscuro' }}
             </button>
@@ -465,6 +465,7 @@ export class ShellComponent implements OnInit, OnDestroy {
 
   /** Avisos sin leer de la vez anterior: si suben, la campanita se mueve */
   private noLeidasAntes: number | null = null;
+  cambiarTemaConCirculo = cambiarTemaConCirculo;
 
   constructor() {
     effect(() => {

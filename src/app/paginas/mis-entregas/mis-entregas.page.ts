@@ -1,4 +1,4 @@
-import { confeti } from '../../shared/animar/animar';
+import { JalarRecargarDirective, confeti } from '../../shared/animar/animar';
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
@@ -35,10 +35,14 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
 @Component({
   selector: 'app-mis-entregas',
   standalone: true,
-  imports: [EsqueletoComponent, QrPagoComponent, IonIcon, EntregarComponent, NovedadComponent, PedidoDetalleComponent, PedidoJybComponent, DiaComponent],
+  imports: [EsqueletoComponent, QrPagoComponent, IonIcon, EntregarComponent, NovedadComponent, PedidoDetalleComponent, PedidoJybComponent, DiaComponent, JalarRecargarDirective],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
+      /* La parada que sigue: su borde late suave */
+      .tarjeta.siguiente { box-shadow: 0 0 0 2px var(--accent); animation: parada-late 2.4s ease-in-out infinite; }
+      @keyframes parada-late { 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 30%, transparent); } }
+      @media (prefers-reduced-motion: reduce) { .tarjeta.siguiente { animation: none; } }
       .top-izq { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; cursor: pointer; }
       .top-izq .total { display: flex; align-items: baseline; gap: 8px; font-size: 19px; line-height: 1.2; }
       .dom-tag { align-self: flex-start; padding: 2px 9px; border-radius: 999px; background: var(--ok-wash); color: var(--efectivo-texto); font-size: 12.5px; font-weight: 600; }
@@ -110,7 +114,7 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
     `,
   ],
   template: `
-    <div class="page">
+    <div class="page" jalarRecargar (recargar)="cargar()">
       <div class="head">
         <div><h1>Mis entregas</h1></div>
         <div style="display: flex; gap: 8px">
@@ -225,7 +229,7 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
       <div class="tarjetas" [class.ordenando]="arrastrandoId() !== null">
         @for (parada of rutaOrdenada(); track parada.clave; let i = $index) {
           @if (parada.jasta; as p) {
-          <article class="tarjeta" [class.arrastrando]="arrastrandoId() === parada.clave" (pointerdown)="presionar($event, parada.clave)" (touchstart)="tocar($event, parada.clave)" (contextmenu)="$event.preventDefault()">
+          <article class="tarjeta" [class.siguiente]="i === 0 && rutaOrdenada().length > 1" [class.arrastrando]="arrastrandoId() === parada.clave" (pointerdown)="presionar($event, parada.clave)" (touchstart)="tocar($event, parada.clave)" (contextmenu)="$event.preventDefault()">
             <div class="tarjeta-top">
               <div class="top-izq" (click)="abrir(p.id)">
                 @if (conJyb()) {<span class="negocio">Jasta</span>}
@@ -276,7 +280,7 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
             </div>
           </article>
           } @else if (parada.jyb; as p) {
-          <article class="tarjeta jyb" [class.arrastrando]="arrastrandoId() === parada.clave" (pointerdown)="presionar($event, parada.clave)" (touchstart)="tocar($event, parada.clave)" (contextmenu)="$event.preventDefault()">
+          <article class="tarjeta jyb" [class.siguiente]="i === 0 && rutaOrdenada().length > 1" [class.arrastrando]="arrastrandoId() === parada.clave" (pointerdown)="presionar($event, parada.clave)" (touchstart)="tocar($event, parada.clave)" (contextmenu)="$event.preventDefault()">
             <div class="tarjeta-top">
               <div class="top-izq" (click)="abiertoJyb.set(p)">
                 <span class="negocio jyb">Variedades JYB</span>

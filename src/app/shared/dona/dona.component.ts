@@ -15,6 +15,12 @@ export interface Segmento { etiqueta: string; valor: number; color: string }
       .caja { position: relative; width: var(--tam, 150px); aspect-ratio: 1; margin: 0 auto; }
       svg { width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
       circle { fill: none; transition: stroke-width 160ms ease, opacity 160ms ease; }
+      /* La dona se dibuja girando al aparecer */
+      svg { animation: dona-gira .9s cubic-bezier(.2,.8,.2,1) both; }
+      .seg { animation: dona-dibuja .9s cubic-bezier(.2,.8,.2,1) both; }
+      @keyframes dona-gira { from { transform: rotate(-90deg); } }
+      @keyframes dona-dibuja { from { stroke-dasharray: 0 1000; } }
+      @media (prefers-reduced-motion: reduce) { svg, .seg { animation: none; } }
       .pista { stroke: var(--surface-2); }
       .seg { cursor: default; }
       .seg.apagado { opacity: 0.35; }

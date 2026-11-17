@@ -1,4 +1,4 @@
-import { Directive, ElementRef, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular/core';
+import { Directive, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, inject } from '@angular/core';
 
 /**
  * Animaciones de la app y la tienda. Todas son cortas, sin librerías y se apagan si el
@@ -272,4 +272,139 @@ export function campanita(el: Element | null | undefined): void {
       { transform: 'rotate(-7deg)' }, { transform: 'rotate(3deg)' }, { transform: 'rotate(0)' }],
     { duration: 900, easing: 'ease-in-out' }
   );
+}
+
+/**
+ * Jalar hacia abajo para recargar (en el celular): <div jalarRecargar (recargar)="cargar()">.
+ * Sale un círculo con la flecha que gira mientras se jala; al soltar pasado el punto, recarga.
+ */
+@Directive({ selector: '[jalarRecargar]', standalone: true })
+export class JalarRecargarDirective implements OnInit, OnDestroy {
+  @Output() recargar = new EventEmitter<void>();
+  private el = inject(ElementRef<HTMLElement>);
+  private y0 = 0;
+  private dy = 0;
+  private activo = false;
+  private ind?: HTMLElement;
+  private quitar: (() => void)[] = [];
+
+  ngOnInit(): void {
+    if (typeof window === 'undefined' || !('ontouchstart' in window)) return;
+    const raiz = this.el.nativeElement;
+    const on = (t: string, f: (e: TouchEvent) => void) => {
+      raiz.addEventListener(t, f as EventListener, { passive: true });
+      this.quitar.push(() => raiz.removeEventListener(t, f as EventListener));
+    };
+    on('touchstart', (e) => {
+      this.activo = e.touches.length === 1 && this.arriba();
+      this.y0 = e.touches[0].clientY;
+      this.dy = 0;
+    });
+    on('touchmove', (e) => {
+      if (!this.activo) return;
+      this.dy = Math.max(0, e.touches[0].clientY - this.y0);
+      if (this.dy < 8) return;
+      this.mostrar(Math.min(1, this.dy / 90));
+    });
+    on('touchend', () => {
+      if (!this.activo) return;
+      this.activo = false;
+      if (this.dy >= 90) {
+        this.girar();
+        this.recargar.emit();
+      } else this.esconder();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.quitar.forEach((f) => f());
+    this.ind?.remove();
+  }
+
+  /** ¿La página está arriba del todo? (solo ahí se jala para recargar) */
+  private arriba(): boolean {
+    let n: HTMLElement | null = this.el.nativeElement;
+    while (n) {
+      const s = getComputedStyle(n);
+      if (/(auto|scroll)/.test(s.overflowY) && n.scrollHeight > n.clientHeight) return n.scrollTop <= 0;
+      n = n.parentElement;
+    }
+    return (document.scrollingElement?.scrollTop ?? 0) <= 0;
+  }
+
+  private indicador(): HTMLElement {
+    if (this.ind) return this.ind;
+    const d = document.createElement('div');
+    d.setAttribute('aria-hidden', 'true');
+    Object.assign(d.style, {
+      position: 'fixed', top: 'calc(10px + env(safe-area-inset-top))', left: '50%', width: '40px', height: '40px', marginLeft: '-20px', zIndex: '2000',
+      borderRadius: '50%', background: '#fff', boxShadow: '0 4px 14px rgba(0,0,0,.2)', display: 'grid', placeItems: 'center', pointerEvents: 'none',
+      opacity: '0', transform: 'translateY(-50px)', transition: 'opacity .2s, transform .2s',
+    });
+    d.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#2563eb" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg>';
+    document.body.appendChild(d);
+    this.ind = d;
+    return d;
+  }
+
+  private mostrar(k: number): void {
+    const d = this.indicador();
+    d.style.transition = 'none';
+    d.style.opacity = String(k);
+    d.style.transform = `translateY(${k * 40 - 20}px) rotate(${k * 300}deg)`;
+  }
+
+  private girar(): void {
+    const d = this.indicador();
+    d.style.transition = 'opacity .2s, transform .2s';
+    d.style.transform = 'translateY(20px)';
+    d.firstElementChild?.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(360deg)' }], { duration: 700, iterations: 1, easing: 'linear' });
+    setTimeout(() => this.esconder(), 800);
+  }
+
+  private esconder(): void {
+    if (!this.ind) return;
+    this.ind.style.transition = 'opacity .2s, transform .2s';
+    this.ind.style.opacity = '0';
+    this.ind.style.transform = 'translateY(-50px)';
+  }
+}
+
+/** Cambia el modo claro / oscuro con un círculo que se expande desde donde se tocó */
+export function cambiarTemaConCirculo(ev: MouseEvent | Event | null | undefined, cambiar: () => void): void {
+  const doc = document as Document & { startViewTransition?: (f: () => void) => { ready: Promise<void>; finished: Promise<void> } };
+  if (!doc.startViewTransition || movimientoReducido()) return cambiar();
+  const me = ev as MouseEvent | undefined;
+  const x = me?.clientX || innerWidth - 40;
+  const y = me?.clientY || 40;
+  const r = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+  document.documentElement.classList.add('vt-tema');
+  const t = doc.startViewTransition(() => cambiar());
+  void t.ready.then(() => {
+    document.documentElement.animate({ clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${r}px at ${x}px ${y}px)`] },
+      { duration: 550, easing: 'cubic-bezier(.4,0,.2,1)', pseudoElement: '::view-transition-new(root)' } as KeyframeAnimationOptions);
+  });
+  void t.finished.finally(() => document.documentElement.classList.remove('vt-tema'));
+}
+
+/**
+ * En toda la app: cuando algo se copia, el botón que se tocó se pone verde con un check.
+ * Recuerda el último botón tocado y lo marca cuando la copia sale bien.
+ */
+export function activarCopiadoVisual(): void {
+  if (typeof document === 'undefined' || !navigator.clipboard?.writeText) return;
+  let ultimo: { el: HTMLElement; t: number } | null = null;
+  document.addEventListener('click', (e) => {
+    const b = (e.target as Element | null)?.closest?.('button, a, [role="button"]') as HTMLElement | null;
+    if (b) ultimo = { el: b, t: Date.now() };
+  }, true);
+  const original = navigator.clipboard.writeText.bind(navigator.clipboard);
+  navigator.clipboard.writeText = async (texto: string) => {
+    await original(texto);
+    if (ultimo && Date.now() - ultimo.t < 2500 && ultimo.el.isConnected) {
+      const el = ultimo.el;
+      el.classList.add('copiado-ok');
+      setTimeout(() => el.classList.remove('copiado-ok'), 1300);
+    }
+  };
 }

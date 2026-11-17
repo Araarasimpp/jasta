@@ -162,6 +162,7 @@
 }
 
 .tabs {
+  position: relative;
   display: flex;
   gap: 2px;
   flex: 1;
@@ -215,7 +216,7 @@
 }
 
 .tab.active::after {
-  transform: scaleX(1);
+  transform: scaleX(0);
 }
 
 .tab .count {
@@ -1257,7 +1258,3 @@ button.cliente {
 
 @media (hover: hover) { .prod-nombre:hover { color: var(--accent); } }
 
-.row.recien{animation:llega .5s cubic-bezier(.2,1.2,.4,1) both,brilla 3.5s ease-out}
-@keyframes llega{from{opacity:0;transform:translateY(-14px)}}
-@keyframes brilla{0%,30%{box-shadow:inset 4px 0 0 var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)}}
-@media (prefers-reduced-motion:reduce){.row.recien{animation:none}}

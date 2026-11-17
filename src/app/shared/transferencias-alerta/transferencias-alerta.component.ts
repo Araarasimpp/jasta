@@ -19,7 +19,9 @@ import { TransferenciasAlertaService } from './transferencias-alerta.service';
         text-decoration: none; text-align: center; animation: latido 1.8s ease-in-out infinite; }
       a .ir { padding: 3px 12px; border-radius: 999px; background: #fff; color: var(--danger); font-size: 13px; font-weight: 750; white-space: nowrap; }
       @keyframes latido { 50% { filter: brightness(1.18); } }
-      @media (prefers-reduced-motion: reduce) { a { animation: none; } }
+      a .ico { display: inline-block; transform-origin: 50% 20%; animation: timbre 3s ease-in-out infinite; }
+      @keyframes timbre { 0%, 80%, 100% { transform: rotate(0); } 84% { transform: rotate(16deg); } 88% { transform: rotate(-14deg); } 92% { transform: rotate(9deg); } 96% { transform: rotate(-5deg); } }
+      @media (prefers-reduced-motion: reduce) { a, a .ico { animation: none; } }
     `,
   ],
   template: `

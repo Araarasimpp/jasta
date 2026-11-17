@@ -118,6 +118,21 @@ function parecido(a: string, b: string): number {
       @keyframes baja-precio { from { transform: translateY(-10px); opacity: 0; } }
       .ico-cupon { vertical-align: -3px; }
       .t-ico { vertical-align: -2px; margin-right: 5px; font-size: 1.05em; }
+      /* Fotos: brillo mientras cargan y aparecen suave */
+      .prod .foto:not(.foto-ok):has(img) { background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, .55) 50%, transparent 70%) var(--surface-2);
+        background-size: 220% 100%; animation: brillo-carga 1.2s linear infinite; }
+      .prod .foto img { opacity: 0; transition: opacity .35s ease; }
+      .prod .foto img.ok { opacity: 1; }
+      @keyframes brillo-carga { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+      /* La cantidad salta al cambiar */
+      .cant-salta { display: inline-block; animation: salta-n .3s ease-out; }
+      @keyframes salta-n { 40% { transform: scale(1.35); } }
+      .sin-res { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+      .sin-res .lupa { font-size: 34px; color: var(--text-muted); animation: busca 2.2s ease-in-out infinite; }
+      @keyframes busca { 0%, 100% { transform: translate(0, 0) rotate(0); } 25% { transform: translate(-8px, -3px) rotate(-10deg); } 75% { transform: translate(8px, 2px) rotate(10deg); } }
+      .listo-pedir { background: #16a34a !important; border-color: #16a34a !important; animation: listo-pop .35s ease-out; }
+      @keyframes listo-pop { 50% { transform: scale(1.04); } }
+      @media (prefers-reduced-motion: reduce) { .prod .foto, .cant-salta, .sin-res .lupa, .listo-pedir { animation: none !important; } .prod .foto img { opacity: 1; } }
       .t-ico-oro { color: #f59e0b; }
       .t-ico-fuego { color: #f97316; }
       @media (prefers-reduced-motion: reduce) { .etq-agot, .fc-desc.recien, .fc-desc.recien .num { animation: none; } }
@@ -315,7 +330,7 @@ function parecido(a: string, b: string): number {
           @for (p of filtrados().slice(0, limite()); track p.id) {
             <article class="prod" [class.agot]="p.agotado" aparecer [aparecerI]="$index">
               <button type="button" class="foto" (click)="abrir(p, $event)" [attr.aria-label]="'Ver ' + p.nombre">
-                @if (urlMini(p.imagen_url); as u) { <img [src]="u" alt="" loading="lazy" decoding="async" /> } @else { <span class="ini">{{ p.nombre.charAt(0) }}</span> }
+                @if (urlMini(p.imagen_url); as u) { <img [src]="u" alt="" loading="lazy" decoding="async" (load)="fotoLista($event)" (error)="fotoLista($event)" /> } @else { <span class="ini">{{ p.nombre.charAt(0) }}</span> }
                 @if (p.agotado) { <span class="etq-agot">Agotado</span> } @else if (p.top && p.top <= 3) { <span class="t-best">Más vendido</span> } @else if (p.nuevo) { <span class="t-best t-nuevo">Nuevo</span> }
               </button>
               <button type="button" class="t-fav" [class.on]="favs().has(p.id)" (click)="alternarFav(p, $event)" [attr.aria-label]="(favs().has(p.id) ? 'Quitar de' : 'Agregar a') + ' favoritos'" [attr.aria-pressed]="favs().has(p.id)"><ion-icon [name]="favs().has(p.id) ? 'heart' : 'heart-outline'" aria-hidden="true"></ion-icon></button>
@@ -329,7 +344,7 @@ function parecido(a: string, b: string): number {
               </div>
             </article>
           } @empty {
-            <p class="vacio" style="grid-column: 1 / -1">No encontramos productos con esa búsqueda.</p>
+            <p class="vacio sin-res" style="grid-column: 1 / -1"><ion-icon class="lupa" name="search-outline" aria-hidden="true"></ion-icon>No encontramos productos con esa búsqueda.</p>
           }
         </div>
         @if (filtrados().length > limite()) {
@@ -346,7 +361,7 @@ function parecido(a: string, b: string): number {
     @if (avisoAgregado()) { <p class="t-toast" role="status">{{ avisoAgregado() }}</p> }
     @if (lineas().length && !verCarrito() && !sel() && !hecho()) {
       <button class="carrito" (click)="abrirCarrito()">
-        <span><ion-icon class="t-ico" name="bag-handle-outline" aria-hidden="true"></ion-icon>Ver mi pedido · {{ unidades() }} {{ unidades() === 1 ? 'producto' : 'productos' }}</span><strong>{{ pesos(subtotal()) }} →</strong>
+        <span><ion-icon class="t-ico" name="bag-handle-outline" aria-hidden="true"></ion-icon>Ver mi pedido · {{ unidades() }} {{ unidades() === 1 ? 'producto' : 'productos' }}</span><strong><span [cuenta]="subtotal()" cuentaFormato="pesos" [cuentaMs]="500"></span> →</strong>
       </button>
     }
 
@@ -477,11 +492,11 @@ function parecido(a: string, b: string): number {
                 @if (urlMini(l.imagen_url); as u) { <img [src]="u" alt="" /> } @else { <span class="mini"></span> }
                 <span><span class="nom">{{ l.nombre }}</span>
                   @if (l.color || l.talla) { <small>{{ variante(l) }}</small> }
-                  <small>{{ pesos(l.precio) }} c/u</small></span>
+                  <small>{{ pesos(l.precio) }} c/u · <b [cuenta]="l.precio * l.cantidad" cuentaFormato="pesos" [cuentaMs]="450"></b></small></span>
                 <span class="der">
                   <span class="paso">
                     <button type="button" (click)="cambiar($index, -1)" aria-label="Menos">−</button>
-                    <span>{{ l.cantidad }}</span>
+                    @for (n of [l.cantidad]; track n) { <span class="cant-salta">{{ n }}</span> }
                     <button type="button" (click)="cambiar($index, 1)" [disabled]="l.cantidad >= l.max" aria-label="Más">+</button>
                   </span>
                   <button class="quitar" (click)="quitar($index)" [attr.aria-label]="'Quitar ' + l.nombre"><ion-icon class="t-ico" name="trash-outline" aria-hidden="true"></ion-icon>Quitar</button>
@@ -508,7 +523,7 @@ function parecido(a: string, b: string): number {
               <li>
                 <span class="fc-foto">@if (urlMini(l.imagen_url); as u) { <img [src]="u" alt="" /> }@if (l.cantidad > 1) { <b>{{ l.cantidad }}</b> }</span>
                 <span class="fc-prod-txt"><span>{{ l.nombre }}</span>@if (l.color || l.talla) { <small>{{ variante(l) }}</small> }</span>
-                <span class="fc-prod-v num">{{ pesos(l.precio * l.cantidad) }}</span>
+                <span class="fc-prod-v num" [cuenta]="l.precio * l.cantidad" cuentaFormato="pesos" [cuentaMs]="450"></span>
               </li>
             }
           </ul>
@@ -723,7 +738,7 @@ function parecido(a: string, b: string): number {
             <span class="num">{{ pesos(total()) }}</span>
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>
           </button>
-          <button class="b b-pri" (click)="enviar()" [disabled]="enviando() || !lineas().length">{{ enviando() ? (formaPago() === 'tarjeta' ? 'Procesando el pago…' : enLinea() ? 'Abriendo el pago…' : 'Enviando…') : formaPago() === 'tarjeta' ? 'Pagar ' + pesos(total()) : enLinea() ? 'Pagar y finalizar' : 'Confirmar pedido' }}</button>
+          <button class="b b-pri" [class.listo-pedir]="pedidoListo()" (click)="enviar()" [disabled]="enviando() || !lineas().length">{{ pedidoListo() ? '¡Listo!' : enviando() ? (formaPago() === 'tarjeta' ? 'Procesando el pago…' : enLinea() ? 'Abriendo el pago…' : 'Enviando…') : formaPago() === 'tarjeta' ? 'Pagar ' + pesos(total()) : enLinea() ? 'Pagar y finalizar' : 'Confirmar pedido' }}</button>
         </div>
         }
       </div>
@@ -735,6 +750,15 @@ export class TiendaPage implements OnInit {
   private cdr = inject(ChangeDetectorRef);
   /** Se acaba de aplicar un cupón: su renglón brilla */
   cuponRecien = signal(false);
+  /** El pedido ya quedó: el botón se pone verde con "¡Listo!" un momento */
+  pedidoListo = signal(false);
+
+  /** La foto terminó de cargar: se quita el brillo de carga y aparece suave */
+  fotoLista(ev: Event): void {
+    const img = ev.target as HTMLImageElement;
+    img.classList.add('ok');
+    img.parentElement?.classList.add('foto-ok');
+  }
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   cli = inject(ClienteService);
@@ -1587,6 +1611,11 @@ export class TiendaPage implements OnInit {
       const url = (pago.data as { url?: string } | null)?.url;
       location.assign(url && url.startsWith('https://checkout.wompi.co/') ? url : `/pago/${r.codigo}`);
       return;
+    }
+    if (!movimientoReducido()) {
+      this.pedidoListo.set(true);
+      await new Promise((ok) => setTimeout(ok, 700));
+      this.pedidoListo.set(false);
     }
     this.enviando.set(false);
     this.hecho.set({ id: r.id, total: Number(r.subtotal) + Number(r.domicilio), domicilioPendiente: r.domicilio_por_confirmar, codigo: r.codigo });

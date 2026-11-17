@@ -525,3 +525,25 @@ html.vt-foto::view-transition-old(root), html.vt-foto::view-transition-new(root)
 @media (prefers-reduced-motion: reduce) { app-tienda .t-fotos > img { animation: none; } }
 // Íconos dentro de textos (reemplazan a los emojis: la app no usa emojis)
 ion-icon.ico { vertical-align: -2px; margin-right: 5px; flex-shrink: 0; }
+// Tienda: la categoría elegida se agranda y su color entra suave
+app-tienda.tv2.tv2.tv2 .t-cat-ico { transition: background-color 0.3s ease, transform 0.3s cubic-bezier(0.2, 1.4, 0.4, 1), box-shadow 0.3s ease; }
+app-tienda.tv2.tv2.tv2 .t-cats button.on .t-cat-ico { transform: scale(1.1); }
+app-tienda.tv2.tv2.tv2 .t-cat-ico ion-icon { transition: color 0.3s ease; }
+// Copiado: el botón se pone verde con un check un momento
+.copiado-ok { position: relative; }
+.copiado-ok::after {
+  content: ''; position: absolute; inset: -1px; border-radius: inherit; z-index: 2;
+  background: #16a34a url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / 22px no-repeat;
+  animation: copiado-entra 0.25s ease-out;
+}
+@keyframes copiado-entra { from { opacity: 0; transform: scale(0.9); } }
+// Modo claro / oscuro con un círculo: todo cambia junto (sin las partes fijas aparte)
+html.vt-tema .vd-fondo, html.vt-tema .vd-top-wrap, html.vt-tema .sidebar.rail, html.vt-tema .pill-nav { view-transition-name: none; }
+html.vt-tema::view-transition-old(root), html.vt-tema::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+
+// Pedidos: la rayita de la pestaña activa se desliza; el pedido que llega en vivo brilla
+app-pedidos .tab-linea{position:absolute;bottom:-1px;height:2px;border-radius:2px 2px 0 0;background:var(--accent);transition:left .3s cubic-bezier(.2,.8,.2,1),width .3s cubic-bezier(.2,.8,.2,1);pointer-events:none}
+app-pedidos .row.recien{animation:llega .5s cubic-bezier(.2,1.2,.4,1) both,brilla 3.5s ease-out}
+@keyframes llega{from{opacity:0;transform:translateY(-14px)}}
+@keyframes brilla{0%,30%{box-shadow:inset 4px 0 0 var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)}}
+@media (prefers-reduced-motion:reduce){app-pedidos .row.recien{animation:none}}
