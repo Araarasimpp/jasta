@@ -25,8 +25,8 @@
     "id": "2026-11-17-guia",
     "fecha": "2026-11-17",
     "hora": "07:20",
-    "titulo": "Guía de la app para cada rol",
-    "cuerpo": "Ahora la app tiene una guía paso a paso de lo que le toca a cada persona según su rol. A quien entra por primera vez le sale sola, y cualquiera la puede abrir desde el menú en \"Guía de la app\".",
+    "titulo": "Recorrido de bienvenida para cada rol",
+    "cuerpo": "La primera vez que alguien entra, la app le muestra un recorrido: resalta los botones que le sirven según su rol y le dice para qué es cada uno. Sale una sola vez.",
     "roles": [
       "admin",
       "vendedora",
