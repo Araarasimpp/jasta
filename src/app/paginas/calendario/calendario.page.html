@@ -64,19 +64,19 @@
 
     @for (f of selEspeciales(); track f.nombre) {
       <div class="lg-item" [class]="'lg-item t-' + f.tipo">
-        <span class="ico">{{ f.tipo === 'festivo' ? '🇨🇴' : f.tipo === 'pago' ? '💵' : '🎉' }}</span>
+        <span class="ico"><ion-icon [name]="f.tipo === 'festivo' ? 'flag' : f.tipo === 'pago' ? 'cash' : 'sparkles'" aria-hidden="true"></ion-icon></span>
         <div><b>{{ f.nombre }}{{ f.tipo === 'festivo' ? ' · festivo' : '' }}</b>@if (f.consejo) { <small>{{ f.consejo }}</small> }</div>
       </div>
     }
 
     @if (selVenta(); as v) {
       <div class="lg-item t-venta">
-        <span class="ico">🛍️</span>
+        <span class="ico"><ion-icon name="bag-handle" aria-hidden="true"></ion-icon></span>
         <div><b>Vendido {{ pesos(v.vendido) }}</b>
           <small>{{ v.pedidos }} {{ +v.pedidos === 1 ? 'venta' : 'ventas' }}{{ datos()?.admin ? ' · ' + v.local + ' en el local' : '' }}{{ v.ganancia !== null ? ' · ganancia ' + pesos(v.ganancia) : '' }}</small></div>
       </div>
     } @else if ((datos()?.admin || datos()?.caja) && sel() <= hoy) {
-      <div class="lg-item vacio"><span class="ico">🛍️</span><div><small>Sin ventas entregadas este día</small></div></div>
+      <div class="lg-item vacio"><span class="ico"><ion-icon name="bag-handle" aria-hidden="true"></ion-icon></span><div><small>Sin ventas entregadas este día</small></div></div>
     }
 
     @if (selCaja(); as k) {
@@ -91,7 +91,7 @@
 
     @for (p of selPagos(); track $index) {
       <a class="lg-item" [class]="'lg-item t-' + p.tipo" [routerLink]="p.url">
-        <span class="ico">{{ p.tipo === 'vence' ? '⏰' : p.tipo === 'cobrado' ? '📥' : '📤' }}</span>
+        <span class="ico"><ion-icon [name]="p.tipo === 'vence' ? 'alarm-outline' : p.tipo === 'cobrado' ? 'download-outline' : 'arrow-up-circle-outline'" aria-hidden="true"></ion-icon></span>
         <div><b>{{ p.titulo }} · {{ pesos(p.valor) }}</b>@if (p.detalle) { <small>{{ p.detalle }}</small> }</div>
       </a>
     }

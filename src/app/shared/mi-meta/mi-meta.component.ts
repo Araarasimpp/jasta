@@ -72,7 +72,7 @@ export class MiMetaComponent implements OnInit {
       const que = a.tipo === 'vendedora' ? 'ventas' : 'entregas';
       const falta = a.meta - a.cantidad;
       let nota = '';
-      if (falta <= 0) nota = semana ? '¡Cumpliste la meta de la semana!' : '¡Cumpliste la meta del mes! 🏆';
+      if (falta <= 0) nota = semana ? '¡Cumpliste la meta de la semana!' : '¡Cumpliste la meta del mes!';
       else if (!semana) {
         const proy = Math.round((a.cantidad / hoy.getDate()) * diasMes);
         nota = `Te ${falta === 1 ? 'falta 1' : 'faltan ' + numero(falta)} en ${quedan === 1 ? 'el último día' : quedan + ' días'}`

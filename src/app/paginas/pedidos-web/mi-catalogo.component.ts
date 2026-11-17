@@ -68,7 +68,7 @@ function normal(s: string): string {
 
     <label>
       <span class="mc-sub-t">Tu frase</span>
-      <textarea class="inp mc-bio" maxlength="160" [(ngModel)]="bio" placeholder="Ej: Hola, soy Valentina 👋 Te ayudo a escoger el regalo perfecto. Envíos el mismo día."></textarea>
+      <textarea class="inp mc-bio" maxlength="160" [(ngModel)]="bio" placeholder="Ej: Hola, soy Valentina. Te ayudo a escoger el regalo perfecto. Envíos el mismo día."></textarea>
       <small class="mc-cuenta">{{ bio.length }}/160</small>
     </label>
 

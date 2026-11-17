@@ -96,7 +96,7 @@ interface Cliente {
           @if (riesgo(); as r) {
             @if (r.nivel) {
               <div class="riesgo" [class.alto]="r.nivel === 'alto'">
-                <strong>{{ r.marca ? '⚠️ Marcado como problemático' : '⚠️ Ha tenido problemas' }}</strong>
+                <strong><ion-icon class="ico" name="warning" aria-hidden="true"></ion-icon>{{ r.marca ? 'Marcado como problemático' : 'Ha tenido problemas' }}</strong>
                 @if (r.marca) { <span>"{{ r.marca.nota }}"{{ r.marca.autor ? ' — ' + r.marca.autor : '' }}</span> }
                 <span>{{ r.rechazados }} cancelados después de salir · {{ r.devoluciones }} devoluciones · {{ r.novedades }} novedades</span>
               </div>

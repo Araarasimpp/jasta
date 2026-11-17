@@ -232,7 +232,7 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
                 <h3>@if (rutaOrdenada().length > 1) {<span class="parada" [attr.aria-label]="'Parada ' + (i + 1)">{{ i + 1 }}</span>}<span class="guia">#{{ p.id }}</span> {{ p.cliente_nombre }}</h3>
                 <strong class="total num">{{ pesos(p.total) }}<small>{{ p.tipo_recaudo || '' }}</small></strong>
                 <span class="dom-tag">Tu domicilio: <b class="num">{{ pesos(p.valor_domicilio) }}</b></span>
-                @if (p.pagado_linea) { <span class="dom-tag ya-pago">💳 {{ +p.pagado_linea >= +p.total ? 'Ya pagó en línea: no le cobres' : 'Pagó ' + pesos(p.pagado_linea) + ' en línea: cobra ' + pesos(p.total - p.pagado_linea) }}</span> }
+                @if (p.pagado_linea) { <span class="dom-tag ya-pago"><ion-icon class="ico" name="card" aria-hidden="true"></ion-icon>{{ +p.pagado_linea >= +p.total ? 'Ya pagó en línea: no le cobres' : 'Pagó ' + pesos(p.pagado_linea) + ' en línea: cobra ' + pesos(p.total - p.pagado_linea) }}</span> }
               </div>
               <div class="top-der">
                 <button type="button" class="chat-btn" [class.nuevo]="avisos.pedidosConMensajes().has(p.id)" (click)="abrir(p.id, true)"

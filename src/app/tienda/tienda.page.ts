@@ -1,3 +1,5 @@
+import { IonIcon } from '@ionic/angular';
+import { iconoCategoria } from '../shared/iconos';
 import { AparecerDirective, CuentaDirective, confeti, latirCorazon, movimientoReducido, sacudir, volarA } from '../shared/animar/animar';
 import { ChangeDetectorRef, Component, ElementRef, HostListener, OnInit, ViewChild, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -78,7 +80,7 @@ function parecido(a: string, b: string): number {
   standalone: true,
   // El diseño de la tienda (tarjetas, banner, carrito) está en global.scss bajo app-tienda.tv2
   host: { class: 'tv2' },
-  imports: [EsqueletoComponent, FormsModule, AparecerDirective, CuentaDirective],
+  imports: [EsqueletoComponent, FormsModule, AparecerDirective, CuentaDirective, IonIcon],
   styles: [
     `
       /* Ionic deja el body fijo y le pone contain: layout a la página (lo "fijo" queda pegado a ella):
@@ -115,6 +117,9 @@ function parecido(a: string, b: string): number {
       @keyframes brillo-cupon { 0% { background: color-mix(in srgb, var(--efectivo) 30%, transparent); } 100% { background: transparent; } }
       @keyframes baja-precio { from { transform: translateY(-10px); opacity: 0; } }
       .ico-cupon { vertical-align: -3px; }
+      .t-ico { vertical-align: -2px; margin-right: 5px; font-size: 1.05em; }
+      .t-ico-oro { color: #f59e0b; }
+      .t-ico-fuego { color: #f97316; }
       @media (prefers-reduced-motion: reduce) { .etq-agot, .fc-desc.recien, .fc-desc.recien .num { animation: none; } }
       .etq-agot { position: absolute; top: 8px; left: 8px; padding: 3px 8px; border-radius: 6px; background: var(--danger); color: #fff; font-size: 11.5px; font-weight: 700; }
       .info { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px 12px; flex: 1; }
@@ -246,7 +251,7 @@ function parecido(a: string, b: string): number {
         @if (!q().trim() && !categoria() && !soloFavs()) {
           <section class="t-hero">
             <div class="t-hero-txt">
-              <span class="t-pill">{{ masVendidos().length ? '🔥 Lo más pedido' : 'Nuevo' }}</span>
+              <span class="t-pill">@if (masVendidos().length) { <ion-icon class="t-ico" name="flame" aria-hidden="true"></ion-icon>Lo más pedido } @else { Nuevo }</span>
               <h2>Lo que buscas, en la puerta de tu casa</h2>
               <p>Pide en minutos y paga al recibir o en línea.</p>
               <button type="button" (click)="irAProductos()">Ver productos →</button>
@@ -257,7 +262,7 @@ function parecido(a: string, b: string): number {
         @if (ultimo(); as u) {
           @if (!q().trim() && !categoria() && !soloFavs() && !lineas().length) {
             <button type="button" class="t-repetir" (click)="repetir(u)">
-              <span class="t-repetir-ico" aria-hidden="true">🔁</span>
+              <span class="t-repetir-ico" aria-hidden="true"><ion-icon name="repeat"></ion-icon></span>
               <span><strong>Repetir mi último pedido</strong><small>{{ resumenUltimo(u) }}</small></span>
               <span class="t-flecha" aria-hidden="true">›</span>
             </button>
@@ -267,20 +272,20 @@ function parecido(a: string, b: string): number {
           <input type="search" [ngModel]="q()" (ngModelChange)="q.set($event); limite.set(40)" placeholder="Buscar producto" aria-label="Buscar producto" />
           <button type="button" class="solo" [class.on]="soloDisp()" [attr.aria-pressed]="soloDisp()" (click)="soloDisp.set(!soloDisp())">Disponibles</button>
           @if (favs().size) {
-            <button type="button" class="solo" [class.on]="soloFavs()" [attr.aria-pressed]="soloFavs()" (click)="soloFavs.set(!soloFavs())">♥ Favoritos</button>
+            <button type="button" class="solo" [class.on]="soloFavs()" [attr.aria-pressed]="soloFavs()" (click)="soloFavs.set(!soloFavs())"><ion-icon class="t-ico" name="heart" aria-hidden="true"></ion-icon>Favoritos</button>
           }
           @if (categorias().length > 1) {
             <div class="cats t-cats" role="group" aria-label="Categorías">
-              <button type="button" [class.on]="!categoria()" [attr.aria-pressed]="!categoria()" (click)="elegirCategoria(null)"><span class="t-cat-ico" aria-hidden="true">🛍️</span><span class="t-cat-nom">Todo</span></button>
+              <button type="button" [class.on]="!categoria()" [attr.aria-pressed]="!categoria()" (click)="elegirCategoria(null)"><span class="t-cat-ico" aria-hidden="true"><ion-icon name="bag-handle"></ion-icon></span><span class="t-cat-nom">Todo</span></button>
               @for (c of categorias(); track c.nombre) {
-                <button type="button" [class.on]="categoria() === c.nombre" [attr.aria-pressed]="categoria() === c.nombre" (click)="elegirCategoria(c.nombre)"><span class="t-cat-ico" aria-hidden="true">{{ icono(c.nombre) }}</span><span class="t-cat-nom">{{ c.nombre }}</span></button>
+                <button type="button" [class.on]="categoria() === c.nombre" [attr.aria-pressed]="categoria() === c.nombre" (click)="elegirCategoria(c.nombre)"><span class="t-cat-ico" aria-hidden="true"><ion-icon [name]="icono(c.nombre)"></ion-icon></span><span class="t-cat-nom">{{ c.nombre }}</span></button>
               }
             </div>
           }
         </div>
         @if (!q().trim() && !categoria() && !soloFavs() && destacados().length) {
           <section class="tienda-top t-dest" aria-labelledby="t-dest">
-            <h2 id="t-dest">⭐ Recomendados por {{ primerNombre(tienda.vendedora!.nombre) }}</h2>
+            <h2 id="t-dest"><ion-icon class="t-ico t-ico-oro" name="star" aria-hidden="true"></ion-icon>Recomendados por {{ primerNombre(tienda.vendedora!.nombre) }}</h2>
             <div class="tienda-carrusel">
               @for (p of destacados(); track p.id) {
                 <button type="button" class="tienda-mini" (click)="abrir(p)">
@@ -293,7 +298,7 @@ function parecido(a: string, b: string): number {
         }
         @if (!q().trim() && !categoria() && masVendidos().length >= 3) {
           <section class="tienda-top" aria-labelledby="t-top">
-            <h2 id="t-top">🔥 Lo más vendido</h2>
+            <h2 id="t-top"><ion-icon class="t-ico t-ico-fuego" name="flame" aria-hidden="true"></ion-icon>Lo más vendido</h2>
             <div class="tienda-carrusel">
               @for (p of masVendidos(); track p.id) {
                 <button type="button" class="tienda-mini" (click)="abrir(p)">
@@ -313,7 +318,7 @@ function parecido(a: string, b: string): number {
                 @if (urlMini(p.imagen_url); as u) { <img [src]="u" alt="" loading="lazy" decoding="async" /> } @else { <span class="ini">{{ p.nombre.charAt(0) }}</span> }
                 @if (p.agotado) { <span class="etq-agot">Agotado</span> } @else if (p.top && p.top <= 3) { <span class="t-best">Más vendido</span> } @else if (p.nuevo) { <span class="t-best t-nuevo">Nuevo</span> }
               </button>
-              <button type="button" class="t-fav" [class.on]="favs().has(p.id)" (click)="alternarFav(p, $event)" [attr.aria-label]="(favs().has(p.id) ? 'Quitar de' : 'Agregar a') + ' favoritos'" [attr.aria-pressed]="favs().has(p.id)">{{ favs().has(p.id) ? '♥' : '♡' }}</button>
+              <button type="button" class="t-fav" [class.on]="favs().has(p.id)" (click)="alternarFav(p, $event)" [attr.aria-label]="(favs().has(p.id) ? 'Quitar de' : 'Agregar a') + ' favoritos'" [attr.aria-pressed]="favs().has(p.id)"><ion-icon [name]="favs().has(p.id) ? 'heart' : 'heart-outline'" aria-hidden="true"></ion-icon></button>
               <div class="info">
                 <h2 (click)="abrir(p)">{{ p.nombre }}</h2>
                 @if (p.resenas) { <span class="t-rating" [attr.aria-label]="p.rating + ' de 5 estrellas, ' + p.resenas + ' reseñas'"><b>★</b> {{ p.rating }} <small>({{ p.resenas }})</small></span> }
@@ -341,7 +346,7 @@ function parecido(a: string, b: string): number {
     @if (avisoAgregado()) { <p class="t-toast" role="status">{{ avisoAgregado() }}</p> }
     @if (lineas().length && !verCarrito() && !sel() && !hecho()) {
       <button class="carrito" (click)="abrirCarrito()">
-        <span>🛍️ Ver mi pedido · {{ unidades() }} {{ unidades() === 1 ? 'producto' : 'productos' }}</span><strong>{{ pesos(subtotal()) }} →</strong>
+        <span><ion-icon class="t-ico" name="bag-handle-outline" aria-hidden="true"></ion-icon>Ver mi pedido · {{ unidades() }} {{ unidades() === 1 ? 'producto' : 'productos' }}</span><strong>{{ pesos(subtotal()) }} →</strong>
       </button>
     }
 
@@ -353,7 +358,7 @@ function parecido(a: string, b: string): number {
           </button>
           <span class="t-barra-tit">Detalle</span>
           <span class="t-barra-der">
-            <button type="button" class="t-circ" [class.fav-on]="favs().has(p.id)" (click)="alternarFav(p, $event)" [attr.aria-label]="(favs().has(p.id) ? 'Quitar de' : 'Agregar a') + ' favoritos'" [attr.aria-pressed]="favs().has(p.id)">{{ favs().has(p.id) ? '♥' : '♡' }}</button>
+            <button type="button" class="t-circ" [class.fav-on]="favs().has(p.id)" (click)="alternarFav(p, $event)" [attr.aria-label]="(favs().has(p.id) ? 'Quitar de' : 'Agregar a') + ' favoritos'" [attr.aria-pressed]="favs().has(p.id)"><ion-icon [name]="favs().has(p.id) ? 'heart' : 'heart-outline'" aria-hidden="true"></ion-icon></button>
             <button type="button" class="t-circ" (click)="compartirProducto(p)" aria-label="Compartir">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>
             </button>
@@ -479,7 +484,7 @@ function parecido(a: string, b: string): number {
                     <span>{{ l.cantidad }}</span>
                     <button type="button" (click)="cambiar($index, 1)" [disabled]="l.cantidad >= l.max" aria-label="Más">+</button>
                   </span>
-                  <button class="quitar" (click)="quitar($index)" [attr.aria-label]="'Quitar ' + l.nombre">🗑 Quitar</button>
+                  <button class="quitar" (click)="quitar($index)" [attr.aria-label]="'Quitar ' + l.nombre"><ion-icon class="t-ico" name="trash-outline" aria-hidden="true"></ion-icon>Quitar</button>
                 </span>
               </li>
             } @empty {
@@ -920,7 +925,7 @@ export class TiendaPage implements OnInit {
     this.guardarFavsLocal(n);
     // Con cuenta: también queda en la cuenta (así los ve en cualquier celular)
     if (this.cli.perfil()) void this.cli.favorito(p.id, on);
-    else if (on) this.avisar('♥ Guardado en este celular · ingresa a tu cuenta para tenerlos en cualquier lado');
+    else if (on) this.avisar('Guardado en este celular · ingresa a tu cuenta para tenerlos en cualquier lado');
   }
   private guardarFavsLocal(n: Set<number>): void {
     try {
@@ -1208,7 +1213,7 @@ export class TiendaPage implements OnInit {
     if (!pid || this.sel()?.id === pid) return;
     const directo = t.productos.find((x) => x.id === pid);
     if (directo) void this.abrir(directo);
-    else this.avisoProducto.set('Ese producto ya no está disponible. Mira los demás 👇');
+    else this.avisoProducto.set('Ese producto ya no está disponible. Mira los demás.');
   }
 
   /** Al volver a la tienda desde Mi cuenta (pantalla reutilizada) */
@@ -1330,15 +1335,9 @@ export class TiendaPage implements OnInit {
     this.verCarrito.set(true);
   }
 
-  /** Ícono de cada categoría (por palabras, así aguanta nombres parecidos) */
+  /** Ícono (ionicons) de cada categoría */
   icono(c: string): string {
-    const n = normal(c);
-    const mapa: [RegExp, string][] = [
-      [/jug|beb|nin/, '🧸'], [/organiz/, '🗂️'], [/cocin/, '🍳'], [/herram/, '🔧'], [/bellez|cuidad/, '💄'], [/tecno|celul|electr/, '📱'],
-      [/limpi/, '🧽'], [/hogar|casa/, '🏠'], [/carro|moto/, '🏍️'], [/ilumin|solar|luz|lampar/, '💡'], [/deport|camp/, '⛺'], [/bols|malet/, '🎒'],
-      [/mascot/, '🐾'], [/ropa|moda/, '👕'], [/salud/, '💊'], [/oficin|escol/, '✏️'],
-    ];
-    return mapa.find(([r]) => r.test(n))?.[1] ?? '🛍️';
+    return iconoCategoria(normal(c));
   }
 
   /** Foto que se ve en el detalle */
@@ -1388,7 +1387,7 @@ export class TiendaPage implements OnInit {
       if (!p || p.agotado || !colorOk || !tallaOk) { faltan++; continue; }
       this.agregar(p, i.cantidad, i.color, i.talla);
     }
-    if (!this.lineas().length) return this.avisar('Esos productos ya no están disponibles 😕');
+    if (!this.lineas().length) return this.avisar('Esos productos ya no están disponibles.');
     this.abrirCarrito();
     if (faltan) this.avisar(faltan === 1 ? 'Un producto ya no está disponible' : `${faltan} productos ya no están disponibles`);
   }

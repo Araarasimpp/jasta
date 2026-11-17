@@ -179,7 +179,7 @@ function normal(s: string): string {
             </div>
             @if (riesgo(); as r) {
               <div class="riesgo" [class.alto]="r.nivel === 'alto'" role="alert">
-                <strong>{{ r.nivel === 'alto' ? '⚠️ Ojo con este cliente' : '⚠️ Este cliente ha tenido problemas' }}</strong>
+                <strong><ion-icon class="ico" name="warning" aria-hidden="true"></ion-icon>{{ r.nivel === 'alto' ? 'Ojo con este cliente' : 'Este cliente ha tenido problemas' }}</strong>
                 @if (r.marca) { <span>"{{ r.marca.nota }}"{{ r.marca.autor ? ' — ' + r.marca.autor : '' }}</span> }
                 <span>{{ resumenRiesgo(r) }}</span>
               </div>
@@ -622,7 +622,7 @@ export class NuevoPedidoPage implements OnInit {
     const hace = Math.max(1, Math.round((Date.now() - new Date(p.created_at).getTime()) / 60000));
     const cuando = hace < 60 ? `hace ${hace} min` : `hace ${Math.round(hace / 60)} h`;
     return confirm(
-      `⚠️ ${p.mismos ? 'Este cliente ya tiene un pedido con estos mismos productos' : 'Este cliente ya hizo un pedido'} ${cuando}:\n\n`
+      `${p.mismos ? 'Este cliente ya tiene un pedido con estos mismos productos' : 'Este cliente ya hizo un pedido'} ${cuando}:\n\n`
       + `#${p.id} (${p.canal === 'local' ? 'venta en el local' : ESTADO[p.estado] ?? p.estado}${p.vendedora ? ', de ' + p.vendedora : ''})\n${p.productos ?? ''}`
       + (lista.length > 1 ? `\n\nY ${lista.length - 1} más en las últimas 24 horas.` : '')
       + `\n\n¿Crear este pedido de todas formas? Toca Cancelar si es el mismo pedido repetido.`

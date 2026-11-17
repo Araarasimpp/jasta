@@ -1,3 +1,4 @@
+import { IonIcon } from '@ionic/angular';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -26,7 +27,7 @@ const aFecha = (s: string) => new Date(Number(s.slice(0, 4)), Number(s.slice(5, 
 @Component({
   selector: 'app-calendario',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, IonIcon],
   styleUrls: ['./calendario.page.scss'],
   templateUrl: './calendario.page.html',
 })

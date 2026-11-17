@@ -4,6 +4,7 @@ import { IonApp, IonRouterOutlet } from '@ionic/angular';
 import { VisorComponent } from './shared/visor/visor.component';
 import { NuevaVersionComponent } from './shared/version/nueva-version.component';
 import { activarArrastreDeHojas } from './shared/arrastrar-hojas';
+import { registrarIconos } from './shared/iconos';
 
 @Component({
   selector: 'app-root',
@@ -11,6 +12,10 @@ import { activarArrastreDeHojas } from './shared/arrastrar-hojas';
   imports: [IonApp, IonRouterOutlet, VisorComponent, NuevaVersionComponent],
 })
 export class AppComponent implements OnInit, OnDestroy {
+  constructor() {
+    registrarIconos();
+  }
+
   private timer?: ReturnType<typeof setTimeout>;
   private quitarArrastre?: () => void;
 

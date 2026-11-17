@@ -128,7 +128,7 @@ const CONCEPTOS = {
           } @else if (k.entregado_at) {
             <p class="recoge">{{ k.entregado_por }} entregó <strong>{{ pesos(k.recoger) }}</strong> a las {{ hora(k.entregado_at) }}. Falta que el admin confirme que lo recibió.</p>
           } @else {
-            <p class="recoge">@if (k.contado < k.base) { ⚠️ Lo contado no alcanza para la base de {{ pesos(k.base) }}: deja todo en la caja y avísale al admin. } @else { Deja <strong>{{ pesos(k.base) }}</strong> de base en la caja y recoge <strong>{{ pesos(k.recoger) }}</strong>. }</p>
+            <p class="recoge">@if (k.contado < k.base) { <ion-icon class="ico" name="warning" aria-hidden="true"></ion-icon>Lo contado no alcanza para la base de {{ pesos(k.base) }}: deja todo en la caja y avísale al admin. } @else { Deja <strong>{{ pesos(k.base) }}</strong> de base en la caja y recoge <strong>{{ pesos(k.recoger) }}</strong>. }</p>
           }
         }
 
@@ -186,7 +186,7 @@ const CONCEPTOS = {
             <p class="resultado" [class]="'resultado ' + estadoDe(diferencia())" role="status">
               {{ diferencia() === 0 ? 'Cuadra exacto ✓' : diferencia() < 0 ? 'Faltan ' + pesos(-diferencia()) : 'Sobran ' + pesos(diferencia()) }}
             </p>
-            <p class="recoge">@if ((contado() ?? 0) < c.base) { ⚠️ No alcanza para la base de {{ pesos(c.base) }}. } @else { Deja <strong>{{ pesos(c.base) }}</strong> de base y recoge <strong>{{ pesos((contado() ?? 0) - c.base) }}</strong>. }</p>
+            <p class="recoge">@if ((contado() ?? 0) < c.base) { <ion-icon class="ico" name="warning" aria-hidden="true"></ion-icon>No alcanza para la base de {{ pesos(c.base) }}. } @else { Deja <strong>{{ pesos(c.base) }}</strong> de base y recoge <strong>{{ pesos((contado() ?? 0) - c.base) }}</strong>. }</p>
           }
           <div class="campo">
             <label for="cj-nota">Nota {{ diferencia() !== 0 && contado() !== null ? '(cuéntale al admin qué pasó)' : '(opcional)' }}</label>

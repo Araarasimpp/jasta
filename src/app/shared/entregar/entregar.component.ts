@@ -1,3 +1,4 @@
+import { IonIcon } from '@ionic/angular';
 import { Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PedidosService } from '../../core/services/pedidos.service';
@@ -11,7 +12,7 @@ import { PesosDirective } from '../../shared/pesos/pesos.directive';
 @Component({
   selector: 'app-entregar',
   standalone: true,
-  imports: [PesosDirective, FormsModule, ComprobantesInputComponent],
+  imports: [PesosDirective, FormsModule, ComprobantesInputComponent, IonIcon],
   styles: [
     `
       .tipos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -35,10 +36,10 @@ import { PesosDirective } from '../../shared/pesos/pesos.directive';
       <div class="hoja-body">
         <div class="total"><span>{{ pedido.cliente_nombre }}</span><strong class="num">{{ pesos(pedido.total) }}</strong></div>
         @if (pagadoLinea()) {
-          <p class="ya-pago">💳 <strong>Ya pagó en línea</strong> {{ pesos(pedido.pagado_linea!) }}. <strong>No le cobres nada</strong>: solo entrégalo y confirma.</p>
+          <p class="ya-pago"><ion-icon class="ico" name="card" aria-hidden="true"></ion-icon><strong>Ya pagó en línea</strong> {{ pesos(pedido.pagado_linea!) }}. <strong>No le cobres nada</strong>: solo entrégalo y confirma.</p>
         } @else {
         @if (pedido.pagado_linea) {
-          <p class="ya-pago">💳 Ya pagó {{ pesos(pedido.pagado_linea) }} en línea. Cóbrale solo la diferencia: <strong>{{ pesos(pedido.total - pedido.pagado_linea) }}</strong>.</p>
+          <p class="ya-pago"><ion-icon class="ico" name="card" aria-hidden="true"></ion-icon>Ya pagó {{ pesos(pedido.pagado_linea) }} en línea. Cóbrale solo la diferencia: <strong>{{ pesos(pedido.total - pedido.pagado_linea) }}</strong>.</p>
         }
         <div class="campo">
           <span class="etq">¿Cómo pagó?</span>

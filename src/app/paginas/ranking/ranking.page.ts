@@ -84,7 +84,10 @@ function ultimosMeses(): { id: string; label: string }[] {
       .escalon[data-puesto='3'] { animation-delay: 260ms; }
       @keyframes subir { from { opacity: 0; transform: translateY(24px) scale(0.92); } }
       @media (prefers-reduced-motion: reduce) { .escalon { animation: none; } }
-      .medalla { font-size: 30px; line-height: 1; }
+      .medalla { font-size: 30px; line-height: 1; display: inline-grid; }
+      /* Medallas de oro, plata y bronce (íconos, no emojis) */
+      [data-m='1'] { color: #e3b23c; } [data-m='2'] { color: #9aa3b2; } [data-m='3'] { color: #c27a3e; }
+      .medalla-mini { font-size: 20px; vertical-align: -4px; }
       .escalon[data-puesto='1'] .medalla { font-size: 40px; position: relative; animation: corona 2.6s ease-in-out .8s infinite; }
       /* El primer puesto: la medalla flota y brilla */
       .escalon[data-puesto='1'] .medalla::after { content: ''; position: absolute; left: 50%; top: -20px; width: 24px; height: 18px; background: #facc15;
@@ -172,7 +175,7 @@ function ultimosMeses(): { id: string; label: string }[] {
           <section class="podio" aria-label="Podio">
             @for (p of podioVisual(); track p.f.usuario_id) {
               <div class="escalon" [attr.data-puesto]="p.puesto" [class.yo]="esYo(p.f)">
-                <span class="medalla" aria-hidden="true">{{ medallas[p.puesto - 1] }}</span>
+                <span class="medalla" [attr.data-m]="p.puesto" aria-hidden="true"><ion-icon name="medal"></ion-icon></span>
                 <app-avatar [nombre]="p.f.nombre" [foto]="p.f.avatar_url" [tam]="p.puesto === 1 ? 64 : 52"></app-avatar>
                 <strong class="podio-nombre">{{ p.f.nombre }}@if (esYo(p.f)) {<span> (tú)</span>}</strong>
                 <span class="podio-valor num">{{ valor(p.f) }}</span>
@@ -184,7 +187,7 @@ function ultimosMeses(): { id: string; label: string }[] {
         } @else {
           <div class="vacio">
             <p class="vacio-titulo">Todavía no hay {{ tipo() === 'vendedora' ? 'ventas entregadas' : 'entregas' }} {{ cuando() }}</p>
-            <p>El primero en {{ tipo() === 'vendedora' ? 'vender' : 'entregar' }} se lleva el oro 🥇</p>
+            <p>El primero en {{ tipo() === 'vendedora' ? 'vender' : 'entregar' }} se lleva el oro.</p>
           </div>
         }
 
@@ -192,7 +195,7 @@ function ultimosMeses(): { id: string; label: string }[] {
           <ol class="lista">
             @for (f of lista(); track f.usuario_id; let i = $index) {
               <li class="fila" [class.yo]="esYo(f)" aparecer [aparecerI]="i">
-                <span class="puesto num">{{ i < podio().length ? medallas[i] : i + 1 }}</span>
+                <span class="puesto num">@if (i < podio().length) { <ion-icon class="medalla-mini" [attr.data-m]="i + 1" name="medal" aria-hidden="true"></ion-icon> } @else { {{ i + 1 }} }</span>
                 <app-avatar [nombre]="f.nombre" [foto]="f.avatar_url" [tam]="36"></app-avatar>
                 <div class="info">
                   <div class="linea">
@@ -245,7 +248,6 @@ export class RankingPage implements OnInit {
   private sb = inject(SupabaseService);
   private toast = inject(ToastService);
 
-  readonly medallas = ['🥇', '🥈', '🥉'];
   meses = ultimosMeses();
   tipo = signal<Tipo>(this.sb.tiene('mensajero') && !this.sb.tiene('admin', 'vendedora') ? 'mensajero' : 'vendedora');
   periodo = signal<Periodo>('mes');

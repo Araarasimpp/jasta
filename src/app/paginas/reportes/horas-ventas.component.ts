@@ -1,3 +1,4 @@
+import { IonIcon } from '@ionic/angular';
 import { Component, Input, OnChanges, computed, inject, signal } from '@angular/core';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
@@ -15,7 +16,7 @@ const HORAS = Array.from({ length: 17 }, (_, i) => i + 6); // 6 a. m. a 10 p. m.
 @Component({
   selector: 'app-horas-ventas',
   standalone: true,
-  imports: [EsqueletoComponent],
+  imports: [EsqueletoComponent, IonIcon],
   styles: [
     `
       :host { display: block; }
@@ -52,7 +53,7 @@ const HORAS = Array.from({ length: 17 }, (_, i) => i + 6); // 6 a. m. a 10 p. m.
         <div class="dato"><small>El pico</small><strong>{{ pico().dia }} {{ hora12(pico().hora) }}</strong><span>{{ numero(pico().pedidos) }} pedidos en esa hora</span></div>
         <div class="dato"><small>Día más flojo</small><strong>{{ peorDia().nombre }}</strong><span>{{ peorDia().pct }}% del total</span></div>
       </div>
-      <p class="tip">💡 <span>La gente compra más entre <b>{{ franja(mejorHora().hora) }}</b>, sobre todo los <b>{{ mejorDia().nombre.toLowerCase() }}</b>.
+      <p class="tip"><ion-icon class="ico" name="bulb" aria-hidden="true"></ion-icon><span>La gente compra más entre <b>{{ franja(mejorHora().hora) }}</b>, sobre todo los <b>{{ mejorDia().nombre.toLowerCase() }}</b>.
         Publica estados, historias y promociones <b>1 hora antes</b> (hacia las {{ hora12(mejorHora().hora - 1) }}) para llegar cuando más compran.
         @if (peorDia().pct < 10) { Los <b>{{ peorDia().nombre.toLowerCase() }}</b> se vende poco: buen día para un cupón o una promoción que los mueva. }</span></p>
 

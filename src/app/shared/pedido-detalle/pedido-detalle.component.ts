@@ -237,10 +237,10 @@ import { mensajeGuia } from '../envio-nacional/envio-nacional';
                 <dt>Entregado</dt><dd>{{ fecha(p.entregado_at) }}</dd>
               }
               @if (!p.pagado_linea && p.cobro_estado) {
-                <dt>Cobro por link</dt><dd>{{ p.cobro_estado === 'rechazado' ? '⚠️ El pago fue rechazado: puede intentarlo otra vez con el mismo link o mándale uno nuevo' : '⏳ Esperando que el cliente pague' }}</dd>
+                <dt>Cobro por link</dt><dd><ion-icon class="ico" [name]="p.cobro_estado === 'rechazado' ? 'warning' : 'hourglass-outline'" aria-hidden="true"></ion-icon>{{ p.cobro_estado === 'rechazado' ? 'El pago fue rechazado: puede intentarlo otra vez con el mismo link o mándale uno nuevo' : 'Esperando que el cliente pague' }}</dd>
               }
               @if (p.pagado_linea) {
-                <dt>Pago en línea</dt><dd>💳 {{ pesos(p.pagado_linea) }} con Wompi desde el catálogo{{ +p.pagado_linea >= +p.total ? ': no se cobra al entregar' : '' }}</dd>
+                <dt>Pago en línea</dt><dd><ion-icon class="ico" name="card" aria-hidden="true"></ion-icon>{{ pesos(p.pagado_linea) }} con Wompi desde el catálogo{{ +p.pagado_linea >= +p.total ? ': no se cobra al entregar' : '' }}</dd>
               }
               @if (p.tipo_recaudo && !p.pagado_linea) {
                 <dt>Pago</dt>

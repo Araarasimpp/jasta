@@ -1,3 +1,4 @@
+import { IonIcon } from '@ionic/angular';
 import { Component, EventEmitter, Output, computed, inject, signal } from '@angular/core';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { NotificacionesService } from '../../core/services/notificaciones.service';
@@ -11,6 +12,7 @@ import { NotificacionesService } from '../../core/services/notificaciones.servic
 @Component({
   selector: 'app-requisitos',
   standalone: true,
+  imports: [IonIcon],
   styles: [
     `
       :host { position: fixed; inset: 0; z-index: 900; display: block; overflow-y: auto; background: var(--bg); color: var(--text); }
@@ -55,7 +57,7 @@ import { NotificacionesService } from '../../core/services/notificaciones.servic
             }
             <ol>
               <li>Abre <strong>{{ origen }}</strong> en <strong>Safari</strong>.</li>
-              <li>Toca el botón <strong>Compartir</strong> (el cuadrito con la flecha hacia arriba ⬆️), abajo en el centro.</li>
+              <li>Toca el botón <strong>Compartir</strong> (el cuadrito con la flecha hacia arriba <ion-icon name="share-outline" aria-hidden="true" style="vertical-align: -2px"></ion-icon>), abajo en el centro.</li>
               <li>Baja y toca <strong>"Agregar a pantalla de inicio"</strong> y luego <strong>Agregar</strong>.</li>
               <li>Cierra Safari y abre <strong>Jasta</strong> desde el ícono nuevo en tu pantalla de inicio.</li>
             </ol>

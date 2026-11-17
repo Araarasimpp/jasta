@@ -209,7 +209,7 @@ export class CuponesPage implements OnInit {
 
   async copiar(c: Cupon): Promise<void> {
     const desc = c.tipo === 'porcentaje' ? `${c.valor}% de descuento` : `${pesos(c.valor)} de descuento`;
-    const txt = `🎟️ Usa el cupón ${c.codigo} y obtén ${desc} en tu compra${+c.minimo ? ` desde ${pesos(c.minimo)}` : ''} en nuestro catálogo: ${location.origin}/tienda`
+    const txt = `Usa el cupón ${c.codigo} y obtén ${desc} en tu compra${+c.minimo ? ` desde ${pesos(c.minimo)}` : ''} en nuestro catálogo: ${location.origin}/tienda`
       + (c.vence ? ` (válido hasta el ${this.fecha(c.vence)})` : '');
     try {
       await navigator.clipboard.writeText(txt);

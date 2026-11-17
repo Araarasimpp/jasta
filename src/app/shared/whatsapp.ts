@@ -38,6 +38,6 @@ export function mensajeSeguimiento(nombre: string, productos: string[]): string 
     `Hola ${nombre.trim()} te hablamos de Jasta Technology, quisiera preguntarte ¿cómo te fue con tu pedido de ${pedido}?\n\n\n` +
     'Te invitamos a que nos sigas en nuestro canal de WhatsApp, tenemos muchos productos novedosos, hogar, herramientas, juguetería gadgets y mucho más\n\n' +
     `${CANAL_WHATSAPP}\n\n` +
-    'Síguenos, mándanos captura y participa en nuestras rifas mensuales 🥳'
+    'Síguenos, mándanos captura y participa en nuestras rifas mensuales.'
   );
 }

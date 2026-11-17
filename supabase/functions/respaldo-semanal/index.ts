@@ -154,7 +154,7 @@ Deno.serve(async (req) => {
     for (const a of admins) {
       const form = new FormData();
       form.append('chat_id', String(a.telegram_id));
-      form.append('caption', `📦 Respaldo de la semana: ${desde} a ${hasta}\nPedidos, vendido, cuadres, gastos, comisiones, devoluciones e inventario.`);
+      form.append('caption', `Respaldo de la semana: ${desde} a ${hasta}\nPedidos, vendido, cuadres, gastos, comisiones, devoluciones e inventario.`);
       form.append('document', new Blob([archivo], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), nombre);
       const res = await fetch(`https://api.telegram.org/bot${tg.token}/sendDocument`, { method: 'POST', body: form });
       if (res.ok) enviados++;

@@ -144,7 +144,7 @@ export class RecontactarPage implements OnInit {
     const quien = yo ? `Soy ${yo}, de Jasta Technology.` : 'Te escribimos de Jasta Technology.';
     const pregunta = producto ? ` ¿Cómo te ha ido con ${producto.toLowerCase()}?` : '';
     return enlaceWhatsapp(c.telefono,
-      `Hola ${nombre} 👋 ${quien}${pregunta} Te comparto el catálogo con todo lo nuevo: ahí ves fotos y precios, y puedes pedir directo 👉 ${enlace}`);
+      `Hola ${nombre}. ${quien}${pregunta} Te comparto el catálogo con todo lo nuevo: ahí ves fotos y precios, y puedes pedir directo: ${enlace}`);
   }
 
   contactado(c: ClienteDormido): void {

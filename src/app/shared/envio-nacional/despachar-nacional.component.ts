@@ -1,3 +1,4 @@
+import { IonIcon } from '@ionic/angular';
 import { Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SupabaseService } from '../../core/services/supabase.service';
@@ -14,7 +15,7 @@ import { TRANSPORTADORAS } from './envio-nacional';
 @Component({
   selector: 'app-despachar-nacional',
   standalone: true,
-  imports: [FormsModule, ComprobantesInputComponent, PesosDirective],
+  imports: [FormsModule, ComprobantesInputComponent, PesosDirective, IonIcon],
   styles: [
     `
       .trans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
@@ -45,7 +46,7 @@ import { TRANSPORTADORAS } from './envio-nacional';
           <div class="campo"><label for="nac-cost">Lo que pagaste del envío</label><input id="nac-cost" pesos [(ngModel)]="costo" placeholder="$ 0" /></div>
         </div>
         @if (pedido.pagado_linea) {
-          <p class="pagado">💳 Ya pagó {{ pesos(pedido.pagado_linea) }} en línea con Wompi: no hace falta comprobante.</p>
+          <p class="pagado"><ion-icon class="ico" name="card" aria-hidden="true"></ion-icon>Ya pagó {{ pesos(pedido.pagado_linea) }} en línea con Wompi: no hace falta comprobante.</p>
         } @else {
           <app-comprobantes-input titulo="Comprobante del pago del cliente" pista="El pantallazo de la transferencia que te mandó antes de enviar."
             [rutas]="soportes()" (cambio)="soportes.set($event); error.set('')"></app-comprobantes-input>

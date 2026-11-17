@@ -1,3 +1,4 @@
+import { IonIcon } from '@ionic/angular';
 import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 
 /**
@@ -10,6 +11,7 @@ import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 @Component({
   selector: 'app-nueva-version',
   standalone: true,
+  imports: [IonIcon],
   styles: [
     `
       .aviso { position: fixed; top: calc(10px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); z-index: 200;
@@ -25,7 +27,7 @@ import { Component, OnDestroy, OnInit, signal } from '@angular/core';
   template: `
     @if (hay()) {
       <div class="aviso" role="status">
-        <span>✨ Nueva versión de Jasta</span>
+        <span><ion-icon class="ico" name="sparkles" aria-hidden="true"></ion-icon>Nueva versión de Jasta</span>
         <button class="act" (click)="actualizar()">Actualizar</button>
         <button class="luego" (click)="luego()" aria-label="Recordar más tarde">Luego</button>
       </div>

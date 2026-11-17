@@ -98,7 +98,7 @@ export class EnlacesProductosComponent {
 
   async compartir(p: Prod): Promise<void> {
     const url = this.enlace(p);
-    const texto = `Mira este producto: ${p.nombre} · ${pesos(p.precio)} 👇`;
+    const texto = `Mira este producto: ${p.nombre} · ${pesos(p.precio)}`;
     if (navigator.share) {
       try {
         await navigator.share({ title: p.nombre, text: texto, url });

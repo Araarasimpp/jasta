@@ -1,3 +1,4 @@
+import { IonIcon } from '@ionic/angular';
 import { Component, inject } from '@angular/core';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -9,7 +10,7 @@ import { TransferenciasAlertaService } from './transferencias-alerta.service';
 @Component({
   selector: 'app-transferencias-alerta',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, IonIcon],
   styles: [
     `
       :host { display: contents; }
@@ -24,7 +25,7 @@ import { TransferenciasAlertaService } from './transferencias-alerta.service';
   template: `
     @if (alerta.n() && !enPagina()) {
       <a routerLink="/app/transferencias" role="alert">
-        <span>🚨 {{ alerta.n() }} {{ alerta.n() === 1 ? 'transferencia sin revisar' : 'transferencias sin revisar' }} · {{ pesos(alerta.valor()) }}</span>
+        <span><ion-icon class="ico" name="alert-circle" aria-hidden="true"></ion-icon>{{ alerta.n() }} {{ alerta.n() === 1 ? 'transferencia sin revisar' : 'transferencias sin revisar' }} · {{ pesos(alerta.valor()) }}</span>
         <span class="ir">Revisar ahora</span>
       </a>
     }

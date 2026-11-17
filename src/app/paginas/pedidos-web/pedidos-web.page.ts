@@ -1,3 +1,4 @@
+import { IonIcon } from '@ionic/angular';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -38,7 +39,7 @@ export function enlaceTienda(u: { id: number; nombre: string } | null): string {
 @Component({
   selector: 'app-pedidos-web',
   standalone: true,
-  imports: [PesosDirective, EnlacesProductosComponent, MiCatalogoComponent, EsqueletoComponent, FormsModule, RouterLink, EstadisticasTiendaComponent],
+  imports: [PesosDirective, EnlacesProductosComponent, MiCatalogoComponent, EsqueletoComponent, FormsModule, RouterLink, EstadisticasTiendaComponent, IonIcon],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -113,13 +114,13 @@ export function enlaceTienda(u: { id: number; nombre: string } | null): string {
             </div>
             @if (w.riesgo?.nivel) {
               <div class="riesgo" [class.alto]="w.riesgo!.nivel === 'alto'">
-                <strong>⚠️ {{ w.riesgo!.marca ? 'Cliente marcado: "' + w.riesgo!.marca!.nota + '"' : 'Este cliente ha tenido problemas' }}</strong>
+                <strong><ion-icon class="ico" name="warning" aria-hidden="true"></ion-icon>{{ w.riesgo!.marca ? 'Cliente marcado: "' + w.riesgo!.marca!.nota + '"' : 'Este cliente ha tenido problemas' }}</strong>
                 <span>{{ w.riesgo!.rechazados }} cancelados después de salir · {{ w.riesgo!.devoluciones }} devoluciones · {{ w.riesgo!.entregados }} de {{ w.riesgo!.pedidos }} entregados</span>
               </div>
             }
             @if (w.sospecha; as s) {
               <div class="riesgo" [class.alto]="s.nivel === 'alto'">
-                <strong>🔎 {{ s.nivel === 'alto' ? 'Revisa este pedido antes de confirmarlo' : 'Ojo con este pedido' }}</strong>
+                <strong><ion-icon class="ico" name="search-circle" aria-hidden="true"></ion-icon>{{ s.nivel === 'alto' ? 'Revisa este pedido antes de confirmarlo' : 'Ojo con este pedido' }}</strong>
                 @for (r of s.razones; track r) { <span>· {{ r }}</span> }
                 <span class="riesgo-tip">Llama al cliente para confirmar antes de despacharlo.</span>
               </div>
@@ -134,10 +135,10 @@ export function enlaceTienda(u: { id: number; nombre: string } | null): string {
             </ul>
             <div class="tot"><span>Total</span><span class="num">{{ pesos(+w.subtotal + +w.valor_domicilio) }}</span></div>
             @if (w.cupon) {
-              <p class="pagado-linea">🎟️ Usó el cupón <strong>{{ w.cupon }}</strong>: se le descontaron {{ pesos(w.descuento ?? 0) }} (ya están restados en los precios).</p>
+              <p class="pagado-linea"><ion-icon class="ico" name="ticket" aria-hidden="true"></ion-icon>Usó el cupón <strong>{{ w.cupon }}</strong>: se le descontaron {{ pesos(w.descuento ?? 0) }} (ya están restados en los precios).</p>
             }
             @if (w.pago_estado === 'aprobado') {
-              <p class="pagado-linea">💳 <strong>Ya pagó en línea</strong>{{ w.pago_metodo ? ' con ' + metodoPago(w.pago_metodo) : '' }} (Wompi). Al entregar no se le cobra nada.</p>
+              <p class="pagado-linea"><ion-icon class="ico" name="card" aria-hidden="true"></ion-icon><strong>Ya pagó en línea</strong>{{ w.pago_metodo ? ' con ' + metodoPago(w.pago_metodo) : '' }} (Wompi). Al entregar no se le cobra nada.</p>
             }
 
             @if (w.estado === 'por_confirmar') {
@@ -167,7 +168,7 @@ export function enlaceTienda(u: { id: number; nombre: string } | null): string {
           @if (a.tipo === 'confirmar') {
             <p class="ayuda" style="margin: 0">Confírmalo solo después de hablar con el cliente. Al confirmar, el pedido pasa a Pedidos por alistar a tu nombre.</p>
             @if (a.w.pago_estado === 'aprobado') {
-              <p class="pagado-linea">💳 Ya pagó en línea {{ pesos(+a.w.subtotal + +a.w.valor_domicilio) }} con domicilio incluido. El pedido sale marcado como pagado y el domiciliario no le cobra.</p>
+              <p class="pagado-linea"><ion-icon class="ico" name="card" aria-hidden="true"></ion-icon>Ya pagó en línea {{ pesos(+a.w.subtotal + +a.w.valor_domicilio) }} con domicilio incluido. El pedido sale marcado como pagado y el domiciliario no le cobra.</p>
             } @else {
             <div class="campo"><label for="pw-dom">Domicilio{{ a.w.domicilio_por_confirmar ? ' (su barrio no está en la tabla)' : '' }}</label>
               <input pesos id="pw-dom" [(ngModel)]="domicilio" [placeholder]="a.w.domicilio_por_confirmar ? 'Escribe lo que vas a cobrar' : ''" /></div>
@@ -230,7 +231,7 @@ export class PedidosWebPage implements OnInit {
 
   async compartir(): Promise<void> {
     const url = this.enlace();
-    const texto = 'Mira el catálogo y haz tu pedido aquí 👇';
+    const texto = 'Mira el catálogo y haz tu pedido aquí:';
     if (navigator.share) {
       try {
         await navigator.share({ title: 'Catálogo', text: texto, url });

@@ -1,3 +1,4 @@
+import { IonIcon } from '@ionic/angular';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SupabaseService } from '../../core/services/supabase.service';
@@ -45,7 +46,7 @@ interface Devolucion {
 @Component({
   selector: 'app-devoluciones',
   standalone: true,
-  imports: [EsqueletoComponent, PedidoDetalleComponent, RangoComponent, FormsModule],
+  imports: [EsqueletoComponent, PedidoDetalleComponent, RangoComponent, FormsModule, IonIcon],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -120,7 +121,7 @@ interface Devolucion {
                     <p>{{ items(d) }}</p>
                     @if (d.nota) { <p>Problema: "{{ d.nota }}"</p> }
                     @if (d.tecnico) {
-                      <p class="tec-info">🔧 {{ d.tecnico }} · {{ fechaCorta(d.tecnico_fecha) }}{{ d.tecnico_obs ? ' · ' + d.tecnico_obs : '' }}</p>
+                      <p class="tec-info"><ion-icon class="ico" name="construct" aria-hidden="true"></ion-icon>{{ d.tecnico }} · {{ fechaCorta(d.tecnico_fecha) }}{{ d.tecnico_obs ? ' · ' + d.tecnico_obs : '' }}</p>
                     }
                     <button type="button" class="link" (click)="$event.stopPropagation(); abrirTecnico(d)">{{ d.tecnico ? 'Editar técnico' : 'Poner técnico' }}</button>
                   } @else {

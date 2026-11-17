@@ -1,3 +1,4 @@
+import { IonIcon } from '@ionic/angular';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FONDOS, FondoService } from '../../core/services/fondo.service';
@@ -11,7 +12,7 @@ import { ToastService } from '../../shared/toast/toast.service';
 @Component({
   selector: 'app-tema',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, IonIcon],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -84,8 +85,8 @@ import { ToastService } from '../../shared/toast/toast.service';
       <section class="panel seccion">
         <h2>Modo</h2>
         <div class="modos">
-          <button type="button" class="modo" [class.on]="theme.isDark()" (click)="!theme.isDark() && theme.toggle()">🌙 Vidrio oscuro</button>
-          <button type="button" class="modo" [class.on]="!theme.isDark()" (click)="theme.isDark() && theme.toggle()">☀️ Vidrio claro</button>
+          <button type="button" class="modo" [class.on]="theme.isDark()" (click)="!theme.isDark() && theme.toggle()"><ion-icon class="ico" name="moon" aria-hidden="true"></ion-icon>Vidrio oscuro</button>
+          <button type="button" class="modo" [class.on]="!theme.isDark()" (click)="theme.isDark() && theme.toggle()"><ion-icon class="ico" name="sunny" aria-hidden="true"></ion-icon>Vidrio claro</button>
         </div>
       </section>
 

@@ -163,7 +163,7 @@ async function atender(cfg: Config, msg: any): Promise<void> {
     if (qr === 'otro') return;
     const pedido = qr ?? (texto ? pedidoDeTexto(texto) : null);
     if (!pedido) {
-      await responder(token, msg, '⚠️ No pude leer el código del rótulo. Manda otra foto más de cerca y con luz, o escribe el número del pedido.');
+      await responder(token, msg, 'No pude leer el código del rótulo. Manda otra foto más de cerca y con luz, o escribe el número del pedido.');
       return;
     }
     await despachar(token, msg, pedido);

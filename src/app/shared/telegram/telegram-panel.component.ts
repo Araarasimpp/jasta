@@ -154,7 +154,7 @@ interface Estado {
             <span class="num">4</span>
             <div>
               <h3>Despachar</h3>
-              <p>Manda al grupo del mensajero la foto de cada rótulo (con el código QR visible). El bot le asigna el pedido, lo pone <strong>En ruta</strong> en el orden de las fotos y responde con ✅. Si una foto no se lee, escribe el número del pedido. <code>/ruta</code> muestra lo que lleva.</p>
+              <p>Manda al grupo del mensajero la foto de cada rótulo (con el código QR visible). El bot le asigna el pedido, lo pone <strong>En ruta</strong> en el orden de las fotos y responde confirmando cada uno. Si una foto no se lee, escribe el número del pedido. <code>/ruta</code> muestra lo que lleva.</p>
             </div>
           </li>
         </ol>
