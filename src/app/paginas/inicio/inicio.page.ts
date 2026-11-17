@@ -1,3 +1,4 @@
+import { CuentaDirective } from '../../shared/animar/animar';
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { BarController, BarElement, CategoryScale, Chart, LinearScale, Tooltip } from 'chart.js';
@@ -62,7 +63,7 @@ function finMes(): string {
 @Component({
   selector: 'app-inicio',
   standalone: true,
-  imports: [EsqueletoComponent, RouterLink, DonaComponent],
+  imports: [EsqueletoComponent, RouterLink, DonaComponent, CuentaDirective],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -188,7 +189,7 @@ function finMes(): string {
       <div class="kpis a-hoy" role="list" [attr.aria-busy]="cargando()">
         <div class="kpi kpi-principal" role="listitem">
           <span class="kpi-label">Ganancia tienda hoy</span>
-          <span class="kpi-valor num">{{ cargando() ? '…' : pesos(gananciaHoy()) }}</span>
+          <span class="kpi-valor num" [cuenta]="gananciaHoy()" cuentaFormato="pesos"></span>
           <span class="kpi-nota">Precio base − compra</span>
           @if (linea(); as ln) {
             <svg class="spark" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true"><polyline [attr.points]="ln" /></svg>
@@ -196,12 +197,12 @@ function finMes(): string {
         </div>
         <div class="kpi" role="listitem">
           <span class="kpi-label">Ventas de hoy</span>
-          <span class="kpi-valor num">{{ cargando() ? '…' : pesos(r()?.ventas) }}</span>
+          <span class="kpi-valor num" [cuenta]="r()?.ventas" cuentaFormato="pesos"></span>
           <span class="kpi-nota">Entregadas, sin domicilios</span>
         </div>
         <div class="kpi" role="listitem">
           <span class="kpi-label">Pedidos de hoy</span>
-          <span class="kpi-valor num">{{ numero(r()?.pedidos) }}</span>
+          <span class="kpi-valor num" [cuenta]="r()?.pedidos"></span>
           <span class="kpi-nota num">{{ numero(r()?.entregados) }} entregados · {{ numero(r()?.cancelados) }} cancelados</span>
           @if (lineaPedidos(); as ln) {
             <svg class="spark" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true"><polyline [attr.points]="ln" /></svg>
@@ -209,7 +210,7 @@ function finMes(): string {
         </div>
         <a class="kpi" role="listitem" routerLink="/app/cuadres">
           <span class="kpi-label">Por recibir en cuadres</span>
-          <span class="kpi-valor num">{{ pesos(porRecibir()) }}</span>
+          <span class="kpi-valor num" [cuenta]="porRecibir()" cuentaFormato="pesos"></span>
           <span class="kpi-nota">{{ cuadres().length ? mensajerosPorCuadrar() + (mensajerosPorCuadrar() === 1 ? ' mensajero' : ' mensajeros') : 'Todo cuadrado' }}</span>
         </a>
       </div>
@@ -330,7 +331,7 @@ function finMes(): string {
             @for (v of r()?.vendedoras ?? []; track v.nombre) {
               <li>
                 <span class="nom">{{ v.nombre }}</span><span class="val num">{{ pesos(v.ventas) }} · {{ v.pedidos }}</span>
-                <span class="pista"><span [style.width.%]="(v.ventas / maxVend()) * 100"></span></span>
+                <span class="pista"><span class="llenar" [style.width.%]="(v.ventas / maxVend()) * 100"></span></span>
               </li>
             } @empty {
               <li class="suave">Sin ventas entregadas hoy.</li>
@@ -343,7 +344,7 @@ function finMes(): string {
             @for (p of r()?.productos ?? []; track p.nombre) {
               <li>
                 <span class="nom">{{ p.nombre }}</span><span class="val num">{{ p.cantidad }} und · {{ pesos(p.ventas) }}</span>
-                <span class="pista"><span [style.width.%]="(p.cantidad / maxProd()) * 100"></span></span>
+                <span class="pista"><span class="llenar" [style.width.%]="(p.cantidad / maxProd()) * 100"></span></span>
               </li>
             } @empty {
               <li class="suave">Sin ventas entregadas hoy.</li>

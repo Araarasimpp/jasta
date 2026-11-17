@@ -143,7 +143,7 @@ const ESTADOS: Record<string, string> = {
           <section class="panel"><div class="panel-head"><div><h2>Por motivo</h2></div></div>
             <ul class="barras">
               @for (m of d()!.por_motivo; track m.motivo) {
-                <li><span class="nombre">{{ m.motivo }}</span><span class="pista"><span class="relleno" [style.width.%]="(m.n / maxMotivo()) * 100"></span></span><span class="n">{{ m.n }}</span></li>
+                <li><span class="nombre">{{ m.motivo }}</span><span class="pista"><span class="relleno llenar" [style.width.%]="(m.n / maxMotivo()) * 100"></span></span><span class="n">{{ m.n }}</span></li>
               }
             </ul>
           </section>
@@ -151,7 +151,7 @@ const ESTADOS: Record<string, string> = {
             <section class="panel"><div class="panel-head"><div><h2>Por mensajero</h2></div></div>
               <ul class="barras">
                 @for (m of d()!.por_mensajero; track m.nombre) {
-                  <li><span class="nombre">{{ m.nombre }}</span><span class="pista"><span class="relleno" [style.width.%]="(m.n / maxMensajero()) * 100"></span></span><span class="n">{{ m.n }}</span></li>
+                  <li><span class="nombre">{{ m.nombre }}</span><span class="pista"><span class="relleno llenar" [style.width.%]="(m.n / maxMensajero()) * 100"></span></span><span class="n">{{ m.n }}</span></li>
                 }
               </ul>
             </section>

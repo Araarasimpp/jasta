@@ -75,7 +75,7 @@ interface Estadisticas {
           @for (p of embudo(); track p.etq) {
             <div class="paso">
               <span class="etq">{{ p.etq }}</span>
-              <span class="riel"><span class="barra" [style.width.%]="p.ancho"></span></span>
+              <span class="riel"><span class="barra llenar" [style.width.%]="p.ancho"></span></span>
               <span class="num">{{ numero(p.valor) }}@if (p.pct !== null) {<small>{{ p.pct }}%</small>}</span>
             </div>
           }

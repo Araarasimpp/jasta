@@ -160,12 +160,12 @@ const METODOS: { id: Metodo; label: string }[] = [
               <span>{{ d.estado === 'pagada' ? 'Pagada' : 'Por pagar' }} de {{ pesos(d.total) }} · abonado {{ pesos(d.abonado) }}</span>
             </div>
             <div class="barra" role="progressbar" [attr.aria-valuenow]="pct(d.abonado, d.total)" aria-valuemin="0" aria-valuemax="100" aria-label="Lo abonado">
-              <i [style.width.%]="pct(d.abonado, d.total)"></i></div>
+              <i class="llenar" [style.width.%]="pct(d.abonado, d.total)"></i></div>
 
             @if (d.unidades) {
               <div class="vendido">
                 <div class="fila"><span>Mercancía vendida</span><span class="num">{{ d.vendidas }} de {{ d.unidades }} unidades</span></div>
-                <div class="barra venta"><i [style.width.%]="pct(d.vendidas ?? 0, d.unidades)"></i></div>
+                <div class="barra venta"><i class="llenar" [style.width.%]="pct(d.vendidas ?? 0, d.unidades)"></i></div>
                 <div class="fila"><span>Costo de lo vendido</span><span class="num">{{ pesos(d.costo_vendido) }}</span></div>
                 @if (d.estado === 'abierta') {
                   <div class="fila apartar"><span>Aparta y abona</span><span class="num">{{ pesos(d.por_apartar) }}</span></div>

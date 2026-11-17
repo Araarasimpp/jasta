@@ -1,3 +1,4 @@
+import { AparecerDirective } from '../../shared/animar/animar';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonIcon } from '@ionic/angular';
@@ -62,7 +63,7 @@ function ultimosMeses(): { id: string; label: string }[] {
 @Component({
   selector: 'app-ranking',
   standalone: true,
-  imports: [EsqueletoComponent, FormsModule, IonIcon, AvatarComponent],
+  imports: [EsqueletoComponent, FormsModule, IonIcon, AvatarComponent, AparecerDirective],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -84,7 +85,13 @@ function ultimosMeses(): { id: string; label: string }[] {
       @keyframes subir { from { opacity: 0; transform: translateY(24px) scale(0.92); } }
       @media (prefers-reduced-motion: reduce) { .escalon { animation: none; } }
       .medalla { font-size: 30px; line-height: 1; }
-      .escalon[data-puesto='1'] .medalla { font-size: 40px; }
+      .escalon[data-puesto='1'] .medalla { font-size: 40px; position: relative; animation: corona 2.6s ease-in-out .8s infinite; }
+      /* El primer puesto: la medalla flota y brilla */
+      .escalon[data-puesto='1'] .medalla::after { content: '👑'; position: absolute; left: 50%; top: -22px; font-size: 22px; transform: translateX(-50%) rotate(-8deg);
+        animation: brillo-corona 2.6s ease-in-out .8s infinite; }
+      @keyframes corona { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+      @keyframes brillo-corona { 0%, 100% { filter: drop-shadow(0 0 0 rgba(250, 204, 21, 0)); } 50% { filter: drop-shadow(0 0 6px rgba(250, 204, 21, .9)); } }
+      @media (prefers-reduced-motion: reduce) { .escalon[data-puesto='1'] .medalla, .escalon[data-puesto='1'] .medalla::after { animation: none; } }
       .podio-nombre { max-width: 100%; font-size: 14px; font-weight: 600; line-height: 1.25; overflow: hidden; text-overflow: ellipsis;
         display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
       .podio-nombre span { color: var(--accent); }
@@ -183,7 +190,7 @@ function ultimosMeses(): { id: string; label: string }[] {
         @if (lista().length) {
           <ol class="lista">
             @for (f of lista(); track f.usuario_id; let i = $index) {
-              <li class="fila" [class.yo]="esYo(f)">
+              <li class="fila" [class.yo]="esYo(f)" aparecer [aparecerI]="i">
                 <span class="puesto num">{{ i < podio().length ? medallas[i] : i + 1 }}</span>
                 <app-avatar [nombre]="f.nombre" [foto]="f.avatar_url" [tam]="36"></app-avatar>
                 <div class="info">
@@ -199,7 +206,7 @@ function ultimosMeses(): { id: string; label: string }[] {
                   }
                   @if (avance(f) !== null) {
                     <div class="progreso" [attr.aria-label]="'Avance de la meta: ' + avance(f) + '%'">
-                      <span [style.width.%]="avance(f)" [class.lograda]="avance(f) === 100"></span>
+                      <span class="llenar" [style.width.%]="avance(f)" [class.lograda]="avance(f) === 100"></span>
                     </div>
                   }
 

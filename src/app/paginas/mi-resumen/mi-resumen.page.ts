@@ -161,7 +161,7 @@ function rango(p: Periodo): { desde: string; hasta: string } {
               <ul class="zonas">
                 @for (z of d.barrios; track z.barrio) {
                   <li class="zona"><b>{{ z.barrio }}</b><small>{{ z.entregas }} {{ z.entregas === 1 ? 'entrega' : 'entregas' }} · {{ pesos(z.ganado) }}</small>
-                    <span class="riel"><i [style.width.%]="(z.entregas / d.barrios[0].entregas) * 100"></i></span></li>
+                    <span class="riel"><i class="llenar" [style.width.%]="(z.entregas / d.barrios[0].entregas) * 100"></i></span></li>
                 }
               </ul>
               <p class="ayuda" style="margin: 12px 0 0">Fuiste a {{ numero(d.barrios_distintos) }} barrios distintos.</p>

@@ -1,3 +1,4 @@
+import { CuentaDirective, confeti, confetiUnaVez } from '../../shared/animar/animar';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PesosDirective } from '../../shared/pesos/pesos.directive';
@@ -47,7 +48,7 @@ const normal = (s: string | null | undefined) => (s ?? '').normalize('NFD').repl
 @Component({
   selector: 'app-cierre-dia',
   standalone: true,
-  imports: [FormsModule, EsqueletoComponent, PesosDirective],
+  imports: [FormsModule, EsqueletoComponent, PesosDirective, CuentaDirective],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -90,6 +91,20 @@ const normal = (s: string | null | undefined) => (s ?? '').normalize('NFD').repl
       .sobre small { display: block; font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
       .sobre strong { display: block; margin-top: 4px; font-family: var(--mono-font); font-size: 22px; }
       .sobre span { display: block; font-size: 12.5px; color: var(--text-soft); margin-top: 2px; }
+      .sobre { position: relative; overflow: hidden; }
+      .sobre .billete { display: none; }
+      /* Al cerrar el día los billetes caen en cada sobre, uno tras otro */
+      .llenando .sobre .billete { display: block; position: absolute; right: 12px; top: -30px; font-size: 22px; animation: billete-cae .7s cubic-bezier(.3,.7,.4,1) forwards; }
+      .llenando .sobre:nth-child(2) .billete { animation-delay: .18s; }
+      .llenando .sobre:nth-child(3) .billete { animation-delay: .36s; }
+      .llenando .sobre:nth-child(4) .billete { animation-delay: .54s; }
+      .llenando .sobre { animation: sobre-recibe .5s ease-out both; }
+      .llenando .sobre:nth-child(2) { animation-delay: .18s; }
+      .llenando .sobre:nth-child(3) { animation-delay: .36s; }
+      .llenando .sobre:nth-child(4) { animation-delay: .54s; }
+      @keyframes billete-cae { 0% { top: -30px; opacity: 0; transform: rotate(-20deg); } 60% { opacity: 1; } 100% { top: 10px; opacity: 0; transform: rotate(8deg) scale(.6); } }
+      @keyframes sobre-recibe { 0% { transform: translateY(8px); opacity: 0; } 70% { transform: translateY(-3px); } 100% { transform: none; opacity: 1; } }
+      @media (prefers-reduced-motion: reduce) { .llenando .sobre { animation: none; } .llenando .sobre .billete { display: none; } }
       .sobre.com strong { color: var(--info-text); }
       .sobre.aho strong { color: var(--st-pendiente-text); }
       .sobre.lib strong { color: var(--efectivo-texto); }
@@ -154,9 +169,15 @@ const normal = (s: string | null | undefined) => (s ?? '').normalize('NFD').repl
             @if (+c.mercancia) {
               <div class="renglon merc"><span class="lbl">Mercancía (lo que costó lo vendido)</span><span class="punteado"></span><span class="val">− {{ pesos(c.mercancia) }}</span></div>
             }
-            <div class="renglon total"><span class="lbl">Te quedó libre</span><span class="punteado"></span><span class="val">{{ pesos(c.libre) }}</span></div>
+            <div class="renglon total"><span class="lbl">Te quedó libre</span><span class="punteado"></span><span class="val" [cuenta]="c.libre" cuentaFormato="pesos"></span></div>
             @if (c.nota) { <p class="ayuda" style="margin-top: 10px">📝 {{ c.nota }}</p> }
           </section>
+          <div class="sobres" [class.llenando]="recienCerrado()" aria-label="Cómo repartir la plata">
+            <div class="sobre com"><small>Sobre comisiones</small><strong [cuenta]="c.comisiones" cuentaFormato="pesos"></strong><span class="billete" aria-hidden="true">💵</span></div>
+            <div class="sobre aho"><small>Sobre ahorro</small><strong [cuenta]="c.ahorro" cuentaFormato="pesos"></strong><span class="billete" aria-hidden="true">💵</span></div>
+            @if (+c.mercancia) { <div class="sobre merc"><small>Sobre mercancía</small><strong [cuenta]="c.mercancia" cuentaFormato="pesos"></strong><span class="billete" aria-hidden="true">💵</span></div> }
+            <div class="sobre lib"><small>Libre</small><strong [cuenta]="c.libre" cuentaFormato="pesos"></strong><span class="billete" aria-hidden="true">💵</span></div>
+          </div>
           <div class="botones"><button class="b" type="button" [disabled]="guardando()" (click)="anular(c)">Anular y volver a cerrar</button></div>
         } @else {
           <section class="panel" aria-labelledby="t-plata">
@@ -207,7 +228,7 @@ const normal = (s: string | null | undefined) => (s ?? '').normalize('NFD').repl
                 <label class="chk"><input type="checkbox" [ngModel]="conMercancia()" (ngModelChange)="conMercancia.set($event)" />Separa: mercancía</label>
                 <small>Lo que costó lo que se vendió, para volver a comprar</small></span>
               <span class="punteado"></span><span class="val">− {{ pesos(conMercancia() ? suma().costo : 0) }}</span></div>
-            <div class="renglon total"><span class="lbl">Te queda libre</span><span class="punteado"></span><span class="val">{{ pesos(libre()) }}</span></div>
+            <div class="renglon total"><span class="lbl">Te queda libre</span><span class="punteado"></span><span class="val" [cuenta]="libre()" cuentaFormato="pesos"></span></div>
           </section>
 
           @if (suma().total > 0) {
@@ -233,7 +254,7 @@ const normal = (s: string | null | undefined) => (s ?? '').normalize('NFD').repl
           <section class="panel" aria-labelledby="t-sem">
             <div class="panel-head"><div><h2 id="t-sem">Sobre de comisiones de la semana</h2>
               <p class="ayuda">Del sábado {{ diaCorto(w.desde) }} al viernes {{ diaCorto(w.hasta) }}: lo que toca pagarles a las vendedoras y lo que ya se separó en los cierres de todos.</p></div></div>
-            <div class="meta-barra" role="progressbar" [attr.aria-valuenow]="w.pct" aria-valuemin="0" aria-valuemax="100" aria-label="Comisiones separadas"><i [style.width.%]="w.pct"></i></div>
+            <div class="meta-barra" role="progressbar" [attr.aria-valuenow]="w.pct" aria-valuemin="0" aria-valuemax="100" aria-label="Comisiones separadas"><i class="llenar" [style.width.%]="w.pct"></i></div>
             <div class="kpis">
               <div class="kpi"><small>Toca pagar el viernes</small><strong>{{ pesos(w.pagar) }}</strong>@if (+w.atrasadas) { <small class="nota">incluye {{ pesos(w.atrasadas) }} de semanas anteriores</small> }</div>
               <div class="kpi"><small>Separado en cierres</small><strong>{{ pesos(w.separado) }}</strong>@if (w.conEste) { <small class="nota">con este cierre ({{ pesos(w.conEste) }})</small> }</div>
@@ -247,7 +268,7 @@ const normal = (s: string | null | undefined) => (s ?? '').normalize('NFD').repl
           <div class="panel-head"><div><h2 id="t-meta">Ahorro</h2>
             <p class="ayuda">Lo que se ha guardado en los cierres de todos los administradores, menos lo que se ha sacado.</p></div></div>
           <div class="ahorro-top">
-            <div><small>Hay ahorrado</small><strong>{{ pesos(saldoAhorro()) }}</strong>
+            <div><small>Hay ahorrado</small><strong [cuenta]="saldoAhorro()" cuentaFormato="pesos"></strong>
               @if (meta()) { <span>{{ avanceMeta() }} % de la meta de {{ pesos(meta()) }}@if (meta() > saldoAhorro()) { · faltan {{ pesos(meta() - saldoAhorro()) }} }</span> }
               @else { <span>Sin meta todavía</span> }</div>
             <div class="botones">
@@ -256,7 +277,7 @@ const normal = (s: string | null | undefined) => (s ?? '').normalize('NFD').repl
             </div>
           </div>
           @if (meta()) {
-            <div class="meta-barra oro" role="progressbar" [attr.aria-valuenow]="avanceMeta()" aria-valuemin="0" aria-valuemax="100" aria-label="Avance de la meta de ahorro"><i [style.width.%]="avanceMeta()"></i></div>
+            <div class="meta-barra oro" role="progressbar" [attr.aria-valuenow]="avanceMeta()" aria-valuemin="0" aria-valuemax="100" aria-label="Avance de la meta de ahorro"><i class="llenar" [style.width.%]="avanceMeta()"></i></div>
             @if (avanceMeta() >= 100) { <p class="ayuda logro">🎉 ¡Cumplieron la meta de ahorro!</p> }
           }
           @if (editandoMeta()) {
@@ -328,6 +349,8 @@ export class CierreDiaPage {
   guardando = signal(false);
   elegidas = signal(new Set<string>());
   pct = signal(10);
+  /** Acaba de cerrar: los billetes caen en los sobres */
+  recienCerrado = signal(false);
   nota = '';
 
   etiquetaDia = computed(() => (this.fecha() === this.hoy ? 'Hoy, ' : '') + this.diaLargo(this.fecha()));
@@ -414,6 +437,8 @@ export class CierreDiaPage {
     if (r.error) return this.toast.error(mensajeError(r.error));
     this.d.set(r.data as Datos);
     this.historial.set((h.data ?? []) as Cierre[]);
+    // Llegaron a la meta de ahorro: se celebra una vez por meta
+    if (this.meta() > 0 && this.saldoAhorro() >= this.meta()) setTimeout(() => confetiUnaVez('ahorro-meta-' + this.meta()), 600);
     this.nota = '';
     this.soloMios();
   }
@@ -445,6 +470,9 @@ export class CierreDiaPage {
     });
     this.guardando.set(false);
     if (error) return this.toast.error(mensajeError(error));
+    this.recienCerrado.set(true);
+    setTimeout(() => this.recienCerrado.set(false), 2500);
+    confeti({ cantidad: 60, y: 140 });
     this.toast.ok(`Día cerrado: separa ${pesos(this.suma().comisiones)} de comisiones, ${pesos(this.ahorro())} de ahorro` + (this.mercancia() ? ` y ${pesos(this.mercancia())} de mercancía` : ''));
     await this.cargar();
   }

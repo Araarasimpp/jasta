@@ -163,7 +163,7 @@ type Atajo = 'hoy' | '7' | 'mes' | 'mes_pasado' | null;
                   <app-avatar [nombre]="v.nombre" [foto]="v.avatar_url" [tam]="32"></app-avatar>
                   <span class="nom">{{ v.nombre }}<small>{{ v.ventas }} {{ v.ventas === 1 ? 'venta' : 'ventas' }} en el local</small></span>
                   <span class="val">{{ pesos(v.total) }}</span>
-                  <span class="pista"><span [style.width.%]="(v.total / maxVend()) * 100"></span></span>
+                  <span class="pista"><span class="llenar" [style.width.%]="(v.total / maxVend()) * 100"></span></span>
                 </li>
               }
             </ol>

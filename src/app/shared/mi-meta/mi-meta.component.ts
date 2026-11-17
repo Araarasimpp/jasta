@@ -1,3 +1,4 @@
+import { CuentaDirective, confetiUnaVez } from '../animar/animar';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { SupabaseService } from '../../core/services/supabase.service';
@@ -13,7 +14,7 @@ interface MiMeta { hoy: string; fin_mes: string; mes: Avance[]; semana: Avance[]
 @Component({
   selector: 'app-mi-meta',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, CuentaDirective],
   styles: [
     `
       :host { display: block; }
@@ -43,10 +44,10 @@ interface MiMeta { hoy: string; fin_mes: string; mes: Avance[]; semana: Avance[]
           <div class="fila" [class.semana]="f.semana">
             <div class="cifras">
               <span><strong>{{ numero(f.a.cantidad) }}</strong> de {{ numero(f.a.meta) }} {{ f.que }} {{ f.semana ? 'esta semana' : 'este mes' }}</span>
-              <span class="pct">{{ f.pct }} %</span>
+              <span class="pct" [cuenta]="f.pct" cuentaFormato="porcentaje"></span>
             </div>
             <div class="avance" [class.lista]="f.pct >= 100" role="progressbar" [attr.aria-valuenow]="f.pct" aria-valuemin="0" aria-valuemax="100"
-              [attr.aria-label]="'Avance de la meta ' + (f.semana ? 'de la semana' : 'del mes')"><i [style.width.%]="f.pct > 100 ? 100 : f.pct"></i></div>
+              [attr.aria-label]="'Avance de la meta ' + (f.semana ? 'de la semana' : 'del mes')"><i class="llenar" [style.width.%]="f.pct > 100 ? 100 : f.pct"></i></div>
             @if (f.nota) { <p class="nota" [class.ok]="f.pct >= 100">{{ f.nota }}</p> }
           </div>
         }
@@ -84,6 +85,18 @@ export class MiMetaComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     const { data } = await this.sb.client.rpc('mi_meta');
-    if (data) this.datos.set(data as MiMeta);
+    if (!data) return;
+    this.datos.set(data as MiMeta);
+    // Meta cumplida: confeti una vez por mes (o por semana)
+    const d = data as MiMeta;
+    const cumplida = this.filas().find((f) => f.pct >= 100);
+    if (cumplida) setTimeout(() => confetiUnaVez(`meta-${cumplida.clave}-${cumplida.semana ? sabadoDe(d.hoy) : d.fin_mes}-${this.sb.usuario()?.id}`), 700);
   }
+}
+
+/** Sábado en que empieza la semana de pago de ese día */
+function sabadoDe(dia: string): string {
+  const t = new Date(dia + 'T12:00:00Z');
+  t.setUTCDate(t.getUTCDate() - ((t.getUTCDay() + 1) % 7));
+  return t.toISOString().slice(0, 10);
 }

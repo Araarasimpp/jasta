@@ -143,6 +143,15 @@ const RAPIDOS_TIENDA = [
       .audio .onda { position: relative; flex: 1; height: 26px; cursor: pointer; --c: color-mix(in srgb, currentColor 35%, transparent);
         background: repeating-linear-gradient(90deg, var(--c) 0 2px, transparent 2px 5px); -webkit-mask: linear-gradient(#000 0 0) center / 100% 60% no-repeat; mask: linear-gradient(#000 0 0) center / 100% 60% no-repeat; }
       .audio .onda i { position: absolute; inset: 0 auto 0 0; background: repeating-linear-gradient(90deg, currentColor 0 2px, transparent 2px 5px); }
+      /* Mientras suena, la onda se mueve */
+      .audio .onda.suena { animation: onda-viva .9s linear infinite; }
+      @keyframes onda-viva { 0%, 100% { -webkit-mask-size: 100% 60%; mask-size: 100% 60%; } 25% { -webkit-mask-size: 100% 85%; mask-size: 100% 85%; } 50% { -webkit-mask-size: 100% 45%; mask-size: 100% 45%; } 75% { -webkit-mask-size: 100% 75%; mask-size: 100% 75%; } }
+      /* Los mensajes que llegan (o que mandas) entran con un rebote */
+      .fila.nuevo .burbuja { animation: burbuja-entra .38s cubic-bezier(.2,1.4,.4,1) both; }
+      .fila.nuevo.mio .burbuja { transform-origin: bottom right; }
+      .fila.nuevo:not(.mio) .burbuja { transform-origin: bottom left; }
+      @keyframes burbuja-entra { from { opacity: 0; transform: translateY(10px) scale(.85); } }
+      @media (prefers-reduced-motion: reduce) { .audio .onda.suena, .fila.nuevo .burbuja { animation: none; } }
       .audio .dur { font-size: 11.5px; font-variant-numeric: tabular-nums; opacity: .85; min-width: 30px; text-align: right; }
 
       /* La otra persona está escribiendo (tres puntos) */
@@ -200,7 +209,7 @@ const RAPIDOS_TIENDA = [
     <div class="lista" #lista aria-live="polite">
       @for (m of mensajes(); track m.id; let i = $index) {
         @if (diaNuevo(i)) { <div class="dia"><span>{{ dia(m.created_at) }}</span></div> }
-        <div class="fila" [class.mio]="m.autor_id === yo()" [class.sigue]="sigue(i)" [attr.data-id]="m.id"
+        <div class="fila" [class.mio]="m.autor_id === yo()" [class.sigue]="sigue(i)" [class.nuevo]="nuevos().has(m.id)" [attr.data-id]="m.id"
           (touchstart)="tocaIni($event, m)" (touchmove)="tocaMueve($event)" (touchend)="tocaFin()" (touchcancel)="tocaFin(true)" (dblclick)="responder(m)">
           <span class="resp-ico" aria-hidden="true" [style.opacity]="desliza()?.id === m.id ? desliza()!.dx / 56 : 0"><ion-icon name="arrow-undo"></ion-icon></span>
           <div class="burbuja" [class.flash]="resaltado() === m.id" [class.arrastra]="desliza()?.id === m.id"
@@ -220,7 +229,7 @@ const RAPIDOS_TIENDA = [
                 <button type="button" class="pp" [attr.aria-label]="sonando() === m.id ? 'Pausar nota de voz' : 'Oír nota de voz'" (click)="tocar(m)">
                   <ion-icon [name]="sonando() === m.id ? 'pause' : 'play'"></ion-icon>
                 </button>
-                <span class="onda" (click)="saltar($event, m)"><i [style.width.%]="actual() === m.id ? avance() * 100 : 0"></i></span>
+                <span class="onda" [class.suena]="sonando() === m.id" (click)="saltar($event, m)"><i [style.width.%]="actual() === m.id ? avance() * 100 : 0"></i></span>
                 <span class="dur">{{ actual() === m.id && avance() > 0 ? minSeg(avance() * (m.duracion || 0)) : minSeg(m.duracion || 0) }}</span>
               </div>
             }
@@ -350,6 +359,9 @@ export class ChatPedidoComponent implements OnInit, AfterViewInit, OnDestroy {
   /** Mensaje que se está deslizando para responder */
   desliza = signal<{ id: number; dx: number } | null>(null);
   resaltado = signal<number | null>(null);
+  /** Mensajes que llegaron después de abrir el chat (entran con animación) */
+  nuevos = signal(new Set<number>());
+  private yaCargo = false;
   /** Texto mientras sube una foto o una nota de voz */
   subiendo = signal<string | null>(null);
   /** Enlaces firmados de fotos y notas de voz, por ruta */
@@ -468,6 +480,12 @@ export class ChatPedidoComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     const antes = this.mensajes().at(-1)?.id;
     const lista = ((data ?? []) as Mensaje[]).reverse();
+    if (this.yaCargo) {
+      const antes = new Set(this.mensajes().map((m) => m.id));
+      const llegaron = lista.filter((m) => !antes.has(m.id)).map((m) => m.id);
+      if (llegaron.length) this.nuevos.update((n) => new Set([...n, ...llegaron]));
+    }
+    this.yaCargo = true;
     this.mensajes.set(lista);
     void this.firmar(lista);
     // Solo baja al final si hay algo nuevo (así no salta mientras se leen mensajes viejos)
@@ -523,6 +541,7 @@ export class ChatPedidoComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.mensajes().some((x) => x.id === m.id)) return;
     // Quien escribía ya mandó su mensaje
     if (m.autor_id !== this.yo()) this.ocultarEscribiendo();
+    this.nuevos.update((n) => new Set(n).add(m.id));
     this.mensajes.update((l) => [...l, m]);
     void this.firmar([m]);
     this.bajar();

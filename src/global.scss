@@ -500,3 +500,13 @@ body.dark app-tienda.tv2.tv2.tv2 .t-fotos img, body.dark app-tienda.tv2.tv2.tv2 
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
 }
+
+/* ===== Animaciones compartidas (src/app/shared/animar/animar.ts) ===== */
+// Barras que se llenan al aparecer (metas, ahorro, comisiones, ranking)
+@keyframes llenar-barra { from { transform: scaleX(0); } }
+.llenar { transform-origin: left center; animation: llenar-barra 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+// Tienda: la foto del producto crece desde la lista hasta la vista grande; el resto no se mueve
+app-tienda .t-pantalla .t-fotos > img:first-child { view-transition-name: foto-prod; }
+html.vt-foto::view-transition-old(root), html.vt-foto::view-transition-new(root) { animation: none; }
+::view-transition-group(foto-prod) { animation-duration: 0.38s; animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1); }
+@media (prefers-reduced-motion: reduce) { .llenar { animation: none; } }

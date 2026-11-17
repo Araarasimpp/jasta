@@ -1,3 +1,4 @@
+import { CuentaDirective } from '../../shared/animar/animar';
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -76,7 +77,7 @@ const POR_PAGINA = 20;
 @Component({
   selector: 'app-mi-panel',
   standalone: true,
-  imports: [MiMetaComponent, EsqueletoComponent, FormsModule, RouterLink, IonIcon, PedidoDetalleComponent, AvatarComponent, EstadoIconComponent],
+  imports: [MiMetaComponent, EsqueletoComponent, FormsModule, RouterLink, IonIcon, PedidoDetalleComponent, AvatarComponent, EstadoIconComponent, CuentaDirective],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -196,22 +197,22 @@ const POR_PAGINA = 20;
       <div class="kpis" role="list" [class.cargando]="cargando()" [attr.aria-busy]="cargando()">
         <div class="kpi kpi-principal" role="listitem">
           <span class="kpi-label">Mi ganancia</span>
-          <span class="kpi-valor num gana">{{ panel() ? pesos(panel()!.ganancia) : '…' }}</span>
+          <span class="kpi-valor num gana" [cuenta]="panel()?.ganancia" cuentaFormato="pesos"></span>
           <span class="kpi-nota">{{ panel()?.alcancia ? 'Ya sin ' + pesos(panel()!.alcancia) + ' del servicio local' : 'Pedidos entregados' }}</span>
         </div>
         <div class="kpi" role="listitem">
           <span class="kpi-label">Por ganar</span>
-          <span class="kpi-valor num">{{ panel() ? pesos(panel()!.ganancia_en_curso) : '…' }}</span>
+          <span class="kpi-valor num" [cuenta]="panel()?.ganancia_en_curso" cuentaFormato="pesos"></span>
           <span class="kpi-nota num">{{ numero(panel()?.en_curso) }} {{ panel()?.en_curso === 1 ? 'pedido en curso' : 'pedidos en curso' }}</span>
         </div>
         <div class="kpi" role="listitem">
           <span class="kpi-label">Vendido</span>
-          <span class="kpi-valor num">{{ panel() ? pesos(panel()!.ventas) : '…' }}</span>
+          <span class="kpi-valor num" [cuenta]="panel()?.ventas" cuentaFormato="pesos"></span>
           <span class="kpi-nota num">{{ numero(panel()?.unidades) }} unidades entregadas</span>
         </div>
         <div class="kpi" role="listitem">
           <span class="kpi-label">Entregados</span>
-          <span class="kpi-valor num">{{ numero(panel()?.entregados) }}</span>
+          <span class="kpi-valor num" [cuenta]="panel()?.entregados"></span>
           <span class="kpi-nota num">{{ numero(panel()?.cancelados) }} {{ panel()?.cancelados === 1 ? 'cancelado' : 'cancelados' }}</span>
         </div>
       </div>

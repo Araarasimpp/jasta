@@ -19,7 +19,7 @@
   <div class="toolbar">
     <nav class="tabs" aria-label="Filtrar por estado">
       @for (f of filtros; track f.id) {
-        <button class="tab" [class.active]="filtro() === f.id" [attr.aria-pressed]="filtro() === f.id" (click)="cambiarFiltro(f.id)">
+        <button class="tab" [attr.data-tab]="f.id" [class.active]="filtro() === f.id" [attr.aria-pressed]="filtro() === f.id" (click)="cambiarFiltro(f.id)">
           {{ f.label }}
           <span class="num count">{{ conteos()[f.id] || 0 }}</span>
         </button>
@@ -93,7 +93,7 @@
             </div>
 
             @for (p of g.pedidos; track p.id) {
-              <div class="row row-grid" [class.selected]="sel().has(p.id)" [class.closed]="!editable(p)">
+              <div class="row row-grid" [attr.data-pedido]="p.id" [class.selected]="sel().has(p.id)" [class.closed]="!editable(p)">
                 @if (gestiona()) {
                   <span class="check-wrap">
                     <input type="checkbox" class="check" [checked]="sel().has(p.id)" (change)="alternar(p.id)" [attr.aria-label]="'Seleccionar pedido ' + p.id" />

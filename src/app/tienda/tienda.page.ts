@@ -1,4 +1,5 @@
-import { Component, ElementRef, HostListener, OnInit, ViewChild, computed, effect, inject, signal, untracked } from '@angular/core';
+import { AparecerDirective, confeti, latirCorazon, movimientoReducido, volarA } from '../shared/animar/animar';
+import { ChangeDetectorRef, Component, ElementRef, HostListener, OnInit, ViewChild, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ClienteDireccion, ClienteService, ClienteTarjeta, ConfigTarjeta } from '../core/services/cliente.service';
@@ -77,7 +78,7 @@ function parecido(a: string, b: string): number {
   standalone: true,
   // El diseño de la tienda (tarjetas, banner, carrito) está en global.scss bajo app-tienda.tv2
   host: { class: 'tv2' },
-  imports: [EsqueletoComponent, FormsModule],
+  imports: [EsqueletoComponent, FormsModule, AparecerDirective],
   styles: [
     `
       /* Ionic deja el body fijo y le pone contain: layout a la página (lo "fijo" queda pegado a ella):
@@ -173,6 +174,13 @@ function parecido(a: string, b: string): number {
       .formas-pago button:disabled { opacity: .45; cursor: not-allowed; }
       .error { margin: 0; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--danger-wash); color: var(--danger); font-size: 13.5px; }
       .listo { max-width: 520px; margin: 30px auto 0; padding: 26px 20px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); text-align: center; }
+      .listo .ok svg { width: 34px; height: 34px; fill: none; stroke: currentColor; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+      .listo .ok circle { stroke-width: 3; stroke-dasharray: 145; stroke-dashoffset: 145; animation: dibujar .6s ease-out forwards; }
+      .listo .ok path { stroke-dasharray: 40; stroke-dashoffset: 40; animation: dibujar .4s .45s ease-out forwards; }
+      .listo .ok { animation: ok-pop .5s cubic-bezier(.2,1.6,.4,1) both; }
+      @keyframes dibujar { to { stroke-dashoffset: 0; } }
+      @keyframes ok-pop { from { transform: scale(.4); opacity: 0; } }
+      @media (prefers-reduced-motion: reduce) { .listo .ok, .listo .ok circle, .listo .ok path { animation: none; stroke-dashoffset: 0; } }
       .listo .ok { width: 56px; height: 56px; margin: 0 auto 10px; display: grid; place-items: center; border-radius: 50%; background: var(--ok-wash); color: var(--efectivo-texto); font-size: 28px; }
       .listo h2 { margin: 0 0 8px; font-size: 21px; }
       .listo p { margin: 0 0 10px; font-size: 15px; line-height: 1.5; color: var(--text-soft); }
@@ -201,7 +209,7 @@ function parecido(a: string, b: string): number {
 
       @if (hecho(); as h) {
         <section class="listo" role="status">
-          <div class="ok" aria-hidden="true">✓</div>
+          <div class="ok" aria-hidden="true"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="23" /><path d="M15 27l7 7 15-16" /></svg></div>
           <h2>{{ h.pagado ? '¡Pago aprobado!' : '¡Recibimos tu pedido!' }}</h2>
           @if (h.pagado) {
             <p>Tu pedido quedó pagado. {{ t()?.vendedora ? primerNombre(t()!.vendedora!.nombre) : 'La tienda' }} te contacta al {{ telefonoMostrar() }} para coordinar el envío. Lo puedes seguir en Mi cuenta → Mis compras.</p>
@@ -292,12 +300,12 @@ function parecido(a: string, b: string): number {
         <div class="t-titulo" id="t-productos"><h2>{{ soloFavs() ? 'Tus favoritos' : categoria() || (q().trim() ? 'Resultados' : 'Todos los productos') }}</h2><span>{{ filtrados().length }}</span></div>
         <div class="rejilla">
           @for (p of filtrados().slice(0, limite()); track p.id) {
-            <article class="prod" [class.agot]="p.agotado">
-              <button type="button" class="foto" (click)="abrir(p)" [attr.aria-label]="'Ver ' + p.nombre">
+            <article class="prod" [class.agot]="p.agotado" aparecer [aparecerI]="$index">
+              <button type="button" class="foto" (click)="abrir(p, $event)" [attr.aria-label]="'Ver ' + p.nombre">
                 @if (urlMini(p.imagen_url); as u) { <img [src]="u" alt="" loading="lazy" decoding="async" /> } @else { <span class="ini">{{ p.nombre.charAt(0) }}</span> }
                 @if (p.agotado) { <span class="etq-agot">Agotado</span> } @else if (p.top && p.top <= 3) { <span class="t-best">Más vendido</span> } @else if (p.nuevo) { <span class="t-best t-nuevo">Nuevo</span> }
               </button>
-              <button type="button" class="t-fav" [class.on]="favs().has(p.id)" (click)="alternarFav(p)" [attr.aria-label]="(favs().has(p.id) ? 'Quitar de' : 'Agregar a') + ' favoritos'" [attr.aria-pressed]="favs().has(p.id)">{{ favs().has(p.id) ? '♥' : '♡' }}</button>
+              <button type="button" class="t-fav" [class.on]="favs().has(p.id)" (click)="alternarFav(p, $event)" [attr.aria-label]="(favs().has(p.id) ? 'Quitar de' : 'Agregar a') + ' favoritos'" [attr.aria-pressed]="favs().has(p.id)">{{ favs().has(p.id) ? '♥' : '♡' }}</button>
               <div class="info">
                 <h2 (click)="abrir(p)">{{ p.nombre }}</h2>
                 @if (p.resenas) { <span class="t-rating" [attr.aria-label]="p.rating + ' de 5 estrellas, ' + p.resenas + ' reseñas'"><b>★</b> {{ p.rating }} <small>({{ p.resenas }})</small></span> }
@@ -337,7 +345,7 @@ function parecido(a: string, b: string): number {
           </button>
           <span class="t-barra-tit">Detalle</span>
           <span class="t-barra-der">
-            <button type="button" class="t-circ" [class.fav-on]="favs().has(p.id)" (click)="alternarFav(p)" [attr.aria-label]="(favs().has(p.id) ? 'Quitar de' : 'Agregar a') + ' favoritos'" [attr.aria-pressed]="favs().has(p.id)">{{ favs().has(p.id) ? '♥' : '♡' }}</button>
+            <button type="button" class="t-circ" [class.fav-on]="favs().has(p.id)" (click)="alternarFav(p, $event)" [attr.aria-label]="(favs().has(p.id) ? 'Quitar de' : 'Agregar a') + ' favoritos'" [attr.aria-pressed]="favs().has(p.id)">{{ favs().has(p.id) ? '♥' : '♡' }}</button>
             <button type="button" class="t-circ" (click)="compartirProducto(p)" aria-label="Compartir">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>
             </button>
@@ -711,6 +719,7 @@ function parecido(a: string, b: string): number {
 })
 export class TiendaPage implements OnInit {
   sb = inject(SupabaseService);
+  private cdr = inject(ChangeDetectorRef);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   cli = inject(ClienteService);
@@ -888,9 +897,10 @@ export class TiendaPage implements OnInit {
     }
   }
 
-  alternarFav(p: ProductoTienda): void {
+  alternarFav(p: ProductoTienda, ev?: Event): void {
     const n = new Set(this.favs());
     const on = !n.has(p.id);
+    if (on) latirCorazon(ev?.currentTarget as Element | null);
     if (on) n.add(p.id);
     else n.delete(p.id);
     this.favs.set(n);
@@ -1400,7 +1410,22 @@ export class TiendaPage implements OnInit {
 
   @ViewChild('detalle') private detalle?: ElementRef<HTMLElement>;
 
-  async abrir(p: ProductoTienda): Promise<void> {
+  /** Abre el producto; si se tocó su foto, la foto crece hasta la vista grande (View Transitions) */
+  abrir(p: ProductoTienda, ev?: Event): void {
+    const img = (ev?.currentTarget as Element | null)?.querySelector('img');
+    const doc = document as Document & { startViewTransition?: (f: () => void) => { finished: Promise<void> } };
+    if (!img || !doc.startViewTransition || movimientoReducido()) return void this.abrirYa(p);
+    img.style.viewTransitionName = 'foto-prod';
+    document.documentElement.classList.add('vt-foto');
+    const t = doc.startViewTransition(() => {
+      img.style.viewTransitionName = '';
+      void this.abrirYa(p);
+      this.cdr.detectChanges();
+    });
+    void t.finished.finally(() => document.documentElement.classList.remove('vt-foto'));
+  }
+
+  private async abrirYa(p: ProductoTienda): Promise<void> {
     this.evento('ver', p.id);
     this.abrirPantalla();
     this.verCarrito.set(false);
@@ -1437,6 +1462,8 @@ export class TiendaPage implements OnInit {
   /** Agrega y vuelve al catálogo */
   agregarSel(p: ProductoTienda): void {
     if (!this.elegido(p)) return;
+    const foto = document.querySelectorAll('.t-pantalla .t-fotos img')[this.fotoI()] ?? document.querySelector('.t-pantalla .t-fotos img');
+    volarA(foto, document.querySelector('.t-icono-carrito'));
     this.cerrarPantalla();
     this.avisar('✓ Agregado a tu pedido');
   }
@@ -1551,6 +1578,7 @@ export class TiendaPage implements OnInit {
     }
     this.enviando.set(false);
     this.hecho.set({ id: r.id, total: Number(r.subtotal) + Number(r.domicilio), domicilioPendiente: r.domicilio_por_confirmar, codigo: r.codigo });
+    setTimeout(() => confeti({ y: 160 }), 350);
     this.lineas.set([]);
     this.cupon.set(null);
     this.cerrarPantalla();
@@ -1576,6 +1604,7 @@ export class TiendaPage implements OnInit {
         this.enviando.set(false);
         this.tNumero.set(''); this.tCvc = ''; this.tVence = ''; this.tTitular = '';
         this.hecho.set({ id: r?.id ?? 0, total: this.total(), domicilioPendiente: !!r?.domicilio_por_confirmar, codigo, pagado: true });
+        setTimeout(() => confeti({ y: 160 }), 350);
         this.lineas.set([]);
         this.cupon.set(null);
         this.cerrarPantalla();

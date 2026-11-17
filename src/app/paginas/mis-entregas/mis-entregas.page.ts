@@ -1,3 +1,4 @@
+import { confeti } from '../../shared/animar/animar';
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
@@ -643,6 +644,7 @@ export class MisEntregasPage implements OnInit, OnDestroy {
     this.entregandoJyb.set(null);
     this.toast.ok(`#${numero} de Variedades JYB entregado`);
     await Promise.all([this.cargarJyb(), this.cargarHechasJyb()]);
+    this.celebrarSiTermino();
   }
 
   async cerrarCuadreJyb(): Promise<void> {
@@ -886,6 +888,15 @@ export class MisEntregasPage implements OnInit, OnDestroy {
     this.entregando.set(null);
     this.toast.ok(`#${p.id} entregado`);
     await Promise.all([this.cargar(), this.cargarHechas()]);
+    this.celebrarSiTermino();
+  }
+
+  /** Entregó la última parada de la ruta: confeti */
+  private celebrarSiTermino(): void {
+    if (this.rutaOrdenada().length === 0) {
+      confeti();
+      this.toast.ok('¡Terminaste tu ruta! 🎉');
+    }
   }
 
   async verDetalle(dia: string): Promise<void> {

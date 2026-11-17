@@ -129,7 +129,7 @@ interface Resumen {
           <div class="panel-head"><div><h2 id="t-cat">En qué se gastó</h2></div></div>
           <ul class="barras">
             @for (c of r()!.por_categoria; track c.categoria) {
-              <li><span class="nombre">{{ categoria(c.categoria) }}</span><span class="pista"><span class="relleno" [style.width.%]="(c.total / maxCat()) * 100"></span></span>
+              <li><span class="nombre">{{ categoria(c.categoria) }}</span><span class="pista"><span class="relleno llenar" [style.width.%]="(c.total / maxCat()) * 100"></span></span>
                 <span class="v">{{ pesos(c.total) }}</span></li>
             }
           </ul>

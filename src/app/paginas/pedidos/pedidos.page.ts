@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { movimientoReducido, saltar } from '../../shared/animar/animar';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
@@ -178,7 +179,18 @@ export class PedidosPage implements OnInit, OnDestroy {
   private cargaPendiente = false;
   private enCarga = false;
 
+  /** Conteos anteriores: el número de la pestaña que cambia da un saltico */
+  private conteosAntes: Record<string, number> | null = null;
+
   constructor() {
+    effect(() => {
+      const c = this.conteos();
+      const antes = this.conteosAntes;
+      this.conteosAntes = { ...c };
+      if (!antes) return;
+      const cambiaron = Object.keys(c).filter((k) => (c[k] ?? 0) !== (antes[k] ?? 0));
+      if (cambiaron.length) setTimeout(() => cambiaron.forEach((k) => saltar(document.querySelector(`[data-tab="${k}"] .count`), 1.4)));
+    });
     addIcons({ add, searchOutline, printOutline, cubeOutline, checkmarkCircle, close, ellipsisHorizontal, chatbubbleEllipses, alertCircleOutline, documentTextOutline });
   }
 
@@ -449,10 +461,12 @@ export class PedidosPage implements OnInit, OnDestroy {
     this.ocupado.set(true);
     let ok = 0;
     const errores: string[] = [];
+    const hechos: number[] = [];
     for (const p of lista) {
       try {
         await accion(p);
         ok++;
+        hechos.push(p.id);
       } catch (e) {
         errores.push(`#${p.id}: ${mensajeError(e)}`);
       }
@@ -461,7 +475,17 @@ export class PedidosPage implements OnInit, OnDestroy {
     if (errores.length) this.toast.error(errores.slice(0, 2).join(' · '));
     else this.toast.ok(lista.length === 1 ? `#${lista[0].id} ${texto.replace('(s)', '')}` : `${ok} pedidos ${texto.replace('(s)', 's')}`);
     this.sel.set(new Set());
+    await this.salir(hechos);
     await this.cargar();
+  }
+
+  /** Los pedidos que cambiaron de estado se deslizan hacia afuera antes de recargar */
+  private async salir(ids: number[]): Promise<void> {
+    if (!ids.length || movimientoReducido()) return;
+    const filas = ids.map((id) => document.querySelector<HTMLElement>(`[data-pedido="${id}"]`)).filter((x): x is HTMLElement => !!x);
+    await Promise.all(filas.map((el) => el.animate(
+      [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateX(48px)' }],
+      { duration: 280, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' }).finished.catch(() => undefined)));
   }
 
   // ---------- Rótulos ----------
