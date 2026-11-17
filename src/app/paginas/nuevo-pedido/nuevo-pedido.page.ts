@@ -188,11 +188,11 @@ function normal(s: string): string {
               <div class="pegar-acc">
                 <button type="button" class="b" (click)="pegarDelPortapapeles()"><ion-icon name="clipboard-outline" aria-hidden="true"></ion-icon>Pegar</button>
                 <button type="button" class="b" (click)="pegando.set(false); resumenPegado.set(null)">Cerrar</button>
-                <button type="button" class="b b-pri" [disabled]="!textoPegado.trim()" (click)="leerPegado()">Llenar el pedido</button>
+                <button type="button" class="b b-pri" [disabled]="!textoPegado.trim() || leyendoIa()" (click)="leerPegado()">{{ leyendoIa() ? 'Leyendo con IA…' : 'Llenar el pedido' }}</button>
               </div>
               @if (resumenPegado(); as r) {
                 <div class="pegar-res" role="status">
-                  @if (r.llenos.length) { <p><ion-icon name="checkmark-circle" aria-hidden="true"></ion-icon>Llené: {{ r.llenos.join(', ') }}.</p> }
+                  @if (r.llenos.length) { <p><ion-icon name="checkmark-circle" aria-hidden="true"></ion-icon>{{ r.ia ? 'Leído con IA. ' : '' }}Llené: {{ r.llenos.join(', ') }}.</p> }
                   @if (r.revisar.length) { <p class="rev"><ion-icon name="warning" aria-hidden="true"></ion-icon>Revisa a mano: {{ r.revisar.join(' · ') }}</p> }
                 </div>
               }
@@ -719,7 +719,7 @@ export class NuevoPedidoPage implements OnInit {
   // ---------- Pegar pedido de WhatsApp ----------
   pegando = signal(false);
   textoPegado = '';
-  resumenPegado = signal<{ llenos: string[]; revisar: string[] } | null>(null);
+  resumenPegado = signal<{ llenos: string[]; revisar: string[]; ia?: boolean } | null>(null);
 
   async pegarDelPortapapeles(): Promise<void> {
     try {
@@ -730,9 +730,47 @@ export class NuevoPedidoPage implements OnInit {
     }
   }
 
+  leyendoIa = signal(false);
+
+  /** La IA (Gemini) lee el mensaje; si no responde, se lee por palabras */
+  private async leerConIa(): Promise<ReturnType<typeof leerPedido<Producto, { barrio: string; domicilio: number }>> | null> {
+    try {
+      const espera = new Promise<null>((ok) => setTimeout(() => ok(null), 15000));
+      const pedido = this.sb.client.functions.invoke('ia', {
+        body: { accion: 'leer_pedido', texto: this.textoPegado, productos: this.productos().map((p) => ({ id: p.id, nombre: p.nombre })), barrios: this.barrios().map((b) => b.barrio) },
+      }).then(({ data, error }) => (error ? null : data));
+      const d = (await Promise.race([pedido, espera])) as {
+        telefono?: string | null; nombre?: string | null; direccion?: string | null; barrio?: string | null; observaciones?: string | null;
+        items?: { producto_id: number; cantidad: number; color?: string | null; talla?: string | null }[]; no_entendido?: string[];
+      } | null;
+      if (!d || typeof d !== 'object') return null;
+      const porId = new Map(this.productos().map((p) => [p.id, p]));
+      const nb = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+      const barrio = d.barrio ? this.barrios().find((b) => nb(b.barrio) === nb(d.barrio!)) ?? null : null;
+      const tel = (d.telefono ?? '').replace(/\D/g, '').replace(/^57(?=3\d{9}$)/, '');
+      return {
+        telefono: /^3\d{9}$/.test(tel) ? tel : null,
+        nombre: d.nombre?.trim() || null,
+        direccion: d.direccion?.trim() || null,
+        barrio,
+        barrioTexto: barrio ? null : d.barrio?.trim() || null,
+        observaciones: d.observaciones?.trim() || null,
+        items: (d.items ?? []).filter((i) => porId.has(Number(i.producto_id))).map((i) => ({
+          producto: porId.get(Number(i.producto_id))!, cantidad: Math.max(1, Math.min(99, Math.round(Number(i.cantidad) || 1))), texto: '',
+        })),
+        sinEntender: (d.no_entendido ?? []).filter((x) => typeof x === 'string' && x.trim()),
+      };
+    } catch {
+      return null;
+    }
+  }
+
   /** Lee el mensaje y llena lo que entienda; lo demás queda para revisar */
   async leerPegado(): Promise<void> {
-    const r = leerPedido(this.textoPegado, this.productos(), this.barrios());
+    this.leyendoIa.set(true);
+    const ia = await this.leerConIa();
+    this.leyendoIa.set(false);
+    const r = ia ?? leerPedido(this.textoPegado, this.productos(), this.barrios());
     const llenos: string[] = [];
     const revisar: string[] = [];
     if (r.telefono) { this.cambioTelefono(r.telefono); llenos.push('celular'); }
@@ -751,7 +789,7 @@ export class NuevoPedidoPage implements OnInit {
     if (r.sinEntender.length) revisar.push('no entendí "' + r.sinEntender.slice(0, 3).join('", "') + '"');
     if (!r.telefono) revisar.push('falta el celular');
     if (!r.items.length) revisar.push('agrega los productos');
-    this.resumenPegado.set({ llenos, revisar });
+    this.resumenPegado.set({ llenos, revisar, ia: !!ia });
     // Con el celular se buscan los datos del cliente si ya compró (solo llena lo que falte)
     if (r.telefono) await this.buscarCliente();
   }

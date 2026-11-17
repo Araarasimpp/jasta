@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-11-17-ia",
+    "fecha": "2026-11-17",
+    "hora": "13:30",
+    "titulo": "La app ahora usa inteligencia artificial",
+    "cuerpo": "\"Pegar pedido de WhatsApp\" ahora lee el mensaje con inteligencia artificial: entiende mensajes desordenados, plurales y errores de escritura, y encuentra el producto correcto. En Productos, el botón \"Escribir con IA\" escribe la descripción para el catálogo; la puedes editar antes de guardar.",
+    "roles": [
+      "admin",
+      "vendedora"
+    ]
+  },
+  {
     "id": "2026-11-17-pegar-pedido",
     "fecha": "2026-11-17",
     "hora": "13:05",

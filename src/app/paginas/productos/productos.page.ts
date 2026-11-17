@@ -37,6 +37,9 @@ const VACIO: Omit<Producto, 'id'> = {
   imports: [PesosDirective, EsqueletoComponent, FormsModule, IonIcon, ColoresProductoComponent, ElegirFotoComponent, FotosProductoComponent, TallasProductoComponent, VideosProductoComponent, CargaMasivaComponent, VariantesAgotadasComponent],
   styles: [
     `
+      .ia-btn { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; margin-top: 6px; height: 32px; padding: 0 12px; border: 1px solid var(--accent-soft);
+        border-radius: 999px; background: var(--accent-wash); color: var(--accent); font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; }
+      .ia-btn:disabled { opacity: .55; cursor: progress; }
       .tonos { display: inline-flex; gap: 3px; margin-left: 8px; vertical-align: middle; }
       .tonos span { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 0 1px var(--border-strong); }
       .colores-sec { padding-top: 6px; display: flex; flex-direction: column; gap: 4px; }
@@ -152,7 +155,9 @@ const VACIO: Omit<Producto, 'id'> = {
           <label class="check"><input type="checkbox" [(ngModel)]="f.controla_stock" />Controlar inventario (descuenta al entregar)</label>
           <label class="check"><input type="checkbox" [(ngModel)]="f.activo" />Activo (aparece al crear pedidos)</label>
           <div class="campo"><label for="pd">Descripción <small class="suave">(sale en el catálogo)</small></label>
-            <textarea id="pd" rows="3" [(ngModel)]="f.descripcion" placeholder="Ej: color sujeto a disponibilidad, medidas, material…"></textarea></div>
+            <textarea id="pd" rows="3" [(ngModel)]="f.descripcion" placeholder="Ej: color sujeto a disponibilidad, medidas, material…"></textarea>
+            <button type="button" class="ia-btn" [disabled]="escribiendoIa() || !f.nombre.trim()" (click)="escribirDescripcion(f)">
+              <ion-icon name="sparkles" aria-hidden="true"></ion-icon>{{ escribiendoIa() ? 'Escribiendo…' : f.descripcion?.trim() ? 'Escribir otra con IA' : 'Escribir con IA' }}</button></div>
           <div class="campo">
             <span class="etq">Foto principal</span>
             <app-elegir-foto [url]="f.imagen_url" [titulo]="f.nombre" (cambio)="f.imagen_url = $event"></app-elegir-foto>
@@ -286,6 +291,20 @@ export class ProductosPage implements OnInit {
     this.editId.set(p.id);
     const { id: _id, ...resto } = p;
     this.form.set({ ...resto, imagenes: [...(p.imagenes ?? [])], tallas: [...(p.tallas ?? [])], videos: [...(p.videos ?? [])] });
+  }
+
+  /** Descripción escrita por la IA (Gemini) con el nombre, la categoría y los colores; se puede editar */
+  escribiendoIa = signal(false);
+  async escribirDescripcion(f: Omit<Producto, 'id'>): Promise<void> {
+    this.escribiendoIa.set(true);
+    const { data, error } = await this.sb.client.functions.invoke('ia', {
+      body: { accion: 'descripcion', nombre: f.nombre, categoria: f.categoria ?? null, colores: (f.colores ?? []).map((c) => c.nombre) },
+    });
+    this.escribiendoIa.set(false);
+    const texto = (data as { texto?: string } | null)?.texto;
+    if (error || !texto) return this.toast.error('La IA no respondió. Intenta de nuevo en un momento.');
+    f.descripcion = texto;
+    this.form.set({ ...f });
   }
 
   async guardar(f: Omit<Producto, 'id'>): Promise<void> {
