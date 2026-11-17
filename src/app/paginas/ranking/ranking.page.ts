@@ -87,7 +87,8 @@ function ultimosMeses(): { id: string; label: string }[] {
       .medalla { font-size: 30px; line-height: 1; }
       .escalon[data-puesto='1'] .medalla { font-size: 40px; position: relative; animation: corona 2.6s ease-in-out .8s infinite; }
       /* El primer puesto: la medalla flota y brilla */
-      .escalon[data-puesto='1'] .medalla::after { content: '👑'; position: absolute; left: 50%; top: -22px; font-size: 22px; transform: translateX(-50%) rotate(-8deg);
+      .escalon[data-puesto='1'] .medalla::after { content: ''; position: absolute; left: 50%; top: -20px; width: 24px; height: 18px; background: #facc15;
+        -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 18'%3E%3Cpath d='M2 15 0 3l6.5 5L12 0l5.5 8L24 3l-2 12z'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 18'%3E%3Cpath d='M2 15 0 3l6.5 5L12 0l5.5 8L24 3l-2 12z'/%3E%3C/svg%3E") center / contain no-repeat; transform: translateX(-50%) rotate(-8deg);
         animation: brillo-corona 2.6s ease-in-out .8s infinite; }
       @keyframes corona { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
       @keyframes brillo-corona { 0%, 100% { filter: drop-shadow(0 0 0 rgba(250, 204, 21, 0)); } 50% { filter: drop-shadow(0 0 6px rgba(250, 204, 21, .9)); } }

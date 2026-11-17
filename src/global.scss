@@ -510,3 +510,13 @@ app-tienda .t-pantalla .t-fotos > img:first-child { view-transition-name: foto-p
 html.vt-foto::view-transition-old(root), html.vt-foto::view-transition-new(root) { animation: none; }
 ::view-transition-group(foto-prod) { animation-duration: 0.38s; animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1); }
 @media (prefers-reduced-motion: reduce) { .llenar { animation: none; } }
+// Tienda: al deslizar las fotos del producto, la que sale se achica un poco (profundidad)
+@supports (animation-timeline: view()) {
+  app-tienda .t-fotos > img { animation: foto-profundidad linear both; animation-timeline: view(inline); }
+  @keyframes foto-profundidad {
+    0% { transform: scale(0.86); opacity: 0.5; }
+    35%, 65% { transform: none; opacity: 1; }
+    100% { transform: scale(0.86); opacity: 0.5; }
+  }
+}
+@media (prefers-reduced-motion: reduce) { app-tienda .t-fotos > img { animation: none; } }

@@ -790,8 +790,8 @@ export class ChatPedidoComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   resumen(m: Mensaje): string {
-    if (m.tipo === 'foto') return '📷 Foto' + (m.texto ? ' · ' + m.texto : '');
-    if (m.tipo === 'audio') return '🎤 Nota de voz · ' + minSeg(m.duracion || 0);
+    if (m.tipo === 'foto') return 'Foto' + (m.texto ? ' · ' + m.texto : '');
+    if (m.tipo === 'audio') return 'Nota de voz · ' + minSeg(m.duracion || 0);
     return m.texto;
   }
 

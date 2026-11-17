@@ -198,3 +198,78 @@ export class AparecerDirective implements OnInit, OnDestroy {
     this.io?.disconnect();
   }
 }
+
+/** Sacudida de "algo falta" (formulario incompleto) */
+export function sacudir(el: Element | null | undefined): void {
+  if (!el || movimientoReducido()) return;
+  (el as HTMLElement).animate(
+    [{ transform: 'translateX(0)' }, { transform: 'translateX(-8px)' }, { transform: 'translateX(7px)' }, { transform: 'translateX(-5px)' },
+      { transform: 'translateX(3px)' }, { transform: 'translateX(0)' }],
+    { duration: 420, easing: 'ease-in-out' }
+  );
+}
+
+/** Capa encima de todo que se quita sola */
+function capa(html: string, ms: number): HTMLElement {
+  const c = document.createElement('div');
+  c.setAttribute('aria-hidden', 'true');
+  Object.assign(c.style, { position: 'fixed', inset: '0', zIndex: '3000', display: 'grid', placeItems: 'center', pointerEvents: 'none' });
+  c.innerHTML = html;
+  document.body.appendChild(c);
+  setTimeout(() => c.remove(), ms);
+  return c;
+}
+
+/** Check verde grande que aparece y se va (como el datáfono al pagar) */
+export function exito(texto = ''): void {
+  if (movimientoReducido() || typeof document === 'undefined') return;
+  const c = capa(`
+    <div style="display:grid;place-items:center;gap:10px">
+      <svg viewBox="0 0 52 52" width="104" height="104" style="filter:drop-shadow(0 8px 24px rgba(0,0,0,.25))">
+        <circle cx="26" cy="26" r="25" fill="#16a34a"/>
+        <path d="M15 27l7 7 15-16" fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="40" stroke-dashoffset="40"/>
+      </svg>
+      ${texto ? `<span style="padding:6px 14px;border-radius:999px;background:rgba(15,23,42,.85);color:#fff;font:600 15px system-ui,sans-serif">${texto.replace(/</g, '&lt;')}</span>` : ''}
+    </div>`, 1300);
+  const caja = c.firstElementChild as HTMLElement;
+  caja.animate([{ transform: 'scale(.4)', opacity: 0 }, { transform: 'scale(1.08)', opacity: 1, offset: 0.35 }, { transform: 'scale(1)', opacity: 1, offset: 0.5 },
+    { transform: 'scale(1)', opacity: 1, offset: 0.8 }, { transform: 'scale(.9)', opacity: 0 }], { duration: 1250, easing: 'ease-out' });
+  c.querySelector('path')?.animate([{ strokeDashoffset: 40 }, { strokeDashoffset: 0 }], { duration: 350, delay: 260, fill: 'forwards', easing: 'ease-out' });
+}
+
+/** Monedas que caen en la alcancía (cuadre confirmado) */
+export function monedasAlcancia(): void {
+  if (movimientoReducido() || typeof document === 'undefined') return;
+  const moneda = (x: number) => `<svg class="mo" viewBox="0 0 24 24" width="26" height="26" style="position:absolute;left:${x}px;top:-40px">
+      <circle cx="12" cy="12" r="11" fill="#f59e0b" stroke="#b45309" stroke-width="1.5"/><circle cx="12" cy="12" r="7" fill="none" stroke="#fde68a" stroke-width="1.5"/></svg>`;
+  const c = capa(`
+    <div style="position:relative;width:150px;height:150px">
+      ${moneda(50)}${moneda(70)}${moneda(90)}
+      <svg viewBox="0 0 64 64" width="150" height="150" style="position:absolute;inset:0;filter:drop-shadow(0 8px 20px rgba(0,0,0,.25))">
+        <ellipse cx="32" cy="38" rx="24" ry="18" fill="#ec4899"/>
+        <circle cx="50" cy="34" r="7" fill="#f472b6"/><circle cx="52" cy="33" r="1.4" fill="#831843"/><circle cx="49" cy="33" r="1.4" fill="#831843"/>
+        <circle cx="38" cy="30" r="2" fill="#1f2937"/>
+        <path d="M14 26l-4-8 9 4z" fill="#db2777"/>
+        <rect x="18" y="52" width="6" height="8" rx="2" fill="#db2777"/><rect x="38" y="52" width="6" height="8" rx="2" fill="#db2777"/>
+        <rect x="26" y="20" width="12" height="3" rx="1.5" fill="#831843"/>
+      </svg>
+    </div>`, 1700);
+  const caja = c.firstElementChild as HTMLElement;
+  caja.animate([{ transform: 'scale(.6)', opacity: 0 }, { transform: 'scale(1)', opacity: 1, offset: 0.2 }, { transform: 'scale(1)', opacity: 1, offset: 0.85 },
+    { transform: 'scale(.9)', opacity: 0 }], { duration: 1650 });
+  c.querySelectorAll<SVGElement>('.mo').forEach((m, i) =>
+    m.animate([{ transform: 'translateY(0)', opacity: 0 }, { opacity: 1, offset: 0.2 }, { transform: 'translateY(78px) scale(.6)', opacity: 0 }],
+      { duration: 650, delay: 250 + i * 200, easing: 'cubic-bezier(.5,0,.8,.6)', fill: 'both' }));
+  setTimeout(() => saltar(caja.querySelector('svg:last-child'), 1.08), 900);
+}
+
+/** La campanita se mueve cuando llega un aviso */
+export function campanita(el: Element | null | undefined): void {
+  if (!el || movimientoReducido()) return;
+  (el as HTMLElement).style.transformOrigin = 'top center';
+  (el as HTMLElement).animate(
+    [{ transform: 'rotate(0)' }, { transform: 'rotate(18deg)' }, { transform: 'rotate(-15deg)' }, { transform: 'rotate(11deg)' },
+      { transform: 'rotate(-7deg)' }, { transform: 'rotate(3deg)' }, { transform: 'rotate(0)' }],
+    { duration: 900, easing: 'ease-in-out' }
+  );
+}

@@ -67,6 +67,17 @@ function finMes(): string {
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
+      .amanecer { display: flex; align-items: center; gap: 14px; padding: 10px 16px 10px 10px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: var(--radius-lg);
+        background: var(--surface); overflow: hidden; }
+      .amanecer svg { width: 120px; height: 64px; flex-shrink: 0; border-radius: 10px; }
+      .amanecer strong { display: block; font-size: 15px; }
+      .amanecer small { display: block; font-size: 13px; color: var(--text-soft); }
+      /* El sol sale y los rayos giran despacio */
+      .amanecer .sol { animation: sale-sol 1.6s cubic-bezier(.2,.8,.2,1) both; }
+      .amanecer .rayos { transform-origin: 60px 52px; animation: rayos 6s linear 1.6s infinite; }
+      @keyframes sale-sol { from { transform: translateY(26px); } }
+      @keyframes rayos { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+      @media (prefers-reduced-motion: reduce) { .amanecer .sol, .amanecer .rayos { animation: none; } }
       .page { max-width: 1560px; }
       /* Tablero: en el computador, cuadrícula de 12 columnas como un panel de control */
       .dash { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
@@ -186,6 +197,20 @@ function finMes(): string {
 
       <div class="dash">
       <!-- Hoy -->
+      @if (!cargando() && r() && !r()!.pedidos) {
+        <section class="amanecer" aria-label="Todavía no hay pedidos hoy">
+          <svg viewBox="0 0 120 64" aria-hidden="true">
+            <defs><linearGradient id="cielo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fde68a" stop-opacity=".0"/><stop offset="1" stop-color="#fdba74" stop-opacity=".55"/></linearGradient></defs>
+            <rect width="120" height="64" fill="url(#cielo)"/>
+            <g class="sol"><circle cx="60" cy="52" r="15" fill="#f59e0b"/>
+              <g stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" class="rayos">
+                <path d="M60 28v-7"/><path d="M42 35l-5-5"/><path d="M78 35l5-5"/><path d="M36 50h-7"/><path d="M84 50h7"/></g></g>
+            <path d="M0 52h120v12H0z" fill="var(--surface)"/>
+            <path d="M0 52h120" stroke="var(--border-strong)" stroke-width="1.5"/>
+          </svg>
+          <div><strong>Hoy todavía no hay pedidos</strong><small>El día apenas empieza. ¡A vender!</small></div>
+        </section>
+      }
       <div class="kpis a-hoy" role="list" [attr.aria-busy]="cargando()">
         <div class="kpi kpi-principal" role="listitem">
           <span class="kpi-label">Ganancia tienda hoy</span>

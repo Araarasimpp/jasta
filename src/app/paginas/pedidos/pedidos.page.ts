@@ -1,4 +1,4 @@
-import { movimientoReducido, saltar } from '../../shared/animar/animar';
+import { exito, movimientoReducido, saltar } from '../../shared/animar/animar';
 import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -88,6 +88,11 @@ export class PedidosPage implements OnInit, OnDestroy {
   // Se abre en Pendientes: es lo que hay que atender primero
   filtro = signal<Filtro>('por_alistar');
   filas = signal<Pedido[]>([]);
+  /** Pedidos que acaban de entrar en vivo (se resaltan unos segundos) */
+  recien = signal(new Set<number>());
+  private idsVistos: Set<number> | null = null;
+  private filtroVisto: string | null = null;
+  private timerRecien?: ReturnType<typeof setTimeout>;
   totalCerrados = signal(0);
   pagina = signal(0);
   cargando = signal(true);
@@ -219,6 +224,7 @@ export class PedidosPage implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    clearTimeout(this.timerRecien);
     this.subParams?.unsubscribe();
     this.dejarDeEscuchar?.();
     clearTimeout(this.timer);
@@ -252,7 +258,20 @@ export class PedidosPage implements OnInit, OnDestroy {
         this.ps.ordenAlistados(),
         this.ps.ordenEnRuta(),
       ]);
-      this.filas.set([...(a?.filas ?? []), ...(c?.filas ?? [])]);
+      const nuevas = [...(a?.filas ?? []), ...(c?.filas ?? [])];
+      // Pedidos que entraron mientras se miraba la lista (mismo filtro): llegan con un brillo
+      const antes = this.idsVistos;
+      if (antes && this.filtroVisto === f) {
+        const llegaron = nuevas.filter((p) => !antes.has(p.id) && p.estado === 'por_alistar').map((p) => p.id);
+        if (llegaron.length) {
+          this.recien.set(new Set(llegaron));
+          clearTimeout(this.timerRecien);
+          this.timerRecien = setTimeout(() => this.recien.set(new Set()), 4000);
+        }
+      }
+      this.idsVistos = new Set(nuevas.map((p) => p.id));
+      this.filtroVisto = f;
+      this.filas.set(nuevas);
       this.totalCerrados.set(c?.total ?? 0);
       this.conteos.set({ ...conteos, todos: Object.values(conteos).reduce((s, n) => s + n, 0) });
       this.ordenAlistado.set(orden);
@@ -380,7 +399,7 @@ export class PedidosPage implements OnInit, OnDestroy {
   async alistar(lista: Pedido[]): Promise<void> {
     this.menuAbierto.set(null);
     const enOrden = [...lista].sort((a, b) => a.created_at.localeCompare(b.created_at));
-    await this.enLote(enOrden, (p) => this.ps.cambiarEstado(p.id, 'alistado'), 'alistado(s)');
+    await this.enLote(enOrden, (p) => this.ps.cambiarEstado(p.id, 'alistado'), 'alistado(s)', true);
   }
 
   async quitarAlistado(p: Pedido): Promise<void> {
@@ -456,7 +475,7 @@ export class PedidosPage implements OnInit, OnDestroy {
     await this.enLote([p], (x) => this.ps.eliminar(x.id), 'eliminado(s)');
   }
 
-  private async enLote(lista: Pedido[], accion: (p: Pedido) => Promise<void>, texto: string): Promise<void> {
+  private async enLote(lista: Pedido[], accion: (p: Pedido) => Promise<void>, texto: string, conCheck = false): Promise<void> {
     if (!lista.length || this.ocupado()) return;
     this.ocupado.set(true);
     let ok = 0;
@@ -475,6 +494,7 @@ export class PedidosPage implements OnInit, OnDestroy {
     if (errores.length) this.toast.error(errores.slice(0, 2).join(' · '));
     else this.toast.ok(lista.length === 1 ? `#${lista[0].id} ${texto.replace('(s)', '')}` : `${ok} pedidos ${texto.replace('(s)', 's')}`);
     this.sel.set(new Set());
+    if (conCheck && hechos.length && !errores.length) exito(hechos.length === 1 ? 'Alistado' : hechos.length + ' alistados');
     await this.salir(hechos);
     await this.cargar();
   }

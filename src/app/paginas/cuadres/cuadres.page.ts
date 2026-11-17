@@ -1,3 +1,4 @@
+import { monedasAlcancia } from '../../shared/animar/animar';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
@@ -390,6 +391,7 @@ export class CuadresPage implements OnInit {
     this.confirmando.set(c.id);
     try {
       await this.ps.confirmarCuadre(c.id);
+      monedasAlcancia();
       this.toast.ok(`Cuadre de ${c.mensajero?.nombre ?? 'el mensajero'} confirmado`);
       await this.cargar();
     } catch (e) {

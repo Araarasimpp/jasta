@@ -5,6 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import { add, bookOutline, chatbubbleEllipses, chatbubblesOutline, chevronForward } from 'ionicons/icons';
+import { flame } from 'ionicons/icons';
 import { BarController, BarElement, CategoryScale, Chart, LinearScale, Tooltip } from 'chart.js';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { PedidosService } from '../../core/services/pedidos.service';
@@ -81,6 +82,16 @@ const POR_PAGINA = 20;
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
+      .racha { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: var(--radius-lg); border: 1px solid var(--border);
+        background: linear-gradient(90deg, color-mix(in srgb, #f97316 calc(8% + var(--fuerza) * 14%), var(--surface)), var(--surface)); }
+      .racha strong { display: block; font-size: 15px; }
+      .racha small { display: block; font-size: 12.5px; color: var(--text-soft); }
+      /* La llama crece con los días seguidos y titila */
+      .llama { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; color: #f97316;
+        font-size: calc(24px + var(--fuerza) * 16px); filter: drop-shadow(0 0 calc(var(--fuerza) * 8px) rgba(249, 115, 22, .7)); }
+      .llama ion-icon { transform-origin: bottom center; animation: titila 1.3s ease-in-out infinite; }
+      @keyframes titila { 0%, 100% { transform: scale(1) rotate(-2deg); } 30% { transform: scale(1.08, 1.12) rotate(2deg); } 60% { transform: scale(.96, 1.04) rotate(-1deg); } }
+      @media (prefers-reduced-motion: reduce) { .llama ion-icon { animation: none; } }
       .page { max-width: 1100px; }
       .head .acciones { display: flex; gap: 8px; }
       .head .acciones ion-icon { font-size: 17px; }
@@ -178,6 +189,15 @@ const POR_PAGINA = 20;
         </div>
       </div>
 
+      @if (racha(); as r) {
+        @if (r.dias >= 2) {
+          <section class="racha" [style.--fuerza]="fuerzaRacha()" aria-label="Racha de ventas">
+            <span class="llama" aria-hidden="true"><ion-icon name="flame"></ion-icon></span>
+            <div><strong>{{ r.dias }} días seguidos vendiendo</strong>
+              <small>{{ r.hoy ? '¡Sigue así! Mañana la racha sube a ' + (r.dias + 1) + '.' : 'Vende hoy para no perder tu racha.' }}</small></div>
+          </section>
+        }
+      }
       <app-mi-meta></app-mi-meta>
 
       <!-- Rango de las ganancias -->
@@ -389,7 +409,7 @@ export class MiPanelPage implements OnInit, OnDestroy {
   private consulta = 0;
 
   constructor() {
-    addIcons({ add, bookOutline, chatbubbleEllipses, chatbubblesOutline, chevronForward });
+    addIcons({ add, bookOutline, chatbubbleEllipses, chatbubblesOutline, chevronForward, flame });
     // Llega un mensaje nuevo (aviso) → se actualizan las conversaciones
     let antes = -1;
     effect(() => {
@@ -398,6 +418,10 @@ export class MiPanelPage implements OnInit, OnDestroy {
       antes = n;
     });
   }
+
+  /** Días seguidos con al menos una venta (la llama crece con la racha) */
+  racha = signal<{ dias: number; hoy: boolean } | null>(null);
+  fuerzaRacha = computed(() => Math.min(1, ((this.racha()?.dias ?? 0) - 1) / 13));
 
   ngOnInit(): void {
     // Desde un aviso llega ?id=…&chat=1: se abre el pedido (y su conversación)
@@ -410,6 +434,7 @@ export class MiPanelPage implements OnInit, OnDestroy {
     });
     this.usarAtajo('mes');
     void this.cargarConvs();
+    void this.sb.client.rpc('mi_racha').then(({ data }) => { if (data) this.racha.set(data as { dias: number; hoy: boolean }); });
     // Cambios en los pedidos (alistado, en ruta, entregado…) actualizan el panel
     this.dejarDeEscuchar = this.ps.escuchar(() => {
       clearTimeout(this.timer);

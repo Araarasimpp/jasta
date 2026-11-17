@@ -895,7 +895,7 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   private celebrarSiTermino(): void {
     if (this.rutaOrdenada().length === 0) {
       confeti();
-      this.toast.ok('¡Terminaste tu ruta! 🎉');
+      this.toast.ok('¡Terminaste tu ruta!');
     }
   }
 

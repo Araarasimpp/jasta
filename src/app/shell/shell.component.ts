@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { campanita } from '../shared/animar/animar';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { entradaEnCascada } from '../core/cascada';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { NgTemplateOutlet } from '@angular/common';
@@ -198,7 +199,7 @@ const MENU: ItemMenu[] = [
               <ion-icon [name]="theme.isDark() ? 'sunny-outline' : 'moon-outline'"></ion-icon></button>
             <a class="vd-circ" routerLink="/app/tema" aria-label="Tema y fondo" title="Tema y fondo"><ion-icon name="color-palette-outline"></ion-icon></a>
             <button class="vd-circ" (click)="avisos.toggle()" [attr.aria-label]="'Avisos' + (avisos.noLeidas() ? ', ' + avisos.noLeidas() + ' sin leer' : '')">
-              <ion-icon name="notifications-outline"></ion-icon>
+              <ion-icon class="campana" name="notifications-outline"></ion-icon>
               @if (avisos.noLeidas()) { <span class="badge-num num">{{ avisos.noLeidas() > 9 ? '9+' : avisos.noLeidas() }}</span> }
             </button>
             <div class="vd-yo">
@@ -252,7 +253,7 @@ const MENU: ItemMenu[] = [
         }
         <button class="tab" [class.active]="avisos.abierto()" (click)="mas.set(false); avisos.toggle()" [attr.aria-expanded]="avisos.abierto()">
           <span class="icono-badge">
-            <ion-icon name="notifications-outline"></ion-icon>
+            <ion-icon class="campana" name="notifications-outline"></ion-icon>
             @if (avisos.noLeidas()) {
               <span class="badge-num num">{{ avisos.noLeidas() > 9 ? '9+' : avisos.noLeidas() }}</span>
             }
@@ -460,7 +461,16 @@ export class ShellComponent implements OnInit, OnDestroy {
     this.sb.roles().map((r) => ROLES.find((x) => x.id === r)?.label ?? r).join(' · ') || 'Sin rol asignado'
   );
 
+  /** Avisos sin leer de la vez anterior: si suben, la campanita se mueve */
+  private noLeidasAntes: number | null = null;
+
   constructor() {
+    effect(() => {
+      const n = this.avisos.noLeidas();
+      const antes = this.noLeidasAntes;
+      this.noLeidasAntes = n;
+      if (antes !== null && n > antes) setTimeout(() => document.querySelectorAll('.campana').forEach((c) => campanita(c)));
+    });
     addIcons({ lockClosedOutline, homeOutline, colorPaletteOutline, calendarOutline, hourglassOutline, swapHorizontalOutline, searchOutline, 
       sparklesOutline, globeOutline, helpBuoyOutline, chatbubblesOutline, analyticsOutline, add, close, chevronDownOutline, layersOutline, pricetagsOutline, returnDownBackOutline, pieChartOutline, alertCircleOutline, cardOutline, trendingDownOutline, barChartOutline, chevronBackOutline, chevronForwardOutline, cubeOutline, ellipsisHorizontal,
       logOutOutline, moonOutline, peopleOutline, receiptOutline, bicycleOutline, clipboardOutline, sunnyOutline, walletOutline, ticketOutline, statsChartOutline, settingsOutline,

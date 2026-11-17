@@ -93,7 +93,7 @@
             </div>
 
             @for (p of g.pedidos; track p.id) {
-              <div class="row row-grid" [attr.data-pedido]="p.id" [class.selected]="sel().has(p.id)" [class.closed]="!editable(p)">
+              <div class="row row-grid" [attr.data-pedido]="p.id" [class.recien]="recien().has(p.id)" [class.selected]="sel().has(p.id)" [class.closed]="!editable(p)">
                 @if (gestiona()) {
                   <span class="check-wrap">
                     <input type="checkbox" class="check" [checked]="sel().has(p.id)" (change)="alternar(p.id)" [attr.aria-label]="'Seleccionar pedido ' + p.id" />

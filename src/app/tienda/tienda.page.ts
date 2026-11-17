@@ -1,4 +1,4 @@
-import { AparecerDirective, confeti, latirCorazon, movimientoReducido, volarA } from '../shared/animar/animar';
+import { AparecerDirective, CuentaDirective, confeti, latirCorazon, movimientoReducido, sacudir, volarA } from '../shared/animar/animar';
 import { ChangeDetectorRef, Component, ElementRef, HostListener, OnInit, ViewChild, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -78,7 +78,7 @@ function parecido(a: string, b: string): number {
   standalone: true,
   // El diseño de la tienda (tarjetas, banner, carrito) está en global.scss bajo app-tienda.tv2
   host: { class: 'tv2' },
-  imports: [EsqueletoComponent, FormsModule, AparecerDirective],
+  imports: [EsqueletoComponent, FormsModule, AparecerDirective, CuentaDirective],
   styles: [
     `
       /* Ionic deja el body fijo y le pone contain: layout a la página (lo "fijo" queda pegado a ella):
@@ -108,6 +108,14 @@ function parecido(a: string, b: string): number {
       .foto img { width: 100%; height: 100%; object-fit: contain; padding: 8px; box-sizing: border-box; display: block; }
       .foto .ini { display: grid; place-items: center; width: 100%; height: 100%; background: var(--oro-wash); color: var(--oro-texto); font-size: 38px; font-weight: 650; }
       .prod.agot .foto img { opacity: .45; filter: grayscale(.6); }
+      .etq-agot { animation: sello .45s cubic-bezier(.2,1.5,.4,1) both; }
+      @keyframes sello { from { opacity: 0; transform: rotate(-14deg) scale(1.6); } }
+      .fc-desc.recien { animation: brillo-cupon 1.4s ease-out; border-radius: 8px; }
+      .fc-desc.recien .num { animation: baja-precio .6s cubic-bezier(.2,1.4,.4,1) both; display: inline-block; }
+      @keyframes brillo-cupon { 0% { background: color-mix(in srgb, var(--efectivo) 30%, transparent); } 100% { background: transparent; } }
+      @keyframes baja-precio { from { transform: translateY(-10px); opacity: 0; } }
+      .ico-cupon { vertical-align: -3px; }
+      @media (prefers-reduced-motion: reduce) { .etq-agot, .fc-desc.recien, .fc-desc.recien .num { animation: none; } }
       .etq-agot { position: absolute; top: 8px; left: 8px; padding: 3px 8px; border-radius: 6px; background: var(--danger); color: #fff; font-size: 11.5px; font-weight: 700; }
       .info { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px 12px; flex: 1; }
       .info h2 { margin: 0; font-size: 13.5px; font-weight: 600; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer; }
@@ -680,12 +688,12 @@ function parecido(a: string, b: string): number {
             <h3 id="fc-res">Resumen de compra</h3>
             <div class="fc-r"><span>{{ unidades() === 1 ? 'Producto' : 'Productos (' + unidades() + ')' }}</span><span class="num">{{ pesos(subtotal()) }}</span></div>
             <div class="fc-r"><span>Envío</span><span class="num">{{ domicilio() !== null ? (domicilio() ? pesos(domicilio()!) : 'Gratis') : '—' }}</span></div>
-            @if (descuento()) { <div class="fc-r fc-desc"><span>Cupón {{ cupon()!.codigo }}</span><span class="num">− {{ pesos(descuento()) }}</span></div> }
+            @if (descuento()) { <div class="fc-r fc-desc" [class.recien]="cuponRecien()"><span>Cupón {{ cupon()!.codigo }}</span><span class="num">− {{ pesos(descuento()) }}</span></div> }
             @if (enLinea()) { <div class="fc-r"><span>Costo del pago en línea</span><span class="num">{{ domicilio() !== null ? pesos(recargo()) : '—' }}</span></div> }
           <div class="tienda-cupon fc-cupon">
             @if (cupon(); as c) {
               <div class="cupon-ok">
-                <span>🎟️ Cupón <strong>{{ c.codigo }}</strong>{{ c.descripcion ? ' · ' + c.descripcion : '' }}
+                <span><svg class="ico-cupon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M3 6.5A1.5 1.5 0 0 1 4.5 5h15A1.5 1.5 0 0 1 21 6.5V9a2 2 0 0 0 0 4v2.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 15.5V13a2 2 0 0 0 0-4V6.5Zm6 1.5v1.5h1.5V8H9Zm0 3v1.5h1.5V11H9Zm0 3v1.5h1.5V14H9Z"/></svg> Cupón <strong>{{ c.codigo }}</strong>{{ c.descripcion ? ' · ' + c.descripcion : '' }}
                   @if (descuento()) { <small>Te ahorras {{ pesos(descuento()) }}</small> } @else { <small class="falta">Es para compras desde {{ pesos(c.minimo) }}</small> }</span>
                 <button type="button" class="link" (click)="quitarCupon()">Quitar</button>
               </div>
@@ -700,7 +708,7 @@ function parecido(a: string, b: string): number {
             }
           </div>
 
-            <div class="fc-r fc-total"><span>Total</span><span class="num">{{ pesos(total()) }}</span></div>
+            <div class="fc-r fc-total"><span>Total</span><span class="num" [cuenta]="total()" cuentaFormato="pesos" [cuentaMs]="600"></span></div>
             <p class="nota">{{ enLinea() ? 'Cuando se apruebe el pago, ' : 'Pagas al recibir. Antes de enviarlo, ' }}{{ t()?.vendedora ? primerNombre(t()!.vendedora!.nombre) : 'la tienda' }} te contacta para {{ enLinea() ? 'coordinar el envío' : 'confirmar tu pedido' }}.</p>
           </section>
           @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
@@ -720,6 +728,8 @@ function parecido(a: string, b: string): number {
 export class TiendaPage implements OnInit {
   sb = inject(SupabaseService);
   private cdr = inject(ChangeDetectorRef);
+  /** Se acaba de aplicar un cupón: su renglón brilla */
+  cuponRecien = signal(false);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   cli = inject(ClienteService);
@@ -824,6 +834,8 @@ export class TiendaPage implements OnInit {
     }
     this.cupon.set(data as Cupon);
     this.verCupon.set(false);
+    this.cuponRecien.set(true);
+    setTimeout(() => this.cuponRecien.set(false), 1600);
   }
 
   quitarCupon(): void {
@@ -1530,6 +1542,7 @@ export class TiendaPage implements OnInit {
       // Lleva al primer dato que falta
       const id = this.errNombre() ? 'tn' : this.errTel() ? 'tt' : this.errDir() ? 'td' : 'tb';
       document.getElementById(id)?.focus();
+      setTimeout(() => document.querySelectorAll('app-tienda .mal').forEach((e) => sacudir(e)));
       return this.error.set('Revisa los datos marcados en rojo.');
     }
     // Con tarjeta: primero la tarjeta (si es nueva, Wompi la convierte en token) y después el pedido

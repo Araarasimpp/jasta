@@ -1,6 +1,9 @@
 import { CuentaDirective, confeti, confetiUnaVez } from '../../shared/animar/animar';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { IonIcon } from '@ionic/angular';
+import { addIcons } from 'ionicons';
+import { cash, documentTextOutline, trophy } from 'ionicons/icons';
 import { PesosDirective } from '../../shared/pesos/pesos.directive';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
@@ -48,7 +51,7 @@ const normal = (s: string | null | undefined) => (s ?? '').normalize('NFD').repl
 @Component({
   selector: 'app-cierre-dia',
   standalone: true,
-  imports: [FormsModule, EsqueletoComponent, PesosDirective, CuentaDirective],
+  imports: [FormsModule, EsqueletoComponent, PesosDirective, CuentaDirective, IonIcon],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -123,7 +126,9 @@ const normal = (s: string | null | undefined) => (s ?? '').normalize('NFD').repl
       .ahorro-top small { display: block; font-size: 12px; color: var(--text-muted); }
       .ahorro-top strong { display: block; font-family: var(--mono-font); font-size: 28px; color: var(--st-pendiente-text); }
       .ahorro-top span { font-size: 13px; color: var(--text-soft); }
+      .logro, .nota-c { display: flex; align-items: center; gap: 6px; }
       .logro { color: var(--efectivo-texto); font-weight: 650; }
+      .billete ion-icon { color: #16a34a; font-size: 24px; }
       .mini-form { display: flex; flex-direction: column; gap: 10px; padding: 12px; border: 1px dashed var(--border-strong); border-radius: var(--radius); }
       .hist .v.neg { color: var(--danger); }
       .hist .quitar { display: block; margin-left: auto; font-size: 12px; color: var(--text-muted); }
@@ -170,13 +175,13 @@ const normal = (s: string | null | undefined) => (s ?? '').normalize('NFD').repl
               <div class="renglon merc"><span class="lbl">Mercancía (lo que costó lo vendido)</span><span class="punteado"></span><span class="val">− {{ pesos(c.mercancia) }}</span></div>
             }
             <div class="renglon total"><span class="lbl">Te quedó libre</span><span class="punteado"></span><span class="val" [cuenta]="c.libre" cuentaFormato="pesos"></span></div>
-            @if (c.nota) { <p class="ayuda" style="margin-top: 10px">📝 {{ c.nota }}</p> }
+            @if (c.nota) { <p class="ayuda nota-c" style="margin-top: 10px"><ion-icon name="document-text-outline" aria-hidden="true"></ion-icon>{{ c.nota }}</p> }
           </section>
           <div class="sobres" [class.llenando]="recienCerrado()" aria-label="Cómo repartir la plata">
-            <div class="sobre com"><small>Sobre comisiones</small><strong [cuenta]="c.comisiones" cuentaFormato="pesos"></strong><span class="billete" aria-hidden="true">💵</span></div>
-            <div class="sobre aho"><small>Sobre ahorro</small><strong [cuenta]="c.ahorro" cuentaFormato="pesos"></strong><span class="billete" aria-hidden="true">💵</span></div>
-            @if (+c.mercancia) { <div class="sobre merc"><small>Sobre mercancía</small><strong [cuenta]="c.mercancia" cuentaFormato="pesos"></strong><span class="billete" aria-hidden="true">💵</span></div> }
-            <div class="sobre lib"><small>Libre</small><strong [cuenta]="c.libre" cuentaFormato="pesos"></strong><span class="billete" aria-hidden="true">💵</span></div>
+            <div class="sobre com"><small>Sobre comisiones</small><strong [cuenta]="c.comisiones" cuentaFormato="pesos"></strong><span class="billete" aria-hidden="true"><ion-icon name="cash"></ion-icon></span></div>
+            <div class="sobre aho"><small>Sobre ahorro</small><strong [cuenta]="c.ahorro" cuentaFormato="pesos"></strong><span class="billete" aria-hidden="true"><ion-icon name="cash"></ion-icon></span></div>
+            @if (+c.mercancia) { <div class="sobre merc"><small>Sobre mercancía</small><strong [cuenta]="c.mercancia" cuentaFormato="pesos"></strong><span class="billete" aria-hidden="true"><ion-icon name="cash"></ion-icon></span></div> }
+            <div class="sobre lib"><small>Libre</small><strong [cuenta]="c.libre" cuentaFormato="pesos"></strong><span class="billete" aria-hidden="true"><ion-icon name="cash"></ion-icon></span></div>
           </div>
           <div class="botones"><button class="b" type="button" [disabled]="guardando()" (click)="anular(c)">Anular y volver a cerrar</button></div>
         } @else {
@@ -278,7 +283,7 @@ const normal = (s: string | null | undefined) => (s ?? '').normalize('NFD').repl
           </div>
           @if (meta()) {
             <div class="meta-barra oro" role="progressbar" [attr.aria-valuenow]="avanceMeta()" aria-valuemin="0" aria-valuemax="100" aria-label="Avance de la meta de ahorro"><i class="llenar" [style.width.%]="avanceMeta()"></i></div>
-            @if (avanceMeta() >= 100) { <p class="ayuda logro">🎉 ¡Cumplieron la meta de ahorro!</p> }
+            @if (avanceMeta() >= 100) { <p class="ayuda logro"><ion-icon name="trophy" aria-hidden="true"></ion-icon>¡Cumplieron la meta de ahorro!</p> }
           }
           @if (editandoMeta()) {
             <div class="mini-form">
@@ -418,6 +423,7 @@ export class CierreDiaPage {
   });
 
   constructor() {
+    addIcons({ cash, documentTextOutline, trophy });
     void this.cargar();
   }
 

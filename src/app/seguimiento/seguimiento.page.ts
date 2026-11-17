@@ -1,5 +1,8 @@
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { IonIcon } from '@ionic/angular';
+import { addIcons } from 'ionicons';
+import { bicycle, checkmark, cube } from 'ionicons/icons';
 import { ActivatedRoute } from '@angular/router';
 import { SupabaseService } from '../core/services/supabase.service';
 import { pesos } from '../shared/formato';
@@ -44,7 +47,7 @@ interface Seguimiento {
 @Component({
   selector: 'app-seguimiento',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, IonIcon],
   styles: [
     `
       /* Ionic deja el body fijo y sin desplazamiento: la página pública es su propio contenedor con scroll */
@@ -67,7 +70,17 @@ interface Seguimiento {
       .paso:last-child { padding-bottom: 0; }
       .paso::before { content: ''; position: absolute; left: 13px; top: 28px; bottom: 0; width: 2px; background: var(--border); }
       .paso:last-child::before { display: none; }
-      .paso.hecho::before { background: var(--oro); }
+      .paso.hecho::before { background: var(--oro); transform-origin: top; animation: linea-llena .45s ease-out both; animation-delay: calc(var(--k) * .35s + .2s); }
+      .paso.hecho .punto, .paso.actual .punto { animation: punto-pop .35s cubic-bezier(.2,1.5,.4,1) both; animation-delay: calc(var(--k) * .35s); }
+      .paso.actual .punto { animation: punto-pop .35s cubic-bezier(.2,1.5,.4,1) both, punto-late 1.8s ease-in-out infinite; animation-delay: calc(var(--k) * .35s), 1.4s; }
+      .punto ion-icon { font-size: 15px; }
+      /* Va en camino: la bicicleta avanza sobre la línea */
+      .punto .viaja { font-size: 17px; animation: viaja 1.1s ease-in-out infinite; }
+      @keyframes linea-llena { from { transform: scaleY(0); } }
+      @keyframes punto-pop { from { transform: scale(.3); opacity: 0; } }
+      @keyframes punto-late { 0%, 100% { box-shadow: 0 0 0 5px var(--oro-wash); } 50% { box-shadow: 0 0 0 9px var(--oro-wash); } }
+      @keyframes viaja { 0%, 100% { transform: translateX(-2px) rotate(-3deg); } 50% { transform: translateX(2px) translateY(-1px) rotate(2deg); } }
+      @media (prefers-reduced-motion: reduce) { .paso.hecho::before, .paso .punto, .punto .viaja { animation: none !important; } }
       .punto { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; border: 2px solid var(--border-strong); background: var(--surface);
         font-size: 14px; color: var(--text-muted); z-index: 1; }
       .paso.hecho .punto { border-color: var(--oro); background: var(--oro); color: #1a1408; }
@@ -183,9 +196,12 @@ interface Seguimiento {
         @if (p.estado !== 'cancelado' && p.canal !== 'local') {
           <section class="tarjeta">
             <ol class="pasos">
-              @for (paso of pasos(); track paso.titulo) {
-                <li class="paso" [class.hecho]="paso.hecho" [class.actual]="paso.actual">
-                  <span class="punto" aria-hidden="true">{{ paso.hecho ? '✓' : '' }}</span>
+              @for (paso of pasos(); track paso.titulo; let k = $index) {
+                <li class="paso" [class.hecho]="paso.hecho" [class.actual]="paso.actual" [style.--k]="k">
+                  <span class="punto" aria-hidden="true">
+                    @if (paso.hecho) { <ion-icon name="checkmark"></ion-icon> }
+                    @else if (paso.actual && s()?.estado === 'despachado') { <ion-icon class="viaja" [name]="s()?.envio_nacional ? 'cube' : 'bicycle'"></ion-icon> }
+                  </span>
                   <div><strong>{{ paso.titulo }}</strong>@if (paso.detalle) {<small>{{ paso.detalle }}</small>}</div>
                 </li>
               }
@@ -376,6 +392,10 @@ export class SeguimientoPage implements OnInit, OnDestroy {
   verificandoPago = signal(false);
   abriendoPago = signal(false);
   errorPago = signal('');
+
+  constructor() {
+    addIcons({ bicycle, checkmark, cube });
+  }
 
   ngOnInit(): void {
     // Vuelve de pagar en Wompi (?id=transacción): se confirma el pago con Wompi

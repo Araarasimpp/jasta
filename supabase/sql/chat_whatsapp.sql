@@ -70,8 +70,8 @@ begin
   values (p_pedido, v_yo, coalesce(v_nombre, 'Alguien'), v_texto, p_responde, v_tipo, p_adjunto,
     case when v_tipo = 'audio' then least(greatest(coalesce(p_duracion, 0), 0), 3600) end)
   returning id into v_id;
-  v_aviso := case v_tipo when 'foto' then '📷 Foto' || case when v_texto <> '' then ': ' || v_texto else '' end
-    when 'audio' then '🎤 Nota de voz' else v_texto end;
+  v_aviso := case v_tipo when 'foto' then 'Foto' || case when v_texto <> '' then ': ' || v_texto else '' end
+    when 'audio' then 'Nota de voz' else v_texto end;
   -- Le llega a la vendedora y al mensajero; mientras no sale a ruta, también a alistamiento
   v_para := array[p.vendedora_id, p.mensajero_id];
   if p.estado in ('por_alistar', 'alistado') then
