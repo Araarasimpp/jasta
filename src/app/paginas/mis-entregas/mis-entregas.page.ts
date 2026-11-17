@@ -1,9 +1,10 @@
 import { JalarRecargarDirective, confeti } from '../../shared/animar/animar';
-import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { SinSenalService, esErrorDeRed } from '../../shared/sin-senal.service';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { qrCodeOutline, refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses, chatbubbleEllipsesOutline, alertCircleOutline } from 'ionicons/icons';
+import { qrCodeOutline, refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses, chatbubbleEllipsesOutline, alertCircleOutline, cloudOfflineOutline, cloudUploadOutline } from 'ionicons/icons';
 import { enlaceWhatsapp, productosDelPedido } from '../../shared/whatsapp';
 import { PedidosService } from '../../core/services/pedidos.service';
 import { EntregadoJyb, JybService, PedidoJyb, ResumenJyb } from '../../core/services/jyb.service';
@@ -39,6 +40,10 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
+      .sin-senal-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: var(--radius); background: color-mix(in srgb, #f59e0b 16%, var(--surface)); color: var(--st-pendiente-text); font-size: 13.5px; font-weight: 600; }
+      .sin-senal-bar.ok { background: var(--accent-wash); color: var(--accent); }
+      .sin-senal-bar ion-icon { font-size: 22px; flex-shrink: 0; }
+      .sin-senal-bar span { flex: 1; }
       /* La parada que sigue: su borde late suave */
       .tarjeta.siguiente { box-shadow: 0 0 0 2px var(--accent); animation: parada-late 2.4s ease-in-out infinite; }
       @keyframes parada-late { 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 30%, transparent); } }
@@ -115,6 +120,14 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
   ],
   template: `
     <div class="page" jalarRecargar (recargar)="cargar()">
+      @if (!sinSenal.enLinea() || sinSenal.pendientes().length) {
+        <div class="sin-senal-bar" [class.ok]="sinSenal.enLinea()" role="status">
+          <ion-icon [name]="sinSenal.enLinea() ? 'cloud-upload-outline' : 'cloud-offline-outline'" aria-hidden="true"></ion-icon>
+          <span>@if (!sinSenal.enLinea()) { Sin señal: tu ruta es la última que se cargó y lo que hagas se guarda en el celular. }
+            @if (sinSenal.pendientes().length) { {{ sinSenal.pendientes().length === 1 ? '1 cosa por enviar' : sinSenal.pendientes().length + ' cosas por enviar' }}{{ sinSenal.enviando() ? ' (enviando…)' : sinSenal.enLinea() ? '' : ': se envían solas al volver la señal' }}. }</span>
+          @if (sinSenal.enLinea() && sinSenal.pendientes().length && !sinSenal.enviando()) { <button type="button" class="b" (click)="sinSenal.sincronizar()">Enviar ya</button> }
+        </div>
+      }
       <div class="head">
         <div><h1>Mis entregas</h1></div>
         <div style="display: flex; gap: 8px">
@@ -524,7 +537,9 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   private timerJyb?: ReturnType<typeof setTimeout>;
 
   constructor() {
-    addIcons({ qrCodeOutline, refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses, chatbubbleEllipsesOutline, alertCircleOutline });
+    addIcons({ qrCodeOutline, refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses, chatbubbleEllipsesOutline, alertCircleOutline, cloudOfflineOutline, cloudUploadOutline });
+    // Cuando se envía lo guardado sin señal, la ruta se recarga
+    effect(() => { if (this.sinSenal.enviados()) void this.cargar(); });
   }
 
   ngOnInit(): void {
@@ -584,16 +599,33 @@ export class MisEntregasPage implements OnInit, OnDestroy {
         this.ps.cuadresPendientes(),
         this.sb.tiene('mensajero') && yo ? this.ps.cuadresPorConfirmar(yo) : Promise.resolve([]),
       ]);
-      this.enRuta.set(r);
+      this.enRuta.set(r.filter((p) => !this.sinSenal.idsPendientes().has(p.id)));
+      this.guardarCopia(r);
       this.pendientes.set(c);
       this.misPorConfirmar.set(pc);
       const dd = this.detalleDia();
       if (dd && this.sb.usuario()) this.detalle.set(await this.ps.pendientesDe(this.sb.usuario()!.id, dd));
     } catch (e) {
-      this.toast.error(mensajeError(e));
+      // Sin señal: se muestra la última ruta guardada en el celular
+      if (esErrorDeRed(e)) {
+        const copia = this.leerCopia();
+        if (copia) this.enRuta.set(copia.filter((p) => !this.sinSenal.idsPendientes().has(p.id)));
+      } else this.toast.error(mensajeError(e));
     } finally {
       this.cargando.set(false);
     }
+  }
+
+  // ---------- Modo sin señal ----------
+  sinSenal = inject(SinSenalService);
+  private claveCopia(): string {
+    return 'ruta-guardada:' + (this.sb.usuario()?.id ?? 0);
+  }
+  private guardarCopia(r: Pedido[]): void {
+    try { localStorage.setItem(this.claveCopia(), JSON.stringify(r)); } catch { /* sin espacio */ }
+  }
+  private leerCopia(): Pedido[] | null {
+    try { return JSON.parse(localStorage.getItem(this.claveCopia()) ?? 'null') as Pedido[] | null; } catch { return null; }
   }
 
   /** Si falla (sin señal, por ejemplo) se dejan los pedidos de Variedades JYB que ya se veían */
@@ -890,6 +922,13 @@ export class MisEntregasPage implements OnInit, OnDestroy {
 
   async alEntregar(p: Pedido): Promise<void> {
     this.entregando.set(null);
+    // Sin señal: sale de la ruta de una vez (se envía solo cuando vuelva)
+    if (this.sinSenal.idsPendientes().has(p.id)) {
+      this.enRuta.update((l) => l.filter((x) => x.id !== p.id));
+      this.toast.ok(`#${p.id} guardado: se envía cuando vuelva la señal`);
+      this.celebrarSiTermino();
+      return;
+    }
     this.toast.ok(`#${p.id} entregado`);
     await Promise.all([this.cargar(), this.cargarHechas()]);
     this.celebrarSiTermino();

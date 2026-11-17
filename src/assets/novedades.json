@@ -1,5 +1,27 @@
 [
   {
+    "id": "2026-11-17-pegar-pedido",
+    "fecha": "2026-11-17",
+    "hora": "13:05",
+    "titulo": "Pega el pedido de WhatsApp y se llena solo",
+    "cuerpo": "En Nuevo pedido, arriba, toca \"Pegar pedido de WhatsApp\", pega el mensaje del cliente y la app llena el celular, el nombre, la dirección, el barrio, las observaciones y los productos con su cantidad. Lo que no entienda te lo dice para que lo revises.",
+    "roles": [
+      "admin",
+      "vendedora"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se usa",
+        "pasos": [
+          "En WhatsApp mantén presionado el mensaje del cliente y toca Copiar.",
+          "En Nuevo pedido toca \"Pegar pedido de WhatsApp\" y luego Pegar (o pégalo en el cuadro).",
+          "Toca \"Llenar el pedido\" y revisa lo que quedó: colores, tallas y lo que la app te marque.",
+          "Si el cliente ya había comprado, sus datos se completan solos con el celular."
+        ]
+      }
+    ]
+  },
+  {
     "id": "2026-11-17-cierre-por-dia",
     "fecha": "2026-11-17",
     "hora": "08:40",

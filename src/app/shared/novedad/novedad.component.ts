@@ -1,3 +1,4 @@
+import { SinSenalService, esErrorDeRed } from '../sin-senal.service';
 import { Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PedidosService } from '../../core/services/pedidos.service';
@@ -82,6 +83,7 @@ export const MOTIVOS_NOVEDAD = [
 })
 export class NovedadComponent {
   private ps = inject(PedidosService);
+  private sinSenal = inject(SinSenalService);
 
   @Input({ required: true }) pedido!: Pick<Pedido, 'id' | 'cliente_nombre' | 'barrio'>;
   @Output() cerrar = new EventEmitter<void>();
@@ -100,7 +102,15 @@ export class NovedadComponent {
     if (m === 'otro' && !this.detalle.trim()) return this.error.set('Cuenta qué pasó.');
     this.guardando.set(true);
     try {
-      await this.ps.reportarNovedad(this.pedido.id, m, this.detalle.trim(), this.accion());
+      try {
+        if (!navigator.onLine) throw new Error('Failed to fetch');
+        await this.ps.reportarNovedad(this.pedido.id, m, this.detalle.trim(), this.accion());
+      } catch (e) {
+        // Sin señal: queda guardada y se envía sola cuando vuelva
+        if (!esErrorDeRed(e)) throw e;
+        await this.sinSenal.guardar({ tipo: 'novedad', pedidoId: this.pedido.id, cliente: this.pedido.cliente_nombre,
+          datos: { motivo: m, detalle: this.detalle.trim(), accion: this.accion() } });
+      }
       this.reportado.emit(this.accion());
     } catch (e) {
       this.error.set(mensajeError(e));

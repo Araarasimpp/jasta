@@ -7,6 +7,30 @@
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
 
+// Modo sin señal: la app se puede abrir sin internet. Siempre se pide primero a la red (así nunca
+// queda una versión vieja) y solo si no hay señal se usa la última copia guardada.
+const CACHE = 'jasta-sin-senal-v1';
+self.addEventListener('fetch', (event) => {
+  const req = event.request;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+  if (url.origin !== self.location.origin) return;
+  const pagina = req.mode === 'navigate';
+  if (!pagina && !/\.(js|css|woff2?|png|svg|webp|jpg|json|ico)$/.test(url.pathname)) return;
+  const clave = pagina ? '/index.html' : req;
+  event.respondWith(
+    fetch(req)
+      .then((res) => {
+        if (res.ok) {
+          const copia = res.clone();
+          caches.open(CACHE).then((c) => c.put(clave, copia)).catch(() => undefined);
+        }
+        return res;
+      })
+      .catch(() => caches.match(clave).then((r) => r || Response.error()))
+  );
+});
+
 self.addEventListener('push', (event) => {
   let datos = {};
   try {

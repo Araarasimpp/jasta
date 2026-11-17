@@ -16,7 +16,7 @@ RewriteRule ^ index.html [L]
   Header always set X-Content-Type-Options "nosniff"
   Header always set X-Frame-Options "DENY"
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
-  Header always set Permissions-Policy "camera=(self), microphone=(), geolocation=(self), payment=()"
+  Header always set Permissions-Policy "camera=(self), microphone=(self), geolocation=(self), payment=()"
   # index.html nunca se guarda en caché para que siempre cargue la última versión
   <FilesMatch "^(index\.html|manifest\.json)$">
     Header set Cache-Control "no-cache, no-store, must-revalidate"
@@ -25,4 +25,9 @@ RewriteRule ^ index.html [L]
   <FilesMatch "-[A-Za-z0-9_-]{8}\.(js|css)$">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
+  # El service worker (avisos y modo sin señal) controla toda la app y siempre se revisa si cambió
+  <Files "sw-push.js">
+    Header set Service-Worker-Allowed "/"
+    Header set Cache-Control "no-cache"
+  </Files>
 </IfModule>

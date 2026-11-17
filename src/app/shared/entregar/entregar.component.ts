@@ -1,3 +1,4 @@
+import { SinSenalService, esErrorDeRed } from '../sin-senal.service';
 import { IonIcon } from '@ionic/angular';
 import { Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -15,6 +16,9 @@ import { PesosDirective } from '../../shared/pesos/pesos.directive';
   imports: [PesosDirective, FormsModule, ComprobantesInputComponent, IonIcon],
   styles: [
     `
+      .foto-local { display: block; padding: 14px; border: 1px dashed var(--border-strong); border-radius: var(--radius); text-align: center; font-size: 14px; font-weight: 600; color: var(--accent); cursor: pointer; }
+      .foto-local input { display: none; }
+      .sin-senal { margin: 0; padding: 8px 12px; border-radius: var(--radius); background: var(--st-pendiente-wash, color-mix(in srgb, #f59e0b 14%, transparent)); color: var(--st-pendiente-text); font-size: 13px; }
       .tipos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
       .tipo { height: 44px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface);
         color: var(--text); font-size: 14px; font-weight: 500; cursor: pointer; }
@@ -88,7 +92,18 @@ import { PesosDirective } from '../../shared/pesos/pesos.directive';
           }
         }
         @if (pideComprobante(tipo())) {
-          <app-comprobantes-input [rutas]="evidencias()" (cambio)="evidencias.set($event); error.set('')"></app-comprobantes-input>
+          @if (sinSenal.enLinea() || alConfirmar) {
+            <app-comprobantes-input [rutas]="evidencias()" (cambio)="evidencias.set($event); error.set('')"></app-comprobantes-input>
+          } @else {
+            <!-- Sin señal: la foto queda en el celular y se sube sola cuando vuelva la señal -->
+            <label class="foto-local">
+              <input type="file" accept="image/*" capture="environment" (change)="fotoSinSenal($event)" />
+              <span>{{ fotoLocal() ? 'Foto del comprobante lista (se sube al volver la señal)' : 'Tomar foto del comprobante' }}</span>
+            </label>
+          }
+        }
+        @if (!sinSenal.enLinea() && !alConfirmar) {
+          <p class="sin-senal">Estás sin señal: la entrega se guarda en el celular y se envía sola cuando vuelva.</p>
         }
         }
         @if (error()) {
@@ -141,6 +156,23 @@ export class EntregarComponent {
     return this.pedido.pagado_linea != null && Number(this.pedido.pagado_linea) >= Number(this.pedido.total);
   }
 
+  sinSenal = inject(SinSenalService);
+  /** Foto del comprobante tomada sin señal */
+  fotoLocal = signal<Blob | null>(null);
+
+  fotoSinSenal(ev: Event): void {
+    const f = (ev.target as HTMLInputElement).files?.[0];
+    if (f) { this.fotoLocal.set(f); this.error.set(''); }
+  }
+
+  private async guardarSinSenal(tipo: TipoRecaudo, evidencias: string[], propina: number): Promise<void> {
+    await this.sinSenal.guardar({
+      tipo: 'entregar', pedidoId: this.pedido.id, cliente: this.pedido.cliente_nombre,
+      datos: { tipo, efectivo: Number(this.efectivo) || 0, transferencia: Number(this.transferencia) || 0, propina, evidencias },
+      foto: this.fotoLocal(),
+    });
+  }
+
   async confirmar(): Promise<void> {
     if (this.pagadoLinea() && !this.alConfirmar) {
       this.guardando.set(true);
@@ -165,7 +197,7 @@ export class EntregarComponent {
       this.error.set('Revisa la propina.');
       return;
     }
-    if (pideComprobante(tipo) && !this.evidencias().length) {
+    if (pideComprobante(tipo) && !this.evidencias().length && !this.fotoLocal()) {
       this.error.set('Sube la foto del comprobante de la transferencia.');
       return;
     }
@@ -174,9 +206,16 @@ export class EntregarComponent {
     try {
       const evidencias = pideComprobante(tipo) ? this.evidencias() : [];
       if (this.alConfirmar) await this.alConfirmar(tipo, Number(this.efectivo) || 0, Number(this.transferencia) || 0, evidencias);
+      else if (!navigator.onLine || this.fotoLocal()) await this.guardarSinSenal(tipo, evidencias, propina);
       else await this.ps.entregar(this.pedido.id, tipo, Number(this.efectivo) || 0, Number(this.transferencia) || 0, evidencias, propina);
       this.entregado.emit();
     } catch (e) {
+      // Se cayó la señal justo al entregar: queda guardada y se envía sola después
+      if (!this.alConfirmar && esErrorDeRed(e)) {
+        await this.guardarSinSenal(tipo, pideComprobante(tipo) ? this.evidencias() : [], propina);
+        this.entregado.emit();
+        return;
+      }
       this.error.set(mensajeError(e));
     } finally {
       this.guardando.set(false);

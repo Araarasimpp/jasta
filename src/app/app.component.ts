@@ -16,6 +16,8 @@ export class AppComponent implements OnInit, OnDestroy {
   constructor() {
     registrarIconos();
     activarCopiadoVisual();
+    // El service worker controla toda la app: así se puede abrir sin señal (si el servidor lo permite)
+    if ('serviceWorker' in navigator) void navigator.serviceWorker.register('/assets/sw-push.js', { scope: '/' }).catch(() => undefined);
   }
 
   private timer?: ReturnType<typeof setTimeout>;

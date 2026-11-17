@@ -1,9 +1,10 @@
+import { leerPedido } from '../../shared/pegar-pedido';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { add, remove, closeOutline, searchOutline } from 'ionicons/icons';
+import { add, remove, closeOutline, searchOutline, logoWhatsapp, clipboardOutline, checkmarkCircle, warning } from 'ionicons/icons';
 import { PedidosService } from '../../core/services/pedidos.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
@@ -49,6 +50,18 @@ function normal(s: string): string {
   imports: [PesosDirective, EsqueletoComponent, FormsModule, IonIcon, ComprobantesInputComponent, BotonTicketComponent],
   styles: [
     `
+      .pegar { margin-bottom: 12px; padding: 12px; border: 1px dashed var(--border-strong); border-radius: var(--radius-lg); background: var(--surface); }
+      .pegar.abierto { border-style: solid; display: flex; flex-direction: column; gap: 10px; }
+      .pegar-btn { all: unset; box-sizing: border-box; width: 100%; display: flex; align-items: center; gap: 12px; cursor: pointer; }
+      .pegar-btn > ion-icon { flex-shrink: 0; width: 42px; height: 42px; padding: 9px; box-sizing: border-box; border-radius: 12px; background: #25d366; color: #fff; }
+      .pegar-btn strong { display: block; font-size: 15px; }
+      .pegar-btn small { display: block; font-size: 12.5px; color: var(--text-soft); }
+      .pegar textarea { width: 100%; resize: vertical; }
+      .pegar-acc { display: flex; gap: 8px; flex-wrap: wrap; }
+      .pegar-acc .b-pri { margin-left: auto; }
+      .pegar-res p { display: flex; gap: 6px; align-items: flex-start; margin: 0 0 4px; font-size: 13.5px; color: var(--efectivo-texto); }
+      .pegar-res p.rev { color: var(--st-pendiente-text); }
+      .pegar-res ion-icon { flex-shrink: 0; margin-top: 2px; }
       .vendida { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-bottom: 16px; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--efectivo-texto) 35%, transparent);
         border-radius: var(--radius-lg); background: var(--ok-wash); }
       .vendida p { flex: 1 1 180px; margin: 0; font-size: 14px; }
@@ -162,6 +175,30 @@ function normal(s: string): string {
         @if (cargandoPedido()) {
           <app-esqueleto forma="texto" [filas]="8"></app-esqueleto>
         } @else {
+        @if (!local() && !editId()) {
+          <section class="pegar" [class.abierto]="pegando()">
+            @if (!pegando()) {
+              <button type="button" class="pegar-btn" (click)="pegando.set(true)">
+                <ion-icon name="logo-whatsapp" aria-hidden="true"></ion-icon>
+                <span><strong>Pegar pedido de WhatsApp</strong><small>Pega el mensaje del cliente y la app llena el pedido</small></span>
+              </button>
+            } @else {
+              <label class="campo"><span>Mensaje del cliente</span>
+                <textarea class="inp" rows="5" [(ngModel)]="textoPegado" placeholder="Ej: Quiero 2 relojes casio para la Cra 45 # 12-30, barrio San Fernando. Mi cel 3001234567"></textarea></label>
+              <div class="pegar-acc">
+                <button type="button" class="b" (click)="pegarDelPortapapeles()"><ion-icon name="clipboard-outline" aria-hidden="true"></ion-icon>Pegar</button>
+                <button type="button" class="b" (click)="pegando.set(false); resumenPegado.set(null)">Cerrar</button>
+                <button type="button" class="b b-pri" [disabled]="!textoPegado.trim()" (click)="leerPegado()">Llenar el pedido</button>
+              </div>
+              @if (resumenPegado(); as r) {
+                <div class="pegar-res" role="status">
+                  @if (r.llenos.length) { <p><ion-icon name="checkmark-circle" aria-hidden="true"></ion-icon>Llené: {{ r.llenos.join(', ') }}.</p> }
+                  @if (r.revisar.length) { <p class="rev"><ion-icon name="warning" aria-hidden="true"></ion-icon>Revisa a mano: {{ r.revisar.join(' · ') }}</p> }
+                </div>
+              }
+            }
+          </section>
+        }
         <div class="grid">
           <section class="panel">
             <h2>Cliente</h2>
@@ -493,7 +530,7 @@ export class NuevoPedidoPage implements OnInit {
   aporteVenta = computed(() => Math.min(this.aporte(), Math.max(0, this.gananciaVend())));
 
   constructor() {
-    addIcons({ add, remove, closeOutline, searchOutline });
+    addIcons({ add, remove, closeOutline, searchOutline, logoWhatsapp, clipboardOutline, checkmarkCircle, warning });
   }
 
   async ngOnInit(): Promise<void> {
@@ -677,6 +714,46 @@ export class NuevoPedidoPage implements OnInit {
     this.barrioAbierto.set(false);
     const b = this.barrios().find((x) => normal(x.barrio) === normal(this.barrio.trim()));
     if (b && !this.domicilio) this.elegirBarrio(b);
+  }
+
+  // ---------- Pegar pedido de WhatsApp ----------
+  pegando = signal(false);
+  textoPegado = '';
+  resumenPegado = signal<{ llenos: string[]; revisar: string[] } | null>(null);
+
+  async pegarDelPortapapeles(): Promise<void> {
+    try {
+      const t = await navigator.clipboard.readText();
+      if (t) this.textoPegado = t;
+    } catch {
+      this.toast.error('Pega el mensaje en el cuadro (mantén presionado y Pegar).');
+    }
+  }
+
+  /** Lee el mensaje y llena lo que entienda; lo demás queda para revisar */
+  async leerPegado(): Promise<void> {
+    const r = leerPedido(this.textoPegado, this.productos(), this.barrios());
+    const llenos: string[] = [];
+    const revisar: string[] = [];
+    if (r.telefono) { this.cambioTelefono(r.telefono); llenos.push('celular'); }
+    if (r.nombre) { this.cambioNombre(r.nombre); llenos.push('nombre'); }
+    if (r.direccion) { this.direccion = r.direccion; llenos.push('dirección'); }
+    if (r.barrio) { this.elegirBarrio(r.barrio); llenos.push('barrio'); }
+    else if (r.barrioTexto) { this.barrio = r.barrioTexto; this.barrioQ.set(r.barrioTexto); revisar.push(`el barrio "${r.barrioTexto}" no está en la lista`); }
+    if (r.observaciones) { this.observaciones = [this.observaciones.trim(), r.observaciones].filter(Boolean).join('. '); llenos.push('observaciones'); }
+    for (const it of r.items) {
+      const ya = this.lineas().findIndex((l) => l.producto.id === it.producto.id && !this.tieneVariantes(it.producto));
+      if (ya >= 0) this.lineas.update((ls) => ls.map((l, k) => (k === ya ? { ...l, cantidad: l.cantidad + it.cantidad } : l)));
+      else this.lineas.update((ls) => [...ls, this.lineaNueva(it.producto, { cantidad: it.cantidad })]);
+    }
+    if (r.items.length) llenos.push(r.items.length === 1 ? '1 producto' : r.items.length + ' productos');
+    if (r.items.some((it) => this.tieneVariantes(it.producto))) revisar.push('escoge el color o la talla');
+    if (r.sinEntender.length) revisar.push('no entendí "' + r.sinEntender.slice(0, 3).join('", "') + '"');
+    if (!r.telefono) revisar.push('falta el celular');
+    if (!r.items.length) revisar.push('agrega los productos');
+    this.resumenPegado.set({ llenos, revisar });
+    // Con el celular se buscan los datos del cliente si ya compró (solo llena lo que falte)
+    if (r.telefono) await this.buscarCliente();
   }
 
   agregar(p: Producto): void {

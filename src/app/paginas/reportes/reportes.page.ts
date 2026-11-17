@@ -1,3 +1,4 @@
+import { MesContraMesComponent } from './mes-contra-mes.component';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonIcon } from '@ionic/angular';
@@ -36,7 +37,7 @@ interface PedidoVenta {
   tipo_recaudo: string | null; valor_efectivo: number | null; valor_transferencia: number | null;
 }
 
-type Pestana = 'detalle' | 'pedidos' | 'vendedoras' | 'productos' | 'mensajeros' | 'barrios' | 'dias' | 'horas';
+type Pestana = 'detalle' | 'pedidos' | 'vendedoras' | 'productos' | 'mensajeros' | 'barrios' | 'dias' | 'horas' | 'meses';
 
 const POR_PAGINA = 100;
 const suma = <T>(filas: T[], f: (x: T) => number) => filas.reduce((a, x) => a + Number(f(x) || 0), 0);
@@ -60,7 +61,7 @@ const ESTADOS: { id: EstadoFiltro; label: string }[] = [
 @Component({
   selector: 'app-reportes',
   standalone: true,
-  imports: [EsqueletoComponent, FormsModule, IonIcon, PedidoDetalleComponent, HorasVentasComponent],
+  imports: [EsqueletoComponent, FormsModule, IonIcon, PedidoDetalleComponent, HorasVentasComponent, MesContraMesComponent],
   styles: [
     `
       .periodo { margin: 0 0 0 auto; font-size: 13px; color: var(--text-soft); }
@@ -105,7 +106,7 @@ const ESTADOS: { id: EstadoFiltro; label: string }[] = [
     <div class="vista">
       <div class="vista-head">
         <h1>{{ veTodo() ? 'Reportes' : 'Mis ventas' }}</h1>
-        <button class="b" (click)="exportar()" [disabled]="exportando() || !rango || pestana() === 'horas'">
+        <button class="b" (click)="exportar()" [disabled]="exportando() || !rango || pestana() === 'horas' || pestana() === 'meses'">
           <ion-icon name="download-outline"></ion-icon>{{ exportando() ? 'Preparando…' : 'Descargar Excel' }}
         </button>
       </div>
@@ -396,6 +397,9 @@ const ESTADOS: { id: EstadoFiltro; label: string }[] = [
           @case ('horas') {
             <div style="padding: 16px 20px"><app-horas-ventas [desde]="rango?.desde" [hasta]="rango?.hasta"></app-horas-ventas></div>
           }
+          @case ('meses') {
+            <div style="padding: 16px 20px"><app-mes-contra-mes></app-mes-contra-mes></div>
+          }
         }
       </div>
 
@@ -437,6 +441,7 @@ export class ReportesPage implements OnInit {
     { id: 'barrios', label: 'Por barrio', todo: true },
     { id: 'dias', label: 'Por día' },
     { id: 'horas', label: 'Horas y días', todo: true },
+    { id: 'meses', label: 'Mes contra mes', todo: true },
   ];
   pestanasVisibles = computed(() => this.pestanas.filter((p) => this.veTodo() || !p.todo));
 
