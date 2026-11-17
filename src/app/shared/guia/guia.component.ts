@@ -24,7 +24,7 @@ const PEDIDOS: Paso[] = [
   { ruta: '/app/pedidos', grupo: 'Ventas', titulo: 'Pedidos', texto: 'Ahora toca Pedidos.', tocar: true },
   { sel: 'app-pedidos nav.tabs', titulo: 'Estados', texto: 'Los pedidos van pasando por Pendientes, Alistados, En ruta y Entregados. Toca una pestaña para ver los de ese estado.' },
   { sel: 'app-pedidos input[aria-label="Buscar pedidos"]', titulo: 'Buscar', texto: 'Encuentra cualquier pedido por cliente, barrio, producto o número.' },
-  { sel: 'app-pedidos .btn-alistar', titulo: 'Alistar', texto: 'Cuando el pedido esté empacado, toca Alistar: pasa a Alistados y sale con un check verde.', opcional: true },
+  { sel: 'app-pedidos .btn-alistar', titulo: 'Alistar', texto: 'Cuando el pedido esté empacado, toca Alistar: pasa a la pestaña Alistados.', opcional: true },
   { sel: 'app-pedidos .btn-imprimir-alistados', titulo: 'Rótulos', texto: 'Imprime de una vez los rótulos de todo lo alistado. Luego manda la foto del rótulo al grupo de Telegram del mensajero.', opcional: true },
 ];
 const AVISOS: Paso = { sel: '.campana', titulo: 'Avisos', texto: 'Aquí te llegan los avisos: pedidos nuevos, mensajes del chat y todo lo que necesita tu atención. La campanita se mueve cuando llega uno.' };
