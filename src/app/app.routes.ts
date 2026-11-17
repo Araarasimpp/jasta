@@ -177,6 +177,11 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/actualizaciones/actualizaciones.page').then((m) => m.ActualizacionesPage),
       },
       {
+        // Guía paso a paso de lo que le toca a cada rol
+        path: 'guia',
+        loadComponent: () => import('./shared/guia/guia.page').then((m) => m.GuiaPage),
+      },
+      {
         path: 'perfil',
         loadComponent: () => import('./paginas/perfil/perfil.page').then((m) => m.PerfilPage),
       },

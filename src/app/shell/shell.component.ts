@@ -1,4 +1,5 @@
 import { campanita } from '../shared/animar/animar';
+import { GuiaComponent } from '../shared/guia/guia.component';
 import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { entradaEnCascada } from '../core/cascada';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
@@ -106,6 +107,7 @@ const MENU: ItemMenu[] = [
   { label: 'Inicio', path: '/app/tablero', icon: 'home-outline', roles: ['alistador'], sinRoles: ['admin'], grupo: 'Bodega' },
   { label: 'Mi panel', path: '/app/mi-panel', icon: 'grid-outline', roles: ['vendedora'], grupo: 'Ventas' },
   { label: 'Pedidos', path: '/app/pedidos', icon: 'receipt-outline', roles: ['admin', 'alistador', 'cuadres'], grupo: 'Ventas' },
+  { label: 'Guía de la app', path: '/app/guia', icon: 'book-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador', 'venta_local', 'recolector'], grupo: 'Equipo', buscar: 'ayuda tutorial como se usa aprender' },
   { label: 'Calendario', path: '/app/calendario', icon: 'calendar-outline', roles: ['admin', 'cuadres', 'vendedora', 'mensajero', 'alistador', 'venta_local', 'recolector'], grupo: 'Equipo', buscar: 'fechas recordatorio agenda festivos quincena dia de la madre' },
   { label: 'Mis entregas', path: '/app/mis-entregas', icon: 'bicycle-outline', roles: ['mensajero'], grupo: 'Entregas' },
   { label: 'Venta en local', path: '/app/venta-local', icon: 'storefront-outline', roles: ['admin', 'venta_local'], grupo: 'Ventas' , buscar: 'vender caja registrar' },
@@ -149,7 +151,7 @@ const MENU: ItemMenu[] = [
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, NgTemplateOutlet, IonIcon, ToastComponent, AvatarComponent, AvisosPanelComponent, RequisitosComponent, TransferenciasAlertaComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, NgTemplateOutlet, IonIcon, ToastComponent, AvatarComponent, AvisosPanelComponent, RequisitosComponent, TransferenciasAlertaComponent, GuiaComponent],
   styleUrls: ['../shared/pill-nav.scss', './shell.component.scss'],
   template: `
     <div class="vd-fondo" aria-hidden="true"></div>
@@ -315,6 +317,7 @@ const MENU: ItemMenu[] = [
         </div>
       }
       <app-toast></app-toast>
+      @if (!avisos.requisito()) { <app-guia></app-guia> }
       @if (avisos.requisito()) {
         <app-requisitos (salir)="salir()"></app-requisitos>
       }

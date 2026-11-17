@@ -1,5 +1,43 @@
 [
   {
+    "id": "2026-11-17-pedido-proveedor",
+    "fecha": "2026-11-17",
+    "hora": "07:25",
+    "titulo": "Pedido al proveedor por WhatsApp",
+    "cuerpo": "En Inventario, \"Qué comprar\" ahora agrupa lo que se va a acabar (y lo que bajó del mínimo) por proveedor, y con un botón le mandas el pedido por WhatsApp con las cantidades.",
+    "roles": [
+      "admin",
+      "alistador"
+    ],
+    "secciones": [
+      {
+        "titulo": "Cómo se usa",
+        "pasos": [
+          "Abre Inventario y toca \"Qué comprar\".",
+          "Abajo, en Proveedores, agrega a cada proveedor con su WhatsApp.",
+          "En cada producto escoge su proveedor (queda guardado para la próxima vez).",
+          "Ajusta las cantidades y toca \"Pedir por WhatsApp\": se abre el chat con el pedido escrito."
+        ]
+      }
+    ]
+  },
+  {
+    "id": "2026-11-17-guia",
+    "fecha": "2026-11-17",
+    "hora": "07:20",
+    "titulo": "Guía de la app para cada rol",
+    "cuerpo": "Ahora la app tiene una guía paso a paso de lo que le toca a cada persona según su rol. A quien entra por primera vez le sale sola, y cualquiera la puede abrir desde el menú en \"Guía de la app\".",
+    "roles": [
+      "admin",
+      "vendedora",
+      "mensajero",
+      "alistador",
+      "venta_local",
+      "cuadres",
+      "recolector"
+    ]
+  },
+  {
     "id": "2026-11-13-cierre-sobres",
     "fecha": "2026-11-13",
     "hora": "22:50",

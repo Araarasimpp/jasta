@@ -3,7 +3,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { addCircleOutline, closeOutline, searchOutline, trashOutline } from 'ionicons/icons';
+import { addCircleOutline, closeOutline, copyOutline, logoWhatsapp, peopleOutline, searchOutline, storefrontOutline, trashOutline } from 'ionicons/icons';
+import { enlaceWhatsapp } from '../../shared/whatsapp';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { VisorService } from '../../shared/visor/visor.service';
@@ -43,7 +44,12 @@ interface Compra {
   items: { nombre: string; cantidad: number; costo: number | null }[];
 }
 interface Linea { producto: Prod; cantidad: number | null; costo: number | null }
-interface Sugerido { id: number; nombre: string; categoria: string | null; stock: number; vendidos_60: number; dias: number | null; sugerido: number; costo: number | null }
+interface Sugerido {
+  id: number; nombre: string; sku?: string | null; categoria: string | null; stock: number; vendidos_60: number; dias: number | null; sugerido: number; costo: number | null;
+  stock_minimo?: number | null; bajo_minimo?: boolean; proveedor_id?: number | null; proveedor_fijo?: boolean;
+}
+interface Proveedor { id: number; nombre: string; telefono: string | null; nota: string | null; productos: number }
+interface GrupoProveedor { proveedor: Proveedor | null; items: Sugerido[]; costo: number }
 type Filtro = 'con' | 'bajos' | 'agotados' | 'sin' | 'todos';
 
 /**
@@ -127,6 +133,21 @@ type Filtro = 'con' | 'bajos' | 'agotados' | 'sin' | 'todos';
       .total-sug { margin: 0; font-size: 14px; color: var(--text-soft); }
       .acc-sug { display: flex; gap: 8px; flex-wrap: wrap; }
       .acc-sug .b { flex: 1 1 160px; }
+      .prov-grupo { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+      .prov-cab { display: flex; align-items: center; gap: 10px; }
+      .prov-cab > ion-icon { font-size: 22px; color: var(--accent); flex-shrink: 0; }
+      .prov-cab strong { display: block; font-size: 15px; }
+      .prov-cab small { display: block; font-size: 12.5px; color: var(--text-muted); }
+      .prov-sel { margin-top: 6px; height: 32px; max-width: 240px; font-size: 13px; padding: 0 8px; }
+      .cant-pedir { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11.5px; font-weight: 650; color: var(--accent); }
+      .cant-pedir.urgente { color: var(--danger); }
+      .cant-pedir input { width: 64px; height: 36px; text-align: center; border: 1px solid var(--border-strong); border-radius: 10px; background: var(--surface); color: var(--text); font: inherit; font-size: 15px; font-weight: 700; }
+      .bajo { color: var(--danger); font-weight: 650; }
+      .prov-grupo .b.b-wa { background: #25d366 !important; border-color: #25d366 !important; color: #fff !important; font-weight: 650; }
+      .provs { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+      .link-prov { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; border: 0; background: none; padding: 0; color: var(--accent); font: inherit; font-size: 14px; font-weight: 650; cursor: pointer; }
+      .prov-acc { display: flex; gap: 6px; flex-shrink: 0; }
+      .prov-form { display: flex; flex-direction: column; gap: 10px; padding: 12px; border: 1px dashed var(--border-strong); border-radius: var(--radius); }
       .quitar { width: 32px; height: 32px; display: grid; place-items: center; border: 0; border-radius: 50%; background: transparent; color: var(--text-muted); cursor: pointer; }
       .quitar:hover { color: var(--danger); background: var(--danger-wash); }
       @media (max-width: 640px) {
@@ -224,26 +245,83 @@ type Filtro = 'con' | 'bajos' | 'agotados' | 'sin' | 'todos';
           @if (cargandoSug()) {
             <app-esqueleto forma="lista" [filas]="5"></app-esqueleto>
           } @else {
-            <ul class="lista">
-              @for (x of sugeridos(); track x.id) {
-                <li class="sug">
-                  <div style="min-width: 0">
-                    <span class="nom">{{ x.nombre }}</span>
-                    <span class="sub">Quedan {{ numero(x.stock < 0 ? 0 : x.stock) }} · se venden ~{{ porSemana(x) }} por semana{{ x.dias !== null ? ' · alcanza para ' + (x.dias === 0 ? 'nada' : '~' + x.dias + (x.dias === 1 ? ' día' : ' días')) : '' }}</span>
-                  </div>
-                  <span class="pedir" [class.urgente]="x.dias !== null && x.dias <= 7">Pedir {{ numero(x.sugerido) }}</span>
-                </li>
-              } @empty {
-                <li><p class="vacio-txt">Nada por comprar: lo que tiene inventario alcanza para {{ semanas() }} semanas.</p></li>
-              }
-            </ul>
             @if (sugeridos().length) {
-              @if (esAdmin() && costoSugerido() > 0) { <p class="total-sug">Costo aproximado: <strong class="num">{{ pesos(costoSugerido()) }}</strong></p> }
+              @for (g of grupos(); track g.proveedor?.id ?? 0) {
+                <div class="prov-grupo">
+                  <div class="prov-cab">
+                    <ion-icon name="storefront-outline" aria-hidden="true"></ion-icon>
+                    <div style="min-width: 0">
+                      <strong>{{ g.proveedor?.nombre ?? 'Sin proveedor' }}</strong>
+                      <small>{{ g.items.length }} {{ g.items.length === 1 ? 'producto' : 'productos' }}@if (esAdmin() && g.costo > 0) { · ~{{ pesos(g.costo) }} }@if (g.proveedor && !g.proveedor.telefono) { · sin WhatsApp }</small>
+                    </div>
+                  </div>
+                  <ul class="lista">
+                    @for (x of g.items; track x.id) {
+                      <li class="sug">
+                        <div style="min-width: 0; flex: 1">
+                          <span class="nom">{{ x.nombre }}</span>
+                          <span class="sub">Quedan {{ numero(x.stock < 0 ? 0 : x.stock) }}@if (x.vendidos_60) { · se venden ~{{ porSemana(x) }} por semana }@if (x.dias !== null) { · alcanza para {{ x.dias === 0 ? 'nada' : '~' + x.dias + (x.dias === 1 ? ' día' : ' días') }} }@if (x.bajo_minimo) { · <b class="bajo">bajo el mínimo ({{ x.stock_minimo }})</b> }</span>
+                          <select class="inp prov-sel" [ngModel]="x.proveedor_id ?? ''" (ngModelChange)="cambiarProveedor(x, $event)" [attr.aria-label]="'Proveedor de ' + x.nombre">
+                            <option value="">{{ x.proveedor_id ? 'Quitar proveedor' : 'Elegir proveedor…' }}</option>
+                            @for (pv of proveedores(); track pv.id) { <option [ngValue]="pv.id">{{ pv.nombre }}</option> }
+                          </select>
+                        </div>
+                        <label class="cant-pedir" [class.urgente]="x.dias !== null && x.dias <= 7">Pedir
+                          <input type="number" min="0" inputmode="numeric" [ngModel]="cantidadDe(x)" (ngModelChange)="ponerCantidad(x, $event)" [attr.aria-label]="'Cantidad a pedir de ' + x.nombre" /></label>
+                      </li>
+                    }
+                  </ul>
+                  <div class="acc-sug">
+                    <button class="b" type="button" (click)="copiarGrupo(g)"><ion-icon name="copy-outline" aria-hidden="true"></ion-icon>Copiar</button>
+                    @if (g.proveedor?.telefono) {
+                      <a class="b b-wa" [href]="whatsappGrupo(g)" target="_blank" rel="noopener"><ion-icon name="logo-whatsapp" aria-hidden="true"></ion-icon>Pedir por WhatsApp</a>
+                    } @else if (g.proveedor) {
+                      <button class="b" type="button" (click)="editarProveedor(g.proveedor)">Agregar su WhatsApp</button>
+                    }
+                  </div>
+                </div>
+              }
+            } @else {
+              <p class="vacio-txt">Nada por comprar: lo que tiene inventario alcanza para {{ semanas() }} semanas.</p>
+            }
+            @if (sugeridos().length) {
+              @if (esAdmin() && costoSugerido() > 0) { <p class="total-sug">Costo aproximado de todo: <strong class="num">{{ pesos(costoSugerido()) }}</strong></p> }
               <div class="acc-sug">
-                <button class="b" (click)="copiarLista()">Copiar lista</button>
+                <button class="b" (click)="copiarLista()">Copiar toda la lista</button>
                 <button class="b b-pri" (click)="comprarSugeridos()">Registrar esta compra</button>
               </div>
             }
+
+            <!-- Proveedores: nombre y WhatsApp para mandarles el pedido -->
+            <div class="provs">
+              <button type="button" class="link-prov" (click)="verProvs.set(!verProvs())" [attr.aria-expanded]="verProvs()">
+                <ion-icon name="people-outline" aria-hidden="true"></ion-icon>Proveedores ({{ proveedores().length }})</button>
+              @if (verProvs()) {
+                <ul class="lista">
+                  @for (pv of proveedores(); track pv.id) {
+                    <li class="sug">
+                      <div style="min-width: 0"><span class="nom">{{ pv.nombre }}</span>
+                        <span class="sub">{{ pv.telefono || 'Sin WhatsApp' }} · {{ pv.productos }} {{ pv.productos === 1 ? 'producto' : 'productos' }}</span></div>
+                      <span class="prov-acc">
+                        <button class="b" type="button" (click)="editarProveedor(pv)">Editar</button>
+                        <button class="b" type="button" (click)="quitarProveedor(pv)" [attr.aria-label]="'Quitar ' + pv.nombre"><ion-icon name="trash-outline"></ion-icon></button>
+                      </span>
+                    </li>
+                  }
+                </ul>
+                <button class="b" type="button" (click)="editarProveedor(null)"><ion-icon name="add-circle-outline" aria-hidden="true"></ion-icon>Agregar proveedor</button>
+              }
+              @if (provForm(); as f) {
+                <form class="prov-form" (ngSubmit)="guardarProveedor()">
+                  <label class="campo"><span>Nombre</span><input class="inp" name="pn" maxlength="80" [(ngModel)]="f.nombre" placeholder="Ej: Variedades Castaño" /></label>
+                  <label class="campo"><span>WhatsApp</span><input class="inp" name="pt" inputmode="tel" maxlength="20" [(ngModel)]="f.telefono" placeholder="Ej: 3001234567" /></label>
+                  <div class="acc-sug">
+                    <button class="b" type="button" (click)="provForm.set(null)">Cancelar</button>
+                    <button class="b b-pri" type="submit">Guardar proveedor</button>
+                  </div>
+                </form>
+              }
+            </div>
           }
         </section>
       } @else {
@@ -398,7 +476,7 @@ export class InventarioPage implements OnInit {
   private sugCargados = false;
   conControl = computed(() => this.productos().filter((p) => p.controla_stock).length);
   sinControl = computed(() => this.productos().length - this.conControl());
-  costoSugerido = computed(() => this.sugeridos().reduce((t, x) => t + x.sugerido * (Number(x.costo) || 0), 0));
+  costoSugerido = computed(() => this.sugeridos().reduce((t, x) => t + this.cantidadDe(x) * (Number(x.costo) || 0), 0));
   productos = signal<Prod[]>([]);
   cargando = signal(true);
   filtro = signal<Filtro>('todos');
@@ -494,7 +572,7 @@ export class InventarioPage implements OnInit {
   totalCompras = computed(() => this.compras().filter((c) => !c.anulada).reduce((s, c) => s + Number(c.total ?? 0), 0));
 
   constructor() {
-    addIcons({ addCircleOutline, closeOutline, searchOutline, trashOutline });
+    addIcons({ addCircleOutline, closeOutline, copyOutline, logoWhatsapp, peopleOutline, searchOutline, storefrontOutline, trashOutline });
   }
 
   ngOnInit(): void {
@@ -511,10 +589,96 @@ export class InventarioPage implements OnInit {
   async cargarSugeridos(): Promise<void> {
     this.sugCargados = true;
     this.cargandoSug.set(true);
-    const { data, error } = await this.sb.client.rpc('compras_sugeridas', { p_dias: this.semanas() * 7 });
+    const [r, pv] = await Promise.all([
+      this.sb.client.rpc('compras_sugeridas2', { p_dias: this.semanas() * 7 }),
+      this.sb.client.rpc('proveedores_lista'),
+    ]);
     this.cargandoSug.set(false);
+    if (r.error) return this.toast.error(mensajeError(r.error));
+    this.sugeridos.set((r.data ?? []) as Sugerido[]);
+    this.proveedores.set((pv.data ?? []) as Proveedor[]);
+    this.cantidades.set({});
+  }
+
+  // ---------- Pedido al proveedor ----------
+  proveedores = signal<Proveedor[]>([]);
+  /** Cantidad a pedir que cambió la persona (si no, la sugerida) */
+  cantidades = signal<Record<number, number>>({});
+  verProvs = signal(false);
+  provForm = signal<{ id: number | null; nombre: string; telefono: string } | null>(null);
+
+  /** Lo que hay que comprar, agrupado por proveedor (los que no tienen, al final) */
+  grupos = computed<GrupoProveedor[]>(() => {
+    const porId = new Map(this.proveedores().map((p) => [p.id, p]));
+    const mapa = new Map<number, GrupoProveedor>();
+    for (const x of this.sugeridos()) {
+      const pv = x.proveedor_id ? porId.get(x.proveedor_id) ?? null : null;
+      const k = pv?.id ?? 0;
+      if (!mapa.has(k)) mapa.set(k, { proveedor: pv, items: [], costo: 0 });
+      const g = mapa.get(k)!;
+      g.items.push(x);
+      g.costo += this.cantidadDe(x) * (Number(x.costo) || 0);
+    }
+    return [...mapa.values()].sort((a, b) => (a.proveedor ? 0 : 1) - (b.proveedor ? 0 : 1) || b.items.length - a.items.length);
+  });
+
+  cantidadDe(x: Sugerido): number {
+    return this.cantidades()[x.id] ?? x.sugerido;
+  }
+
+  ponerCantidad(x: Sugerido, v: number | string): void {
+    const n = Math.max(0, Math.round(Number(v) || 0));
+    this.cantidades.update((c) => ({ ...c, [x.id]: n }));
+  }
+
+  private mensajeGrupo(g: GrupoProveedor): string {
+    const lineas = g.items.filter((x) => this.cantidadDe(x) > 0)
+      .map((x) => `• ${this.cantidadDe(x)} × ${x.nombre}${x.sku ? ' (' + x.sku + ')' : ''}`);
+    const saludo = g.proveedor ? `Hola ${g.proveedor.nombre}, ` : 'Hola, ';
+    return `${saludo}te hago este pedido para Jasta:\n\n${lineas.join('\n')}\n\n¿Me confirmas si tienes todo y el valor? Gracias.`;
+  }
+
+  whatsappGrupo(g: GrupoProveedor): string {
+    return enlaceWhatsapp(g.proveedor?.telefono ?? '', this.mensajeGrupo(g));
+  }
+
+  async copiarGrupo(g: GrupoProveedor): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(this.mensajeGrupo(g));
+      this.toast.ok('Pedido copiado: pégalo en el chat del proveedor');
+    } catch {
+      this.toast.error('No se pudo copiar');
+    }
+  }
+
+  /** El producto queda asignado a ese proveedor (la próxima vez sale en su grupo) */
+  async cambiarProveedor(x: Sugerido, id: number | '' | null): Promise<void> {
+    const nuevo = id ? Number(id) : null;
+    const { error } = await this.sb.client.rpc('producto_proveedor', { p_producto: x.id, p_proveedor: nuevo });
     if (error) return this.toast.error(mensajeError(error));
-    this.sugeridos.set((data ?? []) as Sugerido[]);
+    this.sugeridos.update((l) => l.map((s) => (s.id === x.id ? { ...s, proveedor_id: nuevo, proveedor_fijo: !!nuevo } : s)));
+  }
+
+  editarProveedor(pv: Proveedor | null): void {
+    this.provForm.set({ id: pv?.id ?? null, nombre: pv?.nombre ?? '', telefono: pv?.telefono ?? '' });
+  }
+
+  async guardarProveedor(): Promise<void> {
+    const f = this.provForm();
+    if (!f) return;
+    const { error } = await this.sb.client.rpc('guardar_proveedor', { p_id: f.id, p_nombre: f.nombre, p_telefono: f.telefono, p_nota: null });
+    if (error) return this.toast.error(mensajeError(error));
+    this.toast.ok('Proveedor guardado');
+    this.provForm.set(null);
+    const { data } = await this.sb.client.rpc('proveedores_lista');
+    this.proveedores.set((data ?? []) as Proveedor[]);
+  }
+
+  async quitarProveedor(pv: Proveedor): Promise<void> {
+    if (!confirm(`¿Quitar a ${pv.nombre} de los proveedores? Sus productos quedan sin proveedor.`)) return;
+    const { error } = await this.sb.client.rpc('ocultar_proveedor', { p_id: pv.id });
+    if (error) return this.toast.error(mensajeError(error));
+    await this.cargarSugeridos();
   }
 
   porSemana(x: Sugerido): string {
@@ -524,7 +688,7 @@ export class InventarioPage implements OnInit {
 
   async copiarLista(): Promise<void> {
     const texto = `Pedido · ${formatoFechaCO(new Date().toISOString(), { day: 'numeric', month: 'long' })}\n\n`
-      + this.sugeridos().map((x) => `• ${x.nombre}: ${x.sugerido}`).join('\n');
+      + this.sugeridos().filter((x) => this.cantidadDe(x) > 0).map((x) => `• ${x.nombre}: ${this.cantidadDe(x)}`).join('\n');
     try {
       await navigator.clipboard.writeText(texto);
       this.toast.ok('Lista copiada: pégala en WhatsApp al proveedor');
@@ -539,7 +703,7 @@ export class InventarioPage implements OnInit {
     const porId = new Map(this.productos().map((p) => [p.id, p]));
     this.lineas.set(this.sugeridos().flatMap((x) => {
       const p = porId.get(x.id);
-      return p ? [{ producto: p, cantidad: x.sugerido, costo: p.costo ?? null }] : [];
+      return p && this.cantidadDe(x) > 0 ? [{ producto: p, cantidad: this.cantidadDe(x), costo: p.costo ?? null }] : [];
     }));
   }
 
