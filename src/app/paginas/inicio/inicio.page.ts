@@ -96,7 +96,8 @@ function finMes(): string {
       .dash { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
       .a-hoy { align-self: start; }
       .dash > * { min-width: 0; }
-      .a-hoy { grid-column: 1 / -1; }
+      .a-hoy, .pregunta, .amanecer { grid-column: 1 / -1; }
+      .dash > .pregunta, .dash > .amanecer { margin-bottom: 0; }
       .a-graf { grid-column: span 8; }
       .a-pedidos { grid-column: span 4; }
       .a-mes, .a-pagos, .a-atencion { grid-column: span 4; }
