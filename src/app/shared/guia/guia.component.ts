@@ -27,7 +27,7 @@ const PEDIDOS: Paso[] = [
   { sel: 'app-pedidos .btn-alistar', titulo: 'Alistar', texto: 'Cuando el pedido esté empacado, toca Alistar: pasa a la pestaña Alistados.', opcional: true },
   { sel: 'app-pedidos .btn-imprimir-alistados', titulo: 'Rótulos', texto: 'Imprime de una vez los rótulos de todo lo alistado. Luego manda la foto del rótulo al grupo de Telegram del mensajero.', opcional: true },
 ];
-const AVISOS: Paso = { sel: '.campana', titulo: 'Avisos', texto: 'Aquí te llegan los avisos: pedidos nuevos, mensajes del chat y todo lo que necesita tu atención. La campanita se mueve cuando llega uno.' };
+const AVISOS: Paso = { sel: '.campana, .pill-nav .tab-tu', titulo: 'Avisos', texto: 'Aquí te llegan los avisos: pedidos nuevos, mensajes del chat y todo lo que necesita tu atención. En el celular están en Tú, en la campanita de arriba a la derecha.' };
 const MAS = (texto: string): Paso => ({ sel: '.pill-nav .tab-tu, .rail button[aria-label="Finanzas"], .rail button[aria-label="Entregas"]', titulo: 'Tú: todo lo demás', texto });
 
 const PASOS: Partial<Record<Rol, Paso[]>> = {

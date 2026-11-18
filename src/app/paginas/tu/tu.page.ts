@@ -2,7 +2,7 @@ import { AfterViewInit, Component, ElementRef, OnDestroy, computed, inject, sign
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { chevronDownOutline, chevronForwardOutline, closeCircle, createOutline, logOutOutline, moonOutline, searchOutline, sunnyOutline } from 'ionicons/icons';
+import { chevronDownOutline, chevronForwardOutline, closeCircle, createOutline, logOutOutline, moonOutline, notificationsOutline, searchOutline, sunnyOutline } from 'ionicons/icons';
 import { ShellComponent } from '../../shell/shell.component';
 import { AvatarComponent } from '../../shared/avatar/avatar.component';
 import { Preferencia } from '../../core/services/presencia.service';
@@ -40,6 +40,9 @@ import { Preferencia } from '../../core/services/presencia.service';
       .tu-der .tu-circ { width: auto; padding: 0 4px; border-radius: 999px; display: flex; gap: 0; }
       .tu-der .tu-circ > * { width: 36px; height: 34px; display: grid; place-items: center; border: none; background: none; color: inherit; font-size: 19px; cursor: pointer; padding: 0; }
 
+      .tu-campana { position: relative; }
+      .tu-badge { position: absolute; top: 1px; right: 0; min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box; border-radius: 999px;
+        background: var(--danger); color: #fff; font-size: 10px; font-weight: 700; line-height: 16px; text-align: center; }
       .tu-buscar { position: relative; margin: 4px 0 8px; }
       .tu-buscar ion-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 18px; }
       .tu-buscar input { width: 100%; height: 44px; box-sizing: border-box; padding: 0 40px 0 42px; border-radius: 14px; font: inherit; font-size: 15.5px;
@@ -99,6 +102,11 @@ import { Preferencia } from '../../core/services/presencia.service';
           <span class="tu-circ">
             <button type="button" (click)="shell.cambiarTemaConCirculo($event, temaToggle)" [attr.aria-label]="shell.theme.isDark() ? 'Modo claro' : 'Modo oscuro'">
               <ion-icon [name]="shell.theme.isDark() ? 'sunny-outline' : 'moon-outline'"></ion-icon></button>
+            <button type="button" class="tu-campana" (click)="shell.avisos.toggle()" [attr.aria-expanded]="shell.avisos.abierto()"
+              [attr.aria-label]="'Avisos' + (shell.avisos.noLeidas() ? ', ' + shell.avisos.noLeidas() + ' sin leer' : '')">
+              <ion-icon class="campana" name="notifications-outline"></ion-icon>
+              @if (shell.avisos.noLeidas()) { <span class="tu-badge">{{ shell.avisos.noLeidas() > 9 ? '9+' : shell.avisos.noLeidas() }}</span> }
+            </button>
             <a routerLink="/app/perfil" aria-label="Editar perfil"><ion-icon name="create-outline"></ion-icon></a>
           </span>
         </div>
@@ -206,7 +214,7 @@ export class TuPage implements AfterViewInit, OnDestroy {
   temaToggle = () => this.shell.theme.toggle();
 
   constructor() {
-    addIcons({ chevronDownOutline, chevronForwardOutline, closeCircle, createOutline, logOutOutline, moonOutline, searchOutline, sunnyOutline });
+    addIcons({ chevronDownOutline, chevronForwardOutline, closeCircle, createOutline, logOutOutline, moonOutline, notificationsOutline, searchOutline, sunnyOutline });
     this.shell.buscarMenu.set('');
   }
 

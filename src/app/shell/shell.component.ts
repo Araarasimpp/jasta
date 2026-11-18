@@ -3,6 +3,7 @@ import { GuiaComponent } from '../shared/guia/guia.component';
 import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { entradaEnCascada } from '../core/cascada';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Location } from '@angular/common';
 import { VidrioLiquidoDirective } from '../shared/vidrio-liquido.directive';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
@@ -234,10 +235,14 @@ const MENU: ItemMenu[] = [
           </div>
         </header>
         </div>
+        @if (conAtras()) { <div class="atras-espacio" aria-hidden="true"></div> }
         <app-transferencias-alerta></app-transferencias-alerta>
         <router-outlet></router-outlet>
       </main>
 
+      @if (conAtras()) {
+        <button type="button" class="atras-btn" aria-label="Volver" (click)="volver()"><ion-icon name="chevron-back-outline"></ion-icon></button>
+      }
       <nav class="pill-nav mobile-only" aria-label="Secciones" appVidrioLiquido>
         @for (item of tabs(); track item.path; let i = $index; let ultimo = $last) {
           <a class="pn-item" [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.path === '/app/pedidos' }" (click)="avisos.cerrar()">
@@ -251,15 +256,6 @@ const MENU: ItemMenu[] = [
             </a>
           }
         }
-        <button class="pn-item tab" data-lente-primero [class.active]="avisos.abierto()" (click)="avisos.toggle()" [attr.aria-expanded]="avisos.abierto()">
-          <span class="icono-badge">
-            <ion-icon class="campana" name="notifications-outline"></ion-icon>
-            @if (avisos.noLeidas()) {
-              <span class="badge-num num">{{ avisos.noLeidas() > 9 ? '9+' : avisos.noLeidas() }}</span>
-            }
-          </span>
-          <span class="tab-label">Avisos</span>
-        </button>
         <a class="pn-item tab-tu" routerLink="/app/tu" [class.active]="tuActivo()" [attr.aria-current]="tuActivo() ? 'page' : null" (click)="avisos.cerrar()">
           <app-avatar [nombre]="sb.usuario()?.nombre" [foto]="sb.usuario()?.avatar_url" [usuario]="sb.usuario()?.id" [tam]="26"></app-avatar>
           <span class="tab-label">Tú</span>
@@ -283,6 +279,7 @@ export class ShellComponent implements OnInit, OnDestroy {
   avisos = inject(NotificacionesService);
   presencia = inject(PresenciaService);
   private router = inject(Router);
+  private location = inject(Location);
 
   colapsado = signal(this.leerColapsado());
 
@@ -338,8 +335,17 @@ export class ShellComponent implements OnInit, OnDestroy {
     if (g && !this.abierto(g.id)) this.alternarGrupo(g.id);
   }
 
-  /** En el celular caben 2 secciones en la barra (más Nuevo, Avisos y Tú); el resto va en "Tú" */
-  tabs = computed(() => this.menu().slice(0, 2));
+  /** En el celular caben 3 secciones en la barra (más Nuevo y Tú): las principales de cada quien; el resto va en "Tú" */
+  tabs = computed(() => this.principales().slice(0, 3));
+  /** Páginas abiertas desde "Tú": llevan el botón de volver arriba a la izquierda (celular) */
+  conAtras = computed(() => {
+    const url = this.url().split(/[?#]/)[0];
+    return this.tuActivo() && url !== '/app/tu' && url !== '/app/perfil';
+  });
+  volver(): void {
+    if (history.length > 1) this.location.back();
+    else this.router.navigateByUrl('/app/tu');
+  }
   /** "Tú" queda marcada en su página y en cualquier página que no tenga pestaña propia */
   tuActivo = computed(() => {
     const url = this.url().split(/[?#]/)[0];
@@ -378,7 +384,10 @@ export class ShellComponent implements OnInit, OnDestroy {
     const nombre = (this.sb.usuario()?.nombre ?? '').trim().split(/\s+/)[0];
     return (h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches') + (nombre ? `, ${nombre}` : '');
   });
-  masItems = computed(() => this.menu().slice(2));
+  masItems = computed(() => {
+    const enBarra = new Set(this.tabs().map((t) => t.path));
+    return this.menu().filter((m) => !enBarra.has(m.path));
+  });
 
   /** Buscador del menú del celular */
   buscarMenu = signal('');

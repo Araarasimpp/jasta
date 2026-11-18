@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-11-18-tu-atras",
+    "fecha": "2026-11-18",
+    "hora": "09:30",
+    "titulo": "Volver y avisos en Tú",
+    "cuerpo": "Las páginas que abres desde Tú tienen arriba a la izquierda el botón para volver. Los avisos ahora están en Tú, en la campanita de arriba a la derecha, y en su lugar la barra de abajo tiene una sección más de las principales (por ejemplo Calendario).",
+    "roles": [
+      "admin",
+      "vendedora",
+      "mensajero",
+      "alistador",
+      "cuadres",
+      "venta_local",
+      "recolector"
+    ]
+  },
+  {
     "id": "2026-11-18-tu-vidrio",
     "fecha": "2026-11-18",
     "hora": "09:00",
