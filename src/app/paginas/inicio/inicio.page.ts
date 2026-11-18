@@ -1,5 +1,8 @@
 import { CuentaDirective } from '../../shared/animar/animar';
+import { pedirIa } from '../../shared/ia';
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { IonIcon } from '@ionic/angular';
 import { RouterLink } from '@angular/router';
 import { BarController, BarElement, CategoryScale, Chart, LinearScale, Tooltip } from 'chart.js';
 import { SupabaseService } from '../../core/services/supabase.service';
@@ -63,10 +66,20 @@ function finMes(): string {
 @Component({
   selector: 'app-inicio',
   standalone: true,
-  imports: [EsqueletoComponent, RouterLink, DonaComponent, CuentaDirective],
+  imports: [EsqueletoComponent, RouterLink, DonaComponent, CuentaDirective, FormsModule, IonIcon],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
+      .pregunta { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; padding: 10px 12px; border: 1px solid var(--accent-soft); border-radius: var(--radius-lg); background: var(--surface); }
+      .pregunta form { display: flex; align-items: center; gap: 8px; }
+      .pregunta form > ion-icon { flex-shrink: 0; font-size: 20px; color: var(--accent); }
+      .pregunta input { flex: 1; min-width: 0; height: 40px; border: 0; background: none; color: var(--text); font: inherit; font-size: 15px; outline: none; }
+      .pregunta .b { height: 36px; flex-shrink: 0; }
+      .sugeridas { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+      .sugeridas button { flex-shrink: 0; height: 30px; padding: 0 12px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface-2); color: var(--text-soft); font: inherit; font-size: 12.5px; cursor: pointer; }
+      .respuesta { padding: 10px 12px; border-radius: var(--radius); background: var(--accent-wash); animation: resp-entra .3s ease-out; }
+      .respuesta p { margin: 0 0 6px; font-size: 14.5px; line-height: 1.5; white-space: pre-wrap; }
+      @keyframes resp-entra { from { opacity: 0; transform: translateY(4px); } }
       .amanecer { display: flex; align-items: center; gap: 14px; padding: 10px 16px 10px 10px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: var(--radius-lg);
         background: var(--surface); overflow: hidden; }
       .amanecer svg { width: 120px; height: 64px; flex-shrink: 0; border-radius: 10px; }
@@ -197,6 +210,22 @@ function finMes(): string {
 
       <div class="dash">
       <!-- Hoy -->
+      <section class="pregunta" aria-label="Pregúntale a Jasta">
+        <form (ngSubmit)="preguntar()">
+          <ion-icon name="sparkles" aria-hidden="true"></ion-icon>
+          <input name="q" [(ngModel)]="pregunta" maxlength="300" placeholder="Pregúntale a Jasta: ¿cuánto vendió Laura este mes?" aria-label="Pregunta" />
+          <button type="submit" class="b b-pri" [disabled]="!pregunta.trim() || preguntando()">{{ preguntando() ? 'Pensando…' : 'Preguntar' }}</button>
+        </form>
+        @if (!respuesta() && !preguntando()) {
+          <div class="sugeridas">
+            @for (q of sugeridas; track q) { <button type="button" (click)="pregunta = q; preguntar()">{{ q }}</button> }
+          </div>
+        }
+        @if (respuesta(); as r) {
+          <div class="respuesta" role="status"><p>{{ r }}</p><button type="button" class="link" (click)="respuesta.set(''); pregunta = ''">Hacer otra pregunta</button></div>
+        }
+      </section>
+
       @if (!cargando() && r() && !r()!.pedidos) {
         <section class="amanecer" aria-label="Todavía no hay pedidos hoy">
           <svg viewBox="0 0 120 64" aria-hidden="true">
@@ -474,6 +503,26 @@ export class InicioPage implements OnInit, OnDestroy {
   private observadorTema: MutationObserver | null = null;
   private dejarDeEscuchar?: () => void;
   private timer?: ReturnType<typeof setTimeout>;
+
+  // ---------- Pregúntale a Jasta (IA con los datos del negocio) ----------
+  pregunta = '';
+  preguntando = signal(false);
+  respuesta = signal('');
+  readonly sugeridas = ['¿Quién vende más este mes?', '¿Qué producto deja más ganancia?', '¿Cómo vamos contra el mes pasado?', '¿Qué se está acabando?'];
+  async preguntar(): Promise<void> {
+    const q = this.pregunta.trim();
+    if (!q || this.preguntando()) return;
+    this.preguntando.set(true);
+    this.respuesta.set('');
+    try {
+      const r = await pedirIa<{ texto: string }>(this.sb.client, { accion: 'pregunta', texto: q }, 40000);
+      this.respuesta.set(r.texto || 'No encontré la respuesta.');
+    } catch (e) {
+      this.respuesta.set(mensajeError(e));
+    } finally {
+      this.preguntando.set(false);
+    }
+  }
 
   ngOnInit(): void {
     void this.cargarTodo();

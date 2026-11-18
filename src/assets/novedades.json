@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-11-18-ia-mas",
+    "fecha": "2026-11-18",
+    "hora": "19:10",
+    "titulo": "Más ayudas con inteligencia artificial",
+    "cuerpo": "Transferencias: la IA lee cada comprobante y te dice si el valor coincide con el pedido, si la fecha es vieja o si esa misma referencia ya se usó en otro pedido. Registrar compra: \"Leer factura con IA\" llena los productos, cantidades y costos desde la foto. Chat: \"Ver texto\" escribe lo que dice una nota de voz. Nuevo pedido: \"Ordenar dirección con IA\". Inicio: pregúntale a Jasta lo que quieras saber del negocio.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "mensajero",
+      "alistador"
+    ]
+  },
+  {
     "id": "2026-11-17-ia",
     "fecha": "2026-11-17",
     "hora": "13:30",

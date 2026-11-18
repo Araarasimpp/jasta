@@ -5,6 +5,9 @@ import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import { addCircleOutline, closeOutline, copyOutline, logoWhatsapp, peopleOutline, searchOutline, storefrontOutline, trashOutline } from 'ionicons/icons';
 import { enlaceWhatsapp } from '../../shared/whatsapp';
+import { aBase64, pedirIa } from '../../shared/ia';
+import { prepararFoto } from '../../shared/fotos';
+import { subirComprobante } from '../../shared/comprobantes';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { VisorService } from '../../shared/visor/visor.service';
@@ -64,6 +67,14 @@ type Filtro = 'con' | 'bajos' | 'agotados' | 'sin' | 'todos';
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
+      .leer-factura { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px dashed var(--accent); border-radius: var(--radius); background: var(--accent-wash); cursor: pointer; }
+      .leer-factura.ocupado { opacity: .7; cursor: progress; }
+      .leer-factura input { display: none; }
+      .leer-factura > ion-icon { font-size: 24px; color: var(--accent); flex-shrink: 0; }
+      .leer-factura strong { display: block; font-size: 14.5px; color: var(--accent); }
+      .leer-factura small { display: block; font-size: 12.5px; color: var(--text-soft); }
+      .sin-prod { padding: 10px 12px; border-radius: var(--radius); background: color-mix(in srgb, #f59e0b 12%, var(--surface)); font-size: 13px; color: var(--st-pendiente-text); }
+      .sin-prod ul { margin: 6px 0 0; padding-left: 18px; }
       .page { max-width: 1000px; }
       .controles { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
       button.kpi { border: 0; background: var(--surface); font: inherit; color: inherit; text-align: left; align-items: flex-start; cursor: pointer; }
@@ -415,6 +426,18 @@ type Filtro = 'con' | 'bajos' | 'agotados' | 'sin' | 'todos';
             <div class="campo"><label for="cp">Proveedor</label><input id="cp" maxlength="120" [(ngModel)]="proveedor" placeholder="Ej: Importadora El Centro" /></div>
             <div class="campo"><label for="cf">Fecha</label><input id="cf" type="date" [max]="hoy" [(ngModel)]="fechaCompra" /></div>
           </div>
+          @if (esAdmin()) {
+            <label class="leer-factura" [class.ocupado]="leyendoFactura()">
+              <input type="file" accept="image/*" (change)="leerFactura($event)" [disabled]="leyendoFactura()" />
+              <ion-icon name="sparkles" aria-hidden="true"></ion-icon>
+              <span><strong>{{ leyendoFactura() ? 'Leyendo la factura…' : 'Leer factura con IA' }}</strong>
+                <small>Toma o escoge la foto de la factura y se llenan los productos, cantidades y costos</small></span>
+            </label>
+            @if (facturaSinProducto().length) {
+              <div class="sin-prod" role="status"><strong>No encontré estos en tus productos (agrégalos a mano o créalos):</strong>
+                <ul>@for (x of facturaSinProducto(); track $index) { <li>{{ x.cantidad }} × {{ x.nombre }}{{ x.costo ? ' · ' + pesos(x.costo) + ' c/u' : '' }}</li> }</ul></div>
+            }
+          }
           <div class="campo">
             <label for="cb">Agregar producto</label>
             <input id="cb" [(ngModel)]="buscaProd" placeholder="Escribe el nombre o el SKU" autocomplete="off" />
@@ -497,6 +520,46 @@ export class InventarioPage implements OnInit {
   cargandoMov = signal(false);
 
   formCompra = signal(false);
+  /** Leer la factura del proveedor con la IA (Gemini) */
+  leyendoFactura = signal(false);
+  facturaSinProducto = signal<{ nombre: string; cantidad: number; costo: number | null }[]>([]);
+  async leerFactura(ev: Event): Promise<void> {
+    const input = ev.target as HTMLInputElement;
+    const archivo = input.files?.[0];
+    input.value = '';
+    if (!archivo) return;
+    this.leyendoFactura.set(true);
+    try {
+      const foto = await prepararFoto(archivo, 1800, 0.85);
+      const [r, ruta] = await Promise.all([
+        pedirIa<{ proveedor: string | null; fecha: string | null; items: { nombre: string; cantidad: number; costo: number | null; producto_id: number | null }[] }>(
+          this.sb.client, { accion: 'factura', imagen: await aBase64(foto), mime: 'image/jpeg', productos: this.productos().map((p) => ({ id: p.id, nombre: p.nombre })) }, 45000),
+        subirComprobante(this.sb.client, foto).catch(() => null),
+      ]);
+      if (ruta) this.facturas.update((f) => [...f, ruta]);
+      if (r.proveedor && !this.proveedor.trim()) this.proveedor = r.proveedor;
+      if (r.fecha && /^\d{4}-\d{2}-\d{2}$/.test(r.fecha) && r.fecha <= this.hoy) this.fechaCompra = r.fecha;
+      const porId = new Map(this.productos().map((p) => [p.id, p]));
+      const sin: { nombre: string; cantidad: number; costo: number | null }[] = [];
+      const nuevas = [...this.lineas()];
+      for (const it of r.items ?? []) {
+        const cant = Math.max(1, Math.round(Number(it.cantidad) || 1));
+        const costo = it.costo ? Math.round(Number(it.costo)) : null;
+        const p = it.producto_id ? porId.get(Number(it.producto_id)) : undefined;
+        if (!p) { sin.push({ nombre: it.nombre, cantidad: cant, costo }); continue; }
+        const i = nuevas.findIndex((l) => l.producto.id === p.id);
+        if (i >= 0) nuevas[i] = { ...nuevas[i], cantidad: (Number(nuevas[i].cantidad) || 0) + cant, costo: costo ?? nuevas[i].costo };
+        else nuevas.push({ producto: p, cantidad: cant, costo: costo ?? p.costo ?? null });
+      }
+      this.lineas.set(nuevas);
+      this.facturaSinProducto.set(sin);
+      this.toast.ok(`Factura leída: ${(r.items ?? []).length - sin.length} productos llenados${sin.length ? ', ' + sin.length + ' por revisar' : ''}`);
+    } catch (e) {
+      this.toast.error(mensajeError(e));
+    } finally {
+      this.leyendoFactura.set(false);
+    }
+  }
   proveedor = '';
   fechaCompra = hoyColombiaISO();
   nota = '';
@@ -820,6 +883,7 @@ export class InventarioPage implements OnInit {
     this.buscaS.set('');
     this.lineas.set([]);
     this.facturas.set([]);
+    this.facturaSinProducto.set([]);
     this.actualizarCosto = true;
     this.error.set('');
     this.formCompra.set(true);

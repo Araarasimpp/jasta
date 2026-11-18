@@ -11,6 +11,7 @@ import { mensajeError } from '../formato';
 import { formatoFechaCO, formatoHoraCO } from '../fecha-colombia';
 import { prepararFoto } from '../fotos';
 import { VisorService } from '../visor/visor.service';
+import { aBase64, pedirIa } from '../ia';
 import { EsqueletoComponent } from '../esqueleto/esqueleto.component';
 
 interface Mensaje {
@@ -24,9 +25,11 @@ interface Mensaje {
   tipo?: 'texto' | 'foto' | 'audio' | null;
   adjunto?: string | null;
   duracion?: number | null;
+  /** Lo que dijo la nota de voz (la escribe la IA) */
+  transcripcion?: string | null;
 }
 
-const CAMPOS = 'id, pedido_id, autor_id, autor_nombre, texto, created_at, responde_a, tipo, adjunto, duracion';
+const CAMPOS = 'id, pedido_id, autor_id, autor_nombre, texto, created_at, responde_a, tipo, adjunto, duracion, transcripcion';
 const PREFIJO_CHAT = 'sb://chat/';
 
 /** Formato en que este celular puede grabar la nota de voz (el primero sirve en todos para oírla) */
@@ -152,6 +155,9 @@ const RAPIDOS_TIENDA = [
       .fila.nuevo:not(.mio) .burbuja { transform-origin: bottom left; }
       @keyframes burbuja-entra { from { opacity: 0; transform: translateY(10px) scale(.85); } }
       @media (prefers-reduced-motion: reduce) { .audio .onda.suena, .fila.nuevo .burbuja { animation: none; } }
+      .transc { display: block; margin-top: 4px; font-size: 13px; font-style: italic; opacity: .9; white-space: pre-wrap; }
+      .ver-texto { all: unset; display: block; margin-top: 3px; font-size: 12px; font-weight: 650; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; opacity: .85; }
+      .ver-texto:disabled { cursor: progress; text-decoration: none; }
       .audio .dur { font-size: 11.5px; font-variant-numeric: tabular-nums; opacity: .85; min-width: 30px; text-align: right; }
 
       /* La otra persona está escribiendo (tres puntos) */
@@ -232,6 +238,12 @@ const RAPIDOS_TIENDA = [
                 <span class="onda" [class.suena]="sonando() === m.id" (click)="saltar($event, m)"><i [style.width.%]="actual() === m.id ? avance() * 100 : 0"></i></span>
                 <span class="dur">{{ actual() === m.id && avance() > 0 ? minSeg(avance() * (m.duracion || 0)) : minSeg(m.duracion || 0) }}</span>
               </div>
+              @if (m.transcripcion) {
+                <span class="transc">{{ m.transcripcion }}</span>
+              } @else {
+                <button type="button" class="ver-texto" [disabled]="transcribiendo().has(m.id)" (click)="transcribir(m); $event.stopPropagation()">
+                  {{ transcribiendo().has(m.id) ? 'Escribiendo lo que dijo…' : 'Ver texto' }}</button>
+              }
             }
             @if (m.texto) { <span>{{ m.texto }}</span> }
             <span class="meta">
@@ -706,6 +718,26 @@ export class ChatPedidoComponent implements OnInit, AfterViewInit, OnDestroy {
     this.trozos = [];
     this.grabando.set(false);
     this.enPausa.set(false);
+  }
+
+  /** La IA escribe lo que dice la nota de voz (queda guardado para todos) */
+  transcribiendo = signal(new Set<number>());
+  async transcribir(m: Mensaje): Promise<void> {
+    const u = this.url(m);
+    if (!u) return void this.firmar([m]);
+    this.transcribiendo.update((s) => new Set(s).add(m.id));
+    try {
+      const audio = await (await fetch(u)).blob();
+      const r = await pedirIa<{ texto: string }>(this.sb.client, { accion: 'transcribir', audio: await aBase64(audio), mime: audio.type || 'audio/mp4' }, 45000);
+      const texto = (r.texto || '').trim();
+      if (!texto) throw new Error('No se entendió la nota de voz');
+      this.mensajes.update((l) => l.map((x) => (x.id === m.id ? { ...x, transcripcion: texto } : x)));
+      void this.sb.client.rpc('guardar_transcripcion', { p_mensaje: m.id, p_texto: texto }).then();
+    } catch (e) {
+      this.toast.error(mensajeError(e));
+    } finally {
+      this.transcribiendo.update((s) => { const n = new Set(s); n.delete(m.id); return n; });
+    }
   }
 
   /** Oír o pausar una nota de voz */

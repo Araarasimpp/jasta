@@ -1,4 +1,5 @@
 import { leerPedido } from '../../shared/pegar-pedido';
+import { pedirIa } from '../../shared/ia';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -50,6 +51,8 @@ function normal(s: string): string {
   imports: [PesosDirective, EsqueletoComponent, FormsModule, IonIcon, ComprobantesInputComponent, BotonTicketComponent],
   styles: [
     `
+      .ordenar-dir { display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; padding: 0; border: 0; background: none; color: var(--accent); font: inherit; font-size: 12.5px; font-weight: 650; cursor: pointer; }
+      .ordenar-dir:disabled { opacity: .6; cursor: progress; }
       .pegar { margin-bottom: 12px; padding: 12px; border: 1px dashed var(--border-strong); border-radius: var(--radius-lg); background: var(--surface); }
       .pegar.abierto { border-style: solid; display: flex; flex-direction: column; gap: 10px; }
       .pegar-btn { all: unset; box-sizing: border-box; width: 100%; display: flex; align-items: center; gap: 12px; cursor: pointer; }
@@ -237,6 +240,10 @@ function normal(s: string): string {
               <div class="campo">
                 <label for="dir">Dirección</label>
                 <input id="dir" autocomplete="off" [(ngModel)]="direccion" [placeholder]="nacional() ? 'Dirección completa con barrio' : ''" />
+                @if (direccion.trim().length > 4) {
+                  <button type="button" class="ordenar-dir" [disabled]="ordenandoDir()" (click)="ordenarDireccion()">
+                    <ion-icon name="sparkles" aria-hidden="true"></ion-icon>{{ ordenandoDir() ? 'Ordenando…' : 'Ordenar dirección con IA' }}</button>
+                }
               </div>
               @if (nacional()) {
                 <div class="fila-campos">
@@ -714,6 +721,20 @@ export class NuevoPedidoPage implements OnInit {
     this.barrioAbierto.set(false);
     const b = this.barrios().find((x) => normal(x.barrio) === normal(this.barrio.trim()));
     if (b && !this.domicilio) this.elegirBarrio(b);
+  }
+
+  /** La IA deja la dirección con el formato de siempre ("cl 5 38 25" -> "Calle 5 # 38-25") */
+  ordenandoDir = signal(false);
+  async ordenarDireccion(): Promise<void> {
+    this.ordenandoDir.set(true);
+    try {
+      const r = await pedirIa<{ texto: string }>(this.sb.client, { accion: 'direccion', texto: this.direccion }, 20000);
+      if (r.texto?.trim()) this.direccion = r.texto.trim();
+    } catch (e) {
+      this.toast.error(mensajeError(e));
+    } finally {
+      this.ordenandoDir.set(false);
+    }
   }
 
   // ---------- Pegar pedido de WhatsApp ----------

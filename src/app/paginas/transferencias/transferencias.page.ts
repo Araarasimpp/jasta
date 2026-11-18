@@ -9,6 +9,8 @@ import { VisorService } from '../../shared/visor/visor.service';
 import { PedidoDetalleComponent } from '../../shared/pedido-detalle/pedido-detalle.component';
 import { EsqueletoComponent } from '../../shared/esqueleto/esqueleto.component';
 import { urlsComprobantes } from '../../shared/comprobantes';
+import { aBase64, pedirIa } from '../../shared/ia';
+import { prepararFoto } from '../../shared/fotos';
 import { mensajeError, pesos } from '../../shared/formato';
 import { formatoFechaCO, formatoHoraCO } from '../../shared/fecha-colombia';
 import { TransferenciasAlertaService } from '../../shared/transferencias-alerta/transferencias-alerta.service';
@@ -20,6 +22,11 @@ interface Transferencia {
   revisada_at: string | null; revisada_por: string | null; nota: string | null;
 }
 type Filtro = 'por_revisar' | 'no_llego' | 'revisadas';
+/** Lo que la IA leyó en la foto del comprobante */
+interface Lectura {
+  es_comprobante?: boolean; valor?: number | null; banco?: string | null; fecha?: string | null; hora?: string | null;
+  referencia?: string | null; destinatario?: string | null; alertas?: string[]; repetidos?: number[];
+}
 
 /**
  * Transferencias por revisar: cada pago presencial con transferencia (domicilio o local) queda aquí
@@ -32,6 +39,19 @@ type Filtro = 'por_revisar' | 'no_llego' | 'revisadas';
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
+      .ia-lee { padding: 10px 12px; border-radius: var(--radius); border: 1px solid var(--border); font-size: 13px; }
+      .ia-lee.bien { border-color: color-mix(in srgb, var(--efectivo) 45%, transparent); background: color-mix(in srgb, var(--efectivo) 8%, var(--surface)); }
+      .ia-lee.ojo { border-color: color-mix(in srgb, #f59e0b 50%, transparent); background: color-mix(in srgb, #f59e0b 9%, var(--surface)); }
+      .ia-lee.mal { border-color: var(--danger); background: color-mix(in srgb, var(--danger) 8%, var(--surface)); }
+      .ia-cab { display: flex; align-items: center; gap: 6px; }
+      .ia-lee.bien .ia-cab { color: var(--efectivo-texto); }
+      .ia-lee.ojo .ia-cab { color: var(--st-pendiente-text); }
+      .ia-lee.mal .ia-cab { color: var(--danger); }
+      .ia-lee p { margin: 4px 0 0; color: var(--text-soft); }
+      .ia-lee p.aviso { color: var(--text); font-weight: 550; }
+      .ia-cargando { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 13px; color: var(--accent); }
+      .ia-cargando ion-icon { animation: girar-ia 1.4s linear infinite; }
+      @keyframes girar-ia { to { transform: rotate(360deg); } }
       .page { max-width: 820px; }
       .resumen { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 16px 18px; border-radius: var(--radius-lg); background: var(--danger-wash); }
       .resumen.ok { background: var(--ok-wash); }
@@ -117,6 +137,20 @@ type Filtro = 'por_revisar' | 'no_llego' | 'revisadas';
                 }
               </div>
             } @else { <span class="sin-foto">Sin foto del comprobante</span> }
+            @for (f of t.evidencias.slice(0, 1); track f) {
+              @if (lecturas()[f]; as l) {
+                @let v = veredicto(t, l);
+                <div class="ia-lee" [class.bien]="v.nivel === 'bien'" [class.mal]="v.nivel === 'mal'" [class.ojo]="v.nivel === 'ojo'">
+                  <div class="ia-cab"><ion-icon [name]="v.nivel === 'bien' ? 'checkmark-circle' : 'warning'" aria-hidden="true"></ion-icon><strong>{{ v.titulo }}</strong></div>
+                  <p>Leído con IA: {{ l.valor ? pesos(l.valor) : 'sin valor' }}{{ l.banco ? ' · ' + l.banco : '' }}{{ l.fecha ? ' · ' + l.fecha : '' }}{{ l.hora ? ' ' + l.hora : '' }}{{ l.referencia ? ' · Ref. ' + l.referencia : '' }}</p>
+                  @for (a of v.avisos; track a) { <p class="aviso">{{ a }}</p> }
+                </div>
+              } @else if (leyendo().has(f)) {
+                <p class="ia-cargando"><ion-icon name="sparkles" aria-hidden="true"></ion-icon>Revisando el comprobante con IA…</p>
+              } @else {
+                <div><button class="link" (click)="leer(t, f)"><ion-icon name="sparkles" aria-hidden="true"></ion-icon> Revisar con IA</button></div>
+              }
+            }
 
             @if (t.estado === 'por_revisar') {
               <div class="acciones">
@@ -194,11 +228,70 @@ export class TransferenciasPage implements OnInit, OnDestroy {
     }
     const lista = (data ?? []) as Transferencia[];
     this.lista.set(lista);
+    // Lo que la IA ya había leído; los por revisar que falten se leen solos, uno a uno
+    const todas = lista.flatMap((t) => t.evidencias.slice(0, 1));
+    if (todas.length) {
+      const { data: leidas } = await this.sb.client.rpc('comprobantes_leidos_de', { p_rutas: todas });
+      if (leidas) this.lecturas.update((m) => ({ ...m, ...(leidas as Record<string, Lectura>) }));
+      void this.leerPendientes(lista.filter((t) => t.estado === 'por_revisar' && t.evidencias.length && !this.lecturas()[t.evidencias[0]]));
+    }
     const faltan = lista.flatMap((t) => t.evidencias).filter((f) => !this.fotos()[f]);
     if (faltan.length) {
       const urls = await urlsComprobantes(this.sb.client, faltan);
       this.fotos.update((m) => ({ ...m, ...Object.fromEntries(faltan.map((f, i) => [f, urls[i]])) }));
     }
+  }
+
+  // ---------- Revisión con IA ----------
+  lecturas = signal<Record<string, Lectura>>({});
+  leyendo = signal(new Set<string>());
+  private cola = false;
+
+  private async leerPendientes(lista: Transferencia[]): Promise<void> {
+    if (this.cola) return;
+    this.cola = true;
+    try {
+      for (const t of lista) await this.leer(t, t.evidencias[0], true);
+    } finally {
+      this.cola = false;
+    }
+  }
+
+  /** La IA lee el comprobante (valor, banco, fecha, referencia) y se compara con el pedido */
+  async leer(t: Transferencia, ruta: string, silencioso = false): Promise<void> {
+    if (this.leyendo().has(ruta)) return;
+    this.leyendo.update((s) => new Set(s).add(ruta));
+    try {
+      const [url] = await urlsComprobantes(this.sb.client, [ruta]);
+      if (!url) throw new Error('No se pudo abrir la foto');
+      const foto = await prepararFoto(await (await fetch(url)).blob(), 1600, 0.85);
+      const datos = await pedirIa<Lectura>(this.sb.client, { accion: 'comprobante', imagen: await aBase64(foto), mime: 'image/jpeg' }, 40000);
+      const { data } = await this.sb.client.rpc('registrar_comprobante', { p_ruta: ruta, p_pedido: t.id, p_datos: datos });
+      this.lecturas.update((m) => ({ ...m, [ruta]: { ...datos, repetidos: (data as { repetidos?: number[] } | null)?.repetidos ?? [] } }));
+    } catch (e) {
+      if (!silencioso) this.toast.error(mensajeError(e));
+    } finally {
+      this.leyendo.update((s) => { const n = new Set(s); n.delete(ruta); return n; });
+    }
+  }
+
+  /** Qué tan bien coincide lo leído con el pedido */
+  veredicto(t: Transferencia, l: Lectura): { nivel: 'bien' | 'ojo' | 'mal'; titulo: string; avisos: string[] } {
+    const avisos: string[] = [];
+    let nivel: 'bien' | 'ojo' | 'mal' = 'bien';
+    if (l.es_comprobante === false) return { nivel: 'mal', titulo: 'La foto no parece un comprobante de pago', avisos: l.alertas ?? [] };
+    const v = Number(l.valor) || 0;
+    const esperado = Number(t.esperado) || 0;
+    if (!v) { nivel = 'ojo'; avisos.push('No se alcanza a leer el valor: revísalo a mano.'); }
+    else if (Math.abs(v - esperado) > 1) { nivel = 'mal'; avisos.push(`El comprobante dice ${pesos(v)} y el pedido espera ${pesos(esperado)}.`); }
+    if (l.fecha && t.entregado_at) {
+      const dias = (new Date(t.entregado_at).getTime() - new Date(l.fecha + 'T12:00:00-05:00').getTime()) / 86400000;
+      if (dias > 2) { nivel = nivel === 'mal' ? 'mal' : 'ojo'; avisos.push(`La fecha del comprobante (${l.fecha}) es de antes del pedido.`); }
+    }
+    if (l.repetidos?.length) { nivel = 'mal'; avisos.push('Esta misma referencia ya se usó en el pedido ' + l.repetidos.map((x) => '#' + x).join(', ') + '.'); }
+    for (const a of l.alertas ?? []) { avisos.push(a); if (nivel === 'bien') nivel = 'ojo'; }
+    const titulo = nivel === 'bien' ? 'Coincide con el pedido' : nivel === 'ojo' ? 'Revísalo con cuidado' : 'Ojo: algo no cuadra';
+    return { nivel, titulo, avisos };
   }
 
   async llego(t: Transferencia): Promise<void> {

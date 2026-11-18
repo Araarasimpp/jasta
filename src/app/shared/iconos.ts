@@ -1,6 +1,6 @@
 import { addIcons } from 'ionicons';
 import {
-  alarmOutline, alertCircle, arrowUpCircleOutline, bagHandle, bagHandleOutline, briefcase, bonfire, bulb, car, card, cash, colorPalette, construct,
+  alarmOutline, alertCircle, checkmarkCircle, arrowUpCircleOutline, bagHandle, bagHandleOutline, briefcase, bonfire, bulb, car, card, cash, colorPalette, construct,
   cube, downloadOutline, extensionPuzzle, fileTrayFull, flag, flame, heart, heartOutline, home, hourglassOutline, medal, medkit, moon, paw, pencil,
   phonePortrait, repeat, restaurant, searchCircle, shareOutline, shirt, sparkles, star, sunny, ticket, trashOutline, warning, water,
 } from 'ionicons/icons';
@@ -11,7 +11,7 @@ import {
  */
 export function registrarIconos(): void {
   addIcons({
-    alarmOutline, alertCircle, arrowUpCircleOutline, bagHandle, bagHandleOutline, briefcase, bonfire, bulb, car, card, cash, colorPalette, construct,
+    alarmOutline, alertCircle, checkmarkCircle, arrowUpCircleOutline, bagHandle, bagHandleOutline, briefcase, bonfire, bulb, car, card, cash, colorPalette, construct,
     cube, downloadOutline, extensionPuzzle, fileTrayFull, flag, flame, heart, heartOutline, home, hourglassOutline, medal, medkit, moon, paw, pencil,
     phonePortrait, repeat, restaurant, searchCircle, shareOutline, shirt, sparkles, star, sunny, ticket, trashOutline, warning, water,
   });
