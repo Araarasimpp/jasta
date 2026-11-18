@@ -547,3 +547,17 @@ app-pedidos .row.recien{animation:llega .5s cubic-bezier(.2,1.2,.4,1) both,brill
 @keyframes llega{from{opacity:0;transform:translateY(-14px)}}
 @keyframes brilla{0%,30%{box-shadow:inset 4px 0 0 var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)}}
 @media (prefers-reduced-motion:reduce){app-pedidos .row.recien{animation:none}}
+
+/* Las páginas de la app van sin título ni descripción arriba (los botones de esa fila se quedan) */
+app-shell main.content .head > :is(div, header):has(> h1),
+app-shell main.content .vista-head > h1 {
+  display: none;
+}
+app-shell main.content .head:not(:has(> :not(:is(div, header):has(> h1)))),
+app-shell main.content .vista-head:not(:has(> :not(h1))) {
+  display: none;
+}
+app-shell main.content .head:has(> :is(div, header):has(> h1)),
+app-shell main.content .vista-head:has(> h1) {
+  justify-content: flex-end;
+}
