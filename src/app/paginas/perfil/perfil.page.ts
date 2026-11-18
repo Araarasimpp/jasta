@@ -1,6 +1,10 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Location } from '@angular/common';
+import { IonIcon } from '@ionic/angular';
+import { addIcons } from 'ionicons';
+import { chevronBackOutline } from 'ionicons/icons';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { Preferencia, PresenciaService } from '../../core/services/presencia.service';
 import { ToastService } from '../../shared/toast/toast.service';
@@ -15,11 +19,29 @@ import { MisDatosPagoComponent } from './mis-datos-pago.component';
 @Component({
   selector: 'app-perfil',
   standalone: true,
-  imports: [FormsModule, AvatarComponent, RecortarFotoComponent, TelegramPanelComponent, MisDatosPagoComponent],
+  imports: [FormsModule, IonIcon, AvatarComponent, RecortarFotoComponent, TelegramPanelComponent, MisDatosPagoComponent],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
       .page { max-width: 620px; }
+      .pf-barra { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; margin-bottom: -6px; }
+      .pf-barra h1 { margin: 0; text-align: center; font-size: 17px; font-weight: 700; }
+      .pf-atras { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; cursor: pointer; font-size: 20px;
+        border: 1px solid color-mix(in srgb, var(--text) 12%, transparent); color: var(--text);
+        background: color-mix(in srgb, var(--surface) 55%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+      .pf-cab { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+      .pf-foto { cursor: pointer; border-radius: 50%; }
+      .pf-foto input, .pf-editar input { display: none; }
+      .pf-editar { cursor: pointer; color: var(--accent); font-size: 15px; font-weight: 600; }
+      .pf-quitar { border: none; background: none; color: var(--text-muted); font: inherit; font-size: 13px; cursor: pointer; padding: 2px 6px; }
+      .pf-grupo { border-radius: 18px; background: var(--surface); border: 1px solid var(--border); overflow: hidden; }
+      .pf-fila { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 50px; padding: 0 16px; font-size: 15.5px; }
+      .pf-fila + .pf-fila { box-shadow: 0 -1px 0 var(--border); }
+      .pf-fila > span { flex-shrink: 0; color: var(--text); }
+      .pf-fila input { flex: 1; min-width: 0; text-align: right; border: none; background: none; color: var(--text-soft); font: inherit; font-size: 15px; padding: 12px 0; outline: none; }
+      .pf-fila input:focus { color: var(--text); }
+      .pf-fila em { font-style: normal; color: var(--text-soft); font-size: 14.5px; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .pf-nota { margin: -12px 0 0; text-align: center; font-size: 13px; color: var(--text-muted); }
       .panel { display: flex; flex-direction: column; gap: 14px; }
       .foto { display: flex; align-items: center; gap: 16px; }
       .foto label { cursor: pointer; }
@@ -39,34 +61,32 @@ import { MisDatosPagoComponent } from './mis-datos-pago.component';
   ],
   template: `
     <div class="page">
-      <div class="head"><div><h1>Mi perfil</h1></div></div>
-
-      <section class="panel">
-        <div class="foto">
-          <app-avatar [nombre]="nombre" [foto]="foto()" [usuario]="sb.usuario()?.id" [tam]="72"></app-avatar>
-          <div class="fila">
-            <label class="b">{{ subiendo() ? 'Subiendo…' : 'Cambiar foto' }}
-              <input type="file" accept="image/*" (change)="elegirFoto($event)" [disabled]="subiendo()" />
-            </label>
-            @if (foto()) {
-              <button class="b" (click)="quitarFoto()">Quitar foto</button>
-            }
-          </div>
-        </div>
-        @if (porRecortar(); as archivo) {
-          <app-recortar-foto [archivo]="archivo" [guardando]="subiendo()" (recortada)="subirFoto($event)" (cancelar)="porRecortar.set(null)"></app-recortar-foto>
-        }
-        <div class="campo"><label for="pn">Nombre</label><input id="pn" [(ngModel)]="nombre" autocomplete="name" /></div>
-        <div class="campo"><label for="pt">Teléfono</label><input id="pt" type="tel" [(ngModel)]="telefono" autocomplete="tel" /></div>
-        <div class="campo"><span class="etq">Correo</span><span class="suave">{{ sb.usuario()?.email }}</span></div>
-        <div class="campo">
-          <span class="etq">Roles</span>
-          <span class="roles">
-            @for (r of roles(); track r) { <span class="etiqueta on">{{ r }}</span> } @empty { <span class="suave">Sin rol asignado</span> }
-          </span>
-        </div>
-        <div><button class="b b-pri" [disabled]="guardando()" (click)="guardar()">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button></div>
-      </section>
+      <!-- Como el perfil de WhatsApp: foto al centro con "Editar foto" y los datos en filas -->
+      <header class="pf-barra">
+        <button type="button" class="pf-atras" aria-label="Volver" (click)="volver()"><ion-icon name="chevron-back-outline"></ion-icon></button>
+        <h1>Perfil</h1>
+        <span></span>
+      </header>
+      <div class="pf-cab">
+        <label class="pf-foto" aria-label="Cambiar foto">
+          <app-avatar [nombre]="nombre" [foto]="foto()" [usuario]="sb.usuario()?.id" [tam]="112"></app-avatar>
+          <input type="file" accept="image/*" (change)="elegirFoto($event)" [disabled]="subiendo()" />
+        </label>
+        <label class="pf-editar">{{ subiendo() ? 'Subiendo…' : 'Editar foto' }}
+          <input type="file" accept="image/*" (change)="elegirFoto($event)" [disabled]="subiendo()" />
+        </label>
+        @if (foto()) { <button type="button" class="pf-quitar" (click)="quitarFoto()">Quitar foto</button> }
+      </div>
+      @if (porRecortar(); as archivo) {
+        <app-recortar-foto [archivo]="archivo" [guardando]="subiendo()" (recortada)="subirFoto($event)" (cancelar)="porRecortar.set(null)"></app-recortar-foto>
+      }
+      <div class="pf-grupo">
+        <label class="pf-fila"><span>Nombre</span><input [(ngModel)]="nombre" autocomplete="name" (blur)="guardarSiCambio()" (keydown.enter)="$any($event.target).blur()" /></label>
+        <label class="pf-fila"><span>Número de teléfono</span><input type="tel" [(ngModel)]="telefono" autocomplete="tel" placeholder="Agregar" (blur)="guardarSiCambio()" (keydown.enter)="$any($event.target).blur()" /></label>
+        <div class="pf-fila"><span>Correo</span><em>{{ sb.usuario()?.email }}</em></div>
+        <div class="pf-fila"><span>Roles</span><em>{{ roles().join(' · ') || 'Sin rol asignado' }}</em></div>
+      </div>
+      @if (guardando()) { <p class="pf-nota">Guardando…</p> }
 
       <!-- Como en Discord: así te ven los demás (punto en tu foto y en los chats) -->
       <section class="panel">
@@ -142,6 +162,28 @@ export class PerfilPage implements OnInit {
   /** Admin y alistamiento despachan (pueden subir fotos de rótulos a Telegram) */
   despacha = computed(() => this.sb.tiene('admin', 'alistador'));
   roles = computed(() => this.sb.roles().map((r) => ROLES.find((x) => x.id === r)?.label ?? r));
+
+  private location = inject(Location);
+
+  constructor() {
+    addIcons({ chevronBackOutline });
+  }
+
+  volver(): void {
+    if (history.length > 1) this.location.back();
+    else this.router.navigateByUrl('/app/tu');
+  }
+
+  /** Como en WhatsApp: el nombre y el teléfono se guardan solos al salir del campo */
+  async guardarSiCambio(): Promise<void> {
+    const u = this.sb.usuario();
+    if (!this.nombre.trim()) {
+      this.nombre = u?.nombre ?? '';
+      return this.toast.error('El nombre no puede quedar vacío.');
+    }
+    if (this.nombre === (u?.nombre ?? '') && this.telefono === (u?.telefono ?? '')) return;
+    await this.guardar();
+  }
 
   ngOnInit(): void {
     const u = this.sb.usuario();

@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-11-18-tu-vidrio",
+    "fecha": "2026-11-18",
+    "hora": "09:00",
+    "titulo": "Nueva barra de abajo y pestaña Tú",
+    "cuerpo": "La barra de abajo ahora es de vidrio líquido: deja el dedo sobre ella y deslízalo, la burbuja te sigue y al soltar abre esa pestaña. El botón Más se cambió por Tú, con tu foto: ahí están todas las demás páginas, el buscador y tu estado. Toca tu foto o tu nombre para cambiar la foto, el nombre y el teléfono; se guardan solos.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "mensajero",
+      "alistador",
+      "cuadres",
+      "venta_local",
+      "recolector"
+    ]
+  },
+  {
     "id": "2026-11-18-ia-mas",
     "fecha": "2026-11-18",
     "hora": "19:10",

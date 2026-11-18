@@ -422,11 +422,12 @@ body.vidrio:not(.dark) .vd-nav a.active { background: #10131a; color: #fff; }
 body.vidrio.vidrio.vidrio .pill-nav.pill-nav {
   --pn-fondo: rgba(var(--vd-rgb), calc(var(--vd-alpha) + 0.05));
   --pn-borde: var(--vd-borde);
-  --pn-activa: rgba(255, 255, 255, 0.92);
-  --pn-acento: #0b0d12;
+  /* Vidrio líquido: la pestaña activa va en una burbuja translúcida, sin invertir colores */
+  --pn-activa: rgba(255, 255, 255, 0.16);
+  --pn-acento: var(--text);
   --pn-texto: var(--text);
 }
-body.vidrio.vidrio.vidrio:not(.dark) .pill-nav.pill-nav { --pn-activa: #10131a; --pn-acento: #fff; }
+body.vidrio.vidrio.vidrio:not(.dark) .pill-nav.pill-nav { --pn-activa: rgba(16, 19, 26, 0.09); --pn-acento: var(--text); }
 body.vidrio .shell::before,
 body.vidrio .layout::before {
   background: transparent;

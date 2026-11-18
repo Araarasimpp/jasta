@@ -40,7 +40,7 @@ export function mostrarTicket(png: Blob, nombre: string): void {
       <button type="button" class="sec" data-a="cerrar">Cerrar</button>
     </div>
     ${puedeCompartir ? '<p class="ayuda">En "Compartir" eliges Imprimir (AirPrint), la app de tu impresora, o lo mandas por WhatsApp.</p>' : ''}
-    ${iphone ? '<p class="ayuda">En iPhone no se puede imprimir por Bluetooth (solo en Android). Sirve una impresora con AirPrint; las otras opciones están en Más → Actualizaciones.</p>' : ''}`;
+    ${iphone ? '<p class="ayuda">En iPhone no se puede imprimir por Bluetooth (solo en Android). Sirve una impresora con AirPrint; las otras opciones están en Tú → Actualizaciones.</p>' : ''}`;
   raiz.querySelector('img')!.src = url;
 
   const cerrar = () => {

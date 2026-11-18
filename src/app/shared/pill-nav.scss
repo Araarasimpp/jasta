@@ -34,7 +34,7 @@
 :host-context(body.dark) .pill-nav {
   --pn-fondo: rgba(30, 32, 38, 0.45);
   --pn-borde: rgba(255, 255, 255, 0.14);
-  --pn-activa: rgba(0, 0, 0, 0.35);
+  --pn-activa: rgba(255, 255, 255, 0.14);
   --pn-texto: rgba(255, 255, 255, 0.92);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.18);
 }
@@ -81,12 +81,134 @@
   font-size: 22px;
 }
 
-.pill-nav a.active,
-.pill-nav .tab.active {
-  background: var(--pn-activa);
+.pill-nav .pn-item.active {
   color: var(--pn-acento);
   font-weight: 700;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+/* Mientras se arrastra la burbuja, ninguna pestaña cambia de color */
+.pill-nav.pn-tocando .pn-item.active {
+  color: var(--pn-texto);
+}
+
+/* Contenido de cada pestaña por encima de la burbuja; se agranda bajo la "lupa" */
+.pill-nav .pn-item > * {
+  position: relative;
+  z-index: 1;
+  transform: scale(var(--pn-lupa, 1));
+  transition: transform 260ms cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+
+.pill-nav.pn-tocando .pn-item > * {
+  transition: transform 90ms linear;
+}
+
+.pill-nav.pn-tocando .pn-item:active {
+  transform: none;
+}
+
+/* Burbuja de vidrio líquido: marca la pestaña activa y sigue el dedo */
+.pill-nav {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.pill-nav .pn-item {
+  -webkit-user-drag: none;
+}
+
+.pn-lente {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 0;
+  z-index: 0;
+  border-radius: 999px;
+  pointer-events: none;
+  background: var(--pn-activa);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35);
+  transform-origin: center;
+  transition:
+    transform 520ms cubic-bezier(0.25, 1.35, 0.4, 1),
+    width 420ms cubic-bezier(0.25, 1.2, 0.4, 1),
+    background 240ms ease,
+    box-shadow 240ms ease,
+    opacity 200ms ease;
+  will-change: transform;
+}
+
+.pn-lente.oculta {
+  opacity: 0;
+}
+
+.pn-lente.sin-transicion {
+  transition: background 240ms ease, box-shadow 240ms ease, opacity 200ms ease;
+}
+
+/* Tocando: la burbuja se infla y se vuelve vidrio claro con brillo y borde tornasol */
+.pn-lente.viva {
+  background: rgba(255, 255, 255, 0.08);
+  -webkit-backdrop-filter: blur(2px) saturate(170%) brightness(1.12);
+  backdrop-filter: blur(2px) saturate(170%) brightness(1.12);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.45),
+    inset 3px 4px 8px rgba(255, 255, 255, 0.35),
+    inset -3px -4px 10px rgba(255, 255, 255, 0.18),
+    0 10px 26px rgba(0, 0, 0, 0.28);
+}
+
+.pn-lente::before,
+.pn-lente::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+
+/* Borde tornasol (los colores del arcoíris que se ven en el borde del vidrio) */
+.pn-lente::before {
+  padding: 1.6px;
+  background: conic-gradient(from 200deg, #ff6a8b, #ffd36e, #7dffb0, #6ec8ff, #b98bff, #ff6a8b);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  filter: blur(0.6px);
+}
+
+/* Reflejo de luz arriba a la izquierda */
+.pn-lente::after {
+  background: radial-gradient(120% 70% at 22% 8%, rgba(255, 255, 255, 0.55), transparent 45%),
+    radial-gradient(90% 60% at 82% 100%, rgba(255, 255, 255, 0.18), transparent 50%);
+}
+
+.pn-lente.viva::before {
+  opacity: 0.75;
+}
+
+.pn-lente.viva::after {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pn-lente,
+  .pill-nav .pn-item > * {
+    transition: opacity 150ms ease;
+  }
+}
+
+/* Pestaña "Tú": la foto de la persona en vez de un ícono */
+.pill-nav .tab-tu app-avatar {
+  margin-bottom: 1px;
+}
+
+.pill-nav .tab-tu.active app-avatar {
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--pn-acento);
 }
 
 .pill-nav a ion-icon,
@@ -107,26 +229,9 @@
   display: none;
 }
 
-// Acción principal (ej. "Nuevo pedido"): círculo de acento dentro de la píldora
-.pill-center {
-  flex: 1;
-  display: flex;
-}
-
-.pill-center .pill-action {
-  color: var(--pn-texto);
-}
-
-.pill-center .pill-action ion-icon {
-  width: 40px;
-  height: 26px;
-  padding: 3px 0;
-  box-sizing: border-box;
-  border-radius: 999px;
-  background: var(--accent);
-  color: var(--on-accent);
-  font-size: 20px;
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 40%, transparent);
+// Acción principal ("Nuevo"): el ícono va en el color de acento
+.pill-nav .pill-action ion-icon {
+  color: var(--accent);
 }
 
 // Hoja "Más": cuadrícula de secciones que sube desde abajo, sobre la barra

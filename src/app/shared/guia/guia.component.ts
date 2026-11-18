@@ -28,10 +28,10 @@ const PEDIDOS: Paso[] = [
   { sel: 'app-pedidos .btn-imprimir-alistados', titulo: 'Rótulos', texto: 'Imprime de una vez los rótulos de todo lo alistado. Luego manda la foto del rótulo al grupo de Telegram del mensajero.', opcional: true },
 ];
 const AVISOS: Paso = { sel: '.campana', titulo: 'Avisos', texto: 'Aquí te llegan los avisos: pedidos nuevos, mensajes del chat y todo lo que necesita tu atención. La campanita se mueve cuando llega uno.' };
-const MAS = (texto: string): Paso => ({ sel: '.pill-nav .tab-mas, .rail button[aria-label="Finanzas"], .rail button[aria-label="Entregas"]', titulo: 'Todo lo demás', texto });
+const MAS = (texto: string): Paso => ({ sel: '.pill-nav .tab-tu, .rail button[aria-label="Finanzas"], .rail button[aria-label="Entregas"]', titulo: 'Tú: todo lo demás', texto });
 
 const PASOS: Partial<Record<Rol, Paso[]>> = {
-  admin: [...NUEVO_PEDIDO, ...PEDIDOS, AVISOS, MAS('En este menú están Cuadres, Mi cierre del día, Comisiones, Inventario (con el pedido al proveedor) y Reportes.')],
+  admin: [...NUEVO_PEDIDO, ...PEDIDOS, AVISOS, MAS('En Tú están Cuadres, Mi cierre del día, Comisiones, Inventario (con el pedido al proveedor) y Reportes.')],
   vendedora: [
     ...NUEVO_PEDIDO,
     { ruta: '/app/mi-panel', grupo: 'Ventas', titulo: 'Mi panel', texto: 'Ahora toca Mi panel.', tocar: true },
@@ -39,7 +39,7 @@ const PASOS: Partial<Record<Rol, Paso[]>> = {
     { sel: 'app-mi-panel .kpis', titulo: 'Lo que ganas', texto: 'Tu ganancia de lo entregado, lo que viene en camino y tus ventas del periodo.' },
     { sel: 'app-mi-panel section[aria-labelledby="t-ped"]', titulo: 'Mis pedidos', texto: 'Toca un pedido para ver cómo va y hablar por chat con el mensajero.' },
     AVISOS,
-    MAS('En este menú están tus comisiones (se pagan el viernes), el ranking, tu catálogo y los pedidos de la tienda.'),
+    MAS('En Tú están tus comisiones (se pagan el viernes), el ranking, tu catálogo y los pedidos de la tienda.'),
   ],
   mensajero: [
     { ruta: '/app/mis-entregas', grupo: 'Entregas', titulo: 'Mis entregas', texto: 'Toca aquí para ver tu ruta.', tocar: true },
@@ -227,7 +227,7 @@ export class GuiaComponent implements OnDestroy {
     }
     if (!el && p.ruta) {
       // No está a la vista: se señala el menú donde está y el botón del globo lleva a la página
-      el = primero([`.rail button[aria-label="${p.grupo}"]`, '.pill-nav .tab-mas']);
+      el = primero([`.rail button[aria-label="${p.grupo}"]`, '.pill-nav .tab-tu']);
       enMenu = !!el;
     }
     if (!el) return void this.ir(n + 1);

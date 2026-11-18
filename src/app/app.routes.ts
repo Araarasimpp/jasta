@@ -177,6 +177,11 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/actualizaciones/actualizaciones.page').then((m) => m.ActualizacionesPage),
       },
       {
+        // "Tú" (celular): tu foto y todas las demás páginas en listas
+        path: 'tu',
+        loadComponent: () => import('./paginas/tu/tu.page').then((m) => m.TuPage),
+      },
+      {
         path: 'perfil',
         loadComponent: () => import('./paginas/perfil/perfil.page').then((m) => m.PerfilPage),
       },

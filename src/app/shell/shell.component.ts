@@ -3,11 +3,12 @@ import { GuiaComponent } from '../shared/guia/guia.component';
 import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { entradaEnCascada } from '../core/cascada';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { NgTemplateOutlet } from '@angular/common';
+import { VidrioLiquidoDirective } from '../shared/vidrio-liquido.directive';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import {
   add,
+  addCircleOutline,
   lockClosedOutline,
   barChartOutline,
   calendarOutline,
@@ -150,7 +151,7 @@ const MENU: ItemMenu[] = [
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, NgTemplateOutlet, IonIcon, ToastComponent, AvatarComponent, AvisosPanelComponent, RequisitosComponent, TransferenciasAlertaComponent, GuiaComponent],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, IonIcon, ToastComponent, AvatarComponent, AvisosPanelComponent, RequisitosComponent, TransferenciasAlertaComponent, GuiaComponent, VidrioLiquidoDirective],
   styleUrls: ['../shared/pill-nav.scss', './shell.component.scss'],
   template: `
     <div class="vd-fondo" aria-hidden="true"></div>
@@ -237,22 +238,20 @@ const MENU: ItemMenu[] = [
         <router-outlet></router-outlet>
       </main>
 
-      <nav class="pill-nav mobile-only" aria-label="Secciones">
+      <nav class="pill-nav mobile-only" aria-label="Secciones" appVidrioLiquido>
         @for (item of tabs(); track item.path; let i = $index; let ultimo = $last) {
-          <a [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.path === '/app/pedidos' }" (click)="mas.set(false); avisos.cerrar()">
+          <a class="pn-item" [routerLink]="item.path" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.path === '/app/pedidos' }" (click)="avisos.cerrar()">
             <ion-icon [name]="item.icon"></ion-icon>
             <span class="tab-label">{{ item.label }}</span>
           </a>
           @if ((i === 1 || ultimo) && i <= 1 && puedeVender()) {
-            <div class="pill-center">
-              <a routerLink="/app/pedidos/nuevo" class="pill-action" (click)="mas.set(false)">
-                <ion-icon name="add"></ion-icon>
-                <span class="tab-label">Nuevo</span>
-              </a>
-            </div>
+            <a routerLink="/app/pedidos/nuevo" class="pn-item pill-action" routerLinkActive="active" (click)="avisos.cerrar()">
+              <ion-icon name="add-circle-outline"></ion-icon>
+              <span class="tab-label">Nuevo</span>
+            </a>
           }
         }
-        <button class="tab" [class.active]="avisos.abierto()" (click)="mas.set(false); avisos.toggle()" [attr.aria-expanded]="avisos.abierto()">
+        <button class="pn-item tab" data-lente-primero [class.active]="avisos.abierto()" (click)="avisos.toggle()" [attr.aria-expanded]="avisos.abierto()">
           <span class="icono-badge">
             <ion-icon class="campana" name="notifications-outline"></ion-icon>
             @if (avisos.noLeidas()) {
@@ -261,60 +260,13 @@ const MENU: ItemMenu[] = [
           </span>
           <span class="tab-label">Avisos</span>
         </button>
-        <button class="tab tab-mas" [class.active]="mas()" (click)="avisos.cerrar(); buscarMenu.set(''); mas.set(!mas())" [attr.aria-expanded]="mas()">
-          <ion-icon name="ellipsis-horizontal"></ion-icon>
-          <span class="tab-label">Más</span>
-        </button>
+        <a class="pn-item tab-tu" routerLink="/app/tu" [class.active]="tuActivo()" [attr.aria-current]="tuActivo() ? 'page' : null" (click)="avisos.cerrar()">
+          <app-avatar [nombre]="sb.usuario()?.nombre" [foto]="sb.usuario()?.avatar_url" [usuario]="sb.usuario()?.id" [tam]="26"></app-avatar>
+          <span class="tab-label">Tú</span>
+        </a>
       </nav>
       <app-avisos-panel [posicion]="'barra'"></app-avisos-panel>
 
-      @if (mas()) {
-        <button class="more-backdrop" aria-label="Cerrar menú" (click)="mas.set(false)"></button>
-        <div class="more-sheet" role="dialog" aria-labelledby="t-mas">
-          <span class="more-agarre" aria-hidden="true"></span>
-          <div class="more-head">
-            <h2 id="t-mas">Menú</h2>
-            <button class="more-cerrar" aria-label="Cerrar menú" (click)="mas.set(false)"><ion-icon name="close"></ion-icon></button>
-          </div>
-          <label class="more-buscar">
-            <ion-icon name="search-outline" aria-hidden="true"></ion-icon>
-            <input type="search" placeholder="Buscar página (ej: caja, gastos, QR)" aria-label="Buscar en el menú" autocomplete="off"
-              [value]="buscarMenu()" (input)="buscarMenu.set($any($event.target).value)" />
-          </label>
-          <ng-template #opcion let-item>
-            <a [routerLink]="item.path" routerLinkActive="active" (click)="mas.set(false)" class="more-op">
-              <span class="more-ico"><ion-icon [name]="item.icon"></ion-icon></span>
-              <span class="more-label">{{ item.label }}</span>
-            </a>
-          </ng-template>
-          @if (buscarMenu().trim()) {
-            <div class="more-grid">
-              @for (item of encontradasMenu(); track item.path + item.label) { <ng-container *ngTemplateOutlet="opcion; context: { $implicit: item }"></ng-container> }
-            </div>
-            @if (!encontradasMenu().length) { <p class="more-vacio">No encontramos esa página. Prueba con otra palabra.</p> }
-          } @else {
-            @if (frecuentes().length) {
-              <h3 class="more-titulo">Lo que más usas</h3>
-              <div class="more-grid">
-                @for (item of frecuentes(); track item.path + item.label) { <ng-container *ngTemplateOutlet="opcion; context: { $implicit: item }"></ng-container> }
-              </div>
-            }
-            @for (sec of seccionesMas(); track sec.titulo) {
-              <h3 class="more-titulo">{{ sec.titulo }}</h3>
-              <div class="more-grid">
-                @for (item of sec.items; track item.path + item.label) { <ng-container *ngTemplateOutlet="opcion; context: { $implicit: item }"></ng-container> }
-              </div>
-            }
-          }
-          <div class="more-pie">
-            <button class="more-btn" (click)="cambiarTemaConCirculo($event, () => theme.toggle())">
-              <ion-icon [name]="theme.isDark() ? 'sunny-outline' : 'moon-outline'"></ion-icon>
-              {{ theme.isDark() ? 'Modo claro' : 'Modo oscuro' }}
-            </button>
-            <button class="more-btn salir" (click)="salir()"><ion-icon name="log-out-outline"></ion-icon>Cerrar sesión</button>
-          </div>
-        </div>
-      }
       <app-toast></app-toast>
       @if (!avisos.requisito()) { <app-guia></app-guia> }
       @if (avisos.requisito()) {
@@ -333,7 +285,6 @@ export class ShellComponent implements OnInit, OnDestroy {
   private router = inject(Router);
 
   colapsado = signal(this.leerColapsado());
-  mas = signal(false);
 
   menu = computed(() => {
     const roles = this.sb.roles();
@@ -387,8 +338,14 @@ export class ShellComponent implements OnInit, OnDestroy {
     if (g && !this.abierto(g.id)) this.alternarGrupo(g.id);
   }
 
-  /** En el celular caben 2 secciones en la barra (más Nuevo, Avisos y Más); el resto va en "Más" */
+  /** En el celular caben 2 secciones en la barra (más Nuevo, Avisos y Tú); el resto va en "Tú" */
   tabs = computed(() => this.menu().slice(0, 2));
+  /** "Tú" queda marcada en su página y en cualquier página que no tenga pestaña propia */
+  tuActivo = computed(() => {
+    const url = this.url().split(/[?#]/)[0];
+    if (url.startsWith('/app/pedidos/nuevo')) return false;
+    return !this.tabs().some((t) => (t.path === '/app/pedidos' ? url === t.path : url === t.path || url.startsWith(t.path + '/')));
+  });
   /** Categoría abierta en el panel flotante de la barra de íconos */
   flotante = signal<string | null>(null);
   grupoFlotante = computed(() => this.grupos().find((g) => g.id === this.flotante()) ?? null);
@@ -474,7 +431,7 @@ export class ShellComponent implements OnInit, OnDestroy {
       this.noLeidasAntes = n;
       if (antes !== null && n > antes) setTimeout(() => document.querySelectorAll('.campana').forEach((c) => campanita(c)));
     });
-    addIcons({ lockClosedOutline, homeOutline, colorPaletteOutline, calendarOutline, hourglassOutline, swapHorizontalOutline, searchOutline, 
+    addIcons({ addCircleOutline, lockClosedOutline, homeOutline, colorPaletteOutline, calendarOutline, hourglassOutline, swapHorizontalOutline, searchOutline, 
       sparklesOutline, globeOutline, helpBuoyOutline, chatbubblesOutline, analyticsOutline, add, close, chevronDownOutline, layersOutline, pricetagsOutline, returnDownBackOutline, pieChartOutline, alertCircleOutline, cardOutline, trendingDownOutline, barChartOutline, chevronBackOutline, chevronForwardOutline, cubeOutline, ellipsisHorizontal,
       logOutOutline, moonOutline, peopleOutline, receiptOutline, bicycleOutline, clipboardOutline, sunnyOutline, walletOutline, ticketOutline, statsChartOutline, settingsOutline,
       storefrontOutline, listOutline, trophyOutline, bookOutline, gridOutline, cashOutline, bagHandleOutline, peopleCircleOutline, timeOutline, personCircleOutline, notificationsOutline, locationOutline,
@@ -523,7 +480,6 @@ export class ShellComponent implements OnInit, OnDestroy {
   }
 
   async salir(): Promise<void> {
-    this.mas.set(false);
     await this.avisos.salir();
     await this.sb.logout();
     this.router.navigateByUrl('/auth/login');
