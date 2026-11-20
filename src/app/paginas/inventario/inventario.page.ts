@@ -120,7 +120,7 @@ type Filtro = 'con' | 'bajos' | 'agotados' | 'sin' | 'todos';
       .linea { display: grid; grid-template-columns: minmax(0, 1fr) 80px 110px 32px; gap: 8px; align-items: center; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--surface-2); }
       .linea.sin-costo { grid-template-columns: minmax(0, 1fr) 90px 32px; }
       .linea .nom { font-size: 13.5px; }
-      .linea input { height: 36px; padding: 0 8px; }
+      .linea input { width: 100%; height: 40px; padding: 0 10px; min-width: 0; }
       .sugerencias { list-style: none; margin: 4px 0 0; padding: 4px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); max-height: 220px; overflow-y: auto; }
       .sugerencias button { all: unset; box-sizing: border-box; display: flex; width: 100%; justify-content: space-between; gap: 8px; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 13.5px; }
       .sugerencias button:hover { background: var(--hover); }
@@ -452,8 +452,8 @@ type Filtro = 'con' | 'bajos' | 'agotados' | 'sin' | 'todos';
               @for (l of lineas(); track l.producto.id; let i = $index) {
                 <div class="linea" [class.sin-costo]="!esAdmin()">
                   <span class="nom">{{ l.producto.nombre }}</span>
-                  <input class="num" type="number" inputmode="numeric" min="1" [(ngModel)]="l.cantidad" (ngModelChange)="tocar()" aria-label="Cantidad" placeholder="Cant." />
-                  @if (esAdmin()) { <input pesos class="num" [(ngModel)]="l.costo" (ngModelChange)="tocar()" aria-label="Costo por unidad" placeholder="Costo c/u" /> }
+                  <input class="inp num" type="number" inputmode="numeric" min="1" [(ngModel)]="l.cantidad" (ngModelChange)="tocar()" aria-label="Cantidad" placeholder="Cant." />
+                  @if (esAdmin()) { <input pesos class="inp num" [(ngModel)]="l.costo" (ngModelChange)="tocar()" aria-label="Costo por unidad" placeholder="Costo c/u" /> }
                   <button type="button" class="quitar" (click)="quitarLinea(i)" aria-label="Quitar"><ion-icon name="trash-outline"></ion-icon></button>
                 </div>
               }

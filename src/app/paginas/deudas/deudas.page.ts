@@ -112,8 +112,8 @@ const METODOS: { id: Metodo; label: string }[] = [
       .f-lineas { display: flex; flex-direction: column; gap: 6px; }
       .f-linea { display: grid; grid-template-columns: minmax(0, 1fr) 64px 104px 32px; gap: 6px; align-items: center; }
       .f-linea .nom { font-size: 13.5px; line-height: 1.25; overflow-wrap: anywhere; }
-      .f-linea input { height: 38px; padding: 0 8px; font-size: 14px; min-width: 0; }
-      .f-linea .quitar { height: 32px; border: 0; border-radius: var(--radius-sm); background: var(--danger-wash); color: var(--danger); cursor: pointer; }
+      .f-linea input { width: 100%; height: 40px; padding: 0 10px; font-size: 14.5px; min-width: 0; }
+      .f-linea .quitar { height: 40px; display: grid; place-items: center; border: 0; border-radius: var(--radius-sm); background: var(--danger-wash); color: var(--danger); cursor: pointer; }
       .f-total { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface-2); font-size: 13.5px; }
       .f-total strong { font-family: var(--mono-font); font-size: 18px; }
       .check { display: flex; align-items: flex-start; gap: 8px; font-size: 14px; line-height: 1.35; cursor: pointer; }
@@ -317,9 +317,9 @@ const METODOS: { id: Metodo; label: string }[] = [
                 @for (l of lineasF(); track l.id; let i = $index) {
                   <div class="f-linea">
                     <span class="nom">{{ l.nombre }}</span>
-                    <input class="num" type="number" inputmode="numeric" min="1" [(ngModel)]="l.cantidad" (ngModelChange)="tocarF()" aria-label="Cantidad" placeholder="Cant." />
-                    <input pesos class="num" [(ngModel)]="l.costo" (ngModelChange)="tocarF()" aria-label="Costo por unidad" placeholder="Costo c/u" />
-                    <button type="button" class="quitar" (click)="quitarF(i)" aria-label="Quitar">✕</button>
+                    <input class="inp num" type="number" inputmode="numeric" min="1" [(ngModel)]="l.cantidad" (ngModelChange)="tocarF()" aria-label="Cantidad" placeholder="Cant." />
+                    <input pesos class="inp num" [(ngModel)]="l.costo" (ngModelChange)="tocarF()" aria-label="Costo por unidad" placeholder="Costo c/u" />
+                    <button type="button" class="quitar" (click)="quitarF(i)" aria-label="Quitar"><svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
                   </div>
                 }
               </div>

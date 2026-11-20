@@ -602,7 +602,7 @@ function normal(s: string): string {
       <div class="cc-hoja" role="dialog" aria-labelledby="t-compra">
         <div class="cc-hoja-cab">
           <div><h2 id="t-compra">{{ estadoTexto(x) }}</h2><small>Pedido del {{ fechaLarga(x.fecha) }}</small></div>
-          <button type="button" class="cc-cerrar" (click)="compraSel.set(null)" aria-label="Cerrar">✕</button>
+          <button type="button" class="cc-cerrar" (click)="compraSel.set(null)" aria-label="Cerrar"><svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
         </div>
         <ol class="cc-linea" [class.cc-cancelado]="x.estado === 'cancelado'">
           @for (p of pasos(x); track p.t) {

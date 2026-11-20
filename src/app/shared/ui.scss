@@ -63,6 +63,12 @@ h2 {
   font-weight: 650;
 }
 
+// En las hojas (ventanas que suben desde abajo) el título empuja la X de cerrar a la derecha
+.hoja-head h2 {
+  margin: 0 auto 0 0;
+  font-size: 18px;
+}
+
 // ---------- KPIs: celdas de una sola grilla, separadas por rayas finas ----------
 .kpis {
   display: grid;

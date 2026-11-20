@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-11-20-campos-cuentas",
+    "fecha": "2026-11-20",
+    "hora": "16:50",
+    "titulo": "Ventanas más ordenadas",
+    "cuerpo": "En Cuentas por cobrar, Deudas y Registrar compra, las casillas de cantidad y precio de cada producto ahora tienen el mismo estilo que el resto de la app. En las ventanas que suben desde abajo, la X para cerrar quedó siempre a la derecha.",
+    "roles": [
+      "admin",
+      "alistador",
+      "recolector"
+    ]
+  },
+  {
     "id": "2026-11-20-campos-iguales",
     "fecha": "2026-11-20",
     "hora": "16:40",

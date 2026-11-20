@@ -72,7 +72,7 @@ const normal = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLower
       .f-sug small { color: var(--text-muted); white-space: nowrap; }
       .f-lineas { display: flex; flex-direction: column; gap: 6px; }
       .f-linea { display: grid; grid-template-columns: minmax(0, 1fr) 56px 96px 32px; gap: 6px; align-items: center; }
-      .f-linea.dos { grid-template-columns: 60px minmax(0, 1fr) minmax(0, 1fr) 32px; row-gap: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--border-soft); }
+      .f-linea.dos { grid-template-columns: 64px minmax(0, 1fr) minmax(0, 1fr) 40px; row-gap: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--border-soft); }
       .f-linea.dos .nom { grid-column: 1 / -1; font-weight: 600; }
       .f-linea.dos.f-cab { padding-bottom: 0; border-bottom: 0; }
       .f-linea.dos.f-cab span:first-child { display: none; }
@@ -81,8 +81,8 @@ const normal = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLower
       .gan { color: var(--efectivo-texto); font-weight: 650; }
       .chip-aum { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: var(--ok-wash); color: var(--efectivo-texto); font-size: 11.5px; font-weight: 700; vertical-align: middle; }
       .f-linea .nom { font-size: 13.5px; line-height: 1.25; overflow-wrap: anywhere; }
-      .f-linea input { height: 38px; padding: 0 8px; font-size: 14px; min-width: 0; }
-      .f-linea .quitar { height: 32px; border: 0; border-radius: var(--radius-sm); background: var(--danger-wash); color: var(--danger); cursor: pointer; }
+      .f-linea input { width: 100%; height: 40px; padding: 0 10px; font-size: 14.5px; min-width: 0; }
+      .f-linea .quitar { height: 40px; display: grid; place-items: center; border: 0; border-radius: var(--radius-sm); background: var(--danger-wash); color: var(--danger); font-size: 18px; cursor: pointer; }
       .f-total { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface-2); font-size: 13.5px; }
       .f-total strong { font-family: var(--mono-font); font-size: 18px; }
       .metodos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -204,10 +204,10 @@ const normal = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLower
               @for (l of lineas(); track l.id; let i = $index) {
                 <div class="f-linea dos">
                   <span class="nom">{{ l.nombre }}</span>
-                  <input class="num" type="number" inputmode="numeric" min="1" [(ngModel)]="l.cantidad" (ngModelChange)="tocar()" aria-label="Cantidad" />
-                  <input pesos class="num" [(ngModel)]="l.real" (ngModelChange)="cambioReal(l)" aria-label="Tu costo por unidad" placeholder="Tu costo" />
-                  <input pesos class="num" [(ngModel)]="l.costo" (ngModelChange)="l.manual = true; tocar()" aria-label="Le cobras por unidad" placeholder="Le cobras" />
-                  <button type="button" class="quitar" (click)="quitar(i)" aria-label="Quitar">✕</button>
+                  <input class="inp num" type="number" inputmode="numeric" min="1" [(ngModel)]="l.cantidad" (ngModelChange)="tocar()" aria-label="Cantidad" />
+                  <input pesos class="inp num" [(ngModel)]="l.real" (ngModelChange)="cambioReal(l)" aria-label="Tu costo por unidad" placeholder="Tu costo" />
+                  <input pesos class="inp num" [(ngModel)]="l.costo" (ngModelChange)="l.manual = true; tocar()" aria-label="Le cobras por unidad" placeholder="Le cobras" />
+                  <button type="button" class="quitar" (click)="quitar(i)" aria-label="Quitar"><ion-icon name="close-outline"></ion-icon></button>
                 </div>
               }
             </div>

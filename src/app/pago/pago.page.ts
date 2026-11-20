@@ -95,7 +95,7 @@ const METODOS: Record<string, string> = {
             <h1>Estamos confirmando tu pago…</h1>
             <p>Esto toma unos segundos. No cierres esta página.</p>
           } @else if (w.pago_estado === 'rechazado') {
-            <div class="icono mal" aria-hidden="true">✕</div>
+            <div class="icono mal" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></div>
             <h1>El pago no se aprobó</h1>
             <p>No se te cobró nada. Puedes intentarlo otra vez (con otra tarjeta o con PSE o Nequi) o pagar al recibir.</p>
           } @else if (w.estado === 'cancelado') {
