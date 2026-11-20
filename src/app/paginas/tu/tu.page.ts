@@ -43,13 +43,9 @@ import { Preferencia } from '../../core/services/presencia.service';
       .tu-campana { position: relative; }
       .tu-badge { position: absolute; top: 1px; right: 0; min-width: 16px; height: 16px; padding: 0 4px; box-sizing: border-box; border-radius: 999px;
         background: var(--danger); color: #fff; font-size: 10px; font-weight: 700; line-height: 16px; text-align: center; }
-      .tu-buscar { position: relative; margin: 4px 0 8px; }
-      .tu-buscar ion-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 18px; }
-      .tu-buscar input { width: 100%; height: 44px; box-sizing: border-box; padding: 0 40px 0 42px; border-radius: 14px; font: inherit; font-size: 15.5px;
-        border: none; background: var(--surface-2); color: var(--text); }
-      .tu-buscar .limpiar { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); border: none; background: none; color: var(--text-muted);
-        font-size: 20px; width: 34px; height: 34px; display: grid; place-items: center; cursor: pointer; }
-      .tu-buscar .limpiar ion-icon { position: static; transform: none; }
+      .tu-buscar { width: 100%; margin: 4px 0 8px; height: 44px; }
+      .tu-buscar input { height: 100%; }
+      .tu-buscar .limpiar { border: none; background: none; color: var(--text-muted); font-size: 20px; width: 30px; height: 30px; display: grid; place-items: center; cursor: pointer; padding: 0; }
 
       /* Cabecera: nota de estado, foto grande, nombre y rol */
       .tu-cab { display: flex; flex-direction: column; align-items: center; padding: 8px 0 18px; position: relative; }
@@ -113,7 +109,7 @@ import { Preferencia } from '../../core/services/presencia.service';
       </header>
 
       @if (buscando()) {
-        <label class="tu-buscar">
+        <label class="buscar tu-buscar">
           <ion-icon name="search-outline" aria-hidden="true"></ion-icon>
           <input #campo type="search" placeholder="Buscar página (ej: caja, gastos, QR)" aria-label="Buscar página" autocomplete="off"
             [value]="shell.buscarMenu()" (input)="shell.buscarMenu.set($any($event.target).value)" />

@@ -550,7 +550,8 @@ app-pedidos .row.recien{animation:llega .5s cubic-bezier(.2,1.2,.4,1) both,brill
 
 /* Las páginas de la app van sin título ni descripción arriba (los botones de esa fila se quedan) */
 app-shell main.content .head > :is(div, header):has(> h1),
-app-shell main.content .vista-head > h1 {
+app-shell main.content .vista-head > h1,
+app-shell main.content .page-header > .title:has(> h1) {
   display: none;
 }
 app-shell main.content .head:not(:has(> :not(:is(div, header):has(> h1)))),

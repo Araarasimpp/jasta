@@ -97,7 +97,7 @@ const normal = (s: string | null | undefined) => (s ?? '').normalize('NFD').repl
       .renglon.total { margin-top: 6px; padding-top: 12px; border-top: 3px double var(--text); font-weight: 650; }
       .renglon.total .val { font-size: 24px; font-weight: 700; color: var(--efectivo-texto); }
       .pct { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; }
-      .pct input { width: 58px; height: 30px; padding: 0 6px; text-align: right; }
+      .pct input { width: 70px; height: 40px; padding: 0 10px; text-align: right; }
       .sobres { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
       .sobre { padding: 14px 16px; border-radius: var(--radius); border: 1px dashed var(--border-strong); background: var(--surface-2); }
       .sobre small { display: block; font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
@@ -124,7 +124,7 @@ const normal = (s: string | null | undefined) => (s ?? '').normalize('NFD').repl
       .renglon.merc .val { color: var(--st-ruta-text); }
       .renglon.apagado .val { opacity: .4; }
       .chk { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; }
-      .chk input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); }
+      .chk input { width: 20px; height: 20px; margin: 0; flex-shrink: 0; }
       .meta-barra { height: 12px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--border); overflow: hidden; }
       .meta-barra i { display: block; height: 100%; border-radius: 6px; background: var(--info); transition: width .4s ease; }
       .meta-barra.oro i { background: linear-gradient(90deg, var(--st-pendiente), var(--efectivo)); }

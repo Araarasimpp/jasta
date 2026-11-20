@@ -71,7 +71,7 @@ function ultimosMeses(): { id: string; label: string }[] {
       .head h1 { display: flex; align-items: center; gap: 8px; }
       .head h1 ion-icon { color: var(--oro); }
       .controles { justify-content: space-between; align-items: center; }
-      .mes { width: auto; min-width: 180px; height: 34px; }
+      .mes { width: auto; min-width: 180px; height: 40px; }
       .nota { margin: -8px 0 0; font-size: 14px; color: var(--text-soft); }
       .nota strong { color: var(--accent); }
 

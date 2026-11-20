@@ -1,5 +1,21 @@
 [
   {
+    "id": "2026-11-20-campos-iguales",
+    "fecha": "2026-11-20",
+    "hora": "16:40",
+    "titulo": "Campos y buscadores parejos",
+    "cuerpo": "Los buscadores y filtros de toda la app ahora tienen el mismo tamaño, borde y estilo de vidrio. Los filtros de Pedidos (Domicilios, Rótulo, Mensajero) se leen mejor y muestran su flechita, y Pedidos ya no tiene el título arriba, como las demás páginas.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "alistador",
+      "cuadres",
+      "venta_local",
+      "mensajero",
+      "recolector"
+    ]
+  },
+  {
     "id": "2026-11-20-devoluciones-bodega",
     "fecha": "2026-11-20",
     "hora": "12:00",

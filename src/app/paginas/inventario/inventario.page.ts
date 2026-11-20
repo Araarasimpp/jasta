@@ -78,9 +78,7 @@ type Filtro = 'con' | 'bajos' | 'agotados' | 'sin' | 'todos';
       .page { max-width: 1000px; }
       .controles { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
       button.kpi { border: 0; background: var(--surface); font: inherit; color: inherit; text-align: left; align-items: flex-start; cursor: pointer; }
-      .buscar { position: relative; flex: 1; min-width: 200px; }
-      .buscar ion-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
-      .buscar input { width: 100%; padding-left: 36px; }
+      .buscar { flex: 1; min-width: 200px; width: auto; height: 40px; }
       .lista { list-style: none; margin: 0; padding: 0; }
       .fila { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 10px 0; border-bottom: var(--perfora); }
       .fila:last-child { border-bottom: 0; }
@@ -204,7 +202,7 @@ type Filtro = 'con' | 'bajos' | 'agotados' | 'sin' | 'todos';
         }
 
         <div class="controles">
-          <div class="buscar"><ion-icon name="search-outline"></ion-icon><input class="inp" type="search" [(ngModel)]="texto" placeholder="Buscar producto o SKU" aria-label="Buscar producto" /></div>
+          <label class="buscar"><ion-icon name="search-outline"></ion-icon><input type="search" [(ngModel)]="texto" placeholder="Buscar producto o SKU" aria-label="Buscar producto" /></label>
           <div class="segmented">
             <button [class.on]="filtro() === 'todos'" (click)="filtro.set('todos')">Todos</button>
             <button [class.on]="filtro() === 'con'" (click)="filtro.set('con')">Con inventario</button>

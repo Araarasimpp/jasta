@@ -242,9 +242,11 @@
   background-position: right 9px center;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--text-2);
-  font-size: 12px;
+  // background-color (no "background"): si no, se borra la flechita del menú
+  background-color: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13.5px;
   cursor: pointer;
 }
 
@@ -864,7 +866,7 @@
   }
 
   .select-ghost {
-    height: 36px;
+    height: 40px;
   }
 
   .list-head {

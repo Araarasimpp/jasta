@@ -248,6 +248,13 @@ body.vidrio input.inp {
   background: var(--surface-2);
   color: var(--text);
 }
+// Buscadores y filtros con el mismo vidrio que los demás campos
+body.vidrio .buscar,
+body.vidrio .select-ghost {
+  border-color: var(--vd-borde);
+  background-color: var(--surface-2);
+  color: var(--text);
+}
 // Las opciones de los menús desplegables las pinta el sistema: texto oscuro sobre blanco
 body.vidrio select option { color: #10131a; background: #ffffff; }
 

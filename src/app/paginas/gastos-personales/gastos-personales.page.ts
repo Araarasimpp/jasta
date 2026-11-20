@@ -105,9 +105,7 @@ const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'o
       .cats .pct { font-size: 11.5px; color: var(--text-muted); }
       .cats .v { font-family: var(--mono-font); font-weight: 650; white-space: nowrap; }
       .filtros { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-      .buscar { flex: 1; min-width: 180px; position: relative; }
-      .buscar ion-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
-      .buscar input { width: 100%; height: 38px; padding: 0 12px 0 34px; box-sizing: border-box; }
+      .buscar { flex: 1; min-width: 180px; width: auto; height: 40px; }
       .filtro-on { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 6px 0 12px; border: 0; border-radius: 999px; background: var(--accent-wash); color: var(--accent); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
       .filtro-on ion-icon { font-size: 16px; }
       .dia-cab { display: flex; justify-content: space-between; align-items: baseline; margin: 14px 0 2px; padding-bottom: 6px; border-bottom: 1px solid var(--border-soft); font-size: 12px; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted); }
