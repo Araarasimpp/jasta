@@ -53,6 +53,8 @@ function normal(s: string): string {
     `
       .ordenar-dir { display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; padding: 0; border: 0; background: none; color: var(--accent); font: inherit; font-size: 12.5px; font-weight: 650; cursor: pointer; }
       .ordenar-dir:disabled { opacity: .6; cursor: progress; }
+      .ordenar-dir.estado { color: var(--text-soft); font-weight: 550; cursor: default; flex-wrap: wrap; }
+      .ordenar-dir.estado .ordenar-dir { margin: 0 0 0 4px; }
       .pegar { margin-bottom: 12px; padding: 12px; border: 1px dashed var(--border-strong); border-radius: var(--radius-lg); background: var(--surface); }
       .pegar.abierto { border-style: solid; display: flex; flex-direction: column; gap: 10px; }
       .pegar-btn { all: unset; box-sizing: border-box; width: 100%; display: flex; align-items: center; gap: 12px; cursor: pointer; }
@@ -239,10 +241,15 @@ function normal(s: string): string {
               </label>
               <div class="campo">
                 <label for="dir">Dirección</label>
-                <input id="dir" autocomplete="off" [(ngModel)]="direccion" [placeholder]="nacional() ? 'Dirección completa con barrio' : ''" />
-                @if (direccion.trim().length > 4) {
-                  <button type="button" class="ordenar-dir" [disabled]="ordenandoDir()" (click)="ordenarDireccion()">
-                    <ion-icon name="sparkles" aria-hidden="true"></ion-icon>{{ ordenandoDir() ? 'Ordenando…' : 'Ordenar dirección con IA' }}</button>
+                <input id="dir" autocomplete="off" [(ngModel)]="direccion" (ngModelChange)="dirTocada = true" (blur)="ordenarSola()" [placeholder]="nacional() ? 'Dirección completa con barrio' : ''" />
+                @if (ordenandoDir()) {
+                  <span class="ordenar-dir estado"><ion-icon name="sparkles" aria-hidden="true"></ion-icon>Ordenando la dirección…</span>
+                } @else if (dirOriginal() && direccion === dirOrdenada()) {
+                  <span class="ordenar-dir estado"><ion-icon name="sparkles" aria-hidden="true"></ion-icon>La IA ordenó la dirección.
+                    <button type="button" class="ordenar-dir" (click)="dejarDireccion()">Dejarla como estaba</button></span>
+                } @else if (direccion.trim().length > 4) {
+                  <button type="button" class="ordenar-dir" (click)="ordenarDireccion()">
+                    <ion-icon name="sparkles" aria-hidden="true"></ion-icon>Ordenar dirección con IA</button>
                 }
               </div>
               @if (nacional()) {
@@ -725,16 +732,56 @@ export class NuevoPedidoPage implements OnInit {
 
   /** La IA deja la dirección con el formato de siempre ("cl 5 38 25" -> "Calle 5 # 38-25") */
   ordenandoDir = signal(false);
+  /** Como la escribió la persona antes de que la IA la ordenara (para devolverla) */
+  dirOriginal = signal('');
+  dirOrdenada = signal('');
+  /** Se escribió o cambió la dirección (al editar un pedido no se toca si no la cambian) */
+  dirTocada = false;
+  private ordenandoAhora: Promise<void> | null = null;
+
+  /** El botón: ordena y avisa si algo falla */
   async ordenarDireccion(): Promise<void> {
+    await this.ordenar(true);
+  }
+
+  /** Al salir del campo la dirección se ordena sola (si la IA no responde, queda como se escribió) */
+  ordenarSola(): void {
+    if (!this.dirTocada || this.nacional() || this.direccion.trim().length <= 4 || this.direccion === this.dirOrdenada()) return;
+    void this.ordenar(false);
+  }
+
+  dejarDireccion(): void {
+    this.direccion = this.dirOriginal();
+    this.dirOriginal.set('');
+    this.dirOrdenada.set('');
+    this.dirTocada = false;
+  }
+
+  private ordenar(avisar: boolean): Promise<void> {
+    if (this.ordenandoAhora) return this.ordenandoAhora;
+    const antes = this.direccion;
     this.ordenandoDir.set(true);
-    try {
-      const r = await pedirIa<{ texto: string }>(this.sb.client, { accion: 'direccion', texto: this.direccion }, 20000);
-      if (r.texto?.trim()) this.direccion = r.texto.trim();
-    } catch (e) {
-      this.toast.error(mensajeError(e));
-    } finally {
-      this.ordenandoDir.set(false);
-    }
+    this.ordenandoAhora = (async () => {
+      try {
+        const r = await pedirIa<{ texto: string }>(this.sb.client, { accion: 'direccion', texto: antes }, 15000);
+        const nueva = r.texto?.trim();
+        // Solo si nadie la cambió mientras tanto
+        if (nueva && this.direccion === antes) {
+          this.dirTocada = false;
+          if (nueva !== antes.trim()) {
+            this.dirOriginal.set(antes);
+            this.dirOrdenada.set(nueva);
+            this.direccion = nueva;
+          }
+        }
+      } catch (e) {
+        if (avisar) this.toast.error(mensajeError(e));
+      } finally {
+        this.ordenandoDir.set(false);
+        this.ordenandoAhora = null;
+      }
+    })();
+    return this.ordenandoAhora;
   }
 
   // ---------- Pegar pedido de WhatsApp ----------
@@ -796,7 +843,7 @@ export class NuevoPedidoPage implements OnInit {
     const revisar: string[] = [];
     if (r.telefono) { this.cambioTelefono(r.telefono); llenos.push('celular'); }
     if (r.nombre) { this.cambioNombre(r.nombre); llenos.push('nombre'); }
-    if (r.direccion) { this.direccion = r.direccion; llenos.push('dirección'); }
+    if (r.direccion) { this.direccion = r.direccion; llenos.push('dirección'); this.dirTocada = true; setTimeout(() => this.ordenarSola()); }
     if (r.barrio) { this.elegirBarrio(r.barrio); llenos.push('barrio'); }
     else if (r.barrioTexto) { this.barrio = r.barrioTexto; this.barrioQ.set(r.barrioTexto); revisar.push(`el barrio "${r.barrioTexto}" no está en la lista`); }
     if (r.observaciones) { this.observaciones = [this.observaciones.trim(), r.observaciones].filter(Boolean).join('. '); llenos.push('observaciones'); }
@@ -942,6 +989,8 @@ export class NuevoPedidoPage implements OnInit {
   }
 
   async guardar(): Promise<void> {
+    // Si la IA está ordenando la dirección, se espera un momento (máximo 6 s) para guardar la ordenada
+    if (this.ordenandoAhora) await Promise.race([this.ordenandoAhora, new Promise((r) => setTimeout(r, 6000))]);
     this.error.set('');
     const local = this.local();
     if (!local && !this.nombre.trim()) return this.error.set('Escribe el nombre del cliente.');

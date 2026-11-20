@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-11-20-direcciones-solas",
+    "fecha": "2026-11-20",
+    "hora": "10:00",
+    "titulo": "Las direcciones se ordenan solas",
+    "cuerpo": "En Nuevo pedido, al terminar de escribir la dirección la IA la ordena sola (por ejemplo \"cra 80 n 12 40\" queda \"Carrera 80 # 12-40\"). Si no te gusta cómo quedó, toca Dejarla como estaba. Los pedidos que llegan por la tienda en línea también se ordenan solos al llegar, y en Pedidos de la tienda ves cómo la escribió el cliente.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "alistador",
+      "venta_local"
+    ]
+  },
+  {
     "id": "2026-11-20-waze-quitar",
     "fecha": "2026-11-20",
     "hora": "09:00",

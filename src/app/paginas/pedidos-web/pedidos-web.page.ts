@@ -17,7 +17,7 @@ import { PesosDirective } from '../../shared/pesos/pesos.directive';
 interface ItemWeb { producto_id: number; nombre: string; cantidad: number; precio: number; color: string | null; talla: string | null }
 interface PedidoWeb {
   id: number; estado: 'por_confirmar' | 'confirmado' | 'cancelado'; vendedora: string | null;
-  cliente_nombre: string; cliente_telefono: string; direccion: string; barrio: string; observaciones: string | null;
+  cliente_nombre: string; cliente_telefono: string; direccion: string; direccion_original?: string | null; barrio: string; observaciones: string | null;
   valor_domicilio: number; domicilio_por_confirmar: boolean; items: ItemWeb[]; subtotal: number; pedido_id: number | null;
   motivo: string | null; atendido_por: string | null; atendido_at: string | null; created_at: string; riesgo: Riesgo | null;
   /** Señales del pedido para revisar antes de confirmar (varios pedidos seguidos, misma conexión, dirección con rechazos…) */
@@ -43,6 +43,8 @@ export function enlaceTienda(u: { id: number; nombre: string } | null): string {
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
+      .dir-original { display: flex; align-items: center; gap: 5px; margin: -2px 0 0; font-size: 12.5px; color: var(--text-muted); }
+      .dir-original ion-icon { color: var(--accent); flex-shrink: 0; }
       .page { max-width: 860px; }
       .enlace { display: flex; flex-direction: column; gap: 10px; }
       .enlace code { display: block; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface-2); font-size: 13.5px; word-break: break-all; }
@@ -126,6 +128,9 @@ export function enlaceTienda(u: { id: number; nombre: string } | null): string {
               </div>
             }
             <p class="dir"><a [href]="'tel:' + w.cliente_telefono">{{ w.cliente_telefono }}</a> · {{ w.direccion }} · <strong>{{ w.barrio }}</strong></p>
+            @if (w.direccion_original && w.direccion_original !== w.direccion) {
+              <p class="dir-original"><ion-icon name="sparkles" aria-hidden="true"></ion-icon>La IA ordenó la dirección. El cliente escribió: {{ w.direccion_original }}</p>
+            }
             @if (w.observaciones) { <p class="obs">"{{ w.observaciones }}"</p> }
             <ul class="items">
               @for (i of w.items; track $index) {
