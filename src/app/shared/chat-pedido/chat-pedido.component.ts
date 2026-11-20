@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, HostBinding, HostListener, Input, OnDestroy, OnInit, Output, ViewChild, computed, inject, signal } from '@angular/core';
+import { pedirMicrofono, soltarMicrofono } from '../medios';
 import { FormsModule } from '@angular/forms';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
@@ -653,7 +654,8 @@ export class ChatPedidoComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!tipo || !navigator.mediaDevices?.getUserMedia) return this.toast.error('Este celular no deja grabar notas de voz aquí.');
     let flujo: MediaStream;
     try {
-      flujo = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Reutiliza el micrófono ya autorizado: así el iPhone no pide permiso en cada nota de voz
+      flujo = await pedirMicrofono();
     } catch {
       return this.toast.error('Dale permiso al micrófono para grabar la nota de voz.');
     }
@@ -713,7 +715,7 @@ export class ChatPedidoComponent implements OnInit, AfterViewInit, OnDestroy {
     if (g) {
       g.ondataavailable = null;
       if (g.state !== 'inactive') g.stop();
-      g.stream.getTracks().forEach((t) => t.stop());
+      soltarMicrofono();
     }
     this.trozos = [];
     this.grabando.set(false);

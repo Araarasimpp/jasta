@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-20-waze-quitar",
+    "fecha": "2026-11-20",
+    "hora": "09:00",
+    "titulo": "Ruta con Waze, quitar de la ruta y menos permisos",
+    "cuerpo": "Mensajeros: en Mis entregas, arriba sale tu siguiente parada con el botón Ir con Waze, y Toda la ruta en Maps con las paradas en orden. Cada pedido también tiene su botón de Waze. Despachar con QR: si escaneaste un pedido por error, toca Deshacer o la X al lado del pedido en la ruta y vuelve a Alistados. Y en iPhone ya no pide permiso del micrófono en cada nota de voz ni de la cámara cada vez que despachas.",
+    "roles": [
+      "admin",
+      "alistador",
+      "mensajero",
+      "vendedora",
+      "cuadres"
+    ]
+  },
+  {
     "id": "2026-11-20-despachar-qr",
     "fecha": "2026-11-20",
     "hora": "08:00",

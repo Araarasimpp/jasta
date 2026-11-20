@@ -104,6 +104,11 @@ export class JybService {
     return this.llamar<ResultadoDespacho>({ accion: 'asignar', mensajero_id: mensajeroId, numero });
   }
 
+  /** Se escaneó por error: el pedido sale de la ruta y vuelve a pendientes en Variedades JYB */
+  quitar(mensajeroId: number, numero: number): Promise<ResultadoDespacho> {
+    return this.llamar<ResultadoDespacho>({ accion: 'quitar', mensajero_id: mensajeroId, numero });
+  }
+
   /** Lo que lleva en ruta ese mensajero en Variedades JYB (para la pantalla de despachar) */
   rutaDe(mensajeroId: number): Promise<{ vinculado: boolean; en_ruta: PedidoJyb[] }> {
     return this.llamar({ accion: 'ruta_de', mensajero_id: mensajeroId });

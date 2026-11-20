@@ -15,6 +15,7 @@
 // POST { accion: 'entregadas', desde?, hasta? }  (ISO)
 // POST { accion: 'asignar', mensajero_id, numero }   quien despacha en Jasta escanea un rótulo de JYB
 // POST { accion: 'ruta_de', mensajero_id }           lo que lleva ese mensajero en JYB (para despachar)
+// POST { accion: 'quitar', mensajero_id, numero }    se escaneó por error: sale de la ruta y vuelve a pendientes
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 // Proyecto de Jasta (la llave es la publicable)
@@ -148,6 +149,15 @@ Deno.serve(async (req) => {
       if (!Number.isInteger(numero) || numero <= 0) return responder({ error: 'Número de pedido no válido' }, 400);
       const correo = await correoMensajero(token, body.mensajero_id);
       const { data, error } = await db.rpc('jasta_asignar', { p_email_dom: correo, p_numero: numero, p_desp: yo.email });
+      if (error) throw error;
+      return responder(data);
+    }
+
+    if (body.accion === 'quitar') {
+      const numero = Number(body.numero);
+      if (!Number.isInteger(numero) || numero <= 0) return responder({ error: 'Número de pedido no válido' }, 400);
+      const correo = await correoMensajero(token, body.mensajero_id);
+      const { data, error } = await db.rpc('jasta_quitar', { p_email_dom: correo, p_numero: numero, p_desp: yo.email });
       if (error) throw error;
       return responder(data);
     }

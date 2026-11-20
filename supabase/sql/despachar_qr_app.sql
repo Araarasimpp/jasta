@@ -67,3 +67,28 @@ begin
   if v_email is null then raise exception 'Ese mensajero no existe o está inactivo'; end if;
   return v_email;
 end $function$;
+
+-- Quitar un pedido de la ruta (se escaneó por error): vuelve a Alistados sin mensajero
+create or replace function public.quitar_de_ruta(p_mensajero bigint, p_pedido bigint)
+returns jsonb
+language plpgsql
+volatile
+security definer
+set search_path to ''
+as $function$
+declare v_desp_nombre text; v_mens_nombre text; p public.pedidos;
+begin
+  select u.nombre into v_desp_nombre from public.usuarios u
+   where u.auth_id = auth.uid() and u.activo and ('admin' = any(u.roles) or 'alistador' = any(u.roles));
+  if v_desp_nombre is null then raise exception 'Solo quien despacha puede quitar pedidos de la ruta'; end if;
+  select * into p from public.pedidos where id = p_pedido for update;
+  if not found then raise exception 'No encontré el pedido #%', p_pedido; end if;
+  if p.estado <> 'despachado' or p.mensajero_id is distinct from p_mensajero then
+    return jsonb_build_object('ok', false, 'texto', 'El #' || p.id || ' ya no está en la ruta de este mensajero.');
+  end if;
+  select nombre into v_mens_nombre from public.usuarios where id = p_mensajero;
+  update public.pedidos set estado = 'alistado', mensajero_id = null, asignado_at = null, updated_at = now() where id = p.id;
+  insert into public.pedido_notas (pedido_id, autor, nota) values (p.id, v_desp_nombre,
+    'Estado: ' || public.estado_label('despachado') || ' → ' || public.estado_label('alistado') || ' (se quitó de la ruta de ' || coalesce(v_mens_nombre, '?') || ') · desde Despachar con QR');
+  return jsonb_build_object('ok', true, 'texto', 'Se quitó el #' || p.id || ' de la ruta de ' || coalesce(v_mens_nombre, '?') || '. Quedó en Alistados.');
+end $function$;

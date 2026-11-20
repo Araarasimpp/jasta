@@ -2,7 +2,7 @@ import { Component, ElementRef, OnDestroy, OnInit, computed, inject, signal, vie
 import { FormsModule } from '@angular/forms';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { alertCircle, cameraOutline, checkmarkCircle, informationCircle, pauseOutline, qrCodeOutline, refreshOutline, sendOutline } from 'ionicons/icons';
+import { alertCircle, cameraOutline, closeCircleOutline, checkmarkCircle, informationCircle, pauseOutline, qrCodeOutline, refreshOutline, sendOutline } from 'ionicons/icons';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { PedidosService } from '../../core/services/pedidos.service';
 import { JybService, ResultadoDespacho } from '../../core/services/jyb.service';
@@ -10,10 +10,11 @@ import { Usuario } from '../../shared/modelos';
 import { AvatarComponent } from '../../shared/avatar/avatar.component';
 import { microsAsignado } from '../../shared/fecha-colombia';
 import { mensajeError } from '../../shared/formato';
+import { pedirCamara, soltarCamara } from '../../shared/medios';
 
 type Negocio = 'jasta' | 'jyb';
 interface Lectura { negocio: Negocio; numero: number }
-interface Resultado { clave: number; negocio: Negocio; numero: number; tipo: 'ok' | 'info' | 'error'; texto: string; hora: string }
+interface Resultado { clave: number; negocio: Negocio; numero: number; tipo: 'ok' | 'info' | 'error'; texto: string; hora: string; quitado?: boolean }
 interface Parada { clave: string; negocio: Negocio; numero: number; cliente: string; barrio: string | null; cuando: number }
 
 const CLAVE_MENSAJERO = 'jasta-despachar-mensajero';
@@ -77,7 +78,11 @@ export function leerRotulo(texto: string): Lectura | null {
       .seg button.on { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
 
       .ruta { list-style: none; margin: 0; padding: 0; border-radius: 18px; background: var(--surface); border: 1px solid var(--border); overflow: hidden; }
-      .ruta li { display: grid; grid-template-columns: 28px auto minmax(0, 1fr); align-items: center; gap: 10px; padding: 10px 14px; font-size: 14.5px; }
+      .ruta li { display: grid; grid-template-columns: 28px auto minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 8px 8px 8px 14px; font-size: 14.5px; }
+      .quitar { width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 50%; background: none; color: var(--text-muted); font-size: 20px; cursor: pointer; }
+      .quitar:active { background: var(--hover); color: var(--danger); }
+      .quitar:disabled { opacity: 0.4; }
+      .ultimo .deshacer { margin-left: auto; align-self: center; flex-shrink: 0; border: 0; background: none; color: var(--accent); font: inherit; font-size: 14px; font-weight: 650; cursor: pointer; padding: 4px 2px; }
       .ruta li + li { border-top: 1px solid var(--border); }
       .ruta .n { font-weight: 750; color: var(--text-soft); text-align: right; }
       .ruta .tag { font-size: 11px; font-weight: 700; padding: 3px 7px; border-radius: 999px; background: var(--surface-2); color: var(--text-soft); }
@@ -129,6 +134,9 @@ export function leerRotulo(texto: string): Lectura | null {
         <div class="ultimo" [class]="'ultimo ' + u.tipo" role="status" aria-live="polite">
           <ion-icon [name]="u.tipo === 'ok' ? 'checkmark-circle' : u.tipo === 'info' ? 'information-circle' : 'alert-circle'"></ion-icon>
           <span>{{ u.texto }}</span>
+          @if (u.tipo === 'ok' && u.numero && !u.quitado) {
+            <button type="button" class="deshacer" (click)="deshacer(u)">Deshacer</button>
+          }
         </div>
       }
 
@@ -154,6 +162,9 @@ export function leerRotulo(texto: string): Lectura | null {
                   <span class="n">{{ i + 1 }}.</span>
                   <span class="tag" [class.jyb]="p.negocio === 'jyb'">{{ p.negocio === 'jyb' ? 'JYB' : 'Jasta' }} #{{ p.numero }}</span>
                   <span class="cli">{{ p.cliente }}@if (p.barrio) { <small> · {{ p.barrio }}</small> }</span>
+                  <button type="button" class="quitar" [disabled]="quitando() === p.clave" (click)="quitar(p)"
+                    [attr.aria-label]="'Quitar ' + (p.negocio === 'jyb' ? 'JYB' : 'Jasta') + ' #' + p.numero + ' de la ruta'" title="Quitar de la ruta">
+                    <ion-icon name="close-circle-outline"></ion-icon></button>
                 </li>
               }
             </ol>
@@ -187,6 +198,7 @@ export class DespacharPage implements OnInit, OnDestroy {
   cargandoRuta = signal(false);
   avisoJyb = signal('');
   nuevo = signal('');
+  quitando = signal('');
   /** Ruta combinada de los dos negocios, en el orden en que se asignaron */
   ruta = computed(() => [...this.rutaJasta(), ...this.rutaJyb()].sort((a, b) => a.cuando - b.cuando));
 
@@ -201,7 +213,7 @@ export class DespacharPage implements OnInit, OnDestroy {
   private contador = 0;
 
   constructor() {
-    addIcons({ alertCircle, cameraOutline, checkmarkCircle, informationCircle, pauseOutline, qrCodeOutline, refreshOutline, sendOutline });
+    addIcons({ alertCircle, cameraOutline, closeCircleOutline, checkmarkCircle, informationCircle, pauseOutline, qrCodeOutline, refreshOutline, sendOutline });
   }
 
   async ngOnInit(): Promise<void> {
@@ -274,10 +286,8 @@ export class DespacharPage implements OnInit, OnDestroy {
       return;
     }
     try {
-      this.stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 1280 } },
-        audio: false,
-      });
+      // Reutiliza la cámara ya autorizada (en iPhone no vuelve a pedir permiso cada vez)
+      this.stream = await pedirCamara();
     } catch {
       this.errorCamara.set('No se pudo abrir la cámara. Dale permiso a la app para usar la cámara y vuelve a intentar.');
       return;
@@ -297,8 +307,10 @@ export class DespacharPage implements OnInit, OnDestroy {
 
   cerrarCamara(): void {
     this.corriendo = false;
-    this.stream?.getTracks().forEach((t) => t.stop());
+    if (this.stream) soltarCamara();
     this.stream = null;
+    const v = this.video()?.nativeElement;
+    if (v) v.srcObject = null;
     this.camaraOn.set(false);
   }
 
@@ -362,6 +374,46 @@ export class DespacharPage implements OnInit, OnDestroy {
         this.enCola.update((x) => x - 1);
       }
     });
+  }
+
+  /** Se escaneó por error: sale de la ruta (Jasta vuelve a Alistados, JYB a pendientes) */
+  async quitar(p: Parada): Promise<void> {
+    const m = this.mensajero();
+    if (!m || this.quitando()) return;
+    const nombre = (p.negocio === 'jyb' ? 'JYB' : 'Jasta') + ' #' + p.numero;
+    if (!confirm(`¿Quitar ${nombre} (${p.cliente}) de la ruta de ${m.nombre}?`)) return;
+    this.quitando.set(p.clave);
+    await this.sacar(m, p.negocio, p.numero);
+    this.quitando.set('');
+  }
+
+  /** "Deshacer" en el aviso del último escaneo */
+  async deshacer(u: Resultado): Promise<void> {
+    const m = this.mensajero();
+    if (!m) return;
+    u.quitado = true;
+    this.ultimo.set({ ...u });
+    await this.sacar(m, u.negocio, u.numero);
+  }
+
+  private async sacar(m: Usuario, negocio: Negocio, numero: number): Promise<void> {
+    // Va en la misma fila que los escaneos, para no cruzarse con uno que se esté asignando
+    this.cola = this.cola.then(async () => {
+      try {
+        const r: ResultadoDespacho =
+          negocio === 'jyb'
+            ? await this.jyb.quitar(m.id, numero)
+            : ((await this.sb.client.rpc('quitar_de_ruta', { p_mensajero: m.id, p_pedido: numero }).then(({ data, error }) => {
+                if (error) throw error;
+                return data;
+              })) as ResultadoDespacho);
+        this.ultimo.set({ ...this.resultado(negocio, numero, r.ok ? 'info' : 'error', r.texto), quitado: true });
+        await this.cargarRuta();
+      } catch (e) {
+        this.ultimo.set(this.resultado(negocio, numero, 'error', mensajeError(e)));
+      }
+    });
+    await this.cola;
   }
 
   private resultado(negocio: Negocio, numero: number, tipo: Resultado['tipo'], texto: string): Resultado {

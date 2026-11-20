@@ -4,7 +4,7 @@ import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { qrCodeOutline, refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses, chatbubbleEllipsesOutline, alertCircleOutline, cloudOfflineOutline, cloudUploadOutline } from 'ionicons/icons';
+import { carOutline, mapOutline, qrCodeOutline, refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses, chatbubbleEllipsesOutline, alertCircleOutline, cloudOfflineOutline, cloudUploadOutline } from 'ionicons/icons';
 import { enlaceWhatsapp, productosDelPedido } from '../../shared/whatsapp';
 import { PedidosService } from '../../core/services/pedidos.service';
 import { EntregadoJyb, JybService, PedidoJyb, ResumenJyb } from '../../core/services/jyb.service';
@@ -99,6 +99,14 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
       .hist-tot { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--text-soft); }
       .hist-tot strong { color: var(--text); }
       /* Ordenar la ruta: mantener presionada una tarjeta y moverla */
+      .mi-ruta { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: var(--radius-lg); border: 1px solid var(--border); background: var(--surface); }
+      .mr-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+      .mr-txt small { font-size: 12px; font-weight: 650; color: var(--text-muted); }
+      .mr-txt strong { font-size: 16px; }
+      .mr-txt span { font-size: 13.5px; color: var(--text-soft); }
+      .mr-acc { display: flex; gap: 8px; flex-wrap: wrap; }
+      .mr-acc .b { flex: 1; justify-content: center; }
+      .b.b-waze { background: #33ccff !important; border-color: #33ccff !important; color: #06283a !important; }
       .ayuda-ruta { margin: 0 0 -2px; font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
       .tarjetas .tarjeta { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
         transition: box-shadow 160ms var(--ease), scale 160ms var(--ease); }
@@ -236,6 +244,21 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
         </section>
       }
 
+      @if (siguienteParada(); as sig) {
+        <section class="mi-ruta" aria-label="Mi ruta">
+          <div class="mr-txt">
+            <small>Siguiente parada · {{ rutaOrdenada().length }} {{ rutaOrdenada().length === 1 ? 'parada' : 'paradas' }} en tu ruta</small>
+            <strong>{{ sig.titulo }}</strong>
+            <span>{{ sig.texto }}</span>
+          </div>
+          <div class="mr-acc">
+            <a class="b b-waze" [href]="waze(sig)" target="_blank" rel="noopener"><ion-icon name="car-outline"></ion-icon>Ir con Waze</a>
+            @if (rutaOrdenada().length > 1) {
+              <a class="b" [href]="rutaCompleta()" target="_blank" rel="noopener"><ion-icon name="map-outline"></ion-icon>Toda la ruta en Maps</a>
+            }
+          </div>
+        </section>
+      }
       @if (rutaOrdenada().length > 1) {
         <p class="ayuda-ruta">Mantén presionada una tarjeta y muévela para ordenar tu ruta.</p>
       }
@@ -283,6 +306,7 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
                 <a class="b" [href]="'tel:' + p.cliente_telefono"><ion-icon name="call-outline"></ion-icon>Llamar</a>
                 <a class="b b-wa" [href]="whatsapp(p)" target="_blank" rel="noopener"><ion-icon name="logo-whatsapp"></ion-icon>WhatsApp</a>
               }
+              <a class="b b-waze" [href]="waze(p)" target="_blank" rel="noopener"><ion-icon name="car-outline"></ion-icon>Waze</a>
               <a class="b" [href]="mapa(p)" target="_blank" rel="noopener"><ion-icon name="navigate-outline"></ion-icon>Mapa</a>
               @if (hayCuentas()) {
                 <button class="b" (click)="qrDe.set({ total: p.total, detalle: 'Pedido #' + p.id + ' · ' + p.cliente_nombre })" aria-label="Mostrar el QR para que el cliente pague por transferencia">
@@ -316,6 +340,7 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
                 <a class="b" [href]="'tel:' + p.cliente_telefono"><ion-icon name="call-outline"></ion-icon>Llamar</a>
                 <a class="b b-wa" [href]="whatsappJyb(p)" target="_blank" rel="noopener"><ion-icon name="logo-whatsapp"></ion-icon>WhatsApp</a>
               }
+              <a class="b b-waze" [href]="waze(p)" target="_blank" rel="noopener"><ion-icon name="car-outline"></ion-icon>Waze</a>
               <a class="b" [href]="mapa(p)" target="_blank" rel="noopener"><ion-icon name="navigate-outline"></ion-icon>Mapa</a>
               <button class="b b-ok" style="flex: 1" (click)="abrirEntregaJyb(p)">Entregar</button>
             </div>
@@ -537,7 +562,7 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   private timerJyb?: ReturnType<typeof setTimeout>;
 
   constructor() {
-    addIcons({ qrCodeOutline, refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses, chatbubbleEllipsesOutline, alertCircleOutline, cloudOfflineOutline, cloudUploadOutline });
+    addIcons({ carOutline, mapOutline, qrCodeOutline, refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses, chatbubbleEllipsesOutline, alertCircleOutline, cloudOfflineOutline, cloudUploadOutline });
     // Cuando se envía lo guardado sin señal, la ruta se recarga
     effect(() => { if (this.sinSenal.enviados()) void this.cargar(); });
   }
@@ -980,6 +1005,34 @@ export class MisEntregasPage implements OnInit, OnDestroy {
         ? `Hola ${cliente}, soy ${yo}, mensajero de Variedades JYB. Voy en camino con tu pedido de ${productos} por ${pesos(p.total)}.`
         : `Hola ${cliente}, soy ${yo}, mensajero de Variedades JYB. Voy en camino con tu pedido por ${pesos(p.total)}.`
     );
+  }
+
+  /** Dirección para buscar en Waze o Maps */
+  private lugar(p: { direccion: string | null; barrio: string | null }): string {
+    return `${p.direccion ?? ''}, ${p.barrio ?? ''}, Cali`;
+  }
+
+  /** Waze abre la navegación directo a esa dirección */
+  waze(p: { direccion: string | null; barrio: string | null }): string {
+    return 'https://waze.com/ul?q=' + encodeURIComponent(this.lugar(p)) + '&navigate=yes';
+  }
+
+  /** La primera parada de la ruta (en el orden que tiene el mensajero) */
+  siguienteParada = computed(() => {
+    const r = this.rutaOrdenada()[0];
+    const p = r?.jasta ?? r?.jyb;
+    if (!p) return null;
+    const n = r.jasta ? '#' + r.jasta.id : 'JYB #' + r.jyb!.numero;
+    return { titulo: `${n} · ${p.cliente_nombre}`, texto: [p.direccion, p.barrio].filter(Boolean).join(' · ') || 'Sin dirección', direccion: p.direccion, barrio: p.barrio };
+  });
+
+  /** Toda la ruta en Google Maps, en orden (Waze solo navega a un destino a la vez). Maps acepta hasta 9 paradas intermedias. */
+  rutaCompleta(): string {
+    const lugares = this.rutaOrdenada().map((r) => this.lugar((r.jasta ?? r.jyb)!)).slice(0, 10);
+    const destino = lugares[lugares.length - 1];
+    const intermedias = lugares.slice(0, -1);
+    return 'https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=' + encodeURIComponent(destino)
+      + (intermedias.length ? '&waypoints=' + encodeURIComponent(intermedias.join('|')) : '');
   }
 
   mapa(p: { direccion: string | null; barrio: string | null }): string {

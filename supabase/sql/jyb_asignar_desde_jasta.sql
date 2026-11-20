@@ -57,3 +57,36 @@ begin
   end if;
   return jsonb_build_object('ok', v_ok, 'texto', v_txt);
 end $function$;
+
+-- Quitar un pedido de la ruta (se escaneó por error): vuelve a pendientes sin domiciliario
+create or replace function public.jasta_quitar(p_email_dom text, p_numero bigint, p_desp text)
+returns jsonb
+language plpgsql
+volatile
+security definer
+set search_path to ''
+as $function$
+declare v_dom uuid; v_desp uuid; v_dom_nombre text; p public.pedidos;
+begin
+  if coalesce(nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role', '') <> 'service_role' then
+    raise exception 'No autorizado';
+  end if;
+  v_dom := public.jasta_domiciliario(p_email_dom);
+  if v_dom is null then
+    return jsonb_build_object('ok', false, 'texto', 'Este mensajero no está como domiciliario en Variedades JYB.');
+  end if;
+  select id into v_desp from public.profiles
+   where lower(email) = lower(trim(p_desp)) and coalesce(activo, true) and ('admin' = any(roles) or 'despachador' = any(roles));
+  if v_desp is not null then
+    perform set_config('request.jwt.claim.sub', v_desp::text, true);
+    perform set_config('request.jwt.claims', jsonb_build_object('sub', v_desp, 'role', 'authenticated')::text, true);
+  end if;
+  select nombre into v_dom_nombre from public.profiles where id = v_dom;
+  select * into p from public.pedidos where numero = p_numero for update;
+  if not found then return jsonb_build_object('ok', false, 'texto', 'No encontré el pedido JYB #' || p_numero || '.'); end if;
+  if p.estado <> 'en_ruta' or p.domiciliario_id is distinct from v_dom then
+    return jsonb_build_object('ok', false, 'texto', 'El JYB #' || p.numero || ' ya no está en la ruta de este mensajero.');
+  end if;
+  update public.pedidos set estado = 'pendiente', domiciliario_id = null where id = p.id;
+  return jsonb_build_object('ok', true, 'texto', 'Se quitó el JYB #' || p.numero || ' de la ruta de ' || coalesce(v_dom_nombre, '?') || '. Volvió a pendientes.');
+end $function$;
