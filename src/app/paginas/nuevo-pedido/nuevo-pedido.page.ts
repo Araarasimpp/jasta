@@ -45,6 +45,8 @@ function normal(s: string): string {
  *  - Venta en el local, que queda entregada y cobrada de una vez (/app/venta-local)
  *  - Editar un pedido existente (/app/pedidos/:id/editar)
  */
+interface DirCliente { direccion: string; barrio: string | null; valor_domicilio: number | null; veces: number; ultima: string }
+
 @Component({
   selector: 'app-nuevo-pedido',
   standalone: true,
@@ -53,6 +55,16 @@ function normal(s: string): string {
     `
       .ordenar-dir { display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; padding: 0; border: 0; background: none; color: var(--accent); font: inherit; font-size: 12.5px; font-weight: 650; cursor: pointer; }
       .ordenar-dir:disabled { opacity: .6; cursor: progress; }
+      .dirs-cliente { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+      .dirs-tit { font-size: 12px; font-weight: 650; color: var(--text-muted); }
+      .dir-op { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 12px; text-align: left; cursor: pointer;
+        border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font: inherit; }
+      .dir-op ion-icon { font-size: 18px; color: var(--text-soft); flex-shrink: 0; }
+      .dir-op span { display: flex; flex-direction: column; min-width: 0; }
+      .dir-op strong { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .dir-op small { font-size: 12px; color: var(--text-soft); }
+      .dir-op.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-wash); }
+      .dir-op.on ion-icon { color: var(--accent); }
       .ordenar-dir.estado { display: block; max-width: 100%; white-space: normal; color: var(--text-soft); font-weight: 550; cursor: default; line-height: 1.5; }
       .ordenar-dir.estado ion-icon { vertical-align: -2px; margin-right: 4px; }
       .ordenar-dir.estado .ordenar-dir { display: inline-block; margin: 0 0 0 4px; white-space: nowrap; }
@@ -243,6 +255,17 @@ function normal(s: string): string {
               <div class="campo">
                 <label for="dir">Dirección</label>
                 <input id="dir" autocomplete="off" [(ngModel)]="direccion" (ngModelChange)="dirTocada = true" (blur)="ordenarSola()" [placeholder]="nacional() ? 'Dirección completa con barrio' : 'Solo calle o carrera y número. Ej: Calle 5 # 38-25'" />
+                @if (dirsCliente().length > 1 || (dirsCliente().length === 1 && !mismaDireccion(dirsCliente()[0]))) {
+                  <div class="dirs-cliente" role="group" aria-label="Direcciones anteriores de este cliente">
+                    <span class="dirs-tit">Direcciones de este cliente</span>
+                    @for (d of dirsCliente(); track $index) {
+                      <button type="button" class="dir-op" [class.on]="mismaDireccion(d)" (click)="usarDireccion(d)">
+                        <ion-icon name="location-outline" aria-hidden="true"></ion-icon>
+                        <span><strong>{{ d.direccion }}</strong><small>{{ d.barrio || 'Sin barrio' }}{{ d.veces > 1 ? ' · ' + d.veces + ' pedidos' : '' }}</small></span>
+                      </button>
+                    }
+                  </div>
+                }
                 @if (ordenandoDir()) {
                   <span class="ordenar-dir estado"><ion-icon name="sparkles" aria-hidden="true"></ion-icon>Ordenando la dirección…</span>
                 } @else if (dirOriginal() && direccion === dirOrdenada()) {
@@ -627,6 +650,7 @@ export class NuevoPedidoPage implements OnInit {
   async buscarCliente(): Promise<void> {
     const digitos = this.telefono.replace(/\D/g, '');
     this.riesgo.set(null);
+    this.dirsCliente.set([]);
     if (digitos.length < 7 || this.editId() || errorTelefono(this.prefijo, digitos)) return;
     const tel = this.telefonoGuardar();
     void this.sb.client.rpc('riesgo_cliente', { p_telefono: tel }).then(({ data }) => {
@@ -634,6 +658,10 @@ export class NuevoPedidoPage implements OnInit {
       if (tel === this.telefonoGuardar()) this.riesgo.set(r?.nivel ? r : null);
     });
     try {
+      // Las direcciones que ha usado este cliente, para escoger con un toque
+      void this.sb.client.rpc('direcciones_cliente', { p_telefono: tel }).then(({ data }) => {
+        if (tel === this.telefonoGuardar() && !this.local()) this.dirsCliente.set((data as DirCliente[] | null) ?? []);
+      });
       const c = await this.ps.buscarCliente(tel);
       this.clientePrevio.set(c?.pedidos ?? 0);
       if (c) {
@@ -700,6 +728,28 @@ export class NuevoPedidoPage implements OnInit {
     this.riesgo.set(null);
     this.error.set('');
     document.querySelector('app-nuevo-pedido h1')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /** Direcciones anteriores del cliente (por su teléfono) */
+  dirsCliente = signal<DirCliente[]>([]);
+
+  mismaDireccion(d: DirCliente): boolean {
+    const n = (x: string | null | undefined) => (x ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    return n(d.direccion) === n(this.direccion) && n(d.barrio) === n(this.barrio);
+  }
+
+  /** Pone esa dirección con su barrio y el domicilio de ese barrio (el de la tabla, o el que se cobró la última vez) */
+  usarDireccion(d: DirCliente): void {
+    this.direccion = d.direccion;
+    const b = this.barrios().find((x) => normal(x.barrio) === normal(d.barrio ?? ''));
+    if (b) this.elegirBarrio(b);
+    else this.elegirBarrio({ barrio: d.barrio ?? '', domicilio: Number(d.valor_domicilio) || 0 });
+    this.dirOriginal.set('');
+    this.dirOrdenada.set('');
+    this.obsAntes.set(null);
+    // Si es una dirección vieja con conjunto o torre, la IA la deja solo con la vía y la placa
+    this.dirTocada = true;
+    this.ordenarSola();
   }
 
   elegirBarrio(b: { barrio: string; domicilio: number }): void {

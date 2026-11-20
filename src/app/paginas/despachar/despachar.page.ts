@@ -11,10 +11,12 @@ import { AvatarComponent } from '../../shared/avatar/avatar.component';
 import { microsAsignado } from '../../shared/fecha-colombia';
 import { mensajeError } from '../../shared/formato';
 import { pedirCamara, soltarCamara } from '../../shared/medios';
+import { haceCuanto } from '../../core/services/presencia.service';
 
 type Negocio = 'jasta' | 'jyb';
 interface Lectura { negocio: Negocio; numero: number }
 interface Resultado { clave: number; negocio: Negocio; numero: number; tipo: 'ok' | 'info' | 'error'; texto: string; hora: string; quitado?: boolean }
+interface Devolucion { novedad: number; pedido: number; cliente: string; barrio: string | null; mensajero: string; motivo: string; detalle: string | null; estado: string; cuando: string }
 interface Parada { clave: string; negocio: Negocio; numero: number; cliente: string; barrio: string | null; cuando: number }
 
 const CLAVE_MENSAJERO = 'jasta-despachar-mensajero';
@@ -41,6 +43,11 @@ export function leerRotulo(texto: string): Lectura | null {
   styles: [
     `
       .page { max-width: 640px; gap: 16px; }
+      .modo { align-self: stretch; display: grid !important; grid-template-columns: 1fr 1fr; }
+      .modo button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 10px !important; }
+      .cuenta { min-width: 20px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 999px; background: var(--danger); color: #fff; font-size: 11.5px; font-weight: 700; line-height: 20px; }
+      .ruta.devs li { grid-template-columns: auto minmax(0, 1fr) auto; }
+      .b-recibir { height: 34px; padding: 0 12px; font-size: 13px; }
       .mens { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 6px; scrollbar-width: none; }
       .mens button { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 5px; width: 78px; padding: 8px 4px; cursor: pointer;
         border: 1px solid var(--border); border-radius: 16px; background: var(--surface); color: var(--text-soft); font: inherit; font-size: 12.5px; font-weight: 600; }
@@ -97,6 +104,13 @@ export function leerRotulo(texto: string): Lectura | null {
   ],
   template: `
     <div class="page">
+      <div class="modo seg" role="tablist" aria-label="Qué vas a hacer">
+        <button type="button" role="tab" [class.on]="modo() === 'despachar'" [attr.aria-selected]="modo() === 'despachar'" (click)="cambiarModo('despachar')">Despachar</button>
+        <button type="button" role="tab" [class.on]="modo() === 'recibir'" [attr.aria-selected]="modo() === 'recibir'" (click)="cambiarModo('recibir')">
+          Recibir devoluciones@if (devoluciones().length) { <span class="cuenta">{{ devoluciones().length }}</span> }</button>
+      </div>
+
+      @if (modo() === 'despachar') {
       <section>
         <p class="tit">¿A quién le despachas?</p>
         <div class="mens" role="radiogroup" aria-label="Mensajero">
@@ -110,6 +124,7 @@ export function leerRotulo(texto: string): Lectura | null {
           }
         </div>
       </section>
+      }
 
       <div class="camara">
         <video #video playsinline muted [hidden]="!camaraOn()"></video>
@@ -118,13 +133,13 @@ export function leerRotulo(texto: string): Lectura | null {
         } @else {
           <div class="apagada">
             <ion-icon name="qr-code-outline"></ion-icon>
-            @if (errorCamara(); as e) { <span>{{ e }}</span> } @else { <span>Escanea el QR de cada rótulo, de Jasta o de Variedades JYB.<br />Se asignan en el orden en que los escaneas.</span> }
-            <button type="button" class="b b-pri" [disabled]="!mensajero()" (click)="abrirCamara()"><ion-icon name="camera-outline"></ion-icon>{{ mensajero() ? 'Abrir cámara' : 'Primero elige el mensajero' }}</button>
+            @if (errorCamara(); as e) { <span>{{ e }}</span> } @else if (modo() === 'recibir') { <span>Escanea el rótulo de cada pedido que el mensajero trae de vuelta a la bodega.</span> } @else { <span>Escanea el QR de cada rótulo, de Jasta o de Variedades JYB.<br />Se asignan en el orden en que los escaneas.</span> }
+            <button type="button" class="b b-pri" [disabled]="modo() === 'despachar' && !mensajero()" (click)="abrirCamara()"><ion-icon name="camera-outline"></ion-icon>{{ modo() === 'recibir' || mensajero() ? 'Abrir cámara' : 'Primero elige el mensajero' }}</button>
           </div>
         }
         @if (camaraOn()) {
           <div class="estado-cam">
-            <span class="pildora">{{ enCola() ? 'Asignando…' : 'Apunta al QR del rótulo' }}</span>
+            <span class="pildora">{{ enCola() ? (modo() === 'recibir' ? 'Recibiendo…' : 'Asignando…') : 'Apunta al QR del rótulo' }}</span>
             <button type="button" class="pildora btn" (click)="cerrarCamara()"><ion-icon name="pause-outline"></ion-icon>Pausar</button>
           </div>
         }
@@ -134,12 +149,38 @@ export function leerRotulo(texto: string): Lectura | null {
         <div class="ultimo" [class]="'ultimo ' + u.tipo" role="status" aria-live="polite">
           <ion-icon [name]="u.tipo === 'ok' ? 'checkmark-circle' : u.tipo === 'info' ? 'information-circle' : 'alert-circle'"></ion-icon>
           <span>{{ u.texto }}</span>
-          @if (u.tipo === 'ok' && u.numero && !u.quitado) {
+          @if (u.tipo === 'ok' && u.numero && !u.quitado && modo() === 'despachar') {
             <button type="button" class="deshacer" (click)="deshacer(u)">Deshacer</button>
           }
         </div>
       }
 
+      @if (modo() === 'recibir') {
+        <form class="manual" (ngSubmit)="recibirManual()">
+          <input class="inp" name="numr" inputmode="numeric" placeholder="N.º del pedido si no lee" [(ngModel)]="numeroManual" aria-label="Número del pedido devuelto" />
+          <button type="submit" class="b" [disabled]="!numeroManual.trim()"><ion-icon name="checkmark-circle"></ion-icon>Recibir</button>
+        </form>
+        <section>
+          <div class="cab">
+            <p class="tit">Por recibir en bodega ({{ devoluciones().length }})</p>
+            <button type="button" class="b b-icono" aria-label="Actualizar" (click)="cargarDevoluciones()"><ion-icon name="refresh-outline"></ion-icon></button>
+          </div>
+          @if (devoluciones().length) {
+            <ul class="ruta devs">
+              @for (d of devoluciones(); track d.novedad) {
+                <li>
+                  <span class="tag">#{{ d.pedido }}</span>
+                  <span class="cli">{{ d.cliente }}<small> · {{ d.mensajero }} · {{ d.motivo }} · {{ haceCuanto(d.cuando) }}</small></span>
+                  <button type="button" class="b b-recibir" [disabled]="enCola() > 0" (click)="encolarRecibir(d.pedido)">Recibido</button>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="vacio">No hay pedidos devueltos pendientes por recibir.</p>
+          }
+          <p class="aviso-jyb">Aquí salen los pedidos de Jasta que un mensajero devolvió con "No se pudo". Al recibirlos quedan en Alistados, listos para despacharlos otra vez.</p>
+        </section>
+      } @else {
       <form class="manual" (ngSubmit)="asignarManual()">
         <div class="seg" role="radiogroup" aria-label="Negocio">
           <button type="button" role="radio" [class.on]="negocioManual() === 'jasta'" [attr.aria-checked]="negocioManual() === 'jasta'" (click)="negocioManual.set('jasta')">Jasta</button>
@@ -173,6 +214,7 @@ export function leerRotulo(texto: string): Lectura | null {
           }
           @if (avisoJyb(); as a) { <p class="aviso-jyb">{{ a }}</p> }
         </section>
+      }
       }
     </div>
   `,
@@ -217,6 +259,7 @@ export class DespacharPage implements OnInit, OnDestroy {
   }
 
   async ngOnInit(): Promise<void> {
+    void this.cargarDevoluciones();
     try {
       const lista = await this.ps.mensajeros();
       this.mensajeros.set(lista);
@@ -338,7 +381,58 @@ export class DespacharPage implements OnInit, OnDestroy {
       this.mostrar(this.resultado('jasta', 0, 'error', 'Este QR no es de un rótulo de Jasta ni de Variedades JYB.'));
       return;
     }
+    if (this.modo() === 'recibir') {
+      if (l.negocio === 'jyb') this.mostrar(this.resultado('jyb', l.numero, 'info', 'El JYB #' + l.numero + ' es de Variedades JYB: las devoluciones de JYB se reciben en su app.'));
+      else this.encolarRecibir(l.numero);
+      return;
+    }
     this.encolar(l);
+  }
+
+  // ------------------------------------------------------------------ Recibir devoluciones
+
+  modo = signal<'despachar' | 'recibir'>('despachar');
+  devoluciones = signal<Devolucion[]>([]);
+  /** "hace 20 min", "ayer", "el 12 de nov." */
+  haceCuanto(iso: string): string {
+    return haceCuanto(iso).replace(/^visto /, '');
+  }
+
+  cambiarModo(m: 'despachar' | 'recibir'): void {
+    if (this.modo() === m) return;
+    this.modo.set(m);
+    this.ultimo.set(null);
+    this.numeroManual = '';
+    if (m === 'recibir') void this.cargarDevoluciones();
+  }
+
+  async cargarDevoluciones(): Promise<void> {
+    const { data, error } = await this.sb.client.rpc('devoluciones_por_recibir');
+    if (!error) this.devoluciones.set((data as Devolucion[]) ?? []);
+  }
+
+  recibirManual(): void {
+    const n = Number(this.numeroManual.replace(/\D/g, ''));
+    if (!n) return;
+    this.numeroManual = '';
+    this.encolarRecibir(n);
+  }
+
+  encolarRecibir(numero: number): void {
+    this.enCola.update((x) => x + 1);
+    this.cola = this.cola.then(async () => {
+      try {
+        const { data, error } = await this.sb.client.rpc('recibir_devolucion', { p_pedido: numero });
+        if (error) throw error;
+        const r = data as ResultadoDespacho;
+        this.mostrar(this.resultado('jasta', numero, r.ok ? 'ok' : r.repetido ? 'info' : 'error', r.texto));
+        if (r.ok) await this.cargarDevoluciones();
+      } catch (e) {
+        this.mostrar(this.resultado('jasta', numero, 'error', mensajeError(e)));
+      } finally {
+        this.enCola.update((x) => x - 1);
+      }
+    });
   }
 
   asignarManual(): void {

@@ -2,7 +2,8 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { downloadOutline, searchOutline, shareOutline } from 'ionicons/icons';
+import { downloadOutline, imageOutline, searchOutline, shareOutline } from 'ionicons/icons';
+import { enlaceTienda } from '../pedidos-web/pedidos-web.page';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { Producto } from '../../shared/modelos';
@@ -57,6 +58,11 @@ function normal(s: string): string {
       .desc { margin: 0; font-size: 12.5px; line-height: 1.35; color: var(--text-soft); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
       .precios { margin-top: auto; padding-top: 8px; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
       .precio { font-size: 17px; font-weight: 650; white-space: nowrap; }
+      .b-estado { margin-top: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 34px; padding: 0 12px;
+        border: 1px solid #25d366; border-radius: 999px; background: color-mix(in srgb, #25d366 12%, var(--surface)); color: var(--text);
+        font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; }
+      .b-estado ion-icon { font-size: 16px; color: #1fa855; }
+      .b-estado:disabled { opacity: 0.6; cursor: progress; }
       .base { font-size: 11.5px; color: var(--text-muted); white-space: nowrap; }
       .stock { font-size: 11.5px; color: var(--text-muted); }
       .stock.bajo { color: var(--danger); }
@@ -139,6 +145,9 @@ function normal(s: string): string {
                 <span class="precio num">{{ pesos(p.precio_venta) }}</span>
                 <span class="base num" title="Precio base: lo mínimo que puedes cobrar">Base {{ pesos(p.precio_base) }}</span>
               </div>
+              <button type="button" class="b-estado" [disabled]="haciendoEstado() === p.id" (click)="paraEstado(p); $event.stopPropagation()" (keydown.enter)="$event.stopPropagation()"
+                [attr.aria-label]="'Imagen para tu estado de WhatsApp: ' + p.nombre">
+                <ion-icon name="image-outline" aria-hidden="true"></ion-icon>{{ haciendoEstado() === p.id ? 'Creando…' : 'Para mi estado' }}</button>
               <span class="ver-mas">Ver todo ›</span>
             </div>
           </article>
@@ -185,7 +194,7 @@ export class CatalogoPage implements OnInit {
   urlMini = urlMini;
 
   constructor() {
-    addIcons({ downloadOutline, searchOutline, shareOutline });
+    addIcons({ downloadOutline, imageOutline, searchOutline, shareOutline });
   }
 
   async ngOnInit(): Promise<void> {
@@ -243,6 +252,50 @@ export class CatalogoPage implements OnInit {
 
   abrir(p: Producto): void {
     this.abierto.set(p);
+  }
+
+  /** Imagen vertical del producto (foto, precio y QR a su enlace en tu tienda) para subir a los estados de WhatsApp */
+  haciendoEstado = signal<number | null>(null);
+  async paraEstado(p: Producto): Promise<void> {
+    this.haciendoEstado.set(p.id);
+    try {
+      const yo = this.sb.usuario();
+      const esVendedora = this.sb.tiene('vendedora') && !this.sb.tiene('admin');
+      const enlace = enlaceTienda(esVendedora && yo ? { id: yo.id, nombre: yo.nombre } : null) + '?p=' + p.id;
+      const color = this.colorActivo(p);
+      const foto = this.fotos(p).find((f) => f.color === color)?.url ?? this.fotos(p)[0]?.url ?? null;
+      const { generarImagenEstado } = await import('../../shared/imagen-estado');
+      const archivo = await generarImagenEstado({
+        nombre: p.nombre,
+        precio: Number(p.precio_venta),
+        foto,
+        enlace,
+        vendedora: esVendedora && yo ? { nombre: yo.nombre, telefono: yo.telefono } : null,
+        agotado: this.agotado(p),
+      });
+      const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
+      if (nav.canShare?.({ files: [archivo] })) {
+        try {
+          // En WhatsApp se escoge "Mi estado"
+          await nav.share({ files: [archivo], text: `${p.nombre} · ${pesos(p.precio_venta)}\nPídelo aquí: ${enlace}` });
+          return;
+        } catch (e) {
+          if ((e as Error)?.name === 'AbortError') return;
+        }
+      }
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(archivo);
+      a.download = archivo.name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+      this.toast.ok('Imagen guardada: súbela a tu estado de WhatsApp');
+    } catch (e) {
+      this.toast.error(mensajeError(e));
+    } finally {
+      this.haciendoEstado.set(null);
+    }
   }
 
   /** Arma el PDF con lo que está filtrado. En el celular abre "Compartir" (WhatsApp, Guardar en Archivos…) */

@@ -1,5 +1,39 @@
 [
   {
+    "id": "2026-11-20-devoluciones-bodega",
+    "fecha": "2026-11-20",
+    "hora": "12:00",
+    "titulo": "Recibir devoluciones en bodega",
+    "cuerpo": "Cuando un mensajero devuelve un pedido con \"No se pudo\", ahora queda pendiente hasta que alistamiento lo recibe. En Despachar → Recibir devoluciones escaneas el rótulo (o tocas Recibido) y queda anotado quién lo trajo y cuándo llegó. Así no se pierde ningún pedido devuelto.",
+    "roles": [
+      "admin",
+      "alistador"
+    ]
+  },
+  {
+    "id": "2026-11-20-dirs-cliente",
+    "fecha": "2026-11-20",
+    "hora": "12:01",
+    "titulo": "Direcciones guardadas del cliente",
+    "cuerpo": "En Nuevo pedido, al escribir el teléfono de un cliente que ya compró, salen las direcciones que ha usado antes. Toca una y se llenan la dirección, el barrio y el domicilio.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "venta_local"
+    ]
+  },
+  {
+    "id": "2026-11-20-estado-whatsapp",
+    "fecha": "2026-11-20",
+    "hora": "12:02",
+    "titulo": "Imagen para tu estado de WhatsApp",
+    "cuerpo": "En el Catálogo cada producto tiene el botón Para mi estado: crea una imagen con la foto, el precio y un código QR que lleva a ese producto en tu tienda. Compártela y en WhatsApp elige Mi estado. Lo que pidan por ese código te llega a ti.",
+    "roles": [
+      "admin",
+      "vendedora"
+    ]
+  },
+  {
     "id": "2026-11-20-solo-direccion",
     "fecha": "2026-11-20",
     "hora": "11:00",
