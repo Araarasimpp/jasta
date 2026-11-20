@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-11-20-despachar-qr",
+    "fecha": "2026-11-20",
+    "hora": "08:00",
+    "titulo": "Despachar con QR desde la app",
+    "cuerpo": "Ya no hace falta el bot de Telegram para despachar. En Tú → Despachar con QR eliges el mensajero, abres la cámara y vas escaneando los rótulos: sirven los de Jasta y los de Variedades JYB. Cada pedido se le asigna en el orden en que lo escaneas, igual que con las fotos en Telegram, y abajo ves su ruta de los dos negocios en ese orden. Si un QR no se lee, escribe el número y elige Jasta o JYB.",
+    "roles": [
+      "admin",
+      "alistador"
+    ]
+  },
+  {
     "id": "2026-11-18-tu-atras",
     "fecha": "2026-11-18",
     "hora": "09:30",

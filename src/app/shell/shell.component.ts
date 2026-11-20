@@ -9,6 +9,7 @@ import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import {
   add,
+  qrCodeOutline,
   addCircleOutline,
   lockClosedOutline,
   barChartOutline,
@@ -123,6 +124,7 @@ const MENU: ItemMenu[] = [
   { label: 'Cuadres', path: '/app/cuadres', icon: 'wallet-outline', roles: ['admin', 'cuadres', 'mensajero'], grupo: 'Entregas' , buscar: 'plata efectivo mensajeros' },
   { label: 'Mi resumen', path: '/app/mi-resumen', icon: 'analytics-outline', roles: ['mensajero'], grupo: 'Entregas' },
   { label: 'Resumen de mensajeros', path: '/app/mi-resumen', icon: 'analytics-outline', roles: ['admin'], sinRoles: ['mensajero'], grupo: 'Entregas' },
+  { label: 'Despachar con QR', path: '/app/despachar', icon: 'qr-code-outline', roles: ['admin', 'alistador'], grupo: 'Entregas', buscar: 'escanear qr rotulo telegram asignar mensajero domiciliario ruta jyb variedades camara' },
   { label: 'Novedades', path: '/app/novedades', icon: 'alert-circle-outline', roles: ['admin', 'alistador', 'cuadres', 'vendedora', 'mensajero'], grupo: 'Entregas' , buscar: 'no se pudo entregar problema' },
   { label: 'Recolector', path: '/app/recolector', icon: 'bag-handle-outline', roles: ['admin', 'recolector', 'cuadres'], grupo: 'Entregas' , buscar: 'base recoger' },
   { label: 'Barrios', path: '/app/barrios', icon: 'location-outline', roles: ['admin'], grupo: 'Entregas' , buscar: 'domicilio tarifa valor' },
@@ -440,7 +442,7 @@ export class ShellComponent implements OnInit, OnDestroy {
       this.noLeidasAntes = n;
       if (antes !== null && n > antes) setTimeout(() => document.querySelectorAll('.campana').forEach((c) => campanita(c)));
     });
-    addIcons({ addCircleOutline, lockClosedOutline, homeOutline, colorPaletteOutline, calendarOutline, hourglassOutline, swapHorizontalOutline, searchOutline, 
+    addIcons({ qrCodeOutline, addCircleOutline, lockClosedOutline, homeOutline, colorPaletteOutline, calendarOutline, hourglassOutline, swapHorizontalOutline, searchOutline, 
       sparklesOutline, globeOutline, helpBuoyOutline, chatbubblesOutline, analyticsOutline, add, close, chevronDownOutline, layersOutline, pricetagsOutline, returnDownBackOutline, pieChartOutline, alertCircleOutline, cardOutline, trendingDownOutline, barChartOutline, chevronBackOutline, chevronForwardOutline, cubeOutline, ellipsisHorizontal,
       logOutOutline, moonOutline, peopleOutline, receiptOutline, bicycleOutline, clipboardOutline, sunnyOutline, walletOutline, ticketOutline, statsChartOutline, settingsOutline,
       storefrontOutline, listOutline, trophyOutline, bookOutline, gridOutline, cashOutline, bagHandleOutline, peopleCircleOutline, timeOutline, personCircleOutline, notificationsOutline, locationOutline,

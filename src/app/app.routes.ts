@@ -81,6 +81,11 @@ export const routes: Routes = [
         loadComponent: () => import('./paginas/clientes/clientes.page').then((m) => m.ClientesPage),
       },
       {
+        // Despachar con QR: escanear los rótulos (Jasta y Variedades JYB) y asignarlos al mensajero
+        path: 'despachar', canActivate: [rolGuard], data: { roles: ['admin', 'alistador'] },
+        loadComponent: () => import('./paginas/despachar/despachar.page').then((m) => m.DespacharPage),
+      },
+      {
         // Pedidos que no se pudieron entregar (motivo y qué pasó)
         path: 'novedades', canActivate: [rolGuard], data: { roles: ['admin', 'alistador', 'cuadres', 'vendedora', 'mensajero'] },
         loadComponent: () => import('./paginas/novedades/novedades.page').then((m) => m.NovedadesPage),

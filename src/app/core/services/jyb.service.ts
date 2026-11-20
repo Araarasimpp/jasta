@@ -22,6 +22,13 @@ export interface PedidoJyb {
   items: { nombre: string; cantidad: number; precio?: number | null }[];
 }
 
+/** Respuesta al asignar un pedido escaneado (igual que lo que responde el bot de Telegram) */
+export interface ResultadoDespacho {
+  ok: boolean;
+  texto: string;
+  repetido?: boolean;
+}
+
 /** Pedido de Variedades JYB que ya entregó (para el historial) */
 export interface EntregadoJyb {
   id: string;
@@ -90,6 +97,16 @@ export class JybService {
     });
     const c = this.avisos.channel(canal).on('broadcast', { event: 'cambio' }, () => cb()).subscribe();
     return () => void this.avisos?.removeChannel(c);
+  }
+
+  /** Quien despacha escanea un rótulo de Variedades JYB: se le asigna al mensajero (por el correo) */
+  asignar(mensajeroId: number, numero: number): Promise<ResultadoDespacho> {
+    return this.llamar<ResultadoDespacho>({ accion: 'asignar', mensajero_id: mensajeroId, numero });
+  }
+
+  /** Lo que lleva en ruta ese mensajero en Variedades JYB (para la pantalla de despachar) */
+  rutaDe(mensajeroId: number): Promise<{ vinculado: boolean; en_ruta: PedidoJyb[] }> {
+    return this.llamar({ accion: 'ruta_de', mensajero_id: mensajeroId });
   }
 
   async cerrarCuadre(): Promise<void> {
