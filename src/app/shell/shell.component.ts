@@ -338,7 +338,12 @@ export class ShellComponent implements OnInit, OnDestroy {
   }
 
   /** En el celular caben 3 secciones en la barra (más Nuevo y Tú): las principales de cada quien; el resto va en "Tú" */
-  tabs = computed(() => this.principales().slice(0, 3));
+  tabs = computed(() => {
+    // Quien despacha (admin y alistamiento) lleva "Despachar con QR" en la barra, en vez de la tercera sección
+    const despachar = this.menu().find((m) => m.path === '/app/despachar');
+    const p = this.principales();
+    return despachar ? [...p.filter((m) => m.path !== despachar.path).slice(0, 2), { ...despachar, label: 'Despachar' }] : p.slice(0, 3);
+  });
   /** Páginas abiertas desde "Tú": llevan el botón de volver arriba a la izquierda (celular) */
   conAtras = computed(() => {
     const url = this.url().split(/[?#]/)[0];
