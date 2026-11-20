@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-20-solo-direccion",
+    "fecha": "2026-11-20",
+    "hora": "11:00",
+    "titulo": "En la dirección, solo la dirección",
+    "cuerpo": "Ahora la dirección queda solo con la calle o carrera y el número (por ejemplo Calle 20 # 11-30). Si alguien escribe el conjunto, la torre, el apto o el barrio en la dirección, la IA los pasa a Observaciones. Así Waze y Maps encuentran el sitio. Los botones de Waze y Maps de Mis entregas también buscan solo la calle y el número, aunque la dirección traiga más cosas.",
+    "roles": [
+      "admin",
+      "vendedora",
+      "alistador",
+      "venta_local",
+      "mensajero"
+    ]
+  },
+  {
     "id": "2026-11-20-direcciones-solas",
     "fecha": "2026-11-20",
     "hora": "10:00",

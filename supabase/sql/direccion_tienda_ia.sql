@@ -3,8 +3,9 @@
 --  YA APLICADO en Supabase (proyecto Jasta); se guarda como registro.
 --
 --  Cuando entra un pedido por la tienda (pedidos_web), un disparador llama con
---  pg_net a la función ia-tienda, que ordena la dirección con Gemini. La que
---  escribió el cliente queda en direccion_original y se ve en "Pedidos de la
+--  pg_net a la función ia-tienda: en la dirección deja solo la vía y la placa (para
+--  que Waze y Maps la encuentren) y el conjunto, la torre o el apto pasan a las
+--  observaciones. La que escribió el cliente queda en direccion_original y se ve en "Pedidos de la
 --  tienda". La llamada lleva la clave 'ia_interno' del Vault (la creó la base
 --  con gen_random_bytes; nadie la ve). Si algo falla, el pedido entra igual.
 -- ============================================================================

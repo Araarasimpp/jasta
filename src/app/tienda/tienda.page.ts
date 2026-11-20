@@ -558,7 +558,8 @@ function parecido(a: string, b: string): number {
               }
               @if (!misDirs().length || dirSel() === 'otra') {
           <div class="campo"><label for="td">Dirección <span class="obl">*</span></label>
-            <input id="td" autocomplete="street-address" maxlength="200" required [class.mal]="intentado() && errDir()" [(ngModel)]="direccion" placeholder="Ej: Cra 45 # 12-30 apto 201" />
+            <input id="td" autocomplete="street-address" maxlength="200" required [class.mal]="intentado() && errDir()" [(ngModel)]="direccion" placeholder="Ej: Carrera 45 # 12-30" />
+            <small class="pista-barrio">Solo la calle o carrera y el número. El conjunto, la torre y el apto escríbelos abajo en Observaciones.</small>
             @if (intentado() && errDir()) { <p class="error-campo">{{ errDir() }}</p> }</div>
           <div class="campo barrio-campo"><label for="tb">Barrio <span class="obl">*</span></label>
             <small class="pista-barrio">Escribe tu barrio y elígelo de la lista. <strong>Si no eres de Cali, escribe solo el nombre de tu ciudad</strong> (ej: Jamundí, Palmira, Yumbo), no el barrio.</small>
@@ -700,7 +701,7 @@ function parecido(a: string, b: string): number {
           <!-- Indicaciones -->
           <section class="fc-sec">
           <div class="campo"><label for="to">Observaciones (opcional)</label>
-            <input id="to" maxlength="300" [(ngModel)]="observaciones" placeholder="Ej: llamar antes, portería, después de las 3 pm" /></div>
+            <input id="to" maxlength="300" [(ngModel)]="observaciones" placeholder="Ej: conjunto Los Pinos, torre 2 apto 201, llamar antes" /></div>
           </section>
 
           <!-- Resumen -->

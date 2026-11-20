@@ -53,8 +53,9 @@ function normal(s: string): string {
     `
       .ordenar-dir { display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; padding: 0; border: 0; background: none; color: var(--accent); font: inherit; font-size: 12.5px; font-weight: 650; cursor: pointer; }
       .ordenar-dir:disabled { opacity: .6; cursor: progress; }
-      .ordenar-dir.estado { color: var(--text-soft); font-weight: 550; cursor: default; flex-wrap: wrap; }
-      .ordenar-dir.estado .ordenar-dir { margin: 0 0 0 4px; }
+      .ordenar-dir.estado { display: block; max-width: 100%; white-space: normal; color: var(--text-soft); font-weight: 550; cursor: default; line-height: 1.5; }
+      .ordenar-dir.estado ion-icon { vertical-align: -2px; margin-right: 4px; }
+      .ordenar-dir.estado .ordenar-dir { display: inline-block; margin: 0 0 0 4px; white-space: nowrap; }
       .pegar { margin-bottom: 12px; padding: 12px; border: 1px dashed var(--border-strong); border-radius: var(--radius-lg); background: var(--surface); }
       .pegar.abierto { border-style: solid; display: flex; flex-direction: column; gap: 10px; }
       .pegar-btn { all: unset; box-sizing: border-box; width: 100%; display: flex; align-items: center; gap: 12px; cursor: pointer; }
@@ -241,11 +242,11 @@ function normal(s: string): string {
               </label>
               <div class="campo">
                 <label for="dir">Dirección</label>
-                <input id="dir" autocomplete="off" [(ngModel)]="direccion" (ngModelChange)="dirTocada = true" (blur)="ordenarSola()" [placeholder]="nacional() ? 'Dirección completa con barrio' : ''" />
+                <input id="dir" autocomplete="off" [(ngModel)]="direccion" (ngModelChange)="dirTocada = true" (blur)="ordenarSola()" [placeholder]="nacional() ? 'Dirección completa con barrio' : 'Solo calle o carrera y número. Ej: Calle 5 # 38-25'" />
                 @if (ordenandoDir()) {
                   <span class="ordenar-dir estado"><ion-icon name="sparkles" aria-hidden="true"></ion-icon>Ordenando la dirección…</span>
                 } @else if (dirOriginal() && direccion === dirOrdenada()) {
-                  <span class="ordenar-dir estado"><ion-icon name="sparkles" aria-hidden="true"></ion-icon>La IA ordenó la dirección.
+                  <span class="ordenar-dir estado"><ion-icon name="sparkles" aria-hidden="true"></ion-icon>{{ obsAntes() !== null ? 'Dejé solo la dirección; lo demás pasó a observaciones.' : 'La IA ordenó la dirección.' }}
                     <button type="button" class="ordenar-dir" (click)="dejarDireccion()">Dejarla como estaba</button></span>
                 } @else if (direccion.trim().length > 4) {
                   <button type="button" class="ordenar-dir" (click)="ordenarDireccion()">
@@ -735,6 +736,8 @@ export class NuevoPedidoPage implements OnInit {
   /** Como la escribió la persona antes de que la IA la ordenara (para devolverla) */
   dirOriginal = signal('');
   dirOrdenada = signal('');
+  /** Observaciones antes de que la IA les pasara el conjunto, la torre o el apto (null si no se tocaron) */
+  obsAntes = signal<string | null>(null);
   /** Se escribió o cambió la dirección (al editar un pedido no se toca si no la cambian) */
   dirTocada = false;
   private ordenandoAhora: Promise<void> | null = null;
@@ -751,6 +754,8 @@ export class NuevoPedidoPage implements OnInit {
   }
 
   dejarDireccion(): void {
+    if (this.obsAntes() !== null) this.observaciones = this.obsAntes()!;
+    this.obsAntes.set(null);
     this.direccion = this.dirOriginal();
     this.dirOriginal.set('');
     this.dirOrdenada.set('');
@@ -763,15 +768,24 @@ export class NuevoPedidoPage implements OnInit {
     this.ordenandoDir.set(true);
     this.ordenandoAhora = (async () => {
       try {
-        const r = await pedirIa<{ texto: string }>(this.sb.client, { accion: 'direccion', texto: antes }, 15000);
+        // En la dirección queda solo la vía y la placa (así Waze y Maps la encuentran);
+        // el conjunto, la torre o el apto pasan a las observaciones y el barrio se quita
+        const r = await pedirIa<{ texto: string; extra?: string | null }>(this.sb.client, { accion: 'direccion', texto: antes, barrio: this.barrio || null }, 15000);
         const nueva = r.texto?.trim();
         // Solo si nadie la cambió mientras tanto
         if (nueva && this.direccion === antes) {
           this.dirTocada = false;
-          if (nueva !== antes.trim()) {
+          const extra = r.extra?.trim();
+          if (nueva !== antes.trim() || extra) {
             this.dirOriginal.set(antes);
             this.dirOrdenada.set(nueva);
             this.direccion = nueva;
+            if (extra && !this.observaciones.toLowerCase().includes(extra.toLowerCase())) {
+              this.obsAntes.set(this.observaciones);
+              this.observaciones = [extra, this.observaciones.trim()].filter(Boolean).join(' · ');
+            } else {
+              this.obsAntes.set(null);
+            }
           }
         }
       } catch (e) {

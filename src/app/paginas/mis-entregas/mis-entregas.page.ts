@@ -1,5 +1,6 @@
 import { JalarRecargarDirective, confeti } from '../../shared/animar/animar';
 import { SinSenalService, esErrorDeRed } from '../../shared/sin-senal.service';
+import { lugarParaMapa } from '../../shared/direccion-mapa';
 import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
@@ -1007,9 +1008,9 @@ export class MisEntregasPage implements OnInit, OnDestroy {
     );
   }
 
-  /** Dirección para buscar en Waze o Maps */
+  /** Solo la dirección (sin conjunto, torre ni barrio) para que Waze y Maps la encuentren */
   private lugar(p: { direccion: string | null; barrio: string | null }): string {
-    return `${p.direccion ?? ''}, ${p.barrio ?? ''}, Cali`;
+    return lugarParaMapa(p);
   }
 
   /** Waze abre la navegación directo a esa dirección */
@@ -1036,6 +1037,6 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   }
 
   mapa(p: { direccion: string | null; barrio: string | null }): string {
-    return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(`${p.direccion ?? ''}, ${p.barrio ?? ''}, Cali`);
+    return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(this.lugar(p));
   }
 }

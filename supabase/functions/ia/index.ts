@@ -6,7 +6,7 @@
 // POST { accion: 'comprobante', imagen, mime }  -> { es_comprobante, valor, banco, fecha, hora, referencia, destinatario, alertas: [] }
 // POST { accion: 'factura', imagen, mime, productos: [{ id, nombre }] }  -> { proveedor, fecha, total, items: [{ nombre, cantidad, costo, producto_id }] }
 // POST { accion: 'transcribir', audio, mime }  -> { texto }   (también para mensajeros)
-// POST { accion: 'direccion', texto }  -> { texto }
+// POST { accion: 'direccion', texto, barrio? }  -> { texto, extra }   (texto: solo vía y placa; extra: conjunto, torre, apto…)
 // POST { accion: 'pregunta', texto }  -> { texto }   (solo admin: responde con los datos del negocio)
 //
 // Solo para el equipo (sesión activa con rol). La llave está en el Vault ('gemini_api_key').
@@ -118,10 +118,13 @@ Productos de la tienda (id|nombre):
 ${productos.slice(0, 1200).map((p) => `${p.id}|${p.nombre}`).join('\n')}`;
 }
 
-const DIRECCION = (t: string) => `Ordena esta dirección de Colombia con el formato usual: tipo de vía completo y número, "#", la placa con guion, y lo demás (apto, torre, casa, interior) al final.
-Ejemplos: "cl 5 38 25 apto 3" -> "Calle 5 # 38-25 apto 3"; "kra 45#12 30" -> "Carrera 45 # 12-30"; "diag 55 n 34-80 casa 2" -> "Diagonal 55 # 34-80 casa 2".
-No agregues barrio ni ciudad ni nada que no esté. Si no parece una dirección, devuélvela igual. Responde solo con la dirección.
-Dirección: ${t}`;
+const DIRECCION = (t: string, barrio?: string | null) => `Separa esta dirección de Colombia. Responde SOLO un JSON: {"direccion": string, "extra": string|null}
+- direccion: SOLO la vía y la placa, con el formato usual: tipo de vía completo y número, "#", la placa con guion. Incluye letras, "Bis" y Sur/Este si son parte de la placa.
+  Ejemplos: "cl 5 38 25 apto 3" -> "Calle 5 # 38-25"; "kra 45#12 30 conjunto los pinos torre 2" -> "Carrera 45 # 12-30"; "diag 55 n 34-80 casa 2" -> "Diagonal 55 # 34-80"; "Cra 7a bis 12b 30 sur" -> "Carrera 7A Bis # 12B-30 Sur".
+- extra: todo lo demás que sirva para entregar, corto (conjunto o edificio, torre, bloque, apto, casa, interior, piso, local, portería, referencias), o null si no hay.
+- Quita el barrio${barrio ? ' ("' + barrio + '")' : ''} y la ciudad: no van ni en direccion ni en extra.
+- Si el texto no tiene una vía con número, pon el texto completo en direccion y extra null.
+Texto: ${t}`;
 
 async function esAdmin(uid: string): Promise<boolean> {
   const [u] = await sql`select 1 from public.usuarios where auth_id = ${uid} and activo and 'admin' = any(roles::text[])`;
@@ -154,7 +157,8 @@ Deno.serve(async (req) => {
     }
     if (b.accion === 'direccion') {
       if (!String(b.texto ?? '').trim()) return json({ error: 'Escribe la dirección' }, 400);
-      return json({ texto: (await gemini(DIRECCION(String(b.texto).slice(0, 200)), false)).replace(/^["']|["']$/g, '').trim() });
+      const d = leerJson(await gemini(DIRECCION(String(b.texto).slice(0, 200), b.barrio ? String(b.barrio).slice(0, 80) : null), true));
+      return json({ texto: String(d?.direccion ?? '').trim(), extra: d?.extra ? String(d.extra).trim() : null });
     }
     if (b.accion === 'pregunta') {
       if (!(await esAdmin(uid))) return json({ error: 'Sin permiso' }, 403);
