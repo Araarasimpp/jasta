@@ -8,6 +8,7 @@ import { addIcons } from 'ionicons';
 import { carOutline, mapOutline, qrCodeOutline, refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses, chatbubbleEllipsesOutline, alertCircleOutline, cloudOfflineOutline, cloudUploadOutline } from 'ionicons/icons';
 import { enlaceWhatsapp, productosDelPedido } from '../../shared/whatsapp';
 import { PedidosService } from '../../core/services/pedidos.service';
+import { CuentaPago } from '../../shared/qr-pago/cuentas-pago';
 import { EntregadoJyb, JybService, PedidoJyb, ResumenJyb } from '../../core/services/jyb.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { NotificacionesService } from '../../core/services/notificaciones.service';
@@ -343,8 +344,8 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
               }
               <a class="b b-waze" [href]="waze(p)" target="_blank" rel="noopener"><ion-icon name="car-outline"></ion-icon>Waze</a>
               <a class="b" [href]="mapa(p)" target="_blank" rel="noopener"><ion-icon name="navigate-outline"></ion-icon>Mapa</a>
-              @if (hayCuentas()) {
-                <button class="b" (click)="qrDe.set({ total: p.total, detalle: 'Pedido JYB #' + p.numero + ' · ' + p.cliente_nombre })" aria-label="Mostrar el QR para que el cliente pague por transferencia">
+              @if (cuentasJyb().length) {
+                <button class="b" (click)="qrDe.set({ total: p.total, detalle: 'Pedido JYB #' + p.numero + ' · ' + p.cliente_nombre, cuentas: cuentasJyb() })" aria-label="Mostrar el QR de Variedades JYB para que el cliente pague por transferencia">
                   <ion-icon name="qr-code-outline"></ion-icon>QR</button>
               }
               <button class="b b-novedad" (click)="novedadJyb.set(p)">No se pudo</button>
@@ -438,7 +439,8 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
         (cerrar)="entregando.set(null)" (entregado)="alEntregar(p)"></app-entregar>
     }
     @if (entregandoJyb(); as e) {
-      <app-entregar [pedido]="e.resumen" [alConfirmar]="e.guardar" (cerrar)="entregandoJyb.set(null)" (entregado)="alEntregarJyb(e.resumen.id)"></app-entregar>
+      <app-entregar [pedido]="e.resumen" [alConfirmar]="e.guardar" [conQr]="cuentasJyb().length > 0"
+        (qr)="qrDe.set({ total: $event, detalle: 'Pedido JYB · ' + e.resumen.cliente_nombre, titulo: 'Valor de la transferencia', cuentas: cuentasJyb() })" (cerrar)="entregandoJyb.set(null)" (entregado)="alEntregarJyb(e.resumen.id)"></app-entregar>
     }
     @if (abiertoJyb(); as p) {
       <app-pedido-jyb [pedido]="p" (cerrar)="abiertoJyb.set(null)"></app-pedido-jyb>
@@ -447,7 +449,7 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
       <app-pedido-detalle [pedidoId]="id" [chat]="abiertoEnChat()" (cerrar)="cerrarDetalle()" (cambiado)="cargar()"></app-pedido-detalle>
     }
     @if (qrDe(); as q) {
-      <app-qr-pago [total]="q.total" [titulo]="q.titulo || 'Total del pedido'" [detalle]="q.detalle" (cerrar)="qrDe.set(null)"></app-qr-pago>
+      <app-qr-pago [total]="q.total" [titulo]="q.titulo || 'Total del pedido'" [detalle]="q.detalle" [cuentasPropias]="q.cuentas ?? null" (cerrar)="qrDe.set(null)"></app-qr-pago>
     }
   `,
 })
@@ -946,7 +948,9 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   /** Pedido al que se le está reportando que no se pudo entregar */
   novedadDe = signal<Pedido | null>(null);
   /** QR de la cuenta del negocio en pantalla completa (total = lo que se cobra; null = sin valor) */
-  qrDe = signal<{ total: number | null; detalle: string; titulo?: string } | null>(null);
+  qrDe = signal<{ total: number | null; detalle: string; titulo?: string; cuentas?: CuentaPago[] } | null>(null);
+  /** Cuentas de pago de Variedades JYB (llegan con el resumen de JYB) */
+  cuentasJyb = computed(() => this.jyb()?.cuentas_pago ?? []);
   hayCuentas = signal(false);
 
   /** "No se pudo" de un pedido de Variedades JYB (se reporta allá, por el puente) */

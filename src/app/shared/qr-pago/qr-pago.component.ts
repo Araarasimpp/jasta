@@ -76,6 +76,8 @@ interface WakeLock { release(): Promise<void> }
 })
 export class QrPagoComponent implements OnInit, OnDestroy {
   /** Valor a cobrar (null = solo mostrar la cuenta) */
+  /** Cuentas de otro negocio (Variedades JYB). Sin esto se usan las de Jasta */
+  @Input() cuentasPropias: CuentaPago[] | null = null;
   @Input() total: number | null = null;
   @Input() titulo = '';
   @Input() detalle = '';
@@ -93,7 +95,7 @@ export class QrPagoComponent implements OnInit, OnDestroy {
 
   async ngOnInit(): Promise<void> {
     void this.pantallaEncendida();
-    this.cuentas.set(await cargarCuentas(this.sb.client));
+    this.cuentas.set(this.cuentasPropias ?? (await cargarCuentas(this.sb.client)));
     this.listo.set(true);
   }
 

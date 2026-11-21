@@ -110,3 +110,10 @@ begin
   if v_dom is null then raise exception 'No estás como domiciliario en Variedades JYB'; end if;
   perform public.reportar_novedad(p_pedido_id, p_motivo, p_detalle, p_accion);
 end $function$;
+
+-- jasta_resumen ahora también devuelve 'cuentas_pago' (las cuentas activas de Variedades JYB),
+-- para que el QR de la tarjeta de JYB en Mis entregas muestre la cuenta de JYB y no la de Jasta.
+-- Se agregó con replace sobre la definición, justo después de 'vinculado', true:
+--   'cuentas_pago', coalesce((select jsonb_agg(jsonb_build_object('id', cp.id, 'nombre', cp.nombre, 'titular', cp.titular,
+--       'numero', cp.numero, 'qr_url', cp.qr_url, 'activa', cp.activa, 'orden', cp.orden) order by cp.orden, cp.id)
+--     from public.cuentas_pago cp where cp.activa), '[]'::jsonb),

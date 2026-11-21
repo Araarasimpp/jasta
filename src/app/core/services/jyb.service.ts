@@ -3,6 +3,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { environment } from '../../../environments/environment';
 import { SupabaseService } from './supabase.service';
 import { TipoRecaudo } from '../../shared/modelos';
+import { CuentaPago } from '../../shared/qr-pago/cuentas-pago';
 
 /** Pedido en ruta de Variedades JYB (otra base: los ids son uuid y se muestra el número) */
 export interface PedidoJyb {
@@ -46,6 +47,8 @@ export interface EntregadoJyb {
 
 export interface ResumenJyb {
   vinculado: boolean;
+  /** Cuentas de Variedades JYB para que el cliente pague por transferencia (QR de la tarjeta de JYB) */
+  cuentas_pago?: CuentaPago[];
   /** Canal de avisos en vivo de Variedades JYB para este mensajero */
   canal?: string;
   en_ruta?: PedidoJyb[];
