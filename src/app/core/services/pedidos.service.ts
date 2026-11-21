@@ -311,6 +311,16 @@ export class PedidosService {
     ) ?? []) as Producto[]).map((p) => ({ ...p, colores: [...(p.colores ?? [])].sort((a, b) => a.orden - b.orden || a.id - b.id) }));
   }
 
+  /** Productos (activos o no) con sus colores y tallas, para editar pedidos viejos */
+  async productosPorId(ids: number[]): Promise<Producto[]> {
+    return ((this.check(
+      await this.db
+        .from('productos')
+        .select('id,nombre,sku,codigo_barras,precio_venta,precio_base,precio_compra,stock,controla_stock,imagen_url,activo,tallas,tallas_agotadas,colores:producto_colores(id,nombre,hex,imagen_url,orden,disponible)')
+        .in('id', ids)
+    ) ?? []) as Producto[]).map((p) => ({ ...p, colores: [...(p.colores ?? [])].sort((a, b) => a.orden - b.orden || a.id - b.id) }));
+  }
+
   /** Barrios con su valor de domicilio (los activos de "Barrios y domicilios") */
   async barrios(): Promise<{ barrio: string; domicilio: number }[]> {
     return (this.check(await this.db.from('tarifas_domicilio').select('barrio,domicilio').eq('activo', true).order('barrio')) ?? []) as {

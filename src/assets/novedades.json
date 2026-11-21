@@ -1,5 +1,15 @@
 [
   {
+    "id": "2026-11-21-editar-color",
+    "fecha": "2026-11-21",
+    "hora": "14:00",
+    "titulo": "Cambiar el color al editar un pedido",
+    "cuerpo": "Al editar un pedido ya se puede cambiar el color o la talla aunque estén marcados como agotados (solo el admin), y también en productos que ya no están activos.",
+    "roles": [
+      "admin"
+    ]
+  },
+  {
     "id": "2026-11-20-campos-cuentas",
     "fecha": "2026-11-20",
     "hora": "16:50",

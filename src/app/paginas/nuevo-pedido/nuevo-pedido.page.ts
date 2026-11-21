@@ -416,7 +416,7 @@ interface DirCliente { direccion: string; barrio: string | null; valor_domicilio
                         <span class="var-etq" [class.pide]="!l.color">Color</span>
                         @for (c of l.producto.colores!; track c.id) {
                           <button type="button" class="var" role="radio" [attr.aria-checked]="l.color === c.nombre" [class.on]="l.color === c.nombre" [class.agotada]="c.disponible === false"
-                            [disabled]="c.disponible === false && l.color !== c.nombre" (click)="elegir(i, 'color', c.nombre)" [title]="c.disponible === false ? 'Agotado' : ''">
+                            [disabled]="c.disponible === false && l.color !== c.nombre && !puedeAgotado()" (click)="elegir(i, 'color', c.nombre)" [title]="c.disponible === false ? 'Agotado' : ''">
                             <span class="tono" [style.background]="c.hex || '#ccc'"></span>{{ c.nombre }}@if (c.disponible === false) { <small>agotado</small> }</button>
                         }
                       </div>
@@ -426,7 +426,7 @@ interface DirCliente { direccion: string; barrio: string | null; valor_domicilio
                         <span class="var-etq" [class.pide]="!l.talla">Talla</span>
                         @for (t of l.producto.tallas!; track t) {
                           <button type="button" class="var talla" role="radio" [attr.aria-checked]="l.talla === t" [class.on]="l.talla === t" [class.agotada]="tallaAgotada(l.producto, t)"
-                            [disabled]="tallaAgotada(l.producto, t) && l.talla !== t" (click)="elegir(i, 'talla', t)" [title]="tallaAgotada(l.producto, t) ? 'Agotada' : ''">{{ t }}</button>
+                            [disabled]="tallaAgotada(l.producto, t) && l.talla !== t && !puedeAgotado()" (click)="elegir(i, 'talla', t)" [title]="tallaAgotada(l.producto, t) ? 'Agotada' : ''">{{ t }}</button>
                         }
                       </div>
                     }
@@ -608,8 +608,12 @@ export class NuevoPedidoPage implements OnInit {
       this.domicilio = Number(p.valor_domicilio) || 0;
       this.domicilioS.set(this.domicilio);
       this.observaciones = p.observaciones ?? '';
-      // Los productos que ya no están activos se agregan igual para poder conservarlos
+      // Los productos que ya no están activos se agregan igual para poder conservarlos (con sus colores y tallas)
       const porId = new Map(this.productos().map((x) => [x.id, x]));
+      const faltan = [...new Set((p.pedido_items ?? []).map((i) => i.producto_id).filter((x): x is number => !!x && !porId.has(x)))];
+      if (faltan.length) {
+        for (const x of await this.ps.productosPorId(faltan).catch(() => [] as Producto[])) porId.set(x.id, x);
+      }
       this.lineas.set(
         (p.pedido_items ?? []).map((i) => ({
           producto:
@@ -972,6 +976,9 @@ export class NuevoPedidoPage implements OnInit {
     const t = !!p.tallas?.length;
     return c && t ? 'color y talla' : c ? 'color' : 'talla';
   }
+
+  /** El admin puede escoger un color o talla marcado como agotado (por ejemplo, al editar un pedido) */
+  puedeAgotado = computed(() => this.sb.tiene('admin'));
 
   tallaAgotada(p: Producto, t: string): boolean {
     return !!p.tallas_agotadas?.includes(t);
