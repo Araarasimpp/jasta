@@ -343,6 +343,11 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
               }
               <a class="b b-waze" [href]="waze(p)" target="_blank" rel="noopener"><ion-icon name="car-outline"></ion-icon>Waze</a>
               <a class="b" [href]="mapa(p)" target="_blank" rel="noopener"><ion-icon name="navigate-outline"></ion-icon>Mapa</a>
+              @if (hayCuentas()) {
+                <button class="b" (click)="qrDe.set({ total: p.total, detalle: 'Pedido JYB #' + p.numero + ' · ' + p.cliente_nombre })" aria-label="Mostrar el QR para que el cliente pague por transferencia">
+                  <ion-icon name="qr-code-outline"></ion-icon>QR</button>
+              }
+              <button class="b b-novedad" (click)="novedadJyb.set(p)">No se pudo</button>
               <button class="b b-ok" style="flex: 1" (click)="abrirEntregaJyb(p)">Entregar</button>
             </div>
           </article>
@@ -423,6 +428,10 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
 
     @if (novedadDe(); as p) {
       <app-novedad [pedido]="p" (cerrar)="novedadDe.set(null)" (reportado)="alReportar(p, $event)"></app-novedad>
+    }
+    @if (novedadJyb(); as p) {
+      <app-novedad [pedido]="{ id: p.numero, cliente_nombre: p.cliente_nombre, barrio: p.barrio }" etiqueta="JYB " [alConfirmar]="novedadJybEnviar()"
+        (cerrar)="novedadJyb.set(null)" (reportado)="alReportarJyb(p, $event)"></app-novedad>
     }
     @if (entregando(); as p) {
       <app-entregar [pedido]="p" [conQr]="hayCuentas()" (qr)="qrDe.set({ total: $event, detalle: 'Pedido #' + p.id + ' · ' + p.cliente_nombre, titulo: 'Valor de la transferencia' })"
@@ -939,6 +948,19 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   /** QR de la cuenta del negocio en pantalla completa (total = lo que se cobra; null = sin valor) */
   qrDe = signal<{ total: number | null; detalle: string; titulo?: string } | null>(null);
   hayCuentas = signal(false);
+
+  /** "No se pudo" de un pedido de Variedades JYB (se reporta allá, por el puente) */
+  novedadJyb = signal<PedidoJyb | null>(null);
+  novedadJybEnviar = computed(() => {
+    const p = this.novedadJyb();
+    return p ? (motivo: string, detalle: string, accion: 'reintentar' | 'devolver') => this.jybs.novedad(p.id, motivo, detalle, accion) : undefined;
+  });
+
+  async alReportarJyb(p: PedidoJyb, accion: 'reintentar' | 'devolver'): Promise<void> {
+    this.novedadJyb.set(null);
+    this.toast.ok(accion === 'devolver' ? `JYB #${p.numero}: novedad reportada, vuelve a la tienda` : `JYB #${p.numero}: novedad reportada, sigue en tu ruta`);
+    await this.cargar();
+  }
 
   async alReportar(p: Pedido, accion: 'reintentar' | 'devolver'): Promise<void> {
     this.novedadDe.set(null);

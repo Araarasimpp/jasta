@@ -43,7 +43,7 @@ export const MOTIVOS_NOVEDAD = [
     <button class="velo" aria-label="Cerrar" (click)="cerrar.emit()"></button>
     <div class="hoja hoja-centro" role="dialog" aria-labelledby="t-novedad">
       <div class="hoja-head">
-        <h2 id="t-novedad">No se pudo entregar #{{ pedido.id }}</h2>
+        <h2 id="t-novedad">No se pudo entregar {{ etiqueta }}#{{ pedido.id }}</h2>
       </div>
       <div class="hoja-body">
         <p class="cliente">{{ pedido.cliente_nombre }}{{ pedido.barrio ? ' · ' + pedido.barrio : '' }}</p>
@@ -66,7 +66,7 @@ export const MOTIVOS_NOVEDAD = [
               <strong>Lo sigo llevando</strong><small>Queda en tu ruta para intentarlo otra vez</small>
             </button>
             <button type="button" class="accion" [class.on]="accion() === 'devolver'" (click)="accion.set('devolver')">
-              <strong>Lo devuelvo a la tienda</strong><small>Sale de tu ruta y vuelve a Alistados</small>
+              <strong>Lo devuelvo a la tienda</strong><small>Sale de tu ruta y vuelve a la tienda</small>
             </button>
           </div>
         </div>
@@ -86,6 +86,10 @@ export class NovedadComponent {
   private sinSenal = inject(SinSenalService);
 
   @Input({ required: true }) pedido!: Pick<Pedido, 'id' | 'cliente_nombre' | 'barrio'>;
+  /** Antes del número en el título (ej. "JYB ") */
+  @Input() etiqueta = '';
+  /** Para pedidos de otro negocio (Variedades JYB): en vez de reportar en Jasta, llama esto */
+  @Input() alConfirmar?: (motivo: string, detalle: string, accion: 'reintentar' | 'devolver') => Promise<void>;
   @Output() cerrar = new EventEmitter<void>();
   @Output() reportado = new EventEmitter<'reintentar' | 'devolver'>();
 
@@ -102,6 +106,11 @@ export class NovedadComponent {
     if (m === 'otro' && !this.detalle.trim()) return this.error.set('Cuenta qué pasó.');
     this.guardando.set(true);
     try {
+      if (this.alConfirmar) {
+        await this.alConfirmar(m, this.detalle.trim(), this.accion());
+        this.reportado.emit(this.accion());
+        return;
+      }
       try {
         if (!navigator.onLine) throw new Error('Failed to fetch');
         await this.ps.reportarNovedad(this.pedido.id, m, this.detalle.trim(), this.accion());

@@ -90,3 +90,23 @@ begin
   update public.pedidos set estado = 'pendiente', domiciliario_id = null where id = p.id;
   return jsonb_build_object('ok', true, 'texto', 'Se quitó el JYB #' || p.numero || ' de la ruta de ' || coalesce(v_dom_nombre, '?') || '. Volvió a pendientes.');
 end $function$;
+
+-- "No se pudo" desde la tarjeta de Variedades JYB en Mis entregas (app de Jasta):
+-- usa la misma regla de Variedades JYB (reportar_novedad) a nombre del domiciliario
+create or replace function public.jasta_novedad(p_email text, p_pedido_id uuid, p_motivo text, p_detalle text, p_accion text)
+returns void
+language plpgsql
+volatile
+security definer
+set search_path to ''
+as $function$
+declare v_dom uuid;
+begin
+  if coalesce(nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role', '') <> 'service_role' then
+    raise exception 'No autorizado';
+  end if;
+  -- Deja la sesión a nombre del domiciliario (para que reportar_novedad sepa quién es)
+  v_dom := public.jasta_domiciliario(p_email);
+  if v_dom is null then raise exception 'No estás como domiciliario en Variedades JYB'; end if;
+  perform public.reportar_novedad(p_pedido_id, p_motivo, p_detalle, p_accion);
+end $function$;

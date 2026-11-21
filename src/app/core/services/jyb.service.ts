@@ -114,6 +114,11 @@ export class JybService {
     return this.llamar({ accion: 'ruta_de', mensajero_id: mensajeroId });
   }
 
+  /** "No se pudo": queda la novedad en Variedades JYB; 'devolver' saca el pedido de la ruta */
+  async novedad(pedidoId: string, motivo: string, detalle: string, accion: 'reintentar' | 'devolver'): Promise<void> {
+    await this.llamar({ accion: 'novedad', pedido_id: pedidoId, motivo, detalle, accion_pedido: accion });
+  }
+
   async cerrarCuadre(): Promise<void> {
     await this.llamar({ accion: 'cerrar_cuadre' });
   }

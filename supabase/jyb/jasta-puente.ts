@@ -16,6 +16,7 @@
 // POST { accion: 'asignar', mensajero_id, numero }   quien despacha en Jasta escanea un rótulo de JYB
 // POST { accion: 'ruta_de', mensajero_id }           lo que lleva ese mensajero en JYB (para despachar)
 // POST { accion: 'quitar', mensajero_id, numero }    se escaneó por error: sale de la ruta y vuelve a pendientes
+// POST { accion: 'novedad', pedido_id, motivo, detalle?, accion_pedido }   no pudo entregar ('reintentar' o 'devolver')
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 // Proyecto de Jasta (la llave es la publicable)
@@ -128,6 +129,20 @@ Deno.serve(async (req) => {
         if (comprobantes.length) await db.storage.from('comprobantes').remove(comprobantes);
         throw error;
       }
+      return responder({ ok: true });
+    }
+
+    if (body.accion === 'novedad') {
+      const pedidoId = String(body.pedido_id ?? '');
+      if (!/^[0-9a-f-]{36}$/i.test(pedidoId)) return responder({ error: 'Pedido no válido' }, 400);
+      const { error } = await db.rpc('jasta_novedad', {
+        p_email: yo.email,
+        p_pedido_id: pedidoId,
+        p_motivo: String(body.motivo ?? ''),
+        p_detalle: typeof body.detalle === 'string' ? body.detalle.slice(0, 500) : null,
+        p_accion: String(body.accion_pedido ?? ''),
+      });
+      if (error) throw error;
       return responder({ ok: true });
     }
 
