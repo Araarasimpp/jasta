@@ -5,6 +5,7 @@ import { Pedido } from '../modelos';
 import { mensajeError } from '../formato';
 import { DatosNegocio, PedidoRotulo, cargarDatosNegocio, documentoRotulos, imprimirHtml, rotuloHtml } from './rotulo';
 import { nombreConVariante } from '../variante';
+import { especialDeEnvio } from './rotulo-devolucion';
 
 /** Imprime rótulos de 100 × 100 mm y los marca como impresos */
 @Injectable({ providedIn: 'root' })
@@ -25,6 +26,7 @@ export class RotulosService {
       created_at: p.created_at,
       productos: (p.pedido_items ?? []).map((i) => `${nombreConVariante(i)}${i.cantidad > 1 ? ' x' + i.cantidad : ''}`),
       nacional: p.envio_nacional ? { ciudad: p.destino_ciudad ?? null, departamento: p.destino_departamento ?? null, cedula: p.destinatario_cedula ?? null } : null,
+      especial: p.servicio ? especialDeEnvio(p.servicio, Number(p.total), p.servicio_detalle ?? null) : null,
     };
   }
 

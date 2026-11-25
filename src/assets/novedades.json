@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-25-envios-cambios",
+    "fecha": "2026-11-25",
+    "hora": "09:40",
+    "titulo": "Cambios y garantías con envío al mensajero",
+    "cuerpo": "Cuando un cambio, garantía o devolución lo lleva un mensajero, la app crea un envío con su propio número y rótulo. Se escanea en Despachar como cualquier pedido, le sale en Mis entregas con lo que tiene que recoger y entregar, y el deducible que cobre entra a su cuadre. El domicilio se le reconoce en el cuadre y queda en Gastos. Para llevarle al cliente una garantía arreglada, toca el botón del rótulo en Devoluciones y se crea el envío de regreso.",
+    "roles": [
+      "admin",
+      "alistador",
+      "venta_local",
+      "cuadres",
+      "mensajero"
+    ]
+  },
+  {
     "id": "2026-11-25-garantias-rotulo",
     "fecha": "2026-11-25",
     "hora": "09:20",

@@ -148,3 +148,49 @@ select cron.schedule('recordar-garantias', '0 18 * * *', 'select privado.recorda
 -- garantias_pendientes: también cliente_telefono, direccion y barrio (para el rótulo)
 -- (se cambiaron con replace sobre su definición, como en cambio_otro_producto.sql)
 -- Garantías que ya existían: estado según lo que tenían (resuelta = entregada, con técnico = en arreglo, si no recibida)
+
+-- ============================================================================
+--  Envíos de cambios, garantías y devoluciones (YA APLICADO)
+--  Cuando un mensajero va donde el cliente se crea un "envío": un pedido ya
+--  alistado (sin productos ni vendedora, con servicio = tipo) que pasa por
+--  Despachar (su QR), Mis entregas y el cuadre del mensajero como cualquiera.
+--  total = lo que cobra el mensajero (el deducible contra entrega);
+--  valor_domicilio = lo que se le paga (se descuenta en su cuadre y va a Gastos).
+-- ============================================================================
+alter table public.pedidos
+  add column if not exists servicio text,
+  add column if not exists servicio_detalle jsonb,
+  add column if not exists devolucion_id bigint;
+alter table public.devoluciones add column if not exists envio_pedido_id bigint;
+
+create or replace function public.crear_envio_devolucion(p_devolucion bigint, p_domicilio numeric, p_cobrar numeric, p_detalle jsonb)
+returns bigint language plpgsql security definer set search_path to '' as $function$
+declare d public.devoluciones; pe public.pedidos; v_id bigint; v_dom numeric := greatest(round(coalesce(p_domicilio, 0)), 0);
+  v_cobrar numeric := greatest(round(coalesce(p_cobrar, 0)), 0); v_tipo text;
+begin
+  if not privado.puede_devoluciones() then raise exception 'Sin permiso'; end if;
+  select * into d from public.devoluciones where id = p_devolucion for update;
+  if not found then raise exception 'No existe'; end if;
+  select * into pe from public.pedidos where id = d.pedido_id;
+  v_tipo := case d.tipo when 'cambio' then 'cambio' when 'garantia' then 'garantía' else 'devolución' end;
+  insert into public.pedidos (estado, alistado_at, cliente_nombre, cliente_telefono, direccion, barrio, observaciones, valor_domicilio, total,
+                              canal, vendedora_id, stock_descontado, servicio, servicio_detalle, devolucion_id)
+  values ('alistado', now(), pe.cliente_nombre, pe.cliente_telefono, pe.direccion, pe.barrio,
+          left(initcap(v_tipo) || ' del pedido #' || pe.id || coalesce(' · ' || nullif(p_detalle->>'nota', ''), ''), 300),
+          v_dom, v_cobrar, 'domicilio', null, true, d.tipo, coalesce(p_detalle, '{}'::jsonb), d.id)
+  returning id into v_id;
+  update public.devoluciones set envio_pedido_id = v_id, domicilio = domicilio + v_dom where id = d.id;
+  if v_dom > 0 then
+    insert into public.gastos (fecha, categoria, descripcion, valor, metodo, comprobantes, creado_por, creado_por_nombre)
+    values ((now() at time zone 'America/Bogota')::date, 'transporte', 'Domicilio de ' || v_tipo || ' del pedido #' || pe.id || ' (envío #' || v_id || ')',
+            v_dom, 'efectivo', '{}', public.mi_usuario_id(), public.mi_nombre());
+  end if;
+  perform public.nota(pe.id, 'Envío #' || v_id || ' para el ' || v_tipo
+    || case when v_cobrar > 0 then ' · el mensajero cobra ' || privado.pesos(v_cobrar) else ' · sin cobro' end
+    || case when v_dom > 0 then ' · domicilio ' || privado.pesos(v_dom) || ' lo paga el negocio' else '' end);
+  perform public.nota(v_id, initcap(v_tipo) || ' del pedido #' || pe.id);
+  return v_id;
+end $function$;
+revoke execute on function public.crear_envio_devolucion(bigint, numeric, numeric, jsonb) from public, anon;
+grant execute on function public.crear_envio_devolucion(bigint, numeric, numeric, jsonb) to authenticated;
+-- devoluciones_lista y garantias_pendientes devuelven también envio_pedido_id y envio_estado (y total/domicilio del envío)

@@ -7,7 +7,7 @@ import { ComprobantesInputComponent } from '../comprobantes/comprobantes-input.c
 import { nombreConVariante } from '../variante';
 import { PesosDirective } from '../../shared/pesos/pesos.directive';
 import { ToastService } from '../toast/toast.service';
-import { DevolucionParaRotulo, imprimirRotuloDevolucion } from '../rotulo/rotulo-devolucion';
+import { DevolucionParaRotulo, crearEnvioDevolucion } from '../rotulo/rotulo-devolucion';
 
 interface ProdNuevo { id: number; nombre: string; sku: string | null; precio_venta: number; stock: number; controla_stock: boolean }
 const normal = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
@@ -176,10 +176,13 @@ const MOTIVOS = [
           }
         }
 
-        <div class="campo"><label for="dv-dom">Domicilio (lo paga el negocio)</label>
-          <input pesos id="dv-dom" class="num" [(ngModel)]="domicilio" placeholder="$ 0" />
-          <small class="suave">Lo que se le paga al mensajero por ir donde el cliente. Queda anotado en Gastos. Déjalo en 0 si el cliente vino a la tienda.</small></div>
-        <label class="check"><input type="checkbox" [(ngModel)]="conRotulo" /> <span>Imprimir el rótulo {{ tipo() === 'cambio' ? 'del cambio' : tipo() === 'garantia' ? 'de la garantía' : 'de la devolución' }}</span></label>
+        <label class="check"><input type="checkbox" [(ngModel)]="conEnvio" /> <span>Lo lleva un mensajero (crea el envío con su rótulo para Despachar)</span></label>
+        @if (conEnvio) {
+          <div class="campo"><label for="dv-dom">Domicilio (lo paga el negocio)</label>
+            <input pesos id="dv-dom" class="num" [(ngModel)]="domicilio" placeholder="$ 0" />
+            <small class="suave">Se le descuenta al mensajero en su cuadre, como en cualquier pedido, y queda anotado en Gastos.</small></div>
+          <label class="check"><input type="checkbox" [(ngModel)]="conRotulo" /> <span>Imprimir el rótulo ahora</span></label>
+        }
 
         @if (puedeFotos()) {
           <app-comprobantes-input [obligatorio]="false" titulo="Fotos (opcional)" pista="Foto del producto o del comprobante del reembolso." [rutas]="fotos()"
@@ -218,6 +221,8 @@ export class DevolucionComponent implements OnInit {
   /** Domicilio de ir donde el cliente: lo paga el negocio (va a Gastos) */
   domicilio: number | null = null;
   conRotulo = true;
+  /** Un mensajero va donde el cliente: se crea el envío (pasa por Despachar y por su cuadre) */
+  conEnvio = true;
   descontarComision = true;
   metodo = 'efectivo';
   nota = '';
@@ -307,23 +312,19 @@ export class DevolucionComponent implements OnInit {
     this.registrado.emit();
   }
 
-  /** Lo de después de registrar: el domicilio a Gastos y el rótulo */
+  /** Lo de después de registrar: el envío para el mensajero (con su rótulo), si lo lleva uno */
   private async despues(id: number, extra: Partial<DevolucionParaRotulo>): Promise<void> {
-    const dom = Number(this.domicilio) || 0;
-    if (id && dom > 0) {
-      const { error } = await this.sb.client.rpc('devolucion_domicilio', { p_id: id, p_valor: dom });
-      if (error) this.toast.error('No se pudo anotar el domicilio en Gastos: ' + mensajeError(error));
-    }
-    if (!this.conRotulo) return;
+    if (!id || !this.conEnvio) return;
     const items = this.items().filter((i) => this.cant()[i.id]).map((i) => ({ nombre: nombreConVariante(i), cantidad: this.cant()[i.id] }));
     try {
-      await imprimirRotuloDevolucion(this.sb.client, {
+      const n = await crearEnvioDevolucion(this.sb.client, id, {
         tipo: this.tipo(), pedido_id: this.pedido.id, cliente: this.pedido.cliente_nombre, cliente_telefono: this.pedido.cliente_telefono,
         direccion: this.pedido.direccion, barrio: this.pedido.barrio, fecha: new Date().toISOString(), items, nota: this.nota.trim() || null,
         garantia_estado: 'recibida', ...extra,
-      });
+      }, Number(this.domicilio) || 0, this.conRotulo);
+      this.toast.ok(`Envío #${n} creado: escanéalo en Despachar para asignárselo al mensajero`);
     } catch (e) {
-      this.toast.error('No se pudo imprimir el rótulo: ' + mensajeError(e));
+      this.toast.error('No se pudo crear el envío: ' + mensajeError(e));
     }
   }
 

@@ -3,7 +3,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { addIcons } from 'ionicons';
 import { closeOutline, printOutline } from 'ionicons/icons';
-import { imprimirRotuloDevolucion } from '../../shared/rotulo/rotulo-devolucion';
+import { DevolucionParaRotulo, cobroDe, crearEnvioDevolucion, imprimirRotuloDevolucion } from '../../shared/rotulo/rotulo-devolucion';
 import { GarantiasAlertaService } from '../../shared/garantias-alerta/garantias-alerta.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
@@ -48,6 +48,10 @@ interface Devolucion {
   garantia_estado: string;
   garantia_estado_texto: string;
   garantia_detalle: string | null;
+  envio_pedido_id: number | null;
+  envio_estado: string | null;
+  envio_total: number | null;
+  envio_domicilio: number | null;
 }
 
 /** Garantía sin resolver (de cualquier fecha) */
@@ -64,6 +68,8 @@ interface GarantiaPendiente {
   nota: string | null;
   fecha: string;
   items: { nombre: string; cantidad: number }[] | null;
+  envio_pedido_id: number | null;
+  envio_estado: string | null;
 }
 
 const ESTADOS_GARANTIA = [
@@ -154,7 +160,7 @@ const ESTADOS_GARANTIA = [
                   <strong>#{{ g.pedido_id }} {{ g.cliente }}</strong>
                   <span [class]="'g-estado ' + g.estado">{{ g.estado_texto }}{{ g.detalle ? (g.estado === 'en_arreglo' ? ' con ' : ' · ') + g.detalle : '' }}</span>
                   <p>{{ itemsTxt(g.items) }}{{ g.nota ? ' · "' + g.nota + '"' : '' }}</p>
-                  <p>Desde {{ cuando(g.fecha) }}</p>
+                  <p>Desde {{ cuando(g.fecha) }}@if (g.envio_pedido_id) { · envío #{{ g.envio_pedido_id }} {{ estadoEnvio(g.envio_estado) }} }</p>
                 </span>
                 <span class="acc-dev">
                   <button type="button" class="b" (click)="rotuloPendiente(g)"><ion-icon name="print-outline"></ion-icon>Rótulo</button>
@@ -217,6 +223,7 @@ const ESTADOS_GARANTIA = [
                     <span class="estado" [class.danado]="d.estado_producto === 'danado'">{{ d.estado_producto === 'danado' ? 'Dañado' : 'Volvió al inventario' }}{{ d.reemplazo ? ' · se entregó otro' : '' }}</span>
                   }
                   @if (d.comision_descuento) { <small>Comisión −{{ pesos(d.comision_descuento) }}</small> }
+                  @if (d.envio_pedido_id) { <span class="dom">Envío #{{ d.envio_pedido_id }} · {{ estadoEnvio(d.envio_estado) }}</span> }
                   @if (+d.domicilio) { <span class="dom">Domicilio {{ pesos(d.domicilio) }} (gasto)</span> }
                   <button type="button" class="b b-icono" (click)="$event.stopPropagation(); rotulo(d)" aria-label="Imprimir el rótulo" title="Imprimir el rótulo"><ion-icon name="print-outline"></ion-icon></button>
                   @if (d.fotos.length) {
@@ -366,20 +373,50 @@ export class DevolucionesPage {
     return (items ?? []).map((i) => `${i.cantidad} ${i.nombre}`).join(', ');
   }
 
-  // Rótulo de la devolución, el cambio o la garantía
+  // Rótulo y envío de la devolución, el cambio o la garantía
   async rotulo(d: Devolucion): Promise<void> {
-    await imprimirRotuloDevolucion(this.sb.client, {
+    await this.rotuloDe(d.id, d.envio_pedido_id, d.envio_estado, Number(d.envio_total) || 0, Number(d.envio_domicilio ?? d.domicilio) || 0, {
       tipo: d.tipo, pedido_id: d.pedido_id, cliente: d.cliente, cliente_telefono: d.cliente_telefono, direccion: d.direccion, barrio: d.barrio,
       fecha: d.fecha, items: d.items, reemplazo: d.reemplazo, nuevo_nombre: d.nuevo_nombre, nuevo_cantidad: d.nuevo_cantidad,
       diferencia: d.diferencia, diferencia_metodo: d.diferencia_metodo, nota: d.nota, garantia_estado: d.garantia_estado,
-    }).catch((e) => this.toast.error(mensajeError(e)));
+    });
   }
 
   async rotuloPendiente(g: GarantiaPendiente): Promise<void> {
-    await imprimirRotuloDevolucion(this.sb.client, {
+    await this.rotuloDe(g.id, g.envio_pedido_id, g.envio_estado, 0, 0, {
       tipo: 'garantia', pedido_id: g.pedido_id, cliente: g.cliente, cliente_telefono: g.cliente_telefono, direccion: g.direccion, barrio: g.barrio,
       fecha: g.fecha, items: g.items, nota: g.nota, garantia_estado: g.estado,
-    }).catch((e) => this.toast.error(mensajeError(e)));
+    });
+  }
+
+  /**
+   * Si el envío de este caso todavía no se entrega, se reimprime su rótulo. Si no tiene envío
+   * (o ya se entregó, como cuando hay que llevarle al cliente la garantía arreglada), se crea uno nuevo.
+   */
+  private async rotuloDe(id: number, envio: number | null, estadoEnvio: string | null, totalEnvio: number, domAntes: number, datos: DevolucionParaRotulo): Promise<void> {
+    try {
+      if (envio && estadoEnvio && !['entregado', 'cancelado'].includes(estadoEnvio)) {
+        await imprimirRotuloDevolucion(this.sb.client, { ...datos, numero: envio, diferencia: totalEnvio, diferencia_metodo: totalEnvio ? 'contra_entrega' : null });
+        return;
+      }
+      const r = prompt(
+        (envio ? 'Se crea un envío nuevo para el mensajero (el anterior ya se entregó).' : 'Se crea el envío para el mensajero.') +
+          '\n¿Cuánto es el domicilio? Lo paga el negocio (escribe 0 si no hay).',
+        String(domAntes || 0)
+      );
+      if (r === null) return;
+      // El deducible se cobra una sola vez: en el primer envío
+      const cobrar = envio ? 0 : cobroDe(datos);
+      const n = await crearEnvioDevolucion(this.sb.client, id, datos, Number(r.replace(/\D/g, '')) || 0, true, cobrar);
+      this.toast.ok(`Envío #${n} creado: escanéalo en Despachar para asignárselo al mensajero`);
+      await Promise.all([this.cargar(), this.cargarPendientes()]);
+    } catch (e) {
+      this.toast.error(mensajeError(e));
+    }
+  }
+
+  estadoEnvio(e: string | null): string {
+    return { por_alistar: 'por despachar', alistado: 'por despachar', despachado: 'en ruta', entregado: 'entregado', cancelado: 'cancelado' }[e ?? ''] ?? '';
   }
 
   fechaCorta(d: string | null): string {

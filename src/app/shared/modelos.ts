@@ -65,6 +65,9 @@ export interface ProductoColor {
 
 export interface Pedido {
   id: number;
+  /** Envío de un cambio, garantía o devolución (no es una venta) */
+  servicio?: 'cambio' | 'garantia' | 'devolucion' | null;
+  servicio_detalle?: { recoge?: string[]; entrega?: string[]; nota?: string | null } | null;
   estado: EstadoPedido;
   created_at: string;
   /** Hora real en que se subió, si se subió desde las 8 p. m. (created_at queda en el día siguiente) */

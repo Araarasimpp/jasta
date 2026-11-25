@@ -22,6 +22,8 @@ export interface DevolucionParaRotulo {
   /** Garantía: por qué se dejó y en qué va */
   nota?: string | null;
   garantia_estado?: string | null;
+  /** Número del envío (el pedido que lleva el mensajero): es el que va en el QR para Despachar */
+  numero?: number | null;
 }
 
 const linea = (nombre: string, cantidad: number) => `${nombre}${cantidad > 1 ? ' x' + cantidad : ''}`;
@@ -66,7 +68,7 @@ export async function imprimirRotuloDevolucion(client: SupabaseClient, d: Devolu
   const negocio = await cargarDatosNegocio(client);
   const html = rotuloHtml(
     {
-      numero: d.pedido_id,
+      numero: d.numero ?? d.pedido_id,
       cliente_nombre: d.cliente,
       cliente_telefono: d.cliente_telefono,
       direccion: d.direccion ?? '',
@@ -80,5 +82,48 @@ export async function imprimirRotuloDevolucion(client: SupabaseClient, d: Devolu
     negocio
   );
   const titulo = { devolucion: 'Devolución', cambio: 'Cambio', garantia: 'Garantía' }[d.tipo];
-  imprimirHtml(documentoRotulos([html], `${titulo} #${d.pedido_id}`));
+  imprimirHtml(documentoRotulos([html], `${titulo} #${d.numero ?? d.pedido_id}`));
+}
+
+/** El rótulo de un envío ya creado (pedido con "servicio"): lo que se guardó al crearlo */
+export function especialDeEnvio(servicio: string, total: number, detalle: { recoge?: string[]; entrega?: string[]; nota?: string | null } | null): RotuloEspecial {
+  const tipo = (['cambio', 'garantia', 'devolucion'].includes(servicio) ? servicio : 'cambio') as RotuloEspecial['tipo'];
+  return {
+    tipo,
+    cobro: total > 0 ? 'COBRAR ' + pesos(total) : tipo === 'garantia' ? 'GARANTÍA · NO COBRAR' : 'NO COBRAR',
+    recoge: detalle?.recoge ?? [],
+    entrega: detalle?.entrega ?? [],
+    nota: detalle?.nota ?? null,
+  };
+}
+
+/** Lo que el mensajero le cobra al cliente: solo el deducible de un cambio cobrado contra entrega */
+export function cobroDe(d: DevolucionParaRotulo): number {
+  const dif = Number(d.diferencia) || 0;
+  return d.tipo === 'cambio' && dif > 0 && d.diferencia_metodo === 'contra_entrega' ? dif : 0;
+}
+
+/**
+ * Crea el envío (un pedido ya alistado que pasa por Despachar, Mis entregas y el cuadre del
+ * mensajero) y, si se pide, imprime su rótulo con el número del envío en el QR.
+ */
+export async function crearEnvioDevolucion(
+  client: SupabaseClient,
+  devolucionId: number,
+  d: DevolucionParaRotulo,
+  domicilio: number,
+  imprimir: boolean,
+  cobrar = cobroDe(d)
+): Promise<number> {
+  const esp = especialDe(d);
+  const { data, error } = await client.rpc('crear_envio_devolucion', {
+    p_devolucion: devolucionId,
+    p_domicilio: domicilio,
+    p_cobrar: cobrar,
+    p_detalle: { tipo: d.tipo, recoge: esp.recoge, entrega: esp.entrega, nota: esp.nota },
+  });
+  if (error) throw error;
+  const numero = Number(data);
+  if (imprimir) await imprimirRotuloDevolucion(client, { ...d, numero, ...(cobrar !== cobroDe(d) ? { diferencia: cobrar, diferencia_metodo: cobrar ? 'contra_entrega' : null } : {}) });
+  return numero;
 }

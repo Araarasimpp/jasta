@@ -108,6 +108,7 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
       .mr-txt span { font-size: 13.5px; color: var(--text-soft); }
       .mr-acc { display: flex; gap: 8px; flex-wrap: wrap; }
       .mr-acc .b { flex: 1; justify-content: center; }
+      .negocio.servicio { background: #111; color: #fff; margin-left: 4px; }
       .b.b-waze { background: #33ccff !important; border-color: #33ccff !important; color: #06283a !important; }
       .ayuda-ruta { margin: 0 0 -2px; font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
       .tarjetas .tarjeta { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
@@ -271,6 +272,7 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
             <div class="tarjeta-top">
               <div class="top-izq" (click)="abrir(p.id)">
                 @if (conJyb()) {<span class="negocio">Jasta</span>}
+                @if (p.servicio) {<span class="negocio servicio">{{ servicioTxt(p.servicio) }}</span>}
                 <h3>@if (rutaOrdenada().length > 1) {<span class="parada" [attr.aria-label]="'Parada ' + (i + 1)">{{ i + 1 }}</span>}<span class="guia">#{{ p.id }}</span> {{ p.cliente_nombre }}</h3>
                 <strong class="total num">{{ pesos(p.total) }}<small>{{ p.tipo_recaudo || '' }}</small></strong>
                 <span class="dom-tag">Tu domicilio: <b class="num">{{ pesos(p.valor_domicilio) }}</b></span>
@@ -297,6 +299,12 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
             <p>{{ p.direccion }}<br />{{ p.barrio || 'Sin barrio' }}</p>
             @if (p.observaciones) {
               <p style="color: var(--st-pendiente-text)">{{ p.observaciones }}</p>
+            }
+            @if (p.servicio_detalle; as sd) {
+              <ul class="items-mini">
+                @for (x of sd.recoge ?? []; track $index) { <li><span><b>Recoger:</b> {{ x }}</span></li> }
+                @for (x of sd.entrega ?? []; track $index) { <li><span><b>Entregar:</b> {{ x }}</span></li> }
+              </ul>
             }
             <ul class="items-mini">
               @for (i of p.pedido_items ?? []; track i.id) {
@@ -952,6 +960,10 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   /** Cuentas de pago de Variedades JYB (llegan con el resumen de JYB) */
   cuentasJyb = computed(() => this.jyb()?.cuentas_pago ?? []);
   hayCuentas = signal(false);
+
+  servicioTxt(s: string): string {
+    return { cambio: 'CAMBIO', garantia: 'GARANTÍA', devolucion: 'DEVOLUCIÓN' }[s] ?? s.toUpperCase();
+  }
 
   /** "No se pudo" de un pedido de Variedades JYB (se reporta allá, por el puente) */
   novedadJyb = signal<PedidoJyb | null>(null);
