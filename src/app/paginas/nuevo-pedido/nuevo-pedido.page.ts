@@ -645,7 +645,7 @@ export class NuevoPedidoPage implements OnInit {
   resumenRiesgo(r: Riesgo): string {
     const p: string[] = [];
     if (r.rechazados) p.push(`${r.rechazados} ${r.rechazados === 1 ? 'pedido salió y se canceló' : 'pedidos salieron y se cancelaron'}`);
-    if (r.devoluciones) p.push(`${r.devoluciones} ${r.devoluciones === 1 ? 'devolución' : 'devoluciones'}`);
+    if (r.devoluciones) p.push(`${r.devoluciones} ${r.devoluciones === 1 ? 'cambio' : 'cambios'}`);
     if (r.novedades) p.push(`${r.novedades} ${r.novedades === 1 ? 'novedad' : 'novedades'} de entrega`);
     p.push(`${r.entregados} de ${r.pedidos} entregados`);
     return p.join(' · ');

@@ -148,7 +148,7 @@ const MOTIVOS = [
                   ({{ ajusteComision() > 0 ? '+' : '−' }}{{ pesos(abs(ajusteComision())) }} en su próximo pago).</p>
               }
               @if (diferencia() < 0) {
-                <p class="error" style="margin: 0">El producto nuevo vale menos que lo que devuelve. Para eso usa Devolución.</p>
+                <p class="error" style="margin: 0">El producto nuevo vale menos que lo que devuelve. En el negocio no se devuelve plata: escoge uno de igual o más valor.</p>
               } @else if (diferencia() > 0) {
                 <div class="campo"><label for="dv-md">¿Cómo pagó la diferencia?</label>
                   <select id="dv-md" [(ngModel)]="metodoDif"><option value="contra_entrega">Contra entrega (lo cobra el mensajero)</option><option value="efectivo">Efectivo (entra a la caja del local)</option><option value="transferencia">Transferencia</option><option value="otro">Otro</option></select></div>
@@ -329,7 +329,7 @@ export class DevolucionComponent implements OnInit {
   private async guardarOtro(items: { item_id: number; cantidad: number }[]): Promise<void> {
     const n = this.nuevo();
     if (!n) return this.error.set('Elige el producto nuevo.');
-    if (this.diferencia() < 0) return this.error.set('El producto nuevo vale menos: para eso usa Devolución.');
+    if (this.diferencia() < 0) return this.error.set('El producto nuevo vale menos: escoge uno de igual o más valor.');
     this.guardando.set(true);
     const { data, error } = await this.sb.client.rpc('registrar_cambio_otro', {
       p_pedido: this.pedido.id, p_items: items, p_motivo: this.motivo(), p_estado_producto: this.estado(),

@@ -107,7 +107,7 @@ export function leerRotulo(texto: string): Lectura | null {
       <div class="modo seg" role="tablist" aria-label="Qué vas a hacer">
         <button type="button" role="tab" [class.on]="modo() === 'despachar'" [attr.aria-selected]="modo() === 'despachar'" (click)="cambiarModo('despachar')">Despachar</button>
         <button type="button" role="tab" [class.on]="modo() === 'recibir'" [attr.aria-selected]="modo() === 'recibir'" (click)="cambiarModo('recibir')">
-          Recibir devoluciones@if (devoluciones().length) { <span class="cuenta">{{ devoluciones().length }}</span> }</button>
+          Recibir en bodega@if (devoluciones().length) { <span class="cuenta">{{ devoluciones().length }}</span> }</button>
       </div>
 
       @if (modo() === 'despachar') {
@@ -382,7 +382,7 @@ export class DespacharPage implements OnInit, OnDestroy {
       return;
     }
     if (this.modo() === 'recibir') {
-      if (l.negocio === 'jyb') this.mostrar(this.resultado('jyb', l.numero, 'info', 'El JYB #' + l.numero + ' es de Variedades JYB: las devoluciones de JYB se reciben en su app.'));
+      if (l.negocio === 'jyb') this.mostrar(this.resultado('jyb', l.numero, 'info', 'El JYB #' + l.numero + ' es de Variedades JYB: los pedidos devueltos de JYB se reciben en su app.'));
       else this.encolarRecibir(l.numero);
       return;
     }

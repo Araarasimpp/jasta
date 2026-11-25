@@ -117,7 +117,7 @@ export function enlaceTienda(u: { id: number; nombre: string } | null): string {
             @if (w.riesgo?.nivel) {
               <div class="riesgo" [class.alto]="w.riesgo!.nivel === 'alto'">
                 <strong><ion-icon class="ico" name="warning" aria-hidden="true"></ion-icon>{{ w.riesgo!.marca ? 'Cliente marcado: "' + w.riesgo!.marca!.nota + '"' : 'Este cliente ha tenido problemas' }}</strong>
-                <span>{{ w.riesgo!.rechazados }} cancelados después de salir · {{ w.riesgo!.devoluciones }} devoluciones · {{ w.riesgo!.entregados }} de {{ w.riesgo!.pedidos }} entregados</span>
+                <span>{{ w.riesgo!.rechazados }} cancelados después de salir · {{ w.riesgo!.devoluciones }} cambios · {{ w.riesgo!.entregados }} de {{ w.riesgo!.pedidos }} entregados</span>
               </div>
             }
             @if (w.sospecha; as s) {

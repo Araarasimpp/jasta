@@ -31,7 +31,7 @@
     "fecha": "2026-11-25",
     "hora": "09:40",
     "titulo": "Cambios y garantías con envío al mensajero",
-    "cuerpo": "Cuando un cambio, garantía o devolución lo lleva un mensajero, la app crea un envío con su propio número y rótulo. Se escanea en Despachar como cualquier pedido, le sale en Mis entregas con lo que tiene que recoger y entregar, y el deducible que cobre entra a su cuadre. El domicilio se le reconoce en el cuadre y queda en Gastos. Para llevarle al cliente una garantía arreglada, toca el botón del rótulo en Devoluciones y se crea el envío de regreso.",
+    "cuerpo": "Cuando un cambio o una garantía lo lleva un mensajero, la app crea un envío con su propio número y rótulo. Se escanea en Despachar como cualquier pedido, le sale en Mis entregas con lo que tiene que recoger y entregar, y el deducible que cobre entra a su cuadre. El domicilio se le reconoce en el cuadre y queda en Gastos. Para llevarle al cliente una garantía arreglada, toca el botón del rótulo en Cambios y garantías y se crea el envío de regreso.",
     "roles": [
       "admin",
       "alistador",
@@ -96,7 +96,7 @@
     "fecha": "2026-11-20",
     "hora": "12:00",
     "titulo": "Recibir devoluciones en bodega",
-    "cuerpo": "Cuando un mensajero devuelve un pedido con \"No se pudo\", ahora queda pendiente hasta que alistamiento lo recibe. En Despachar → Recibir devoluciones escaneas el rótulo (o tocas Recibido) y queda anotado quién lo trajo y cuándo llegó. Así no se pierde ningún pedido devuelto.",
+    "cuerpo": "Cuando un mensajero devuelve un pedido con \"No se pudo\", ahora queda pendiente hasta que alistamiento lo recibe. En Despachar → Recibir en bodega escaneas el rótulo (o tocas Recibido) y queda anotado quién lo trajo y cuándo llegó. Así no se pierde ningún pedido devuelto.",
     "roles": [
       "admin",
       "alistador"

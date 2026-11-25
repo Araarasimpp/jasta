@@ -113,3 +113,25 @@ end $$;
 --    reemplazo entregado; a las dos sin pagar se les quitó el descuento de comisión.
 --    La de #101297 conserva su descuento de $8.000 porque ya iba en el pago 103.
 -- ============================================================================
+
+-- ============================================================================
+--  Ajustes de comisión a mano (YA APLICADO 2026-11-25)
+--  public.ajustes_comision: valor positivo = se le suma a la vendedora en su próximo pago.
+--  Entra por privado.descuentos_por_liquidar (union), pagar_liquidacion lo marca con la
+--  liquidación, anular_liquidacion lo deja pendiente otra vez y liquidacion_pedidos lo muestra.
+--  Primer ajuste: +$8.000 a la vendedora del pedido #101297 (la devolución de la almohada pasó
+--  a cambio después de que ya se le había descontado la comisión en el pago 103).
+--  registrar_cambio_otro: el mensaje "para eso usa Devolución" ahora dice que escoja uno de igual o más valor.
+-- ============================================================================
+create table if not exists public.ajustes_comision (
+  id bigserial primary key,
+  vendedora_id bigint not null references public.usuarios(id),
+  pedido_id bigint references public.pedidos(id),
+  dia date not null default (now() at time zone 'America/Bogota')::date,
+  valor numeric not null,
+  nombre text not null,
+  liquidacion_id bigint,
+  creado_por_nombre text,
+  created_at timestamptz not null default now()
+);
+alter table public.ajustes_comision enable row level security;

@@ -145,7 +145,7 @@ const ESTADOS_GARANTIA = [
   template: `
     <div class="page">
       <div class="head">
-        <div><p class="fecha">{{ etiqueta() }}</p><h1>Devoluciones</h1></div>
+        <div><p class="fecha">{{ etiqueta() }}</p><h1>Cambios y garantías</h1></div>
       </div>
       <app-rango inicial="mes" (cambio)="cambiarRango($event)"></app-rango>
       <p class="ayuda" style="margin: 0">Para registrar uno, abre el pedido entregado y toca <strong>Cambio o garantía</strong>. Cada uno tiene su rótulo para el mensajero. En el negocio no se devuelve plata.</p>

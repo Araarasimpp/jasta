@@ -67,12 +67,12 @@ type Orden = 'ganancia_neta' | 'ganancia_tienda' | 'unidades' | 'ventas' | 'marg
 
       <div class="kpis" role="list">
         <div class="kpi kpi-principal" role="listitem"><span class="kpi-label">Ganancia neta tienda</span><span class="kpi-valor num">{{ pesos(tot().neta) }}</span>
-          <span class="kpi-nota">Después de devoluciones</span></div>
+          <span class="kpi-nota">Después de cambios</span></div>
         <div class="kpi" role="listitem"><span class="kpi-label">Ventas</span><span class="kpi-valor num">{{ pesos(tot().ventas) }}</span>
           <span class="kpi-nota">{{ numero(tot().unidades) }} unidades entregadas</span></div>
         <div class="kpi" role="listitem"><span class="kpi-label">Margen de la tienda</span><span class="kpi-valor num">{{ pct(tot().tienda, tot().ventas) }}</span>
           <span class="kpi-nota">Ganancia tienda ÷ ventas</span></div>
-        <div class="kpi" role="listitem"><span class="kpi-label">Restan las devoluciones</span><span class="kpi-valor num">{{ pesos(tot().perdidas) }}</span>
+        <div class="kpi" role="listitem"><span class="kpi-label">Restan los cambios</span><span class="kpi-valor num">{{ pesos(tot().perdidas) }}</span>
           <span class="kpi-nota">{{ numero(tot().devueltas) }} unidades devueltas</span></div>
       </div>
 
@@ -84,7 +84,7 @@ type Orden = 'ganancia_neta' | 'ganancia_tienda' | 'unidades' | 'ventas' | 'marg
           <option value="unidades">Más vendidos</option>
           <option value="ventas">Más ventas en plata</option>
           <option value="margen">Menor margen primero</option>
-          <option value="devoluciones">Más devoluciones</option>
+          <option value="devoluciones">Más cambios</option>
         </select>
       </div>
 
