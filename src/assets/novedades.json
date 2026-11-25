@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-11-25-comision-cambios",
+    "fecha": "2026-11-25",
+    "hora": "10:00",
+    "titulo": "Comisión en los cambios",
+    "cuerpo": "Cuando un cliente cambia un producto por otro, la comisión de la vendedora queda por el producto nuevo y no por el viejo. La diferencia se ajusta en su próximo pago: si el nuevo deja más comisión se le suma, y si deja menos se le descuenta. En Comisiones sale como \"Cambio por … · devolvió …\".",
+    "roles": [
+      "admin",
+      "vendedora",
+      "alistador",
+      "venta_local",
+      "cuadres"
+    ]
+  },
+  {
     "id": "2026-11-25-envios-cambios",
     "fecha": "2026-11-25",
     "hora": "09:40",

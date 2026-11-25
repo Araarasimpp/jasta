@@ -9,7 +9,8 @@ import { PesosDirective } from '../../shared/pesos/pesos.directive';
 import { ToastService } from '../toast/toast.service';
 import { DevolucionParaRotulo, crearEnvioDevolucion } from '../rotulo/rotulo-devolucion';
 
-interface ProdNuevo { id: number; nombre: string; sku: string | null; precio_venta: number; stock: number; controla_stock: boolean }
+interface ProdNuevo { id: number; nombre: string; sku: string | null; precio_venta: number;
+  precio_base: number; stock: number; controla_stock: boolean }
 const normal = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 
 type Tipo = 'devolucion' | 'cambio' | 'garantia';
@@ -154,6 +155,10 @@ const MOTIVOS = [
                 <span>Producto nuevo</span><span>{{ pesos(totalNuevo()) }}</span>
                 <span class="fin" [class.paga]="diferencia() > 0">{{ diferencia() < 0 ? 'Vale menos' : 'El cliente paga' }}</span><span class="fin" [class.paga]="diferencia() > 0">{{ pesos(diferencia()) }}</span>
               </div>
+              @if (pedido.vendedora_id && ajusteComision() !== 0) {
+                <p class="nota-com">Comisión de {{ pedido.vendedora?.nombre || 'la vendedora' }}: pasa de {{ pesos(comisionSel()) }} a {{ pesos(comisionNueva()) }}
+                  ({{ ajusteComision() > 0 ? '+' : '−' }}{{ pesos(abs(ajusteComision())) }} en su próximo pago).</p>
+              }
               @if (diferencia() < 0) {
                 <p class="error" style="margin: 0">El producto nuevo vale menos que lo que devuelve. Para eso usa Devolución.</p>
               } @else if (diferencia() > 0) {
@@ -246,6 +251,10 @@ export class DevolucionComponent implements OnInit {
   });
   totalNuevo = computed(() => Number(this.nuevo()?.precio_venta ?? 0) * this.cantNuevo());
   diferencia = computed(() => this.totalNuevo() - this.valorSel());
+  /** En un cambio la comisión queda por el producto nuevo, no por el viejo */
+  comisionNueva = computed(() => (Number(this.nuevo()?.precio_venta ?? 0) - Number(this.nuevo()?.precio_base ?? 0)) * this.cantNuevo());
+  ajusteComision = computed(() => this.comisionNueva() - this.comisionSel());
+  abs = Math.abs;
   valorSel = computed(() => this.items().reduce((s, i) => s + (this.cant()[i.id] || 0) * Number(i.precio_venta), 0));
   comisionSel = computed(() => this.items().reduce((s, i) => s + (this.cant()[i.id] || 0) * (Number(i.precio_venta) - Number(i.precio_base)), 0));
 
@@ -261,7 +270,7 @@ export class DevolucionComponent implements OnInit {
   async elegirOtro(): Promise<void> {
     this.porOtro.set(true);
     if (this.prods().length) return;
-    const { data } = await this.sb.client.from('productos').select('id, nombre, sku, precio_venta, stock, controla_stock').eq('activo', true).order('nombre');
+    const { data } = await this.sb.client.from('productos').select('id, nombre, sku, precio_venta, precio_base, stock, controla_stock').eq('activo', true).order('nombre');
     this.prods.set((data ?? []) as ProdNuevo[]);
   }
 

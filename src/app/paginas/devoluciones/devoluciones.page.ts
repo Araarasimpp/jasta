@@ -222,7 +222,7 @@ const ESTADOS_GARANTIA = [
                   @if (d.tipo !== 'garantia') {
                     <span class="estado" [class.danado]="d.estado_producto === 'danado'">{{ d.estado_producto === 'danado' ? 'Dañado' : 'Volvió al inventario' }}{{ d.reemplazo ? ' · se entregó otro' : '' }}</span>
                   }
-                  @if (d.comision_descuento) { <small>Comisión −{{ pesos(d.comision_descuento) }}</small> }
+                  @if (+d.comision_descuento) { <small>Comisión {{ +d.comision_descuento > 0 ? '−' : '+' }}{{ pesos(abs(d.comision_descuento)) }}</small> }
                   @if (d.envio_pedido_id) { <span class="dom">Envío #{{ d.envio_pedido_id }} · {{ estadoEnvio(d.envio_estado) }}</span> }
                   @if (+d.domicilio) { <span class="dom">Domicilio {{ pesos(d.domicilio) }} (gasto)</span> }
                   <button type="button" class="b b-icono" (click)="$event.stopPropagation(); rotulo(d)" aria-label="Imprimir el rótulo" title="Imprimir el rótulo"><ion-icon name="print-outline"></ion-icon></button>
@@ -295,6 +295,7 @@ export class DevolucionesPage {
   abierto = signal<number | null>(null);
   esAdmin = computed(() => this.sb.tiene('admin'));
   pesos = pesos;
+  abs = (n: number) => Math.abs(Number(n));
   private rango: RangoFechas | null = null;
 
   garantiasAbiertas = computed(() => this.lista().filter((d) => d.tipo === 'garantia' && !d.resuelta).length);

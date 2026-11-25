@@ -93,3 +93,15 @@ begin
     execute v;
   end if;
 end $$;
+
+-- ============================================================================
+--  Comisión en los cambios por otro producto (YA APLICADO 2026-11-25)
+--  La comisión de la vendedora queda por el producto nuevo y no por el viejo:
+--  devoluciones.comision_descuento = comisión de lo devuelto − comisión del nuevo
+--  (positivo = se le descuenta, negativo = se le suma) y va en su próximo pago.
+--  * registrar_cambio_otro: calcula ese ajuste (solo si el pedido tiene vendedora).
+--  * privado.descuentos_por_liquidar: toma los ajustes en los dos sentidos (<> 0) y
+--    los nombra "Cambio por … · devolvió …".
+--  * liquidacion_pedidos: en una liquidación pagada, la línea dice "Cambio".
+--  (Se cambiaron con replace sobre su definición.)
+-- ============================================================================
