@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-11-25-sin-devoluciones",
+    "fecha": "2026-11-25",
+    "hora": "11:10",
+    "titulo": "Solo cambios y garantías",
+    "cuerpo": "En el negocio no se devuelve plata, así que se quitó la opción Devolución. En el pedido entregado el botón ahora dice Cambio o garantía, y la página se llama Cambios y garantías.",
+    "roles": [
+      "admin",
+      "alistador",
+      "venta_local",
+      "cuadres"
+    ]
+  },
+  {
     "id": "2026-11-25-comision-cambios",
     "fecha": "2026-11-25",
     "hora": "10:00",

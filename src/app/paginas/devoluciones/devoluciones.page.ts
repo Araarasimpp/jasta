@@ -148,7 +148,7 @@ const ESTADOS_GARANTIA = [
         <div><p class="fecha">{{ etiqueta() }}</p><h1>Devoluciones</h1></div>
       </div>
       <app-rango inicial="mes" (cambio)="cambiarRango($event)"></app-rango>
-      <p class="ayuda" style="margin: 0">Para registrar una, abre el pedido entregado y toca <strong>Devolución o garantía</strong>. Cada una tiene su rótulo para el mensajero.</p>
+      <p class="ayuda" style="margin: 0">Para registrar uno, abre el pedido entregado y toca <strong>Cambio o garantía</strong>. Cada uno tiene su rótulo para el mensajero. En el negocio no se devuelve plata.</p>
 
       @if (pendientes().length) {
         <section class="panel pend" aria-labelledby="t-pend">
@@ -174,11 +174,11 @@ const ESTADOS_GARANTIA = [
 
       <div class="kpis" role="list">
         <div class="kpi" role="listitem"><span class="kpi-label">Casos</span><span class="kpi-valor num">{{ lista().length }}</span>
-          <span class="kpi-nota">{{ cuenta('devolucion') }} devoluciones · {{ cuenta('cambio') }} cambios · {{ cuenta('garantia') }} garantías{{ garantiasAbiertas() ? ' (' + garantiasAbiertas() + ' sin resolver)' : '' }}</span></div>
+          <span class="kpi-nota">{{ cuenta('cambio') }} cambios · {{ cuenta('garantia') }} garantías{{ garantiasAbiertas() ? ' (' + garantiasAbiertas() + ' sin resolver)' : '' }}</span></div>
         <div class="kpi" role="listitem"><span class="kpi-label">Unidades</span><span class="kpi-valor num">{{ resumen().unidades }}</span>
           <span class="kpi-nota">{{ resumen().danadas }} dañadas</span></div>
-        <div class="kpi" role="listitem"><span class="kpi-label">Reembolsado</span><span class="kpi-valor num">{{ pesos(resumen().reembolsos) }}</span>
-          <span class="kpi-nota">Plata devuelta a clientes</span></div>
+        <div class="kpi" role="listitem"><span class="kpi-label">Deducibles</span><span class="kpi-valor num">{{ pesos(resumen().deducibles) }}</span>
+          <span class="kpi-nota">Cobrados por cambios a algo de más valor</span></div>
         @if (esAdmin()) {
           <div class="kpi" role="listitem"><span class="kpi-label">Pérdida por dañados</span><span class="kpi-valor num">{{ pesos(resumen().perdida) }}</span>
             <span class="kpi-nota">A precio de compra</span></div>
@@ -236,7 +236,7 @@ const ESTADOS_GARANTIA = [
             }
           </ul>
         } @else {
-          @if (cargando()) { <app-esqueleto forma="lista" [filas]="4"></app-esqueleto> } @else { <p class="vacio-txt">{{ 'No hubo devoluciones ni garantías en este periodo.' }}</p> }
+          @if (cargando()) { <app-esqueleto forma="lista" [filas]="4"></app-esqueleto> } @else { <p class="vacio-txt">{{ 'No hubo cambios ni garantías en este periodo.' }}</p> }
         }
       </section>
     </div>
@@ -305,6 +305,7 @@ export class DevolucionesPage {
       unidades: l.reduce((s, d) => s + d.items.reduce((a, i) => a + i.cantidad, 0), 0),
       danadas: l.filter((d) => d.estado_producto === 'danado').reduce((s, d) => s + d.items.reduce((a, i) => a + i.cantidad, 0), 0),
       reembolsos: l.reduce((s, d) => s + Number(d.reembolso || 0), 0),
+      deducibles: l.reduce((s, d) => s + Number(d.diferencia || 0), 0),
       perdida: l.reduce((s, d) => s + Number(d.perdida || 0), 0),
       comision: l.reduce((s, d) => s + Number(d.comision_descuento || 0), 0),
     };

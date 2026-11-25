@@ -105,3 +105,11 @@ end $$;
 --  * liquidacion_pedidos: en una liquidación pagada, la línea dice "Cambio".
 --  (Se cambiaron con replace sobre su definición.)
 -- ============================================================================
+
+-- ============================================================================
+--  Sin devoluciones de dinero (YA APLICADO 2026-11-25)
+--  * registrar_devolucion rechaza p_tipo = 'devolucion' ("En el negocio no se devuelve plata").
+--  * Las 3 que había (#101247, #101430, #101297) se pasaron a cambio sin reembolso y sin
+--    reemplazo entregado; a las dos sin pagar se les quitó el descuento de comisión.
+--    La de #101297 conserva su descuento de $8.000 porque ya iba en el pago 103.
+-- ============================================================================

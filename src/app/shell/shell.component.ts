@@ -132,7 +132,7 @@ const MENU: ItemMenu[] = [
   { label: 'Inventario', path: '/app/inventario', icon: 'layers-outline', roles: ['admin', 'alistador'], grupo: 'Bodega' , buscar: 'stock compras comprar bodega' },
   { label: 'Productos quietos', path: '/app/quietos', icon: 'hourglass-outline', roles: ['admin'], grupo: 'Bodega', buscar: 'sin vender no se venden rotacion estancados quieta' },
   { label: 'Productos', path: '/app/productos', icon: 'pricetags-outline', roles: ['admin'], grupo: 'Bodega' , buscar: 'precios fotos crear' },
-  { label: 'Devoluciones', path: '/app/devoluciones', icon: 'return-down-back-outline', roles: ['admin', 'alistador', 'venta_local', 'cuadres'], grupo: 'Bodega' },
+  { label: 'Cambios y garantías', path: '/app/devoluciones', icon: 'return-down-back-outline', roles: ['admin', 'alistador', 'venta_local', 'cuadres'], grupo: 'Bodega', buscar: 'devoluciones cambio garantia deducible tecnico arreglo' },
   { label: 'Reportes', path: '/app/reportes', icon: 'stats-chart-outline', roles: ['admin', 'vendedora'], grupo: 'Finanzas' },
   { label: 'Comisiones', path: '/app/comisiones', icon: 'card-outline', roles: ['admin', 'vendedora'], grupo: 'Finanzas' , buscar: 'liquidacion pagar vendedoras ganancia' },
   { label: 'Mi cierre del día', path: '/app/cierre-dia', icon: 'lock-closed-outline', roles: ['admin'], grupo: 'Finanzas', buscar: 'cierre ahorro separar comisiones plata recibi cuadre' },

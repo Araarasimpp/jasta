@@ -418,7 +418,7 @@ export class PedidoDetalleComponent implements OnChanges {
     if (p.estado !== 'cancelado' && admin) out.push({ id: 'editar', label: 'Editar' });
     if (p.estado === 'cancelado' && admin) out.push({ id: 'por_alistar', label: 'Reactivar' });
     if (p.estado === 'entregado' && this.sb.tiene('admin', 'alistador', 'venta_local', 'cuadres'))
-      out.push({ id: 'devolucion', label: 'Devolución o garantía' });
+      out.push({ id: 'devolucion', label: 'Cambio o garantía' });
     return out;
   });
 

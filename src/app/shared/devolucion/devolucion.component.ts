@@ -72,11 +72,10 @@ const MOTIVOS = [
   template: `
     <button class="velo" aria-label="Cerrar" (click)="cerrar.emit()"></button>
     <div class="hoja hoja-centro" role="dialog" aria-labelledby="t-dev">
-      <div class="hoja-head"><h2 id="t-dev">Devolución, cambio o garantía · #{{ pedido.id }}</h2></div>
+      <div class="hoja-head"><h2 id="t-dev">Cambio o garantía · #{{ pedido.id }}</h2></div>
       <div class="hoja-body">
         <div class="campo"><span class="etq">¿Qué pasó?</span>
           <div class="tipos">
-            <button type="button" class="op" [class.on]="tipo() === 'devolucion'" (click)="tipo.set('devolucion')">Devolución<small>Se le devuelve la plata</small></button>
             <button type="button" class="op" [class.on]="tipo() === 'cambio'" (click)="tipo.set('cambio')">Cambio<small>Lo cambia por otro</small></button>
             <button type="button" class="op" [class.on]="tipo() === 'garantia'" (click)="tipo.set('garantia')">Garantía<small>Falló y se responde</small></button>
           </div>
@@ -99,7 +98,7 @@ const MOTIVOS = [
         </div>
 
         @if (tipo() === 'garantia') {
-          <p class="nota-com">En garantía no se toca el inventario: solo queda registrado el producto y por qué se deja. Después le pones el técnico desde <strong>Devoluciones</strong>.</p>
+          <p class="nota-com">En garantía no se toca el inventario: solo queda registrado el producto y por qué se deja. Después le cambias el estado desde <strong>Cambios y garantías</strong>.</p>
           <div class="campo"><label for="dv-pq">¿Por qué se deja en garantía? <span class="obl">*</span></label>
             <textarea id="dv-pq" rows="3" maxlength="300" [(ngModel)]="nota" placeholder="Ej: no prende, la batería no carga, hace un ruido raro…"></textarea></div>
         } @else {
@@ -120,18 +119,7 @@ const MOTIVOS = [
 
         }
 
-        @if (tipo() === 'devolucion') {
-          <div class="fila-campos">
-            <div class="campo"><label for="dv-re">Se le devuelve</label><input pesos id="dv-re" class="num" [(ngModel)]="reembolso" /></div>
-            <div class="campo"><label for="dv-me">¿Cómo?</label>
-              <select id="dv-me" [(ngModel)]="metodo"><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="otro">Otro</option></select></div>
-          </div>
-          <p class="nota-com">Valor de lo que devuelve: {{ pesos(valorSel()) }}</p>
-          @if (comisionSel() > 0) {
-            <label class="check"><input type="checkbox" [(ngModel)]="descontarComision" />
-              <span>Descontarle a {{ pedido.vendedora?.nombre || 'la vendedora' }} su comisión de estas unidades ({{ pesos(comisionSel()) }}) en el próximo pago</span></label>
-          }
-        } @else if (tipo() === 'cambio') {
+        @if (tipo() === 'cambio') {
           <div class="campo"><span class="etq">¿Por cuál lo cambia?</span>
             <div class="estados">
               <button type="button" class="op" [class.on]="!porOtro()" (click)="porOtro.set(false)">Por el mismo<small>Otro igual</small></button>
@@ -214,7 +202,8 @@ export class DevolucionComponent implements OnInit {
   @Output() registrado = new EventEmitter<void>();
 
   motivos = MOTIVOS;
-  tipo = signal<Tipo>('devolucion');
+  /** En el negocio no se devuelve plata: solo cambios y garantías */
+  tipo = signal<Tipo>('cambio');
   motivo = signal('defectuoso');
   estado = signal<'vuelve_stock' | 'danado'>('vuelve_stock');
   cant = signal<Record<number, number>>({});
