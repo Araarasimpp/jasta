@@ -7,6 +7,7 @@ import { ComprobantesInputComponent } from '../comprobantes/comprobantes-input.c
 import { nombreConVariante } from '../variante';
 import { PesosDirective } from '../../shared/pesos/pesos.directive';
 import { ToastService } from '../toast/toast.service';
+import { DevolucionParaRotulo, imprimirRotuloDevolucion } from '../rotulo/rotulo-devolucion';
 
 interface ProdNuevo { id: number; nombre: string; sku: string | null; precio_venta: number; stock: number; controla_stock: boolean }
 const normal = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
@@ -70,7 +71,7 @@ const MOTIVOS = [
   template: `
     <button class="velo" aria-label="Cerrar" (click)="cerrar.emit()"></button>
     <div class="hoja hoja-centro" role="dialog" aria-labelledby="t-dev">
-      <div class="hoja-head"><h2 id="t-dev">Devolución o garantía · #{{ pedido.id }}</h2></div>
+      <div class="hoja-head"><h2 id="t-dev">Devolución, cambio o garantía · #{{ pedido.id }}</h2></div>
       <div class="hoja-body">
         <div class="campo"><span class="etq">¿Qué pasó?</span>
           <div class="tipos">
@@ -157,7 +158,7 @@ const MOTIVOS = [
                 <p class="error" style="margin: 0">El producto nuevo vale menos que lo que devuelve. Para eso usa Devolución.</p>
               } @else if (diferencia() > 0) {
                 <div class="campo"><label for="dv-md">¿Cómo pagó la diferencia?</label>
-                  <select id="dv-md" [(ngModel)]="metodoDif"><option value="efectivo">Efectivo (entra a la caja del local)</option><option value="transferencia">Transferencia</option><option value="otro">Otro</option></select></div>
+                  <select id="dv-md" [(ngModel)]="metodoDif"><option value="contra_entrega">Contra entrega (lo cobra el mensajero)</option><option value="efectivo">Efectivo (entra a la caja del local)</option><option value="transferencia">Transferencia</option><option value="otro">Otro</option></select></div>
               }
             } @else {
               <div class="campo buscar"><label for="dv-bn">Producto nuevo</label>
@@ -174,6 +175,11 @@ const MOTIVOS = [
             }
           }
         }
+
+        <div class="campo"><label for="dv-dom">Domicilio (lo paga el negocio)</label>
+          <input pesos id="dv-dom" class="num" [(ngModel)]="domicilio" placeholder="$ 0" />
+          <small class="suave">Lo que se le paga al mensajero por ir donde el cliente. Queda anotado en Gastos. Déjalo en 0 si el cliente vino a la tienda.</small></div>
+        <label class="check"><input type="checkbox" [(ngModel)]="conRotulo" /> <span>Imprimir el rótulo {{ tipo() === 'cambio' ? 'del cambio' : tipo() === 'garantia' ? 'de la garantía' : 'de la devolución' }}</span></label>
 
         @if (puedeFotos()) {
           <app-comprobantes-input [obligatorio]="false" titulo="Fotos (opcional)" pista="Foto del producto o del comprobante del reembolso." [rutas]="fotos()"
@@ -209,6 +215,9 @@ export class DevolucionComponent implements OnInit {
   error = signal('');
   guardando = signal(false);
   reemplazo = true;
+  /** Domicilio de ir donde el cliente: lo paga el negocio (va a Gastos) */
+  domicilio: number | null = null;
+  conRotulo = true;
   descontarComision = true;
   metodo = 'efectivo';
   nota = '';
@@ -224,7 +233,7 @@ export class DevolucionComponent implements OnInit {
   buscaNuevo = signal('');
   nuevo = signal<ProdNuevo | null>(null);
   cantNuevo = signal(1);
-  metodoDif = 'efectivo';
+  metodoDif = 'contra_entrega';
   sugNuevo = computed(() => {
     const t = normal(this.buscaNuevo());
     if (t.length < 2) return [];
@@ -239,6 +248,7 @@ export class DevolucionComponent implements OnInit {
     // Con un solo producto, ya queda elegido
     if (this.items().length === 1) this.cant.set({ [this.items()[0].id]: 1 });
     this.reembolso = this.valorSel() || null;
+    this.domicilio = Number(this.pedido.valor_domicilio) || null;
     const { data } = await this.sb.client.rpc('devoluciones_pedido', { p_pedido: this.pedido.id });
     this.ya.set((data ?? {}) as Record<number, number>);
   }
@@ -282,15 +292,39 @@ export class DevolucionComponent implements OnInit {
     if (t === 'garantia' && !this.nota.trim()) return this.error.set('Escribe por qué se deja en garantía.');
     if (t === 'cambio' && this.porOtro()) return this.guardarOtro(items);
     this.guardando.set(true);
-    const { error } = await this.sb.client.rpc('registrar_devolucion', {
+    const { data: id, error } = await this.sb.client.rpc('registrar_devolucion', {
       p_pedido: this.pedido.id, p_items: items, p_tipo: t, p_motivo: t === 'garantia' ? 'defectuoso' : this.motivo(),
       p_estado_producto: t === 'garantia' ? 'vuelve_stock' : this.estado(),
       p_reemplazo: t === 'cambio' && this.reemplazo, p_reembolso: t === 'devolucion' ? Number(this.reembolso) || 0 : 0,
       p_metodo: this.metodo, p_descontar_comision: t === 'devolucion' && this.descontarComision, p_nota: this.nota.trim(), p_fotos: this.fotos(),
     });
+    if (error) {
+      this.guardando.set(false);
+      return this.error.set(mensajeError(error));
+    }
+    await this.despues(Number(id), { reemplazo: t === 'cambio' && this.reemplazo });
     this.guardando.set(false);
-    if (error) return this.error.set(mensajeError(error));
     this.registrado.emit();
+  }
+
+  /** Lo de después de registrar: el domicilio a Gastos y el rótulo */
+  private async despues(id: number, extra: Partial<DevolucionParaRotulo>): Promise<void> {
+    const dom = Number(this.domicilio) || 0;
+    if (id && dom > 0) {
+      const { error } = await this.sb.client.rpc('devolucion_domicilio', { p_id: id, p_valor: dom });
+      if (error) this.toast.error('No se pudo anotar el domicilio en Gastos: ' + mensajeError(error));
+    }
+    if (!this.conRotulo) return;
+    const items = this.items().filter((i) => this.cant()[i.id]).map((i) => ({ nombre: nombreConVariante(i), cantidad: this.cant()[i.id] }));
+    try {
+      await imprimirRotuloDevolucion(this.sb.client, {
+        tipo: this.tipo(), pedido_id: this.pedido.id, cliente: this.pedido.cliente_nombre, cliente_telefono: this.pedido.cliente_telefono,
+        direccion: this.pedido.direccion, barrio: this.pedido.barrio, fecha: new Date().toISOString(), items, nota: this.nota.trim() || null,
+        garantia_estado: 'recibida', ...extra,
+      });
+    } catch (e) {
+      this.toast.error('No se pudo imprimir el rótulo: ' + mensajeError(e));
+    }
   }
 
   private async guardarOtro(items: { item_id: number; cantidad: number }[]): Promise<void> {
@@ -302,14 +336,18 @@ export class DevolucionComponent implements OnInit {
       p_pedido: this.pedido.id, p_items: items, p_motivo: this.motivo(), p_estado_producto: this.estado(),
       p_producto_nuevo: n.id, p_cantidad_nuevo: this.cantNuevo(), p_metodo: this.metodoDif, p_nota: this.nota.trim(), p_fotos: this.fotos(),
     });
-    this.guardando.set(false);
-    if (error) return this.error.set(mensajeError(error));
-    const r = data as { diferencia: number; en_caja: boolean };
+    if (error) {
+      this.guardando.set(false);
+      return this.error.set(mensajeError(error));
+    }
+    const r = data as { id: number; diferencia: number; en_caja: boolean };
     const dif = Number(r.diferencia);
+    await this.despues(Number(r.id), { nuevo_nombre: n.nombre, nuevo_cantidad: this.cantNuevo(), diferencia: dif, diferencia_metodo: this.metodoDif });
+    this.guardando.set(false);
     if (dif > 0 && this.metodoDif === 'efectivo' && !r.en_caja) {
       this.toast.ok(`Cambio registrado. Los ${pesos(dif)} no entraron a la caja (ya se cerró o no tienes acceso): guárdalos aparte.`);
     } else {
-      this.toast.ok(dif > 0 ? `Cambio registrado · el cliente pagó ${pesos(dif)}` : 'Cambio registrado');
+      this.toast.ok(dif > 0 ? (this.metodoDif === 'contra_entrega' ? `Cambio registrado · el mensajero le cobra ${pesos(dif)}` : `Cambio registrado · el cliente pagó ${pesos(dif)}`) : 'Cambio registrado');
     }
     this.registrado.emit();
   }

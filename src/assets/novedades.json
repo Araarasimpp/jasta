@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-11-25-garantias-rotulo",
+    "fecha": "2026-11-25",
+    "hora": "09:20",
+    "titulo": "Rótulo para cambios, garantías y devoluciones",
+    "cuerpo": "Las devoluciones, cambios y garantías ahora tienen su propio rótulo, que dice en grande CAMBIO, GARANTÍA o DEVOLUCIÓN, qué recoger y qué entregarle al cliente. En un cambio por un producto de más valor, el deducible se puede cobrar contra entrega y el rótulo dice COBRAR y el valor; si es por el mismo producto dice NO COBRAR. El domicilio lo paga el negocio y queda anotado solo en Gastos. Las garantías tienen estados (Recibida, En arreglo con…, Esperando repuesto, Lista para entregar, En camino, Entregada) con su historial, y todos los días a la 1 p. m. la app avisa si hay garantías pendientes.",
+    "roles": [
+      "admin",
+      "alistador",
+      "venta_local",
+      "cuadres"
+    ]
+  },
+  {
     "id": "2026-11-21-editar-color",
     "fecha": "2026-11-21",
     "hora": "14:00",

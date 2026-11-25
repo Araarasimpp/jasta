@@ -1,6 +1,10 @@
 import { IonIcon } from '@ionic/angular';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { addIcons } from 'ionicons';
+import { closeOutline, printOutline } from 'ionicons/icons';
+import { imprimirRotuloDevolucion } from '../../shared/rotulo/rotulo-devolucion';
+import { GarantiasAlertaService } from '../../shared/garantias-alerta/garantias-alerta.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ToastService } from '../../shared/toast/toast.service';
 import { VisorService } from '../../shared/visor/visor.service';
@@ -37,7 +41,40 @@ interface Devolucion {
   nuevo_cantidad: number | null;
   diferencia: number;
   diferencia_metodo: string | null;
+  cliente_telefono: string | null;
+  direccion: string | null;
+  barrio: string | null;
+  domicilio: number;
+  garantia_estado: string;
+  garantia_estado_texto: string;
+  garantia_detalle: string | null;
 }
+
+/** Garantía sin resolver (de cualquier fecha) */
+interface GarantiaPendiente {
+  id: number;
+  pedido_id: number;
+  cliente: string;
+  cliente_telefono: string | null;
+  direccion: string | null;
+  barrio: string | null;
+  estado: string;
+  estado_texto: string;
+  detalle: string | null;
+  nota: string | null;
+  fecha: string;
+  items: { nombre: string; cantidad: number }[] | null;
+}
+
+const ESTADOS_GARANTIA = [
+  { id: 'recibida', label: 'Recibida en la tienda' },
+  { id: 'en_arreglo', label: 'En arreglo con…' },
+  { id: 'esperando_repuesto', label: 'Esperando repuesto' },
+  { id: 'lista', label: 'Lista para entregar' },
+  { id: 'en_camino', label: 'En camino al cliente' },
+  { id: 'entregada', label: 'Entregada al cliente' },
+  { id: 'sin_arreglo', label: 'No tiene arreglo' },
+];
 
 /**
  * Devoluciones, cambios y garantías del periodo. Se registran desde el detalle de un
@@ -76,6 +113,26 @@ interface Devolucion {
       .tec-info { margin: 4px 0 0; padding: 6px 10px; border-radius: var(--radius-sm); background: var(--surface-2); font-size: 13px; color: var(--text-soft); }
       .link { display: block; margin: 6px 0 2px; border: 0; background: none; padding: 0; color: var(--accent); font: inherit; font-size: 13px; font-weight: 600; text-decoration: underline; cursor: pointer; }
       .check { display: flex; gap: 8px; align-items: center; font-size: 14px; }
+      .pend { border-color: color-mix(in srgb, var(--oro) 45%, var(--border)); }
+      .pend h2 { display: flex; align-items: center; gap: 8px; }
+      .pend-li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 10px 0; border-bottom: var(--perfora); }
+      .pend-li:last-child { border-bottom: 0; }
+      .pend-li strong { font-size: 14.5px; }
+      .pend-li p { margin: 2px 0 0; font-size: 13px; color: var(--text-soft); }
+      .acc-dev { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
+      .acc-dev .b { height: 34px; padding: 0 12px; font-size: 13px; }
+      .g-estado.en_arreglo, .g-estado.esperando_repuesto { background: var(--accent-wash); color: var(--accent); }
+      .g-estado.lista, .g-estado.en_camino { background: var(--oro-wash); color: var(--oro-texto); }
+      .g-estado.entregada { background: var(--ok-wash); color: var(--efectivo-texto); }
+      .estados-g { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .estados-g button { min-height: 44px; padding: 8px 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface);
+        color: var(--text); font: inherit; font-size: 13.5px; text-align: left; cursor: pointer; }
+      .estados-g button.on { border-color: var(--accent); background: var(--accent-wash); color: var(--accent); font-weight: 650; }
+      .hist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+      .hist li { font-size: 13px; color: var(--text-soft); }
+      .hist b { color: var(--text); font-weight: 650; }
+      .dom { font-size: 12px; color: var(--text-muted); }
+      @media (max-width: 640px) { .pend-li { grid-template-columns: minmax(0, 1fr); } .acc-dev { justify-content: flex-start; } }
       .vacio-txt { margin: 0; padding: 14px 0 6px; text-align: center; font-size: 13.5px; color: var(--text-soft); }
     `,
   ],
@@ -85,7 +142,29 @@ interface Devolucion {
         <div><p class="fecha">{{ etiqueta() }}</p><h1>Devoluciones</h1></div>
       </div>
       <app-rango inicial="mes" (cambio)="cambiarRango($event)"></app-rango>
-      <p class="ayuda" style="margin: 0">Para registrar una, abre el pedido entregado y toca <strong>Devolución o garantía</strong>.</p>
+      <p class="ayuda" style="margin: 0">Para registrar una, abre el pedido entregado y toca <strong>Devolución o garantía</strong>. Cada una tiene su rótulo para el mensajero.</p>
+
+      @if (pendientes().length) {
+        <section class="panel pend" aria-labelledby="t-pend">
+          <h2 id="t-pend"><ion-icon name="construct" aria-hidden="true"></ion-icon>Garantías pendientes ({{ pendientes().length }})</h2>
+          <ul class="lista">
+            @for (g of pendientes(); track g.id) {
+              <li class="pend-li">
+                <span style="min-width: 0">
+                  <strong>#{{ g.pedido_id }} {{ g.cliente }}</strong>
+                  <span [class]="'g-estado ' + g.estado">{{ g.estado_texto }}{{ g.detalle ? (g.estado === 'en_arreglo' ? ' con ' : ' · ') + g.detalle : '' }}</span>
+                  <p>{{ itemsTxt(g.items) }}{{ g.nota ? ' · "' + g.nota + '"' : '' }}</p>
+                  <p>Desde {{ cuando(g.fecha) }}</p>
+                </span>
+                <span class="acc-dev">
+                  <button type="button" class="b" (click)="rotuloPendiente(g)"><ion-icon name="print-outline"></ion-icon>Rótulo</button>
+                  <button type="button" class="b b-pri" (click)="abrirEstado(g.id, g.pedido_id, g.estado, g.detalle, itemsTxt(g.items))">Cambiar estado</button>
+                </span>
+              </li>
+            }
+          </ul>
+        </section>
+      }
 
       <div class="kpis" role="list">
         <div class="kpi" role="listitem"><span class="kpi-label">Casos</span><span class="kpi-valor num">{{ lista().length }}</span>
@@ -117,16 +196,16 @@ interface Devolucion {
                 <span style="min-width: 0">
                   <strong>#{{ d.pedido_id }} {{ d.cliente }}</strong> <span class="tipo" [class]="'tipo ' + d.tipo">{{ tipoTxt(d.tipo) }}</span>
                   @if (d.tipo === 'garantia') {
-                    <span class="g-estado" [class.tec]="d.tecnico && !d.resuelta" [class.ok]="d.resuelta">{{ d.resuelta ? 'Resuelta' : d.tecnico ? 'Con el técnico' : 'Falta técnico' }}</span>
+                    <span [class]="'g-estado ' + d.garantia_estado">{{ d.garantia_estado_texto }}{{ d.garantia_detalle ? (d.garantia_estado === 'en_arreglo' ? ' con ' : ' · ') + d.garantia_detalle : '' }}</span>
                     <p>{{ items(d) }}</p>
                     @if (d.nota) { <p>Problema: "{{ d.nota }}"</p> }
                     @if (d.tecnico) {
                       <p class="tec-info"><ion-icon class="ico" name="construct" aria-hidden="true"></ion-icon>{{ d.tecnico }} · {{ fechaCorta(d.tecnico_fecha) }}{{ d.tecnico_obs ? ' · ' + d.tecnico_obs : '' }}</p>
                     }
-                    <button type="button" class="link" (click)="$event.stopPropagation(); abrirTecnico(d)">{{ d.tecnico ? 'Editar técnico' : 'Poner técnico' }}</button>
+                    <button type="button" class="link" (click)="$event.stopPropagation(); abrirEstado(d.id, d.pedido_id, d.garantia_estado, d.garantia_detalle, items(d))">Cambiar estado</button>
                   } @else {
                     <p>{{ items(d) }} · {{ d.motivo }}</p>
-                    @if (d.nuevo_nombre) { <p>→ Por {{ d.nuevo_cantidad }} {{ d.nuevo_nombre }}{{ +d.diferencia ? ' · pagó ' + pesos(d.diferencia) + ' de diferencia (' + d.diferencia_metodo + ')' : ' · sin diferencia' }}</p> }
+                    @if (d.nuevo_nombre) { <p>→ Por {{ d.nuevo_cantidad }} {{ d.nuevo_nombre }}{{ +d.diferencia ? (d.diferencia_metodo === 'contra_entrega' ? ' · deducible ' + pesos(d.diferencia) + ' (lo cobra el mensajero)' : ' · pagó ' + pesos(d.diferencia) + ' de diferencia (' + d.diferencia_metodo + ')') : ' · sin diferencia' }}</p> }
                     @if (d.nota) { <p>"{{ d.nota }}"</p> }
                   }
                   <small>{{ cuando(d.fecha) }}{{ d.creado_por_nombre ? ' · ' + d.creado_por_nombre : '' }}{{ d.vendedora ? ' · vendió ' + d.vendedora : '' }}</small>
@@ -138,6 +217,8 @@ interface Devolucion {
                     <span class="estado" [class.danado]="d.estado_producto === 'danado'">{{ d.estado_producto === 'danado' ? 'Dañado' : 'Volvió al inventario' }}{{ d.reemplazo ? ' · se entregó otro' : '' }}</span>
                   }
                   @if (d.comision_descuento) { <small>Comisión −{{ pesos(d.comision_descuento) }}</small> }
+                  @if (+d.domicilio) { <span class="dom">Domicilio {{ pesos(d.domicilio) }} (gasto)</span> }
+                  <button type="button" class="b b-icono" (click)="$event.stopPropagation(); rotulo(d)" aria-label="Imprimir el rótulo" title="Imprimir el rótulo"><ion-icon name="print-outline"></ion-icon></button>
                   @if (d.fotos.length) {
                     <button type="button" class="foto" (click)="$event.stopPropagation(); verFotos(d)" aria-label="Ver fotos">
                       @if (miniaturas()[d.fotos[0]]; as u) { <img [src]="u" alt="" loading="lazy" /> }
@@ -153,21 +234,33 @@ interface Devolucion {
       </section>
     </div>
 
-    @if (tecDe(); as d) {
-      <button class="velo" aria-label="Cerrar" (click)="tecDe.set(null)"></button>
-      <div class="hoja hoja-centro" role="dialog" aria-labelledby="t-tec">
-        <div class="hoja-head"><h2 id="t-tec">Garantía · #{{ d.pedido_id }}</h2></div>
+    @if (estadoDe(); as e) {
+      <button class="velo" aria-label="Cerrar" (click)="estadoDe.set(null)"></button>
+      <div class="hoja hoja-centro" role="dialog" aria-labelledby="t-est">
+        <div class="hoja-head"><h2 id="t-est">Garantía · #{{ e.pedido_id }}</h2>
+          <button class="b b-icono" aria-label="Cerrar" (click)="estadoDe.set(null)"><ion-icon name="close-outline"></ion-icon></button></div>
         <div class="hoja-body">
-          <p class="ayuda" style="margin: 0">{{ items(d) }}{{ d.nota ? ' · "' + d.nota + '"' : '' }}</p>
-          <div class="campo"><label for="tc-n">Técnico</label><input id="tc-n" maxlength="80" [(ngModel)]="tNombre" placeholder="Nombre del técnico" /></div>
-          <div class="campo"><label for="tc-f">Fecha</label><input id="tc-f" type="date" [(ngModel)]="tFecha" /></div>
-          <div class="campo"><label for="tc-o">Observaciones</label>
-            <textarea id="tc-o" rows="3" maxlength="600" [(ngModel)]="tObs" placeholder="Ej: cambió la batería, queda listo el viernes"></textarea></div>
-          <label class="check"><input type="checkbox" [(ngModel)]="tResuelta" /> Ya está resuelta (se le entregó al cliente)</label>
+          <p class="ayuda" style="margin: 0">{{ e.items }}</p>
+          <div class="campo"><span class="etq">¿En qué va?</span>
+            <div class="estados-g" role="radiogroup" aria-label="Estado de la garantía">
+              @for (op of estadosGarantia; track op.id) {
+                <button type="button" role="radio" [class.on]="eEstado() === op.id" [attr.aria-checked]="eEstado() === op.id" (click)="eEstado.set(op.id)">{{ op.label }}</button>
+              }
+            </div>
+          </div>
+          <div class="campo"><label for="ge-d">{{ eEstado() === 'en_arreglo' ? '¿Con quién está en arreglo?' : 'Detalle (opcional)' }}</label>
+            <input id="ge-d" maxlength="200" [(ngModel)]="eDetalle" [placeholder]="eEstado() === 'en_arreglo' ? 'Ej: técnico Carlos, servicio técnico Samsung' : 'Ej: le falta el cargador, se entrega el viernes'" /></div>
+          @if (historial().length) {
+            <div class="campo"><span class="etq">Historial</span>
+              <ul class="hist">
+                @for (h of historial(); track $index) { <li><b>{{ h.estado }}</b>{{ h.detalle ? ' · ' + h.detalle : '' }} · {{ cuando(h.fecha) }}{{ h.autor ? ' · ' + h.autor : '' }}</li> }
+              </ul>
+            </div>
+          }
         </div>
         <div class="hoja-pie">
-          <button class="b" (click)="tecDe.set(null)">Cancelar</button>
-          <button class="b b-pri" [disabled]="guardando()" (click)="guardarTecnico()">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button>
+          <button class="b" (click)="estadoDe.set(null)">Cancelar</button>
+          <button class="b b-pri" [disabled]="guardando()" (click)="guardarEstado()">{{ guardando() ? 'Guardando…' : 'Guardar' }}</button>
         </div>
       </div>
     }
@@ -181,6 +274,11 @@ export class DevolucionesPage {
   private sb = inject(SupabaseService);
   private toast = inject(ToastService);
   private visor = inject(VisorService);
+  private alerta = inject(GarantiasAlertaService);
+
+  constructor() {
+    addIcons({ closeOutline, printOutline });
+  }
 
   lista = signal<Devolucion[]>([]);
   porMotivo = signal<{ motivo: string; n: number }[]>([]);
@@ -205,6 +303,7 @@ export class DevolucionesPage {
   });
 
   cambiarRango(r: RangoFechas): void {
+    if (!this.rango) void this.cargarPendientes();
     this.rango = r;
     this.etiqueta.set(r.etiqueta);
     void this.cargar();
@@ -226,36 +325,61 @@ export class DevolucionesPage {
     }
   }
 
-  // Técnico de la garantía
-  tecDe = signal<Devolucion | null>(null);
+  // Estado de la garantía
+  estadosGarantia = ESTADOS_GARANTIA;
+  estadoDe = signal<{ id: number; pedido_id: number; items: string } | null>(null);
+  eEstado = signal('recibida');
+  eDetalle = '';
+  historial = signal<{ estado: string; detalle: string | null; autor: string | null; fecha: string }[]>([]);
   guardando = signal(false);
-  tNombre = '';
-  tFecha = '';
-  tObs = '';
-  tResuelta = false;
 
-  abrirTecnico(d: Devolucion): void {
-    this.tNombre = d.tecnico ?? '';
-    this.tFecha = d.tecnico_fecha ?? hoyColombiaISO();
-    this.tObs = d.tecnico_obs ?? '';
-    this.tResuelta = d.resuelta;
-    this.tecDe.set(d);
+  abrirEstado(id: number, pedidoId: number, estado: string, detalle: string | null, items: string): void {
+    this.eEstado.set(estado || 'recibida');
+    this.eDetalle = detalle ?? '';
+    this.historial.set([]);
+    this.estadoDe.set({ id, pedido_id: pedidoId, items });
+    void this.sb.client.rpc('garantia_historial', { p_id: id }).then(({ data }) => this.historial.set((data as never[]) ?? []));
   }
 
-  async guardarTecnico(): Promise<void> {
-    const d = this.tecDe();
-    if (!d) return;
-    if (!this.tNombre.trim()) return this.toast.error('Escribe el nombre del técnico');
-    if (!this.tFecha) return this.toast.error('Elige la fecha');
+  async guardarEstado(): Promise<void> {
+    const e = this.estadoDe();
+    if (!e) return;
+    if (this.eEstado() === 'en_arreglo' && !this.eDetalle.trim()) return this.toast.error('Escribe con quién está en arreglo');
     this.guardando.set(true);
-    const { error } = await this.sb.client.rpc('garantia_tecnico', {
-      p_id: d.id, p_tecnico: this.tNombre.trim(), p_fecha: this.tFecha, p_obs: this.tObs.trim(), p_resuelta: this.tResuelta,
-    });
+    const { error } = await this.sb.client.rpc('garantia_estado', { p_id: e.id, p_estado: this.eEstado(), p_detalle: this.eDetalle.trim() });
     this.guardando.set(false);
     if (error) return this.toast.error(mensajeError(error));
-    this.toast.ok(this.tResuelta ? 'Garantía resuelta ✓' : 'Técnico guardado');
-    this.tecDe.set(null);
-    await this.cargar();
+    this.toast.ok(this.eEstado() === 'entregada' ? 'Garantía entregada: queda resuelta' : 'Estado de la garantía guardado');
+    this.estadoDe.set(null);
+    this.alerta.refrescar();
+    await Promise.all([this.cargar(), this.cargarPendientes()]);
+  }
+
+  // Garantías sin resolver (de cualquier fecha)
+  pendientes = signal<GarantiaPendiente[]>([]);
+  async cargarPendientes(): Promise<void> {
+    const { data } = await this.sb.client.rpc('garantias_pendientes');
+    this.pendientes.set(((data as { lista?: GarantiaPendiente[] } | null)?.lista ?? []) as GarantiaPendiente[]);
+  }
+
+  itemsTxt(items: { nombre: string; cantidad: number }[] | null): string {
+    return (items ?? []).map((i) => `${i.cantidad} ${i.nombre}`).join(', ');
+  }
+
+  // Rótulo de la devolución, el cambio o la garantía
+  async rotulo(d: Devolucion): Promise<void> {
+    await imprimirRotuloDevolucion(this.sb.client, {
+      tipo: d.tipo, pedido_id: d.pedido_id, cliente: d.cliente, cliente_telefono: d.cliente_telefono, direccion: d.direccion, barrio: d.barrio,
+      fecha: d.fecha, items: d.items, reemplazo: d.reemplazo, nuevo_nombre: d.nuevo_nombre, nuevo_cantidad: d.nuevo_cantidad,
+      diferencia: d.diferencia, diferencia_metodo: d.diferencia_metodo, nota: d.nota, garantia_estado: d.garantia_estado,
+    }).catch((e) => this.toast.error(mensajeError(e)));
+  }
+
+  async rotuloPendiente(g: GarantiaPendiente): Promise<void> {
+    await imprimirRotuloDevolucion(this.sb.client, {
+      tipo: 'garantia', pedido_id: g.pedido_id, cliente: g.cliente, cliente_telefono: g.cliente_telefono, direccion: g.direccion, barrio: g.barrio,
+      fecha: g.fecha, items: g.items, nota: g.nota, garantia_estado: g.estado,
+    }).catch((e) => this.toast.error(mensajeError(e)));
   }
 
   fechaCorta(d: string | null): string {

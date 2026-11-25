@@ -25,7 +25,23 @@ export interface PedidoRotulo {
   productos: string[];
   /** Envío a otra ciudad por transportadora (pago anticipado: no se cobra al entregar) */
   nacional?: { ciudad: string | null; departamento: string | null; cedula: string | null } | null;
+  /** Rótulo de una devolución, un cambio o una garantía (no es una venta) */
+  especial?: RotuloEspecial | null;
 }
+
+export interface RotuloEspecial {
+  tipo: 'devolucion' | 'cambio' | 'garantia';
+  /** Lo que dice el recuadro del valor: "NO COBRAR", "COBRAR $ 20.000", "GARANTÍA"… */
+  cobro: string;
+  /** Lo que el mensajero recoge donde el cliente */
+  recoge: string[];
+  /** Lo que el mensajero le lleva al cliente */
+  entrega: string[];
+  /** Una línea extra (ej. "Deducible por cambio a un producto de más valor") */
+  nota?: string | null;
+}
+
+const TITULO_ESPECIAL: Record<RotuloEspecial['tipo'], string> = { devolucion: 'DEVOLUCIÓN', cambio: 'CAMBIO', garantia: 'GARANTÍA' };
 
 /** Se usan solo si la tabla configuracion está vacía o no se puede leer. */
 export const NEGOCIO_POR_DEFECTO: DatosNegocio = {
@@ -141,7 +157,25 @@ export function rotuloHtml(p: PedidoRotulo, n: DatosNegocio): string {
       </div>
     </header>
 
-    ${p.nacional ? `
+    ${p.especial ? `
+    <div class="tipo-especial">${TITULO_ESPECIAL[p.especial.tipo]}</div>
+    <div class="cobro">
+      <span class="cobro-label">${p.especial.tipo === 'garantia' ? 'Valor' : 'Valor a cobrar'}</span>
+      <strong class="cobro-valor">${esc(p.especial.cobro)}</strong>
+    </div>
+
+    <div class="cuerpo">
+    <table class="datos">
+      ${fila('Pedido', '#' + esc(p.numero), 'pedido')}
+      ${fila('Nombre', esc(p.cliente_nombre), 'destacado')}
+      ${fila('Dirección', esc(mayus(p.direccion)), 'destacado')}
+      ${fila('Barrio', esc(p.barrio))}
+      ${fila('Celular', esc(mayus(p.cliente_telefono)), 'fuerte')}
+      ${p.especial.recoge.length ? fila('Recoger', p.especial.recoge.slice(0, 3).map((x) => esc(x)).join('<br>'), 'productos') : ''}
+      ${p.especial.entrega.length ? fila('Entregar', p.especial.entrega.slice(0, 3).map((x) => esc(x)).join('<br>'), 'productos') : ''}
+      ${fila('Observación', esc(mayus([p.especial.nota, p.observaciones].filter(Boolean).join(' · '))), 'fuerte')}
+    </table>
+    </div>` : p.nacional ? `
     <div class="cobro">
       <span class="cobro-label">Envío nacional</span>
       <strong class="cobro-valor">PAGADO · NO COBRAR</strong>
@@ -261,6 +295,19 @@ export const ROTULO_CSS = `
   .telefonos { font-size: 9pt; font-weight: bold; }
   .redes { font-size: 8.5pt; }
 
+  /* Devolución, cambio o garantía: franja negra bien visible arriba del valor */
+  .tipo-especial {
+    margin-top: 1.4mm;
+    padding: 0.8mm 0;
+    background: #000;
+    color: #fff;
+    font-size: 15pt;
+    font-weight: 900;
+    letter-spacing: 1.5mm;
+    text-align: center;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
   .cobro {
     display: flex;
     justify-content: space-between;

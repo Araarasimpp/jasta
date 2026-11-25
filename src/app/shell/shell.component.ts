@@ -64,6 +64,7 @@ import {
 import { SupabaseService } from '../core/services/supabase.service';
 import { RequisitosComponent } from '../shared/requisitos/requisitos.component';
 import { TransferenciasAlertaComponent } from '../shared/transferencias-alerta/transferencias-alerta.component';
+import { GarantiasAlertaComponent } from '../shared/garantias-alerta/garantias-alerta.component';
 import { ThemeService } from '../core/services/theme.service';
 import { FondoService } from '../core/services/fondo.service';
 import { ROLES, Rol } from '../shared/modelos';
@@ -154,7 +155,7 @@ const MENU: ItemMenu[] = [
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, IonIcon, ToastComponent, AvatarComponent, AvisosPanelComponent, RequisitosComponent, TransferenciasAlertaComponent, GuiaComponent, VidrioLiquidoDirective],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, IonIcon, ToastComponent, AvatarComponent, AvisosPanelComponent, RequisitosComponent, TransferenciasAlertaComponent, GarantiasAlertaComponent, GuiaComponent, VidrioLiquidoDirective],
   styleUrls: ['../shared/pill-nav.scss', './shell.component.scss'],
   template: `
     <div class="vd-fondo" aria-hidden="true"></div>
@@ -239,6 +240,7 @@ const MENU: ItemMenu[] = [
         </div>
         @if (conAtras()) { <div class="atras-espacio" aria-hidden="true"></div> }
         <app-transferencias-alerta></app-transferencias-alerta>
+        <app-garantias-alerta></app-garantias-alerta>
         <router-outlet></router-outlet>
       </main>
 
