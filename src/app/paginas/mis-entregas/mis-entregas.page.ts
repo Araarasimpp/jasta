@@ -1,11 +1,12 @@
 import { JalarRecargarDirective, confeti } from '../../shared/animar/animar';
 import { SinSenalService, esErrorDeRed } from '../../shared/sin-senal.service';
 import { lugarParaMapa } from '../../shared/direccion-mapa';
+import { IconoWazeComponent } from '../../shared/icono-waze/icono-waze.component';
 import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { carOutline, mapOutline, qrCodeOutline, refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses, chatbubbleEllipsesOutline, alertCircleOutline, cloudOfflineOutline, cloudUploadOutline } from 'ionicons/icons';
+import { call, navigate, carOutline, mapOutline, qrCodeOutline, refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses, chatbubbleEllipsesOutline, alertCircleOutline, cloudOfflineOutline, cloudUploadOutline } from 'ionicons/icons';
 import { enlaceWhatsapp, productosDelPedido } from '../../shared/whatsapp';
 import { PedidosService } from '../../core/services/pedidos.service';
 import { CuentaPago } from '../../shared/qr-pago/cuentas-pago';
@@ -38,7 +39,7 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
 @Component({
   selector: 'app-mis-entregas',
   standalone: true,
-  imports: [EsqueletoComponent, QrPagoComponent, IonIcon, EntregarComponent, NovedadComponent, PedidoDetalleComponent, PedidoJybComponent, DiaComponent, JalarRecargarDirective],
+  imports: [IconoWazeComponent, EsqueletoComponent, QrPagoComponent, IonIcon, EntregarComponent, NovedadComponent, PedidoDetalleComponent, PedidoJybComponent, DiaComponent, JalarRecargarDirective],
   styleUrls: ['../../shared/ui.scss'],
   styles: [
     `
@@ -109,6 +110,18 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
       .mr-acc { display: flex; gap: 8px; flex-wrap: wrap; }
       .mr-acc .b { flex: 1; justify-content: center; }
       .negocio.servicio { background: #111; color: #fff; margin-left: 4px; }
+      /* Botones de la tarjeta: fila compacta de íconos y abajo No se pudo / Entregar */
+      .acc-rapidas { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 6px; margin-top: 10px; }
+      .acc { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-width: 0; height: 56px; padding: 0 2px;
+        border: 1px solid var(--border); border-radius: 14px; background: var(--surface-2); color: var(--text); font: inherit; font-size: 10.5px; font-weight: 650; letter-spacing: -0.01em;
+        text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+      .acc ion-icon, .acc app-icono-waze { font-size: 21px; }
+      .acc span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .acc:active { transform: scale(0.96); }
+      .acc-wa ion-icon { color: #25d366; }
+      .acc-waze { background: #33ccff; border-color: #33ccff; color: #06283a; }
+      .acc-fin { display: grid; grid-template-columns: 1fr 1.6fr; gap: 6px; margin-top: 6px; }
+      .acc-fin .b { height: 46px; justify-content: center; font-size: 15px; }
       .b.b-waze { background: #33ccff !important; border-color: #33ccff !important; color: #06283a !important; }
       .ayuda-ruta { margin: 0 0 -2px; font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
       .tarjetas .tarjeta { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
@@ -255,7 +268,7 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
             <span>{{ sig.texto }}</span>
           </div>
           <div class="mr-acc">
-            <a class="b b-waze" [href]="waze(sig)" target="_blank" rel="noopener"><ion-icon name="car-outline"></ion-icon>Ir con Waze</a>
+            <a class="b b-waze" [href]="waze(sig)" target="_blank" rel="noopener"><app-icono-waze></app-icono-waze>Ir con Waze</a>
             @if (rutaOrdenada().length > 1) {
               <a class="b" [href]="rutaCompleta()" target="_blank" rel="noopener"><ion-icon name="map-outline"></ion-icon>Toda la ruta en Maps</a>
             }
@@ -311,19 +324,20 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
                 <li><span>{{ i.cantidad }} × {{ nombreConVariante(i) }}</span></li>
               }
             </ul>
-            <div class="acciones">
+            <div class="acc-rapidas">
               @if (p.cliente_telefono) {
-                <a class="b" [href]="'tel:' + p.cliente_telefono"><ion-icon name="call-outline"></ion-icon>Llamar</a>
-                <a class="b b-wa" [href]="whatsapp(p)" target="_blank" rel="noopener"><ion-icon name="logo-whatsapp"></ion-icon>WhatsApp</a>
+                <a class="acc" [href]="'tel:' + p.cliente_telefono"><ion-icon name="call"></ion-icon><span>Llamar</span></a>
+                <a class="acc acc-wa" [href]="whatsapp(p)" target="_blank" rel="noopener"><ion-icon name="logo-whatsapp"></ion-icon><span>WhatsApp</span></a>
               }
-              <a class="b b-waze" [href]="waze(p)" target="_blank" rel="noopener"><ion-icon name="car-outline"></ion-icon>Waze</a>
-              <a class="b" [href]="mapa(p)" target="_blank" rel="noopener"><ion-icon name="navigate-outline"></ion-icon>Mapa</a>
+              <a class="acc acc-waze" [href]="waze(p)" target="_blank" rel="noopener"><app-icono-waze></app-icono-waze><span>Waze</span></a>
+              <a class="acc" [href]="mapa(p)" target="_blank" rel="noopener"><ion-icon name="navigate"></ion-icon><span>Mapa</span></a>
               @if (hayCuentas()) {
-                <button class="b" (click)="qrDe.set({ total: p.total, detalle: 'Pedido #' + p.id + ' · ' + p.cliente_nombre })" aria-label="Mostrar el QR para que el cliente pague por transferencia">
-                  <ion-icon name="qr-code-outline"></ion-icon>QR</button>
+                <button type="button" class="acc" (click)="qrDe.set({ total: p.total, detalle: 'Pedido #' + p.id + ' · ' + p.cliente_nombre })" aria-label="Mostrar el QR para que el cliente pague por transferencia"><ion-icon name="qr-code-outline"></ion-icon><span>QR</span></button>
               }
-              <button class="b b-novedad" (click)="novedadDe.set(p)">No se pudo</button>
-              <button class="b b-ok" style="flex: 1" (click)="entregando.set(p)">Entregar</button>
+            </div>
+            <div class="acc-fin">
+              <button type="button" class="b b-novedad" (click)="novedadDe.set(p)">No se pudo</button>
+              <button type="button" class="b b-ok" (click)="entregando.set(p)">Entregar</button>
             </div>
           </article>
           } @else if (parada.jyb; as p) {
@@ -345,19 +359,20 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
                 <li><span>{{ it.cantidad }} × {{ it.nombre }}</span></li>
               }
             </ul>
-            <div class="acciones">
+            <div class="acc-rapidas">
               @if (p.cliente_telefono) {
-                <a class="b" [href]="'tel:' + p.cliente_telefono"><ion-icon name="call-outline"></ion-icon>Llamar</a>
-                <a class="b b-wa" [href]="whatsappJyb(p)" target="_blank" rel="noopener"><ion-icon name="logo-whatsapp"></ion-icon>WhatsApp</a>
+                <a class="acc" [href]="'tel:' + p.cliente_telefono"><ion-icon name="call"></ion-icon><span>Llamar</span></a>
+                <a class="acc acc-wa" [href]="whatsappJyb(p)" target="_blank" rel="noopener"><ion-icon name="logo-whatsapp"></ion-icon><span>WhatsApp</span></a>
               }
-              <a class="b b-waze" [href]="waze(p)" target="_blank" rel="noopener"><ion-icon name="car-outline"></ion-icon>Waze</a>
-              <a class="b" [href]="mapa(p)" target="_blank" rel="noopener"><ion-icon name="navigate-outline"></ion-icon>Mapa</a>
+              <a class="acc acc-waze" [href]="waze(p)" target="_blank" rel="noopener"><app-icono-waze></app-icono-waze><span>Waze</span></a>
+              <a class="acc" [href]="mapa(p)" target="_blank" rel="noopener"><ion-icon name="navigate"></ion-icon><span>Mapa</span></a>
               @if (cuentasJyb().length) {
-                <button class="b" (click)="qrDe.set({ total: p.total, detalle: 'Pedido JYB #' + p.numero + ' · ' + p.cliente_nombre, cuentas: cuentasJyb() })" aria-label="Mostrar el QR de Variedades JYB para que el cliente pague por transferencia">
-                  <ion-icon name="qr-code-outline"></ion-icon>QR</button>
+                <button type="button" class="acc" (click)="qrDe.set({ total: p.total, detalle: 'Pedido JYB #' + p.numero + ' · ' + p.cliente_nombre, cuentas: cuentasJyb() })" aria-label="Mostrar el QR para que el cliente pague por transferencia"><ion-icon name="qr-code-outline"></ion-icon><span>QR</span></button>
               }
-              <button class="b b-novedad" (click)="novedadJyb.set(p)">No se pudo</button>
-              <button class="b b-ok" style="flex: 1" (click)="abrirEntregaJyb(p)">Entregar</button>
+            </div>
+            <div class="acc-fin">
+              <button type="button" class="b b-novedad" (click)="novedadJyb.set(p)">No se pudo</button>
+              <button type="button" class="b b-ok" (click)="abrirEntregaJyb(p)">Entregar</button>
             </div>
           </article>
           }
@@ -582,7 +597,7 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   private timerJyb?: ReturnType<typeof setTimeout>;
 
   constructor() {
-    addIcons({ carOutline, mapOutline, qrCodeOutline, refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses, chatbubbleEllipsesOutline, alertCircleOutline, cloudOfflineOutline, cloudUploadOutline });
+    addIcons({ call, navigate, carOutline, mapOutline, qrCodeOutline, refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses, chatbubbleEllipsesOutline, alertCircleOutline, cloudOfflineOutline, cloudUploadOutline });
     // Cuando se envía lo guardado sin señal, la ruta se recarga
     effect(() => { if (this.sinSenal.enviados()) void this.cargar(); });
   }

@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-11-26-tarjetas-compactas",
+    "fecha": "2026-11-26",
+    "hora": "11:50",
+    "titulo": "Tarjetas de entrega más compactas",
+    "cuerpo": "En Mis entregas, los botones de cada pedido ahora van en una sola fila pequeña con su ícono (Llamar, WhatsApp, Waze, Mapa y QR) y abajo No se pudo y Entregar, uno al lado del otro. El botón de Waze tiene su propio ícono.",
+    "roles": [
+      "mensajero",
+      "admin"
+    ]
+  },
+  {
     "id": "2026-11-26-barra-seleccion",
     "fecha": "2026-11-26",
     "hora": "11:45",
