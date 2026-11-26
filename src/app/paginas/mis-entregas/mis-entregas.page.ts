@@ -115,11 +115,11 @@ type Parada = { clave: string; jasta: Pedido; jyb?: undefined } | { clave: strin
       .acc { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-width: 0; height: 56px; padding: 0 2px;
         border: 1px solid var(--border); border-radius: 14px; background: var(--surface-2); color: var(--text); font: inherit; font-size: 10.5px; font-weight: 650; letter-spacing: -0.01em;
         text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-      .acc ion-icon, .acc app-icono-waze { font-size: 21px; }
+      .acc ion-icon { font-size: 21px; }
       .acc span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .acc:active { transform: scale(0.96); }
       .acc-wa ion-icon { color: #25d366; }
-      .acc-waze { background: #33ccff; border-color: #33ccff; color: #06283a; }
+      .acc app-icono-waze { font-size: 24px; }
       .acc-fin { display: grid; grid-template-columns: 1fr 1.6fr; gap: 6px; margin-top: 6px; }
       .acc-fin .b { height: 46px; justify-content: center; font-size: 15px; }
       .b.b-waze { background: #33ccff !important; border-color: #33ccff !important; color: #06283a !important; }
