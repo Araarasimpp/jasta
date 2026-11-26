@@ -90,6 +90,7 @@ const normal = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLower
       .metodo.on { border-color: var(--accent); background: var(--accent-wash); color: var(--accent); font-weight: 650; }
       .rapidos { display: flex; gap: 6px; flex-wrap: wrap; }
       .rapidos button { height: 32px; padding: 0 12px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface); color: var(--text-soft); font: inherit; font-size: 13px; cursor: pointer; }
+      .parcial { color: var(--oro-texto); font-weight: 600; }
       .vacio-txt { margin: 0; padding: 20px 0; text-align: center; font-size: 14px; color: var(--text-soft); }
     `,
   ],
@@ -124,6 +125,26 @@ const normal = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLower
             </div>
             @if (abierta() === c.id) {
               @if (detalle(); as d) {
+                @if (!verPagado()) {
+                  <ul class="movs">
+                    @for (p of pendientes(); track p.e.id) {
+                      <li class="mov">
+                        <div class="mov-top"><span>{{ fecha(p.e.fecha) }} · <b>Le entregaste</b></span><strong>{{ pesos(p.falta) }}</strong></div>
+                        @if (p.falta < +p.e.total) { <small class="parcial">De {{ pesos(p.e.total) }} ya pagó {{ pesos(+p.e.total - p.falta) }}: le falta {{ pesos(p.falta) }}</small> }
+                        <ul>@for (i of p.e.items; track $index) { <li>{{ i.cantidad }} × {{ i.nombre }} · {{ pesos(i.costo) }} c/u</li> }</ul>
+                        @if (p.e.nota) { <small>{{ p.e.nota }}</small> }
+                        <div class="pie-mov"><button class="link" (click)="abrirEntrega(c, p.e)">Editar</button>
+                          <button class="link peligro" (click)="eliminarEntrega(p.e)">Eliminar entrega</button></div>
+                      </li>
+                    } @empty {
+                      <li class="vacio-txt">No debe ningún producto: todo lo entregado ya está pagado.</li>
+                    }
+                  </ul>
+                  @if (movimientos().length) {
+                    <button class="link" (click)="verPagado.set(true)">Ver todo el historial (lo ya pagado y los abonos)</button>
+                  }
+                } @else {
+                <button class="link" (click)="verPagado.set(false)">Ver solo lo que debe</button>
                 <ul class="movs">
                   @for (m of movimientos(); track m.tipo + (m.tipo === 'entrega' ? m.e.id : m.a.id)) {
                     @if (m.tipo === 'entrega') {
@@ -150,6 +171,7 @@ const normal = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLower
                     <li class="vacio-txt">Todavía no hay movimientos.</li>
                   }
                 </ul>
+                }
               } @else { <app-esqueleto forma="texto" [filas]="3"></app-esqueleto> }
             }
           </article>
@@ -268,6 +290,28 @@ export class CuentasPage implements OnInit {
   metodos = METODOS;
   hoy = hoyColombiaISO();
 
+  /** Historial completo (lo ya pagado y los abonos) o solo lo que debe */
+  verPagado = signal(false);
+
+  /**
+   * Lo que todavía debe: los abonos pagan primero las entregas más viejas. Las que quedaron
+   * pagadas del todo no se muestran; las que van a medias dicen cuánto les falta.
+   */
+  pendientes = computed(() => {
+    const d = this.detalle();
+    if (!d) return [];
+    let abonado = d.abonos.reduce((s, a) => s + Number(a.valor || 0), 0);
+    const viejasPrimero = [...d.entregas].sort((x, y) => x.fecha.localeCompare(y.fecha) || x.id - y.id);
+    const out: { e: Entrega; falta: number }[] = [];
+    for (const e of viejasPrimero) {
+      const total = Number(e.total || 0);
+      const cubre = Math.min(abonado, total);
+      abonado -= cubre;
+      if (total - cubre > 0) out.push({ e, falta: total - cubre });
+    }
+    return out.reverse();
+  });
+
   movimientos = computed<Mov[]>(() => {
     const d = this.detalle();
     if (!d) return [];
@@ -334,6 +378,7 @@ export class CuentasPage implements OnInit {
   async verDetalle(c: Cuenta): Promise<void> {
     if (this.abierta() === c.id) return this.abierta.set(null);
     this.detalle.set(null);
+    this.verPagado.set(false);
     this.abierta.set(c.id);
     await this.cargarDetalle(c.id);
   }
