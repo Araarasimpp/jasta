@@ -1,5 +1,16 @@
 [
   {
+    "id": "2026-11-26-barra-seleccion",
+    "fecha": "2026-11-26",
+    "hora": "11:45",
+    "titulo": "Barra de selección más clara",
+    "cuerpo": "En Pedidos, la barra que sale abajo al seleccionar pedidos (Alistar, Asignar mensajero, Imprimir rótulos) ya no se ve toda negra: ahora es de vidrio claro, con los botones legibles y Alistar resaltado.",
+    "roles": [
+      "admin",
+      "alistador"
+    ]
+  },
+  {
     "id": "2026-11-25-sin-devoluciones",
     "fecha": "2026-11-25",
     "hora": "11:10",

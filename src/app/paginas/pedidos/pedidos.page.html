@@ -289,7 +289,7 @@
         </select>
       }
       @if (selPorAlistar().length) {
-        <button class="bar-btn" (click)="alistar(selPorAlistar())" [disabled]="ocupado()">
+        <button class="bar-btn principal" (click)="alistar(selPorAlistar())" [disabled]="ocupado()">
           <ion-icon name="cube-outline" aria-hidden="true"></ion-icon>
           {{ ocupado() ? 'Alistando…' : 'Alistar (' + selPorAlistar().length + ')' }}
         </button>
