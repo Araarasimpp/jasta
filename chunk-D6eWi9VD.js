@@ -1,0 +1,1 @@
+function t(r){return r>0?Math.ceil(((r+700*1.19)/(1-.0265*1.19)-r)/100)*100:0}export{t};
