@@ -2,7 +2,7 @@ import { Component, ElementRef, OnDestroy, OnInit, computed, inject, signal, vie
 import { FormsModule } from '@angular/forms';
 import { IonIcon } from '@ionic/angular';
 import { addIcons } from 'ionicons';
-import { alertCircle, cameraOutline, closeCircleOutline, checkmarkCircle, informationCircle, pauseOutline, qrCodeOutline, refreshOutline, sendOutline } from 'ionicons/icons';
+import { alertCircle, cameraOutline, closeCircleOutline, checkmarkCircle, informationCircle, pauseOutline, qrCodeOutline, refreshOutline, reorderTwoOutline, sendOutline } from 'ionicons/icons';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { PedidosService } from '../../core/services/pedidos.service';
 import { JybService, ResultadoDespacho } from '../../core/services/jyb.service';
@@ -85,7 +85,13 @@ export function leerRotulo(texto: string): Lectura | null {
       .seg button.on { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
 
       .ruta { list-style: none; margin: 0; padding: 0; border-radius: 18px; background: var(--surface); border: 1px solid var(--border); overflow: hidden; }
-      .ruta li { display: grid; grid-template-columns: 28px auto minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 8px 8px 8px 14px; font-size: 14.5px; }
+      .ruta li { display: grid; grid-template-columns: 28px auto minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 8px 8px 8px 14px; font-size: 14.5px; background: var(--surface); }
+      .ruta.orden li { grid-template-columns: 30px 24px auto minmax(0, 1fr) auto; padding-left: 4px; gap: 8px; }
+      .asa { width: 30px; height: 36px; display: grid; place-items: center; color: var(--text-muted); font-size: 20px; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; border-radius: 10px; }
+      .asa:active { cursor: grabbing; color: var(--text); background: var(--hover); }
+      .ruta li.arrastrando { position: relative; z-index: 5; box-shadow: 0 12px 30px rgba(15, 23, 42, 0.22); border-radius: 12px; scale: 1.02; }
+      .ruta.moviendo li:not(.arrastrando) { transition: transform 160ms var(--ease, ease); }
+      .ruta.guardando { opacity: 0.7; pointer-events: none; }
       .quitar { width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 50%; background: none; color: var(--text-muted); font-size: 20px; cursor: pointer; }
       .quitar:active { background: var(--hover); color: var(--danger); }
       .quitar:disabled { opacity: 0.4; }
@@ -197,9 +203,15 @@ export function leerRotulo(texto: string): Lectura | null {
             <button type="button" class="b b-icono" aria-label="Actualizar ruta" (click)="cargarRuta()"><ion-icon name="refresh-outline"></ion-icon></button>
           </div>
           @if (ruta().length) {
-            <ol class="ruta">
+            <ol class="ruta" [class.orden]="ruta().length > 1" [class.moviendo]="arrastrando() !== null" [class.guardando]="guardandoOrden()">
               @for (p of ruta(); track p.clave; let i = $index) {
-                <li [class.nuevo]="p.clave === nuevo()">
+                <li [class.nuevo]="p.clave === nuevo()" [class.arrastrando]="arrastrando() === p.clave">
+                  @if (ruta().length > 1) {
+                    <span class="asa" role="button" tabindex="0" title="Arrastra para cambiar el orden"
+                      [attr.aria-label]="'Mover ' + (p.negocio === 'jyb' ? 'JYB' : 'Jasta') + ' #' + p.numero + ' (flechas arriba y abajo)'"
+                      (pointerdown)="agarrar($event, p.clave)" (keydown)="moverConTecla($event, p.clave)" (contextmenu)="$event.preventDefault()">
+                      <ion-icon name="reorder-two-outline"></ion-icon></span>
+                  }
                   <span class="n">{{ i + 1 }}.</span>
                   <span class="tag" [class.jyb]="p.negocio === 'jyb'">{{ p.negocio === 'jyb' ? 'JYB' : 'Jasta' }} #{{ p.numero }}</span>
                   <span class="cli">{{ p.cliente }}@if (p.barrio) { <small> · {{ p.barrio }}</small> }</span>
@@ -212,6 +224,7 @@ export function leerRotulo(texto: string): Lectura | null {
           } @else {
             <p class="vacio">{{ cargandoRuta() ? 'Cargando ruta…' : 'No lleva pedidos en ruta.' }}</p>
           }
+          @if (ruta().length > 1) { <p class="aviso-jyb">Arrastra desde las rayas para cambiar el orden de entrega. Al mensajero le llega en ese orden.</p> }
           @if (avisoJyb(); as a) { <p class="aviso-jyb">{{ a }}</p> }
         </section>
       }
@@ -241,8 +254,18 @@ export class DespacharPage implements OnInit, OnDestroy {
   avisoJyb = signal('');
   nuevo = signal('');
   quitando = signal('');
-  /** Ruta combinada de los dos negocios, en el orden en que se asignaron */
-  ruta = computed(() => [...this.rutaJasta(), ...this.rutaJyb()].sort((a, b) => a.cuando - b.cuando));
+  /** Orden mientras se arrastra (claves); al soltar se guarda como nueva hora de asignación */
+  private ordenLocal = signal<string[] | null>(null);
+  arrastrando = signal<string | null>(null);
+  guardandoOrden = signal(false);
+  /** Ruta combinada de los dos negocios, en el orden en que se asignaron (o el que se arrastró) */
+  ruta = computed(() => {
+    const base = [...this.rutaJasta(), ...this.rutaJyb()].sort((a, b) => a.cuando - b.cuando);
+    const orden = this.ordenLocal();
+    if (!orden) return base;
+    const pos = new Map(orden.map((c, i) => [c, i]));
+    return base.map((p, i) => ({ p, k: pos.get(p.clave) ?? 1e6 + i })).sort((a, b) => a.k - b.k).map((x) => x.p);
+  });
 
   private stream: MediaStream | null = null;
   private lector: ((v: HTMLVideoElement) => Promise<string | null>) | null = null;
@@ -255,7 +278,7 @@ export class DespacharPage implements OnInit, OnDestroy {
   private contador = 0;
 
   constructor() {
-    addIcons({ alertCircle, cameraOutline, closeCircleOutline, checkmarkCircle, informationCircle, pauseOutline, qrCodeOutline, refreshOutline, sendOutline });
+    addIcons({ alertCircle, cameraOutline, closeCircleOutline, checkmarkCircle, informationCircle, pauseOutline, qrCodeOutline, refreshOutline, reorderTwoOutline, sendOutline });
   }
 
   async ngOnInit(): Promise<void> {
@@ -287,6 +310,7 @@ export class DespacharPage implements OnInit, OnDestroy {
   async cargarRuta(): Promise<void> {
     const m = this.mensajero();
     if (!m) return;
+    this.ordenLocal.set(null);
     this.cargandoRuta.set(true);
     const jasta = this.sb.client
       .from('pedidos')
@@ -318,6 +342,137 @@ export class DespacharPage implements OnInit, OnDestroy {
       });
     await Promise.all([jasta, jyb]);
     this.cargandoRuta.set(false);
+  }
+
+  // ------------------------------------------------------------------ Ordenar la ruta (arrastrar)
+
+  private agarrado: { li: HTMLElement; asa: HTMLElement; scroller: HTMLElement; id: number; agarre: number; dy: number; y: number; raf: number; esperado: number | null } | null = null;
+
+  /** Se agarra desde las rayas: el pedido sigue al dedo y los demás se corren */
+  agarrar(e: PointerEvent, clave: string): void {
+    if (this.guardandoOrden() || this.agarrado || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    const asa = e.currentTarget as HTMLElement;
+    const li = asa.closest('li') as HTMLElement | null;
+    if (!li) return;
+    e.preventDefault();
+    try { asa.setPointerCapture(e.pointerId); } catch { /* sin captura */ }
+    this.ordenLocal.set(this.ruta().map((p) => p.clave));
+    this.arrastrando.set(clave);
+    let sc: HTMLElement | null = li.parentElement;
+    while (sc && !/(auto|scroll)/.test(getComputedStyle(sc).overflowY)) sc = sc.parentElement;
+    this.agarrado = { li, asa, scroller: sc ?? (document.scrollingElement as HTMLElement), id: e.pointerId, agarre: e.clientY - li.getBoundingClientRect().top, dy: 0, y: e.clientY, raf: 0, esperado: null };
+    asa.addEventListener('pointermove', this.alMover);
+    asa.addEventListener('pointerup', this.alSoltar);
+    asa.addEventListener('pointercancel', this.alSoltar);
+    navigator.vibrate?.(20);
+    this.agarrado.raf = requestAnimationFrame(this.cuadro);
+  }
+
+  private alMover = (e: PointerEvent): void => {
+    if (this.agarrado && e.pointerId === this.agarrado.id) this.agarrado.y = e.clientY;
+  };
+
+  /** Cada cuadro: mueve la fila con el dedo, desplaza la página en los bordes y cambia de puesto al pasar la mitad de la vecina */
+  private cuadro = (): void => {
+    const a = this.agarrado;
+    if (!a) return;
+    const y = a.y;
+    if (y < 90) a.scroller.scrollTop -= Math.ceil((90 - y) / 8);
+    else if (y > window.innerHeight - 120) a.scroller.scrollTop += Math.ceil((y - (window.innerHeight - 120)) / 8);
+    const natural = a.li.getBoundingClientRect().top - a.dy;
+    a.dy = y - a.agarre - natural;
+    a.li.style.transform = `translateY(${a.dy}px)`;
+    const lista = [...(a.li.parentElement?.children ?? [])] as HTMLElement[];
+    const i = lista.indexOf(a.li);
+    if (a.esperado !== null && i !== a.esperado) {
+      a.raf = requestAnimationFrame(this.cuadro);
+      return; // todavía no se dibujó el cambio anterior
+    }
+    a.esperado = null;
+    const r = a.li.getBoundingClientRect();
+    const centro = r.top + r.height / 2;
+    const mitad = (el: HTMLElement | undefined) => { if (!el) return NaN; const q = el.getBoundingClientRect(); return q.top + q.height / 2; };
+    let destino = -1;
+    if (centro > mitad(lista[i + 1])) destino = i + 1;
+    else if (centro < mitad(lista[i - 1])) destino = i - 1;
+    if (destino >= 0) {
+      this.mover(this.arrastrando()!, destino);
+      a.esperado = destino;
+      navigator.vibrate?.(8);
+    }
+    a.raf = requestAnimationFrame(this.cuadro);
+  };
+
+  private mover(clave: string, destino: number): void {
+    const ids = this.ruta().map((p) => p.clave);
+    const desde = ids.indexOf(clave);
+    if (desde < 0 || destino < 0 || destino >= ids.length || destino === desde) return;
+    ids.splice(desde, 1);
+    ids.splice(destino, 0, clave);
+    this.ordenLocal.set(ids);
+  }
+
+  private alSoltar = (): void => {
+    const a = this.agarrado;
+    if (!a) return;
+    cancelAnimationFrame(a.raf);
+    a.asa.removeEventListener('pointermove', this.alMover);
+    a.asa.removeEventListener('pointerup', this.alSoltar);
+    a.asa.removeEventListener('pointercancel', this.alSoltar);
+    a.li.style.transform = '';
+    this.agarrado = null;
+    this.arrastrando.set(null);
+    void this.guardarOrden();
+  };
+
+  /** Sin dedo: con las flechas del teclado sobre las rayas */
+  moverConTecla(e: KeyboardEvent, clave: string): void {
+    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+    e.preventDefault();
+    const i = this.ruta().findIndex((p) => p.clave === clave);
+    this.ordenLocal.set(this.ruta().map((p) => p.clave));
+    this.mover(clave, i + (e.key === 'ArrowUp' ? -1 : 1));
+    void this.guardarOrden().then(() =>
+      setTimeout(() => (document.querySelector(`.ruta li:nth-child(${this.ruta().findIndex((p) => p.clave === clave) + 1}) .asa`) as HTMLElement | null)?.focus())
+    );
+  }
+
+  /**
+   * Guarda el orden: cada pedido toma una hora de asignación en ese orden (las mismas horas
+   * que ya tenía la ruta, repartidas de nuevo). Así Mis entregas del mensajero y la ruta de los
+   * dos negocios quedan en el orden nuevo.
+   */
+  private async guardarOrden(): Promise<void> {
+    const m = this.mensajero();
+    const nueva = this.ruta();
+    if (!m || !this.ordenLocal()) return;
+    const ahora = Date.now() * 1000;
+    const horas = nueva.map((p) => p.cuando || ahora).sort((a, b) => a - b);
+    for (let i = 1; i < horas.length; i++) if (horas[i] <= horas[i - 1]) horas[i] = horas[i - 1] + 1000;
+    const cambios = nueva.map((p, i) => ({ p, at: horas[i] })).filter((x) => x.at !== x.p.cuando);
+    if (!cambios.length) { this.ordenLocal.set(null); return; }
+    const iso = (micros: number) => new Date(Math.floor(micros / 1000)).toISOString().replace('Z', String(micros % 1000).padStart(3, '0') + 'Z');
+    const jasta = cambios.filter((x) => x.p.negocio === 'jasta').map((x) => ({ id: x.p.numero, at: iso(x.at) }));
+    const jyb = cambios.filter((x) => x.p.negocio === 'jyb').map((x) => ({ numero: x.p.numero, at: iso(x.at) }));
+    this.guardandoOrden.set(true);
+    try {
+      await Promise.all([
+        jasta.length ? this.sb.client.rpc('ordenar_ruta', { p_mensajero: m.id, p_items: jasta }).then(({ error }) => { if (error) throw error; }) : null,
+        jyb.length ? this.jyb.ordenar(m.id, jyb) : null,
+      ]);
+      if (this.mensajero()?.id !== m.id) return;
+      // Queda igual que en la base, sin volver a cargar
+      const nuevaHora = new Map(cambios.map((x) => [x.p.clave, x.at]));
+      const ajustar = (l: Parada[]) => l.map((p) => (nuevaHora.has(p.clave) ? { ...p, cuando: nuevaHora.get(p.clave)! } : p));
+      this.rutaJasta.update(ajustar);
+      this.rutaJyb.update(ajustar);
+      this.ordenLocal.set(null);
+    } catch (e) {
+      this.ultimo.set(this.resultado('jasta', 0, 'error', 'No se pudo guardar el orden: ' + mensajeError(e)));
+      await this.cargarRuta();
+    } finally {
+      this.guardandoOrden.set(false);
+    }
   }
 
   // ------------------------------------------------------------------ Cámara

@@ -1,5 +1,17 @@
 [
   {
+    "id": "2026-11-27-ordenar-ruta",
+    "fecha": "2026-11-27",
+    "hora": "15:15",
+    "titulo": "Ordena la ruta arrastrando en Despachar",
+    "cuerpo": "En Despachar, la ruta del mensajero ahora se puede reorganizar: mantén las rayas de la izquierda de un pedido y arrástralo al puesto que quieras, con pedidos de Jasta y de Variedades JYB mezclados. El orden nuevo se guarda y al mensajero le aparece así en Mis entregas.",
+    "roles": [
+      "admin",
+      "alistador",
+      "mensajero"
+    ]
+  },
+  {
     "id": "2026-11-26-tarjetas-compactas",
     "fecha": "2026-11-26",
     "hora": "11:50",

@@ -530,17 +530,19 @@ export class MisEntregasPage implements OnInit, OnDestroy {
   /** Orden de la ruta que el mensajero armó ('j:<id>' Jasta, 'k:<uuid>' Variedades JYB), guardado en este celular */
   orden = signal<string[]>([]);
   arrastrandoId = signal<string | null>(null);
-  rutaOrdenada = computed<Parada[]>(() => {
-    const pos = new Map(this.orden().map((clave, i) => [clave, i]));
-    // Sin orden propio, va en el orden en que se los asignaron: por Telegram es el orden de las
-    // fotos de los rótulos (de Jasta y de Variedades JYB mezcladas)
-    const todas: Parada[] = [
+  /** La ruta en el orden en que se la asignaron (o como la ordenó quien despacha en Despachar) */
+  private rutaServidor = computed<Parada[]>(() =>
+    // Por Telegram o Despachar es el orden de los rótulos (de Jasta y de Variedades JYB mezcladas)
+    [
       ...this.enRuta().map((p) => ({ clave: 'j:' + p.id, jasta: p, cuando: microsAsignado(p.asignado_at) })),
       ...(this.jyb()?.en_ruta ?? []).map((p) => ({ clave: 'k:' + p.id, jyb: p, cuando: microsAsignado(p.asignado_at ?? p.created_at) })),
     ]
       .sort((a, b) => a.cuando - b.cuando)
-      .map(({ cuando: _, ...p }) => p);
-    return todas
+      .map(({ cuando: _, ...p }) => p)
+  );
+  rutaOrdenada = computed<Parada[]>(() => {
+    const pos = new Map(this.orden().map((clave, i) => [clave, i]));
+    return this.rutaServidor()
       .map((p, i) => ({ p, k: pos.has(p.clave) ? pos.get(p.clave)! : 1e6 + i }))
       .sort((a, b) => a.k - b.k)
       .map((x) => x.p);
@@ -600,6 +602,26 @@ export class MisEntregasPage implements OnInit, OnDestroy {
     addIcons({ call, navigate, carOutline, mapOutline, qrCodeOutline, refreshOutline, callOutline, navigateOutline, logoWhatsapp, chatbubbleEllipses, chatbubbleEllipsesOutline, alertCircleOutline, cloudOfflineOutline, cloudUploadOutline });
     // Cuando se envía lo guardado sin señal, la ruta se recarga
     effect(() => { if (this.sinSenal.enviados()) void this.cargar(); });
+    // Si quien despacha reordenó la ruta en Despachar, ese orden manda sobre el que se armó en este celular
+    effect(() => {
+      const servidor = this.rutaServidor().map((p) => p.clave);
+      if (!servidor.length) return;
+      const clave = this.claveOrden() + '-despacho';
+      try {
+        const antes: unknown = JSON.parse(localStorage.getItem(clave) || '[]');
+        if (Array.isArray(antes)) {
+          const hay = new Set(servidor);
+          const visto = new Set(antes);
+          const a = antes.filter((x) => hay.has(x));
+          const b = servidor.filter((x) => visto.has(x));
+          if (a.some((x, i) => x !== b[i])) {
+            this.orden.set([]);
+            this.guardarOrden();
+          }
+        }
+        localStorage.setItem(clave, JSON.stringify(servidor.slice(-300)));
+      } catch { /* sin almacenamiento */ }
+    });
   }
 
   ngOnInit(): void {

@@ -16,6 +16,7 @@
 // POST { accion: 'asignar', mensajero_id, numero }   quien despacha en Jasta escanea un rótulo de JYB
 // POST { accion: 'ruta_de', mensajero_id }           lo que lleva ese mensajero en JYB (para despachar)
 // POST { accion: 'quitar', mensajero_id, numero }    se escaneó por error: sale de la ruta y vuelve a pendientes
+// POST { accion: 'ordenar', mensajero_id, items: [{ numero, at }] }   orden de la ruta arrastrado en Despachar
 // POST { accion: 'novedad', pedido_id, motivo, detalle?, accion_pedido }   no pudo entregar ('reintentar' o 'devolver')
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
@@ -175,6 +176,18 @@ Deno.serve(async (req) => {
       const { data, error } = await db.rpc('jasta_quitar', { p_email_dom: correo, p_numero: numero, p_desp: yo.email });
       if (error) throw error;
       return responder(data);
+    }
+
+    if (body.accion === 'ordenar') {
+      // Orden de la ruta arrastrado en Despachar: [{ numero, at }] con la nueva hora de asignación
+      const items = (Array.isArray(body.items) ? body.items : [])
+        .map((i: { numero?: unknown; at?: unknown }) => ({ numero: Number(i?.numero), at: String(i?.at ?? '') }))
+        .filter((i: { numero: number; at: string }) => Number.isInteger(i.numero) && i.numero > 0 && !isNaN(Date.parse(i.at)))
+        .slice(0, 200);
+      const correo = await correoMensajero(token, body.mensajero_id);
+      const { data, error } = await db.rpc('jasta_ordenar', { p_email_dom: correo, p_items: items });
+      if (error) throw error;
+      return responder({ ok: true, n: data });
     }
 
     if (body.accion === 'ruta_de') {

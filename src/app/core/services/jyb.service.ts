@@ -112,6 +112,11 @@ export class JybService {
     return this.llamar<ResultadoDespacho>({ accion: 'quitar', mensajero_id: mensajeroId, numero });
   }
 
+  /** Nuevo orden de su ruta de JYB (arrastrado en Despachar): nueva hora de asignación de cada pedido */
+  async ordenar(mensajeroId: number, items: { numero: number; at: string }[]): Promise<void> {
+    await this.llamar({ accion: 'ordenar', mensajero_id: mensajeroId, items });
+  }
+
   /** Lo que lleva en ruta ese mensajero en Variedades JYB (para la pantalla de despachar) */
   rutaDe(mensajeroId: number): Promise<{ vinculado: boolean; en_ruta: PedidoJyb[] }> {
     return this.llamar({ accion: 'ruta_de', mensajero_id: mensajeroId });
